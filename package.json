@@ -1,0 +1,36 @@
+{
+  "name": "comprehende",
+  "version": "0.0.0",
+  "description": "Local review assistant that groups git diffs so humans can comprehend AI code changes.",
+  "type": "module",
+  "bin": {
+    "comprehende": "./dist/cli/main.js"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli/main.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.21.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matemolnar8/comprehende.git"
+  },
+  "bugs": {
+    "url": "https://github.com/matemolnar8/comprehende/issues"
+  },
+  "homepage": "https://github.com/matemolnar8/comprehende#readme",
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

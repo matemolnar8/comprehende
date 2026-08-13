@@ -165,9 +165,9 @@ The browser never computes diffs. It asks the local server.
 
 Written. Product intent stays in `AGENTS.md`.
 
-### 1. Repo skeleton
+### 1. Repo skeleton — done
 
-`git init` (if needed), LICENSE, `.gitignore`, pnpm, `package.json`, `tsconfig`, README (run locally, install skill). Stub `skills/comprehende/SKILL.md` so `npx skills add ./` works during development.
+LICENSE, `.gitignore`, pnpm, `package.json`, `tsconfig`, README, stub CLI, stub `skills/comprehende/SKILL.md`. Toolchain: Node 24 LTS, TypeScript 7, tsx. CLI commands still exit unimplemented.
 
 ### 2. Schema + git index (accuracy kernel)
 
@@ -197,4 +197,4 @@ Author grouping rules and the extract → validate → serve loop by hand. Pin `
 
 ## First implementation slice
 
-Phase 1 + 2: schema, `index`, `validate`, one fixture repo, `serve` that can dump joined hunks (even ugly HTML). Pretty chrome after the git join is real.
+Phase 2: schema, `index`, `validate`, one fixture repo. Then a `serve` that can dump joined hunks (even ugly HTML). Pretty chrome after the git join is real.
