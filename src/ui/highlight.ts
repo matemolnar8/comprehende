@@ -36,9 +36,31 @@ const ALIASES: Record<string, string> = {
   sh: "bash",
 };
 
-export function highlightLine(text: string, language: string): string {
+export function languageFromPath(path: string): string {
+  const base = path.split("/").pop() ?? path;
+  const ext = base.includes(".") ? (base.split(".").pop()?.toLowerCase() ?? "plaintext") : "plaintext";
+  return ALIASES[ext] ?? ext;
+}
+
+function mappedLanguage(language: string): string | undefined {
   const mapped = ALIASES[language] ?? language;
   if (mapped === "plaintext" || !hljs.getLanguage(mapped)) {
+    return undefined;
+  }
+  return mapped;
+}
+
+export function highlightLine(text: string, language: string): string {
+  const mapped = mappedLanguage(language);
+  if (mapped === undefined) {
+    return escapeHtml(text);
+  }
+  return hljs.highlight(text, { language: mapped, ignoreIllegals: true }).value;
+}
+
+export function highlightSource(text: string, language: string): string {
+  const mapped = mappedLanguage(language);
+  if (mapped === undefined) {
     return escapeHtml(text);
   }
   return hljs.highlight(text, { language: mapped, ignoreIllegals: true }).value;

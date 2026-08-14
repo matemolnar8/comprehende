@@ -11,7 +11,7 @@ import {
   type LiveHunk,
   type ReviewMeta,
 } from "./api.ts";
-import { highlightLine } from "./highlight.ts";
+import { highlightLine, highlightSource, languageFromPath } from "./highlight.ts";
 import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -209,7 +209,7 @@ export function App() {
           defaultLayout={defaultLayout}
           onLayoutChanged={onLayoutChanged}
         >
-          <ResizablePanel id="stack" defaultSize="22" minSize="14%" className="min-h-0">
+          <ResizablePanel id="stack" defaultSize="22" minSize="14%" className="min-h-0 min-w-0">
             <nav className="h-full overflow-auto bg-card py-3">
               <PaneLabel>Stack</PaneLabel>
               <ul className="mb-3 list-none p-0">
@@ -230,7 +230,7 @@ export function App() {
                       onClick={() => setSelection({ kind: "group", id: group.id })}
                       index={padLayer(index + 1)}
                       title={group.title}
-                      count={`${group.files.length}f${group.staleCount > 0 ? ` · ${group.staleCount} stale` : ""}`}
+                      count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
                     />
                   </li>
                 ))}
@@ -269,7 +269,7 @@ export function App() {
             </nav>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel id="main" defaultSize="56" minSize="30%" className="min-h-0">
+          <ResizablePanel id="main" defaultSize="56" minSize="30%" className="min-h-0 min-w-0">
             <main className="h-full overflow-auto px-6 py-5">
               {selection?.kind === "overview" ? (
                 <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
@@ -312,10 +312,15 @@ export function App() {
             </main>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel id="rail" defaultSize="22" minSize="14%" className="min-h-0">
+          <ResizablePanel id="rail" defaultSize="22" minSize="14%" className="min-h-0 min-w-0">
             <aside className="h-full overflow-auto bg-card py-3">
               {inspector !== null ? (
-                <Inspector inspector={inspector} setInspector={setInspector} onClose={() => setInspector(null)} />
+                <Inspector
+                  inspector={inspector}
+                  wrap={wrap}
+                  setInspector={setInspector}
+                  onClose={() => setInspector(null)}
+                />
               ) : selection?.kind === "group" && hunks.length > 0 ? (
                 <FileRail hunks={hunks} active={activeHunk} onSelect={setActiveHunk} />
               ) : (
@@ -350,7 +355,7 @@ function StackItem(props: {
   active: boolean;
   onClick: () => void;
   title: string;
-  count: string;
+  count?: string;
   index?: string;
   warn?: boolean;
 }) {
@@ -360,18 +365,20 @@ function StackItem(props: {
       variant="ghost"
       onClick={props.onClick}
       className={cn(
-        "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] justify-start gap-2 rounded-md px-2 py-1.5 font-normal",
+        "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] min-w-0 items-start justify-start gap-2 rounded-md px-2 py-1.5 text-left font-normal whitespace-normal",
         props.active && "bg-secondary text-foreground",
         props.warn && "text-warn hover:text-warn",
       )}
     >
       {props.index !== undefined ? (
-        <span className="w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
+        <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
       ) : null}
-      <span className="min-w-0 flex-1 truncate text-left">{props.title}</span>
-      <span className={cn("text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
-        {props.count}
-      </span>
+      <span className="min-w-0 flex-1 text-left leading-snug">{props.title}</span>
+      {props.count !== undefined ? (
+        <span className={cn("shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
+          {props.count}
+        </span>
+      ) : null}
     </Button>
   );
 }
@@ -444,43 +451,20 @@ function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }
             <Button
               type="button"
               variant="secondary"
-              className="h-auto w-full justify-start gap-2.5 px-3 py-2 text-left font-normal"
+              className="h-auto w-full min-w-0 items-start justify-start gap-2.5 px-3 py-2.5 text-left font-normal whitespace-normal"
               onClick={() => onOpenLayer(group.id)}
             >
-              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{padLayer(index + 1)}</span>
-              <span>
-                <strong className="font-medium text-foreground">{group.title}</strong>
-                <span className="text-muted-foreground"> {group.summary}</span>
+              <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+                {padLayer(index + 1)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <strong className="block font-medium text-foreground">{group.title}</strong>
+                <span className="mt-0.5 block text-muted-foreground">{group.summary}</span>
               </span>
             </Button>
           </li>
         ))}
       </ol>
-      <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
-        Files by layer
-      </h2>
-      <table className="w-full border-collapse text-xs">
-        <thead>
-          <tr>
-            <th className="pb-1 text-left font-medium text-muted-foreground">Layer</th>
-            <th className="pb-1 text-left font-medium text-muted-foreground">Path</th>
-            <th className="pb-1 text-left font-medium text-muted-foreground">Hunks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {meta.groups.flatMap((group, index) =>
-            group.files.map((path) => (
-              <tr key={`${group.id}:${path}`} className="border-t border-border">
-                <td className="py-1 pr-2 font-mono tabular-nums">{padLayer(index + 1)}</td>
-                <td className="py-1 pr-2">{path}</td>
-                <td className="py-1 font-mono tabular-nums">
-                  {meta.files.find((file) => file.path === path)?.hunkCount ?? ""}
-                </td>
-              </tr>
-            )),
-          )}
-        </tbody>
-      </table>
       {meta.commits.length > 0 ? (
         <>
           <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
@@ -716,13 +700,16 @@ function FileTree(props: {
 
 function Inspector(props: {
   inspector: Inspector;
+  wrap: boolean;
   setInspector: (inspector: Inspector) => void;
   onClose: () => void;
 }) {
-  const { inspector, setInspector, onClose } = props;
+  const { inspector, wrap, setInspector, onClose } = props;
   const [content, setContent] = useState<string>("");
+  const [language, setLanguage] = useState("plaintext");
   const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const blameLanguage = languageFromPath(inspector.path);
 
   useEffect(() => {
     let cancelled = false;
@@ -732,6 +719,7 @@ function Inspector(props: {
         .then((payload) => {
           if (!cancelled) {
             setContent(payload.content);
+            setLanguage(payload.language);
             setBlame(null);
           }
         })
@@ -803,7 +791,9 @@ function Inspector(props: {
       </div>
       {error !== null ? <p className="px-3 text-warn">{error}</p> : null}
       {inspector.mode === "file" && error === null ? (
-        <pre className="flex-1 overflow-auto p-2 font-mono text-[11px]">{content}</pre>
+        <pre className={cn("flex-1 overflow-auto p-2 font-mono text-[11px] leading-5", wrap && "whitespace-pre-wrap")}>
+          <code dangerouslySetInnerHTML={{ __html: highlightSource(content, language) }} />
+        </pre>
       ) : null}
       {inspector.mode === "blame" && blame !== null ? (
         <table className="w-full flex-1 border-collapse overflow-auto p-2 text-[11px]">
@@ -813,8 +803,8 @@ function Inspector(props: {
                 <td className="pr-2 text-right align-top whitespace-nowrap text-muted-foreground">{line.line}</td>
                 <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.sha.slice(0, 7)}</td>
                 <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.author}</td>
-                <td className="align-top">
-                  <code>{line.text}</code>
+                <td className={cn("align-top", wrap ? "whitespace-pre-wrap" : "whitespace-pre")}>
+                  <code dangerouslySetInnerHTML={{ __html: highlightLine(line.text, blameLanguage) }} />
                 </td>
               </tr>
             ))}

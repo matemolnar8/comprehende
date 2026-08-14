@@ -19,5 +19,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": [".", "../schema/types.ts", "../schema/hunk-meta.ts"]
+  "include": [".", "../schema/types.ts", "../schema/hunk-meta.ts"],
+  "exclude": ["**/*.test.ts"]
 }
