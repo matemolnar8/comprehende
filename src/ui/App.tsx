@@ -49,8 +49,8 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
-    id: "comprehende-shell",
-    panelIds: ["stack", "main", "rail"],
+    id: "comprehende-shell-overlay",
+    panelIds: ["stack", "main"],
     onlySaveAfterUserInteractions: true,
   });
 
@@ -103,6 +103,10 @@ export function App() {
     };
   }, [selectedKey]);
 
+  useEffect(() => {
+    setInspector(null);
+  }, [selection]);
+
   const scrollToHunk = useCallback((index: number) => {
     setActiveHunk(index);
     requestAnimationFrame(() => {
@@ -113,6 +117,13 @@ export function App() {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.isContentEditable || target.closest("input, textarea, select") !== null)
+      ) {
         return;
       }
       if (event.key === "w") {
@@ -132,6 +143,12 @@ export function App() {
         setSelection({ kind: "unassigned" });
       } else if (event.key === "Escape") {
         setInspector(null);
+      } else if (event.key === "[") {
+        shiftSelection(meta, selection, setSelection, -1);
+      } else if (event.key === "]") {
+        shiftSelection(meta, selection, setSelection, 1);
+      } else if (inspector !== null) {
+        return;
       } else if (event.key === "j") {
         const files = filesFromHunks(hunks, layerPatches);
         const current = files.findIndex(
@@ -150,15 +167,11 @@ export function App() {
         if (previous !== undefined) {
           scrollToHunk(previous.firstIndex);
         }
-      } else if (event.key === "[") {
-        shiftSelection(meta, selection, setSelection, -1);
-      } else if (event.key === "]") {
-        shiftSelection(meta, selection, setSelection, 1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, hunks, layerPatches, load, meta, scrollToHunk, selection]);
+  }, [activeHunk, hunks, inspector, layerPatches, load, meta, scrollToHunk, selection]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
@@ -183,20 +196,13 @@ export function App() {
     return null;
   }
 
-  const coverageRatio = meta.coverage.totalHunks === 0 ? 1 : meta.coverage.assignedHunks / meta.coverage.totalHunks;
   const incomplete = meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0;
-  const highlightFiles = new Set(
-    selectedGroup?.files ?? (selection?.kind === "unassigned" ? meta.unassigned.files : []),
-  );
 
   return (
     <TooltipProvider>
       <div className="flex h-full min-h-0 flex-col">
-        <header className="flex items-center gap-4 border-b border-border bg-card px-3 py-2">
-          <div className="flex min-w-52 flex-col">
-            <span className="font-serif text-base leading-none text-foreground">Comprehende</span>
-            <span className="mt-1 text-[11px] text-muted-foreground">diffs from git · groups are interpretation</span>
-          </div>
+        <header className="flex items-center gap-6 border-b border-border px-5 py-3">
+          <span className="font-serif text-lg leading-none text-foreground">Comprehende</span>
           <div
             className="flex min-w-0 flex-1 items-baseline gap-2 text-sm"
             title={`${meta.resolved.baseSha} ... ${meta.resolved.headSha}`}
@@ -208,70 +214,63 @@ export function App() {
               {shortSha(meta.resolved.baseSha)} → {shortSha(meta.resolved.headSha)}
             </span>
           </div>
-          <div className={cn("min-w-56 text-xs", incomplete ? "text-warn" : "text-add")}>
-            <span>
-              {meta.coverage.assignedHunks}/{meta.coverage.totalHunks} hunks grouped
-              {meta.coverage.unassignedCount > 0 ? ` · ${meta.coverage.unassignedCount} unassigned` : ""}
-              {meta.coverage.staleCount > 0 ? ` · ${meta.coverage.staleCount} stale` : ""}
-            </span>
-            <div className="mt-1 h-1 overflow-hidden rounded-full bg-secondary">
-              <div
-                className={cn("h-full", incomplete ? "bg-warn" : "bg-add")}
-                style={{ width: `${Math.round(coverageRatio * 100)}%` }}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
+          <Coverage meta={meta} incomplete={incomplete} />
+          <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Toggle size="sm" variant="outline" pressed={wrap} onPressedChange={setWrap} aria-label="Wrap lines">
                   Wrap
+                  <Kbd>w</Kbd>
                 </Toggle>
               </TooltipTrigger>
-              <TooltipContent>Wrap long lines (w)</TooltipContent>
+              <TooltipContent>Wrap long lines</TooltipContent>
             </Tooltip>
-            <div className="flex overflow-hidden rounded-md border border-input">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant={split ? "ghost" : "secondary"}
-                    className="rounded-none border-0"
-                    onClick={() => setSplit(false)}
-                    aria-pressed={!split}
-                  >
-                    Unified
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Unified diff (s)</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant={split ? "secondary" : "ghost"}
-                    className="rounded-none border-0"
-                    onClick={() => {
-                      setSplit(true);
-                      if (!split) {
-                        setSplitRatio(0.5);
-                      }
-                    }}
-                    aria-pressed={split}
-                  >
-                    Split
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Side-by-side diff (s)</TooltipContent>
-              </Tooltip>
+            <div className="flex items-center gap-1.5">
+              <div className="flex overflow-hidden rounded-md border border-input">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={split ? "ghost" : "secondary"}
+                      className="rounded-none border-0"
+                      onClick={() => setSplit(false)}
+                      aria-pressed={!split}
+                    >
+                      Unified
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Unified diff</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant={split ? "secondary" : "ghost"}
+                      className="rounded-none border-0"
+                      onClick={() => {
+                        setSplit(true);
+                        if (!split) {
+                          setSplitRatio(0.5);
+                        }
+                      }}
+                      aria-pressed={split}
+                    >
+                      Split
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Side-by-side diff</TooltipContent>
+                </Tooltip>
+              </div>
+              <Kbd>s</Kbd>
             </div>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="sm" variant="outline" onClick={() => void load()}>
                   Refresh
+                  <Kbd>r</Kbd>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Reload live git (r)</TooltipContent>
+              <TooltipContent>Reload live git</TooltipContent>
             </Tooltip>
           </div>
         </header>
@@ -281,10 +280,9 @@ export function App() {
           defaultLayout={defaultLayout}
           onLayoutChanged={onLayoutChanged}
         >
-          <ResizablePanel id="stack" defaultSize="22" minSize="14%" className="min-h-0 min-w-0">
-            <nav className="h-full overflow-auto bg-card py-3">
-              <PaneLabel>Stack</PaneLabel>
-              <ul className="mb-3 list-none p-0">
+          <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
+            <nav className="h-full overflow-auto py-6">
+              <ul className="mb-6 list-none p-0">
                 <li>
                   <StackItem
                     active={selection?.kind === "overview"}
@@ -294,7 +292,7 @@ export function App() {
                   />
                 </li>
               </ul>
-              <ul className="mb-3 list-none p-0">
+              <ul className="mb-6 list-none p-0">
                 {meta.groups.map((group, index) => (
                   <li key={group.id}>
                     <StackItem
@@ -306,108 +304,93 @@ export function App() {
                     />
                   </li>
                 ))}
-                <li>
-                  <StackItem
-                    active={selection?.kind === "unassigned"}
-                    onClick={() => setSelection({ kind: "unassigned" })}
-                    title="Unassigned"
-                    count={String(meta.unassigned.hunkCount)}
-                    warn
-                  />
-                </li>
+                {meta.unassigned.hunkCount > 0 ? (
+                  <li>
+                    <StackItem
+                      active={selection?.kind === "unassigned"}
+                      onClick={() => setSelection({ kind: "unassigned" })}
+                      title="Unassigned"
+                      count={String(meta.unassigned.hunkCount)}
+                      warn
+                    />
+                  </li>
+                ) : null}
               </ul>
               {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (
-                <section>
-                  <PaneLabel>Tickets</PaneLabel>
-                  <ul className="space-y-1.5 px-3 text-xs text-muted-foreground">
-                    {meta.document.tickets.map((ticket) => (
-                      <li key={ticket.id}>
-                        {ticket.url !== undefined ? (
-                          <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
-                            {ticket.id}
-                            {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                          </a>
-                        ) : (
-                          <span>
-                            {ticket.id}
-                            {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </section>
+                <ul className="space-y-2 px-4 text-sm text-muted-foreground">
+                  {meta.document.tickets.map((ticket) => (
+                    <li key={ticket.id}>
+                      {ticket.url !== undefined ? (
+                        <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
+                          {ticket.id}
+                          {ticket.title !== undefined ? ` ${ticket.title}` : ""}
+                        </a>
+                      ) : (
+                        <span>
+                          {ticket.id}
+                          {ticket.title !== undefined ? ` ${ticket.title}` : ""}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               ) : null}
             </nav>
           </ResizablePanel>
           <ResizableHandle withHandle />
-          <ResizablePanel id="main" defaultSize="56" minSize="30%" className="min-h-0 min-w-0">
-            <main ref={mainRef} className="h-full overflow-auto px-6 py-5">
-              {selection?.kind === "overview" ? (
-                <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
-              ) : selection?.kind === "unassigned" ? (
-                <Brief kicker="Unassigned" title="Not in any layer">
-                  <p className="font-serif text-[17px] leading-snug text-foreground">
-                    Live git still has these hunks, and no group points at them. Coverage cannot hide. Fix the review
-                    document — never the diff.
-                  </p>
-                </Brief>
-              ) : selectedGroup !== null ? (
-                <LayerBrief
-                  group={selectedGroup}
-                  index={layerIndex(meta.groups, selectedGroup.id)}
-                  groups={meta.groups}
-                  onOpenLayer={(id) => setSelection({ kind: "group", id })}
-                />
-              ) : (
-                <h1 className="font-serif text-xl">Select a layer</h1>
-              )}
-              {hunkError !== null ? <p className="mt-3 text-warn">{hunkError}</p> : null}
-              {selection?.kind !== "overview" ? (
-                <>
-                  {hunks.length === 0 && hunkError === null ? (
-                    <p className="mt-4 text-muted-foreground">No hunks in this layer.</p>
-                  ) : null}
-                  <div className="mt-4 space-y-4">
-                    {layerFiles.map((file) => (
-                      <HunkView
-                        key={file.path}
-                        file={file}
-                        active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
-                        index={file.firstIndex}
-                        split={split}
-                        splitRatio={splitRatio}
-                        wrap={wrap}
-                        onSplitRatio={setSplitRatio}
-                        onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : null}
-            </main>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel id="rail" defaultSize="22" minSize="14%" className="min-h-0 min-w-0">
-            <aside className={cn("h-full bg-card py-3", inspector !== null ? "flex min-h-0 flex-col overflow-hidden" : "overflow-auto")}>
-              {inspector !== null ? (
-                <Inspector
-                  inspector={inspector}
-                  wrap={wrap}
-                  setInspector={setInspector}
-                  onClose={() => setInspector(null)}
-                />
-              ) : selection?.kind === "group" && hunks.length > 0 ? (
-                <FileRail hunks={hunks} patches={layerPatches} active={activeHunk} onSelect={scrollToHunk} />
-              ) : (
-                <FileTree
-                  files={meta.files}
-                  skipped={meta.skipped}
-                  highlight={highlightFiles}
-                  onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
-                />
-              )}
-            </aside>
+          <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
+            {inspector !== null ? (
+              <Inspector
+                inspector={inspector}
+                wrap={wrap}
+                setInspector={setInspector}
+                onClose={() => setInspector(null)}
+              />
+            ) : (
+              <main ref={mainRef} className="h-full overflow-auto px-10 py-8">
+                {selection?.kind === "overview" ? (
+                  <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
+                ) : selection?.kind === "unassigned" ? (
+                  <Brief kicker="Unassigned" title="Not in any layer">
+                    <p className="font-serif text-lg leading-relaxed text-foreground">
+                      These hunks are in git and in no layer. Fix the review document — never the diff.
+                    </p>
+                  </Brief>
+                ) : selectedGroup !== null ? (
+                  <LayerBrief
+                    group={selectedGroup}
+                    index={layerIndex(meta.groups, selectedGroup.id)}
+                    groups={meta.groups}
+                    onOpenLayer={(id) => setSelection({ kind: "group", id })}
+                  />
+                ) : (
+                  <h1 className="font-serif text-2xl">Select a layer</h1>
+                )}
+                {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
+                {selection?.kind !== "overview" ? (
+                  <>
+                    {hunks.length === 0 && hunkError === null ? (
+                      <p className="mt-8 text-muted-foreground">No hunks in this layer.</p>
+                    ) : null}
+                    <div className="mt-8 space-y-8">
+                      {layerFiles.map((file) => (
+                        <HunkView
+                          key={file.path}
+                          file={file}
+                          active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
+                          index={file.firstIndex}
+                          split={split}
+                          splitRatio={splitRatio}
+                          wrap={wrap}
+                          onSplitRatio={setSplitRatio}
+                          onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
+                        />
+                      ))}
+                    </div>
+                  </>
+                ) : null}
+              </main>
+            )}
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
@@ -416,14 +399,33 @@ export function App() {
 }
 
 function Boot(props: { children: string; className?: string }) {
-  return <div className={cn("p-12 text-muted-foreground", props.className)}>{props.children}</div>;
+  return <div className={cn("p-16 text-muted-foreground", props.className)}>{props.children}</div>;
 }
 
-function PaneLabel(props: { children: string }) {
+function Kbd(props: { children: string }) {
+  return <kbd className="font-mono text-[10px] font-normal text-muted-foreground">{props.children}</kbd>;
+}
+
+function Coverage(props: { meta: ReviewMeta; incomplete: boolean }) {
+  const { meta, incomplete } = props;
+  const detail = [
+    `${meta.coverage.assignedHunks} of ${meta.coverage.totalHunks} hunks grouped`,
+    meta.coverage.unassignedCount > 0 ? `${meta.coverage.unassignedCount} unassigned` : null,
+    meta.coverage.staleCount > 0 ? `${meta.coverage.staleCount} stale` : null,
+  ]
+    .filter((part) => part !== null)
+    .join(" · ");
   return (
-    <h2 className="mb-2 px-3 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
-      {props.children}
-    </h2>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn("font-mono text-xs tabular-nums", incomplete ? "text-warn" : "text-muted-foreground")}
+        >
+          {meta.coverage.assignedHunks}/{meta.coverage.totalHunks}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{detail}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -441,7 +443,7 @@ function StackItem(props: {
       variant="ghost"
       onClick={props.onClick}
       className={cn(
-        "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] min-w-0 items-start justify-start gap-2 rounded-md px-2 py-1.5 text-left font-normal whitespace-normal",
+        "mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal",
         props.active && "bg-secondary text-foreground",
         props.warn && "text-warn hover:text-warn",
       )}
@@ -476,7 +478,9 @@ function shiftSelection(
     return;
   }
   const ids: Selection[] = [{ kind: "overview" }, ...meta.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
-  ids.push({ kind: "unassigned" });
+  if (meta.unassigned.hunkCount > 0) {
+    ids.push({ kind: "unassigned" });
+  }
   const current = ids.findIndex((item) => sameSelection(item, selection));
   const next = ids[(current + delta + ids.length) % ids.length];
   if (next !== undefined) {
@@ -497,11 +501,13 @@ function sameSelection(a: Selection, b: Selection | null): boolean {
   return b.kind === "group" && b.id === a.id;
 }
 
-function Brief(props: { kicker: string; title: string; children: ReactNode }) {
+function Brief(props: { kicker?: string; title: string; children?: ReactNode }) {
   return (
-    <div className="mb-5 max-w-[72ch]">
-      <p className="mb-1.5 text-[11px] tracking-[0.04em] text-muted-foreground uppercase">{props.kicker}</p>
-      <h1 className="mb-2 font-serif text-[22px] leading-tight text-foreground">{props.title}</h1>
+    <div className="mb-8 max-w-[68ch]">
+      {props.kicker !== undefined ? (
+        <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+      ) : null}
+      <h1 className="mb-3 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
       {props.children}
     </div>
   );
@@ -510,23 +516,22 @@ function Brief(props: { kicker: string; title: string; children: ReactNode }) {
 function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }) {
   const { meta, onOpenLayer } = props;
   return (
-    <Brief kicker="Overview" title="Review stack">
+    <div className="mb-8 max-w-[68ch]">
       {meta.document.walkthrough !== undefined ? (
-        <p className="mb-3 font-serif text-[17px] leading-snug text-foreground">{meta.document.walkthrough}</p>
-      ) : null}
-      <p className="mb-3 text-muted-foreground">
-        {sizeLabel(meta.document.size)} · {meta.files.length} files · {meta.coverage.totalHunks} hunks
+        <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{meta.document.walkthrough}</h1>
+      ) : (
+        <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">Overview</h1>
+      )}
+      <p className="mb-10 text-muted-foreground">
+        {sizeLabel(meta.document.size)} · {meta.files.length} files
       </p>
-      <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
-        Read in this order
-      </h2>
       <ol className="m-0 list-none p-0">
         {meta.groups.map((group, index) => (
-          <li key={group.id} className="mb-1.5">
+          <li key={group.id} className="mb-2">
             <Button
               type="button"
-              variant="secondary"
-              className="h-auto w-full min-w-0 items-start justify-start gap-2.5 px-3 py-2.5 text-left font-normal whitespace-normal"
+              variant="ghost"
+              className="h-auto w-full min-w-0 items-start justify-start gap-3 px-3 py-3 text-left font-normal whitespace-normal"
               onClick={() => onOpenLayer(group.id)}
             >
               <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
@@ -534,27 +539,22 @@ function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }
               </span>
               <span className="min-w-0 flex-1">
                 <strong className="block font-medium text-foreground">{group.title}</strong>
-                <span className="mt-0.5 block text-muted-foreground">{group.summary}</span>
+                <span className="mt-1 block leading-relaxed text-muted-foreground">{group.summary}</span>
               </span>
             </Button>
           </li>
         ))}
       </ol>
       {meta.commits.length > 0 ? (
-        <>
-          <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
-            Commits
-          </h2>
-          <ul className="space-y-1.5 text-xs text-muted-foreground">
-            {meta.commits.map((commit) => (
-              <li key={commit.sha}>
-                <code className="text-primary">{commit.shortSha}</code> {commit.subject}
-              </li>
-            ))}
-          </ul>
-        </>
+        <ul className="mt-12 space-y-2 text-sm text-muted-foreground">
+          {meta.commits.map((commit) => (
+            <li key={commit.sha}>
+              <code className="text-primary">{commit.shortSha}</code> {commit.subject}
+            </li>
+          ))}
+        </ul>
       ) : null}
-    </Brief>
+    </div>
   );
 }
 
@@ -566,13 +566,10 @@ function LayerBrief(props: {
 }) {
   const { group, index, groups, onOpenLayer } = props;
   return (
-    <Brief
-      kicker={`Layer ${padLayer(index)} · ${group.files.length} file${group.files.length === 1 ? "" : "s"} · ${group.hunkCount} hunk${group.hunkCount === 1 ? "" : "s"}`}
-      title={group.title}
-    >
-      <p className="mb-3 font-serif text-[17px] leading-snug text-foreground">{group.summary}</p>
+    <Brief kicker={padLayer(index)} title={group.title}>
+      <p className="mb-5 font-serif text-lg leading-relaxed text-foreground">{group.summary}</p>
       {group.dependsOn.length > 0 ? (
-        <p className="mb-3 text-muted-foreground">
+        <p className="mb-5 text-muted-foreground">
           Depends on{" "}
           {group.dependsOn.map((id, i) => {
             const dep = groups.find((item) => item.id === id);
@@ -589,19 +586,14 @@ function LayerBrief(props: {
         </p>
       ) : null}
       {group.lookFor.length > 0 ? (
-        <>
-          <h2 className="mt-4 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
-            Look for
-          </h2>
-          <ul className="mb-4 list-disc space-y-1.5 pl-4">
-            {group.lookFor.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </>
+        <ul className="mb-2 list-disc space-y-2 pl-5 leading-relaxed">
+          {group.lookFor.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       ) : null}
       {group.staleCount > 0 ? (
-        <p className="text-warn">
+        <p className="mt-4 text-warn">
           {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the pointer
           is flagged, not replaced.
         </p>
@@ -647,49 +639,6 @@ function filesFromHunks(hunks: LiveHunk[], patches: Map<string, string>): LayerF
   return [...map.values()];
 }
 
-function FileRail(props: {
-  hunks: LiveHunk[];
-  patches: Map<string, string>;
-  active: number;
-  onSelect: (index: number) => void;
-}) {
-  const files = filesFromHunks(props.hunks, props.patches);
-  const activePath = props.hunks[props.active]?.path;
-  return (
-    <>
-      <PaneLabel>Files in this layer</PaneLabel>
-      <ul className="list-none p-0">
-        {files.map((file) => (
-          <li key={file.path} className="mb-0.5">
-            <Button
-              type="button"
-              variant="ghost"
-              className={cn(
-                "mx-2 h-auto w-[calc(100%-16px)] flex-col items-stretch gap-0.5 rounded-md px-2 py-1.5 font-normal",
-                file.path === activePath && "bg-secondary text-foreground",
-              )}
-              onClick={() => props.onSelect(file.firstIndex)}
-            >
-              <span className="flex w-full items-baseline gap-2">
-                <span className="min-w-0 flex-1 truncate text-left">
-                  {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
-                </span>
-                <span className="shrink-0 font-mono text-[11px] tabular-nums">
-                  <span className="text-del">−{file.removed}</span>{" "}
-                  <span className="text-add">+{file.added}</span>
-                </span>
-              </span>
-              <span className="text-left text-[11px] text-muted-foreground">
-                {file.hunkCount} hunk{file.hunkCount === 1 ? "" : "s"}
-              </span>
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
 function HunkView(props: {
   file: LayerFile;
   active: boolean;
@@ -705,15 +654,21 @@ function HunkView(props: {
   const symbols = addedSymbols(
     file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
   );
+  const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
   return (
     <article
       className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
       data-hunk={index}
     >
-      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-card px-3 py-2">
-        <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(file.path)}>
-          {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
-        </Button>
+      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border bg-card px-4 py-3">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(file.path)}>
+              {label}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Open file</TooltipContent>
+        </Tooltip>
         <code className="font-mono text-xs text-muted-foreground">
           {file.hunkCount === 1 && first !== undefined ? hunkRangeLabel(first.header) : `${file.hunkCount} hunks`}
         </code>
@@ -736,55 +691,6 @@ function HunkView(props: {
         onSplitRatio={onSplitRatio}
       />
     </article>
-  );
-}
-
-function FileTree(props: {
-  files: ReviewMeta["files"];
-  skipped: ReviewMeta["skipped"];
-  highlight: Set<string>;
-  onOpen: (path: string) => void;
-}) {
-  return (
-    <>
-      <PaneLabel>Files in the live diff</PaneLabel>
-      <ul className="list-none p-0">
-        {props.files.map((file) => (
-          <li key={file.path}>
-            <Button
-              type="button"
-              variant="ghost"
-              className={cn(
-                "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] justify-start gap-2 px-2 py-1.5 font-normal",
-                props.highlight.has(file.path) && "bg-secondary",
-              )}
-              onClick={() => props.onOpen(file.path)}
-              disabled={file.binary}
-            >
-              <span
-                className={cn(
-                  "w-3 font-semibold",
-                  file.status === "added" && "text-add",
-                  file.status === "deleted" && "text-del",
-                  file.status === "renamed" && "text-primary",
-                )}
-              >
-                {file.status[0]?.toUpperCase()}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-left">
-                {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
-              </span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">
-                {file.binary ? "binary" : file.hunkCount}
-              </span>
-            </Button>
-          </li>
-        ))}
-      </ul>
-      {props.skipped.length > 0 ? (
-        <p className="px-3 text-xs text-muted-foreground">Binary files are skipped in the hunk index.</p>
-      ) : null}
-    </>
   );
 }
 
@@ -862,56 +768,62 @@ function Inspector(props: {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-2 px-2">
-        <Button type="button" size="sm" variant="outline" onClick={onClose}>
-          Back
-        </Button>
-        <strong className="min-w-0 truncate text-xs">{inspector.path}</strong>
+      <div className="flex flex-wrap items-center gap-3 px-8 pt-6 pb-4">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button type="button" size="sm" variant="outline" onClick={onClose}>
+              Back
+              <Kbd>esc</Kbd>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Back to the diff</TooltipContent>
+        </Tooltip>
+        <strong className="min-w-0 truncate font-mono text-sm font-medium">{inspector.path}</strong>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            type="button"
+            size="sm"
+            variant={inspector.mode === "file" ? "secondary" : "ghost"}
+            onClick={() => setInspector({ ...inspector, mode: "file" })}
+          >
+            File
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={inspector.mode === "blame" ? "secondary" : "ghost"}
+            onClick={() => setInspector({ ...inspector, mode: "blame" })}
+          >
+            Blame
+          </Button>
+          <Separator orientation="vertical" className="mx-1 h-6" />
+          <Button
+            type="button"
+            size="sm"
+            variant={inspector.side === "old" ? "secondary" : "ghost"}
+            onClick={() => setInspector({ ...inspector, side: "old" })}
+          >
+            Old
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={inspector.side === "new" ? "secondary" : "ghost"}
+            onClick={() => setInspector({ ...inspector, side: "new" })}
+          >
+            New
+          </Button>
+        </div>
       </div>
-      <div className="flex gap-1 px-2 py-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={inspector.mode === "file" ? "secondary" : "ghost"}
-          onClick={() => setInspector({ ...inspector, mode: "file" })}
-        >
-          File
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={inspector.mode === "blame" ? "secondary" : "ghost"}
-          onClick={() => setInspector({ ...inspector, mode: "blame" })}
-        >
-          Blame
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          size="sm"
-          variant={inspector.side === "old" ? "secondary" : "ghost"}
-          onClick={() => setInspector({ ...inspector, side: "old" })}
-        >
-          Old
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant={inspector.side === "new" ? "secondary" : "ghost"}
-          onClick={() => setInspector({ ...inspector, side: "new" })}
-        >
-          New
-        </Button>
-      </div>
-      {error !== null ? <p className="px-3 text-warn">{error}</p> : null}
-      {loading && error === null ? <p className="px-3 text-xs text-muted-foreground">Reading git…</p> : null}
+      {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
+      {loading && error === null ? <p className="px-8 text-sm text-muted-foreground">Reading git…</p> : null}
       {inspector.mode === "file" && error === null && !loading ? (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={content} wrap={wrap} />
         </div>
       ) : null}
       {inspector.mode === "blame" && error === null && !loading && blame !== null ? (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={blameContents} wrap={wrap} annotations={blameAnnotations} />
         </div>
       ) : null}

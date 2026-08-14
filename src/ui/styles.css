@@ -73,8 +73,8 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-size: 13px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   code,
