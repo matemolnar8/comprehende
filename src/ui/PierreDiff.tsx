@@ -1,5 +1,5 @@
 import { parsePatchFiles, type FileDiffMetadata } from "@pierre/diffs";
-import { FileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
+import { File, FileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
 import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
 import {
@@ -119,6 +119,41 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   );
   return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
 });
+
+const StablePierreFile = memo(function StablePierreFile(props: {
+  path: string;
+  contents: string;
+  wrap: boolean;
+}) {
+  const file = useMemo(
+    () => ({
+      name: props.path,
+      contents: props.contents,
+      cacheKey: `${props.path}:${props.contents.length}:${props.contents.slice(0, 32)}`,
+    }),
+    [props.path, props.contents],
+  );
+  const options = useMemo(
+    () => ({
+      theme: "pierre-dark" as const,
+      themeType: "dark" as const,
+      overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
+      disableFileHeader: true,
+      stickyHeader: false,
+      unsafeCSS: PIERRE_UNSAFE_CSS,
+    }),
+    [props.wrap],
+  );
+  return <File className="block w-full" file={file} options={options} />;
+});
+
+export function PierreFile(props: { path: string; contents: string; wrap: boolean }) {
+  return (
+    <div className="min-h-0 min-w-0">
+      <StablePierreFile path={props.path} contents={props.contents} wrap={props.wrap} />
+    </div>
+  );
+}
 
 export function PierreFileDiff(props: {
   patch: string;

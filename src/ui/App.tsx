@@ -11,9 +11,9 @@ import {
   type LiveHunk,
   type ReviewMeta,
 } from "./api.ts";
-import { highlightLine, highlightSource, languageFromPath } from "./highlight.ts";
+import { highlightLine, languageFromPath } from "./highlight.ts";
 import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
-import { PierreFileDiff } from "./PierreDiff.tsx";
+import { PierreFile, PierreFileDiff } from "./PierreDiff.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
@@ -385,7 +385,7 @@ export function App() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="rail" defaultSize="22" minSize="14%" className="min-h-0 min-w-0">
-            <aside className="h-full overflow-auto bg-card py-3">
+            <aside className={cn("h-full bg-card py-3", inspector !== null ? "flex min-h-0 flex-col overflow-hidden" : "overflow-auto")}>
               {inspector !== null ? (
                 <Inspector
                   inspector={inspector}
@@ -793,26 +793,28 @@ function Inspector(props: {
 }) {
   const { inspector, wrap, setInspector, onClose } = props;
   const [content, setContent] = useState<string>("");
-  const [language, setLanguage] = useState("plaintext");
   const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string }[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const blameLanguage = languageFromPath(inspector.path);
 
   useEffect(() => {
     let cancelled = false;
     setError(null);
+    setLoading(true);
     if (inspector.mode === "file") {
       void fetchFile(inspector.path, inspector.side)
         .then((payload) => {
           if (!cancelled) {
             setContent(payload.content);
-            setLanguage(payload.language);
             setBlame(null);
+            setLoading(false);
           }
         })
         .catch((cause: unknown) => {
           if (!cancelled) {
             setError(cause instanceof Error ? cause.message : String(cause));
+            setLoading(false);
           }
         });
     } else {
@@ -820,11 +822,13 @@ function Inspector(props: {
         .then((payload) => {
           if (!cancelled) {
             setBlame(payload.lines);
+            setLoading(false);
           }
         })
         .catch((cause: unknown) => {
           if (!cancelled) {
             setError(cause instanceof Error ? cause.message : String(cause));
+            setLoading(false);
           }
         });
     }
@@ -877,10 +881,11 @@ function Inspector(props: {
         </Button>
       </div>
       {error !== null ? <p className="px-3 text-warn">{error}</p> : null}
-      {inspector.mode === "file" && error === null ? (
-        <pre className={cn("flex-1 overflow-auto p-2 font-mono text-[11px] leading-5", wrap && "whitespace-pre-wrap")}>
-          <code dangerouslySetInnerHTML={{ __html: highlightSource(content, language) }} />
-        </pre>
+      {loading && error === null ? <p className="px-3 text-xs text-muted-foreground">Reading git…</p> : null}
+      {inspector.mode === "file" && error === null && !loading ? (
+        <div className="min-h-0 flex-1 overflow-auto">
+          <PierreFile path={inspector.path} contents={content} wrap={wrap} />
+        </div>
       ) : null}
       {inspector.mode === "blame" && blame !== null ? (
         <table className="w-full flex-1 border-collapse overflow-auto p-2 text-[11px]">
