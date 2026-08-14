@@ -140,6 +140,46 @@
   color: var(--del);
 }
 
+.hunk-table.split {
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
+}
+
+.hunks-wrap .hunk-table.split {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.hunk-table.split .num {
+  width: 3rem;
+}
+
+.hunk-table.split .code {
+  min-width: 24rem;
+}
+
+.hunks-wrap .hunk-table.split .code {
+  min-width: 0;
+  width: 50%;
+}
+
+.hunk-table.split .split-start {
+  border-left: 1px solid var(--border);
+}
+
+.hunk-table.split .empty {
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+
+.hunk-table.split .num.add {
+  color: var(--add);
+}
+
+.hunk-table.split .num.del {
+  color: var(--del);
+}
+
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-title.class_ {

@@ -43,7 +43,27 @@ export function addedSymbols(addedLines: string[]): string[] {
   return names;
 }
 
-export function lineDelta(lines: { kind: "ctx" | "add" | "del" }[]): { added: number; removed: number } {
+export type HunkLineKind = "ctx" | "add" | "del";
+
+export type HunkLine = {
+  kind: HunkLineKind;
+  oldNumber: number | null;
+  newNumber: number | null;
+  text: string;
+};
+
+export type SplitSide = {
+  kind: HunkLineKind;
+  number: number | null;
+  text: string;
+};
+
+export type SplitRow = {
+  left: SplitSide | null;
+  right: SplitSide | null;
+};
+
+export function lineDelta(lines: { kind: HunkLineKind }[]): { added: number; removed: number } {
   let added = 0;
   let removed = 0;
   for (const line of lines) {
@@ -54,4 +74,63 @@ export function lineDelta(lines: { kind: "ctx" | "add" | "del" }[]): { added: nu
     }
   }
   return { added, removed };
+}
+
+export function splitDiffRows(lines: HunkLine[]): SplitRow[] {
+  const rows: SplitRow[] = [];
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index];
+    if (line === undefined) {
+      break;
+    }
+    if (line.kind === "ctx") {
+      rows.push({
+        left: { kind: "ctx", number: line.oldNumber, text: line.text },
+        right: { kind: "ctx", number: line.newNumber, text: line.text },
+      });
+      index += 1;
+      continue;
+    }
+    if (line.kind === "del") {
+      const removed: HunkLine[] = [];
+      while (index < lines.length && lines[index]?.kind === "del") {
+        const next = lines[index];
+        if (next !== undefined) {
+          removed.push(next);
+        }
+        index += 1;
+      }
+      const added: HunkLine[] = [];
+      while (index < lines.length && lines[index]?.kind === "add") {
+        const next = lines[index];
+        if (next !== undefined) {
+          added.push(next);
+        }
+        index += 1;
+      }
+      const count = Math.max(removed.length, added.length);
+      for (let offset = 0; offset < count; offset += 1) {
+        const leftLine = removed[offset];
+        const rightLine = added[offset];
+        rows.push({
+          left:
+            leftLine === undefined
+              ? null
+              : { kind: leftLine.kind, number: leftLine.oldNumber, text: leftLine.text },
+          right:
+            rightLine === undefined
+              ? null
+              : { kind: rightLine.kind, number: rightLine.newNumber, text: rightLine.text },
+        });
+      }
+      continue;
+    }
+    rows.push({
+      left: null,
+      right: { kind: "add", number: line.newNumber, text: line.text },
+    });
+    index += 1;
+  }
+  return rows;
 }

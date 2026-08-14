@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseReviewDocument } from "./parse.ts";
-import { addedSymbols, hunkContext, hunkRangeLabel } from "./hunk-meta.ts";
+import { addedSymbols, hunkContext, hunkRangeLabel, splitDiffRows, type HunkLine } from "./hunk-meta.ts";
 
 describe("parseReviewDocument", () => {
   it("accepts a minimal valid document", () => {
@@ -97,5 +97,50 @@ describe("hunk-meta", () => {
       ),
       "@@ -19,6 +19,10 @@",
     );
+  });
+
+  it("pairs unified hunk lines into split rows", () => {
+    const line = (
+      kind: HunkLine["kind"],
+      text: string,
+      oldNumber: number | null,
+      newNumber: number | null,
+    ): HunkLine => ({ kind, text, oldNumber, newNumber });
+
+    assert.deepEqual(splitDiffRows([line("ctx", "keep", 1, 1)]), [
+      {
+        left: { kind: "ctx", number: 1, text: "keep" },
+        right: { kind: "ctx", number: 1, text: "keep" },
+      },
+    ]);
+
+    assert.deepEqual(splitDiffRows([line("del", "old", 1, null), line("add", "new", null, 1)]), [
+      {
+        left: { kind: "del", number: 1, text: "old" },
+        right: { kind: "add", number: 1, text: "new" },
+      },
+    ]);
+
+    assert.deepEqual(
+      splitDiffRows([
+        line("del", "a", 1, null),
+        line("del", "b", 2, null),
+        line("add", "c", null, 1),
+      ]),
+      [
+        {
+          left: { kind: "del", number: 1, text: "a" },
+          right: { kind: "add", number: 1, text: "c" },
+        },
+        {
+          left: { kind: "del", number: 2, text: "b" },
+          right: null,
+        },
+      ],
+    );
+
+    assert.deepEqual(splitDiffRows([line("add", "only", null, 1)]), [
+      { left: null, right: { kind: "add", number: 1, text: "only" } },
+    ]);
   });
 });

@@ -12,7 +12,7 @@ import {
   type ReviewMeta,
 } from "./api.ts";
 import { highlightLine, highlightSource, languageFromPath } from "./highlight.ts";
-import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
+import { addedSymbols, hunkRangeLabel, lineDelta, splitDiffRows, type SplitSide } from "../schema/hunk-meta.ts";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
@@ -44,6 +44,7 @@ export function App() {
   const [hunks, setHunks] = useState<LiveHunk[]>([]);
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
+  const [split, setSplit] = useState(false);
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<Inspector | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,8 +102,13 @@ export function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
       if (event.key === "w") {
         setWrap((value) => !value);
+      } else if (event.key === "s") {
+        setSplit((value) => !value);
       } else if (event.key === "r") {
         void load();
       } else if (event.key === "o") {
@@ -193,6 +199,36 @@ export function App() {
               </TooltipTrigger>
               <TooltipContent>Wrap long lines (w)</TooltipContent>
             </Tooltip>
+            <div className="flex overflow-hidden rounded-md border border-input">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={split ? "ghost" : "secondary"}
+                    className="rounded-none border-0"
+                    onClick={() => setSplit(false)}
+                    aria-pressed={!split}
+                  >
+                    Unified
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Unified diff (s)</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant={split ? "secondary" : "ghost"}
+                    className="rounded-none border-0"
+                    onClick={() => setSplit(true)}
+                    aria-pressed={split}
+                  >
+                    Split
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Side-by-side diff (s)</TooltipContent>
+              </Tooltip>
+            </div>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button size="sm" variant="outline" onClick={() => void load()}>
@@ -303,6 +339,7 @@ export function App() {
                         hunk={hunk}
                         active={index === activeHunk}
                         index={index}
+                        split={split}
                         onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
                       />
                     ))}
@@ -606,10 +643,17 @@ function FileRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: 
   );
 }
 
-function HunkView(props: { hunk: LiveHunk; active: boolean; index: number; onOpen: (path: string) => void }) {
-  const { hunk, active, index, onOpen } = props;
+function HunkView(props: {
+  hunk: LiveHunk;
+  active: boolean;
+  index: number;
+  split: boolean;
+  onOpen: (path: string) => void;
+}) {
+  const { hunk, active, index, split, onOpen } = props;
   const symbols = addedSymbols(hunk.lines.filter((line) => line.kind === "add").map((line) => line.text));
   const delta = lineDelta(hunk.lines);
+  const splitRows = split ? splitDiffRows(hunk.lines) : [];
   return (
     <article
       className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
@@ -631,21 +675,55 @@ function HunkView(props: { hunk: LiveHunk; active: boolean; index: number; onOpe
             ))
           : null}
       </header>
-      <table className="hunk-table">
-        <tbody>
-          {hunk.lines.map((line, lineIndex) => (
-            <tr key={lineIndex} className={line.kind}>
-              <td className="num">{line.oldNumber ?? ""}</td>
-              <td className="num">{line.newNumber ?? ""}</td>
-              <td className="sign">{line.kind === "add" ? "+" : line.kind === "del" ? "-" : " "}</td>
-              <td className="code">
-                <code dangerouslySetInnerHTML={{ __html: highlightLine(line.text, hunk.language) }} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {split ? (
+        <div className="overflow-x-auto">
+          <table className="hunk-table split">
+            <tbody>
+              {splitRows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  <SplitCell side={row.left} language={hunk.language} />
+                  <SplitCell side={row.right} language={hunk.language} start />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="hunk-table">
+            <tbody>
+              {hunk.lines.map((line, lineIndex) => (
+                <tr key={lineIndex} className={line.kind}>
+                  <td className="num">{line.oldNumber ?? ""}</td>
+                  <td className="num">{line.newNumber ?? ""}</td>
+                  <td className="sign">{line.kind === "add" ? "+" : line.kind === "del" ? "-" : " "}</td>
+                  <td className="code">
+                    <code dangerouslySetInnerHTML={{ __html: highlightLine(line.text, hunk.language) }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </article>
+  );
+}
+
+function SplitCell(props: { side: SplitSide | null; language: string; start?: boolean }) {
+  const { side, language, start = false } = props;
+  const tone = side === null ? "empty" : side.kind;
+  return (
+    <>
+      <td className={cn("num", start && "split-start", tone)}>{side?.number ?? ""}</td>
+      <td className={cn("code", start && "split-start", tone)}>
+        {side !== null ? (
+          <code dangerouslySetInnerHTML={{ __html: highlightLine(side.text, language) }} />
+        ) : (
+          "\u00a0"
+        )}
+      </td>
+    </>
   );
 }
 
