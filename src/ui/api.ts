@@ -116,3 +116,7 @@ export function layerIndex(groups: { id: string }[], id: string): number {
 export function padLayer(index: number): string {
   return String(index).padStart(2, "0");
 }
+
+export function sizeLabel(size: ReviewMeta["document"]["size"]): string {
+  return size.replace("-", " ");
+}
