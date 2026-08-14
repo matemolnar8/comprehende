@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
-import { cmdGenerate } from "../cli/commands.ts";
+import { cmdIndex } from "../cli/commands.ts";
+import { writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 
@@ -31,7 +32,8 @@ describe("serve API", () => {
     roots.push(root);
     const repo = await createExampleRepo(root);
     const dataPath = join(root, "review.json");
-    const document = await cmdGenerate(repo.root, dataPath, repo.base, repo.head);
+    const index = await cmdIndex(repo.root, repo.base, repo.head);
+    const document = await writeCoveringDocument(dataPath, index);
     const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
     servers.push(running.server);
 

@@ -1,4 +1,4 @@
-export type CommandName = "index" | "validate" | "serve" | "generate";
+export type CommandName = "index" | "validate" | "serve";
 
 export type CliRequest =
   | { kind: "help" }
@@ -15,7 +15,7 @@ export type CliRequest =
       open: boolean;
     };
 
-const COMMANDS = new Set<CommandName>(["index", "validate", "serve", "generate"]);
+const COMMANDS = new Set<CommandName>(["index", "validate", "serve"]);
 
 export const USAGE = `Usage: comprehende <command> [options]
 
@@ -24,10 +24,6 @@ Run inside the git repository under review. Cwd is the repo.
 Commands:
   index     [--base <ref>] [--head <ref>]
             List hunk refs from live git (no patch text)
-
-  generate  --data <review.json> [--base <ref>] [--head <ref>]
-            EXPERIMENTAL. Write a review document from git
-            (groups + summaries + hunk refs, never patch text)
 
   validate  --data <review.json>
             Check schema, ref resolution, and hunk coverage

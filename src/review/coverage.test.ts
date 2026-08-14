@@ -6,7 +6,8 @@ import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { readHunkIndex } from "../git/diff.ts";
 import { coverReview, joinCoverage } from "./coverage.ts";
-import { cmdGenerate, cmdValidate } from "../cli/commands.ts";
+import { cmdValidate } from "../cli/commands.ts";
+import { writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import type { LiveHunk } from "../schema/types.ts";
 
@@ -68,8 +69,8 @@ describe("coverage join", () => {
   });
 });
 
-describe("example repo index/validate/generate", () => {
-  it("indexes refs without patch text, generate covers every hunk, extra refs fail", async () => {
+describe("example repo index/validate", () => {
+  it("indexes refs without patch text, coverage fails on extra or missing refs", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-"));
     roots.push(root);
     const repo = await createExampleRepo(root);
@@ -83,15 +84,12 @@ describe("example repo index/validate/generate", () => {
     assert.ok(index.hunks.some((hunk) => hunk.path === "src/helpers.ts" && hunk.oldPath === "src/util.ts"));
 
     const dataPath = join(root, "review.json");
-    const document = await cmdGenerate(repo.root, dataPath, repo.base, repo.head);
+    const document = await writeCoveringDocument(dataPath, index);
     await cmdValidate(repo.root, dataPath);
     const { coverage } = await coverReview(repo.root, document);
     assert.equal(coverage.unassigned.length, 0);
     assert.equal(coverage.stale.length, 0);
-    for (const group of document.groups) {
-      assert.equal(group.summary.includes("hunks across"), false);
-      assert.equal(group.summary.startsWith("Commit:"), false);
-    }
+    assert.equal(document.groups[0]?.hunkRefs.length, index.hunks.length);
 
     const broken = structuredClone(document);
     const first = broken.groups[0];

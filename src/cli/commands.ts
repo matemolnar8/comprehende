@@ -1,9 +1,8 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { readHunkIndex, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
-import { generateReviewDocument } from "../review/generate.ts";
 import { parseReviewJson } from "../schema/parse.ts";
 import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
 
@@ -48,21 +47,4 @@ export async function cmdValidate(cwd: string, dataPath: string): Promise<{ docu
     throw new Error(errors.join("\n\n"));
   }
   return { document, warnings: [] };
-}
-
-export async function cmdGenerate(
-  cwd: string,
-  dataPath: string,
-  base: string | undefined,
-  head: string | undefined,
-): Promise<ReviewDocument> {
-  const index = await cmdIndex(cwd, base, head);
-  const document = await generateReviewDocument(cwd, index);
-  await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`, "utf8");
-  const { coverage } = await coverReview(cwd, document);
-  const errors = coverageErrors(coverage);
-  if (errors.length > 0) {
-    throw new Error(`generate produced an incomplete review:\n${errors.join("\n\n")}`);
-  }
-  return document;
 }

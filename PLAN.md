@@ -100,7 +100,7 @@ type HunkRef = {
 
 **Stale refs:** if a `HunkRef` does not match a live hunk (rebase, uncommitted edit), serve still shows the live git diff and flags the broken pointer. Git wins. Do not invent a replacement hunk.
 
-**Drill-down** is CLI APIs against cwd, not fields in JSON: full file (`git show`), blame (`git blame --line-porcelain`), log, rename detection. The document may list ticket ids; the UI renders `id` / `url` / `title` from the document. It does not fetch GitHub. Optional `gh pr view` in the skill is never required.
+**Drill-down** is CLI APIs against cwd, not fields in JSON: full file (`git show`), blame (`git blame --line-porcelain`), log, rename detection. The document may list ticket ids; the UI renders `id` / `url` / `title` from the document. It does not fetch a host. Host CLIs are never required.
 
 Drill-down **works** (file inspector, blame inspector, commit list on Overview, header refs/SHAs). Convenience of that drill-down is an open product question — no design yet.
 
@@ -135,8 +135,6 @@ comprehende index  [--base <ref>] [--head <ref>]
 comprehende validate --data <review.json>
 comprehende serve --data <review.json> [--port] [--open]
 ```
-
-Shipped extra, **not** v1-required: `comprehende generate --data <review.json>` drafts groups and hunk pointers only. Whether the skill may use it is a decision in the hand rewrite.
 
 - `base` / `head` default to `origin/HEAD` (fallback `main` / `master`) … `HEAD`. Override via flags or `source` in the JSON.
 - `serve` binds `127.0.0.1` only. It re-reads git on every request; it does not cache patch text in the document.
@@ -197,7 +195,7 @@ Issue: [#2](https://github.com/matemolnar8/comprehende/issues/2)
 
 Not an agent rewrite. The current `skills/comprehende/` is a working draft so the loop could be dogfooded. **Máté reviews it and rewrites it by hand.**
 
-Keep `SKILL.md` under 500 lines; schema excerpts and examples stay in `references/`. Pin `npx comprehende@<version>` once the prerequisite exists.
+Keep `SKILL.md` under 500 lines; the JSON Schema lives in `skills/comprehende/references/review.schema.json` (copied from `src/schema/review.schema.json` by `pnpm sync:skill`). Example stays in `references/example.md`. Pin `npx comprehende@<version>` once the prerequisite exists.
 
 #### Differences vs the original plan (and vs this draft)
 
@@ -205,15 +203,15 @@ These are the deltas to resolve in the rewrite — not a request to keep or drop
 
 1. **How the agent invokes the CLI.** Plan: `npx comprehende@<pinned>`. Draft: `node /path/to/comprehende/dist/cli/main.js`, `pnpm dev` only when this repo is under review, or `pnpm link --global`. That is checkout-era. The rewrite should assume a published package.
 
-2. **Who writes `review.json`.** Plan: the agent writes groups from `index` output. Draft: step 3 allows experimental `comprehende generate`. Decide: forbidden, optional draft then edit, or first-class.
+2. **Who writes `review.json`.** Locked: the agent writes groups from `index` output after reading the live git diffs. `comprehende generate` is removed. Path-heuristic drafts are not a substitute for concern-based grouping.
 
 3. **Summary contract.** Plan: “Summaries say what changed and why it matters. Do not paraphrase the patch.” Draft: `summary` is **one sentence** (intent of the layer); `lookFor` is bullets of what to inspect; optional document `walkthrough` is one or two sentences for Overview. The UI is built around that split. The rewrite should either adopt it as the contract or change the product.
 
 4. **Reading order.** Plan: prose rule — contracts / foundations, then call sites, then tests, then chores. Draft: same idea encoded as `dependsOn` plus a stack Overview. Confirm that is the grouping model, not directory-first.
 
-5. **Schema extras.** `walkthrough`, `lookFor`, `dependsOn` are in the shipped schema and UI. They were not in the original PLAN types. Keep, rename, or drop in the hand rewrite — the JSON Schema must match whatever you write.
+5. **Schema extras.** `walkthrough`, `lookFor`, `dependsOn` are in the shipped schema and UI. They were not in the original PLAN types. Keep, rename, or drop in the hand rewrite — the JSON Schema must match whatever you write. Canonical file: `src/schema/review.schema.json`. `pnpm sync:skill` copies it into `skills/comprehende/references/` and mirrors that skill tree into `.agents/skills/comprehende/`. Tests fail on drift. Do not maintain a separate `schema.md`.
 
-6. **GitHub PR recipe.** Draft adds `git fetch origin pull/<n>/head` and optional `gh pr view` for ticket metadata. Plan only said tickets may live on the document and titles are never required. Decide how much GitHub ceremony belongs in the skill.
+6. **Host recipe.** Draft had a GitHub `git fetch origin pull/<n>/head` snippet and optional `gh pr view`. The skill is vendor-agnostic (GitHub, Bitbucket, local branches). Three-dot `base...head` is the request diff. Tickets may live on the document; host CLIs are never required.
 
 7. **Install story.** Plan: `npx skills add matemolnar8/comprehende` from the public repo. Draft skill does not mention `skills add`. README already splits checkout install vs “once published.” The rewrite should describe the published install only.
 
@@ -232,7 +230,7 @@ Known candidates already in the README: [vitadeck](https://github.com/matemolnar
 What to learn:
 
 - `index` / `validate` / `serve` on real three-dot ranges (including GitHub PR diffs).
-- Grouping quality if an agent (or `generate`) writes the document: coverage, stale refs after rebase, multi-hunk files, renames, binaries.
+- Grouping quality if an agent writes the document: coverage, stale refs after rebase, multi-hunk files, renames, binaries.
 - Whether drill-down is usable enough on real files to live with until there is a design.
 
 After npm publish, re-run the same loop via `npx comprehende@<pinned>` so we are not only testing the checkout.

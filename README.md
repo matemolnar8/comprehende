@@ -13,6 +13,7 @@ pnpm install
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm sync:skill
 pnpm dev -- --help
 ```
 
@@ -30,25 +31,22 @@ node /path/to/comprehende/dist/cli/main.js index --base origin/main
 
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when *this* repo is the one under review.
 
-## Review a GitHub repo (or PR)
+## Review a clone
 
-Clone the repo, then generate a review document and serve it. `generate` is experimental: it writes groups and hunk pointers only. Patch text still comes from git at serve time. There is no `--repo` flag — cwd is the clone.
+Clone the repo, `cd` into it, then index, write a review document, validate, and serve. There is no `--repo` flag — cwd is the clone. Diffs always come from git at serve time.
 
 ```sh
-git clone https://github.com/matemolnar8/vitadeck.git
-cd vitadeck
-# private: git clone git@github.com:matemolnar8/cigster.git && cd cigster
+git clone <url>
+cd <repo>
 
-node /path/to/comprehende/dist/cli/main.js generate \
-  --base origin/main \
-  --head HEAD \
-  --data /tmp/review.json
+node /path/to/comprehende/dist/cli/main.js index --base origin/main
+# write review.json from those hunk refs (the skill does this)
 
 node /path/to/comprehende/dist/cli/main.js validate --data /tmp/review.json
 node /path/to/comprehende/dist/cli/main.js serve --data /tmp/review.json --open
 ```
 
-To review a branch that is not `HEAD`, check it out (or pass `--head <ref>`). Three-dot range (`base...head`) matches GitHub's PR diff. `--base` defaults to `origin/HEAD` (or `main`/`master`).
+Three-dot range (`base...head`) is the merge-request / branch diff. `--base` defaults to `origin/HEAD` (or `main`/`master`). `--head` defaults to `HEAD`.
 
 ## Install the skill
 
@@ -64,13 +62,12 @@ Once published:
 npx skills add matemolnar8/comprehende
 ```
 
-The skill is the agent workflow: `index` → write `review.json` (refs + summaries only) → `validate` → `serve`. On this branch, `generate` can write the document when no human is grouping.
+The skill is the agent workflow: `index` → read the git diffs → write `review.json` (refs + summaries only) → `validate` → `serve`. Edit `src/schema/review.schema.json` and run `pnpm sync:skill` so the copy in the skill folder stays identical.
 
 ## Commands
 
 ```
 comprehende index [--base <ref>] [--head <ref>]
-comprehende generate --data <review.json> [--base <ref>] [--head <ref>]
 comprehende validate --data <review.json>
 comprehende serve --data <review.json> [--port] [--open]
 ```

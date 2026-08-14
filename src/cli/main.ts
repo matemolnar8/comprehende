@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdGenerate, cmdIndex, cmdValidate, loadDocument, resolveDataPath } from "./commands.ts";
+import { cmdIndex, cmdValidate, loadDocument, resolveDataPath } from "./commands.ts";
 import { resolveSource } from "../git/diff.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
 import { assertWorkTree } from "../git/repo.ts";
@@ -39,14 +39,6 @@ export async function run(argv: string[]): Promise<number> {
         const { document } = await cmdValidate(request.cwd, dataPath);
         const hunks = document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0);
         console.log(`ok  ${document.groups.length} groups  ${hunks} hunk refs  ${dataPath}`);
-        return 0;
-      }
-      case "generate": {
-        const dataPath = resolveDataPath(request.data, request.cwd);
-        const document = await cmdGenerate(request.cwd, dataPath, request.base, request.head);
-        const hunks = document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0);
-        console.error(`wrote ${dataPath}`);
-        console.error(`${document.groups.length} groups, ${hunks} hunk refs (experimental generate; diffs stay in git)`);
         return 0;
       }
       case "serve": {

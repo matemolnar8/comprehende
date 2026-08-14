@@ -15,7 +15,8 @@
     "dev": "tsx src/cli/main.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
-    "fixture": "tsx scripts/build-fixture.ts"
+    "fixture": "tsx scripts/build-fixture.ts",
+    "sync:skill": "tsx scripts/sync-skill.ts"
   },
   "engines": {
     "node": ">=24"

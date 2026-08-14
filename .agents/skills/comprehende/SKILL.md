@@ -25,38 +25,30 @@ If the package is linked globally (`pnpm link --global` from the comprehende che
 
 ## Workflow
 
-1. Resolve the git range (PR, `origin/main...HEAD`, or user-specified). GitHub PRs are three-dot: `base...head`.
-2. Run `comprehende index [--base <ref>] [--head <ref>]`. This prints hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
-3. Write `review.json` from those refs. On this experimental branch you may run `comprehende generate --data review.json` to draft groups, then edit. Do not paste patch text into the file.
-4. Run `comprehende validate --data review.json`. On failure, fix groups or coverage — never the diff.
-5. Run `comprehende serve --data review.json` and give the user the localhost URL (`127.0.0.1` only).
+1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base/head SHAs (or the merge-base), not current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
+2. Run `comprehende index [--base <ref>] [--head <ref>]` and save the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
+3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by **review concern**. Index is not enough to group.
+4. Write `review.json` by **copying hunk objects** from the index into groups. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text.
+5. Run `comprehende validate --data review.json`. On failure, fix groups or coverage — never the diff.
+6. Run `comprehende serve --data review.json --open` and give the user the localhost URL (`127.0.0.1` only).
 
 Default `--head` is `HEAD`. Default `--base` is `origin/HEAD` (fallback `main` / `master`).
+
+Tickets (`id`, optional `url` / `title`) may be copied from whatever tracker the user mentioned. Host CLIs are never required.
 
 ## Grouping rules
 
 - Group by **review concern**, not by directory, unless the concern *is* a layer (schema, CLI, UI).
 - The same hunk may appear in multiple groups when it matters in more than one story.
-- Reading order: contracts / foundations first, then call sites, then tests, then chores.
-- Summaries say what changed and why it matters for the reviewer. Use commit subjects, ticket ids, and path lists. Do not paraphrase the patch line-by-line.
+- Reading order: contracts / foundations first, then call sites, then tests, then chores. Encode that with `dependsOn` (earlier layer ids).
+- `summary` is **one sentence**: what this layer is. `lookFor` is a short bullet list of what to inspect. Do not pack commits, file lists, and hunk counts into a single paragraph.
+- The UI also has an **Overview** of the stack. Optional document `walkthrough` is one or two sentences for the whole change (commit subjects are fine). Do not paraphrase the patch.
 - Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 
 Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory.
 
-Schema: [references/schema.md](./references/schema.md). Example document: [references/example.md](./references/example.md).
-
-## GitHub PR
-
-```sh
-git fetch origin pull/<n>/head:pr-<n>
-# cwd = that clone
-comprehende generate --base origin/<default-branch> --head pr-<n> --data /tmp/review.json
-comprehende validate --data /tmp/review.json
-comprehende serve --data /tmp/review.json --open
-```
-
-If `gh` is available you may attach ticket metadata (`id`, optional `url` / `title`) from `gh pr view`. Never required.
+Schema: [references/review.schema.json](./references/review.schema.json). Example document: [references/example.md](./references/example.md).
 
 ## Accuracy
 

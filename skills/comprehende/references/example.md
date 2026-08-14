@@ -1,6 +1,6 @@
 # Example review.json
 
-Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch.
+Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
 ```json
 {
