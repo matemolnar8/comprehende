@@ -1,0 +1,96 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-add: var(--add);
+  --color-del: var(--del);
+  --color-warn: var(--warn);
+  --radius-sm: calc(var(--radius) * 0.7);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.3);
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", "Iowan Old Style", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+:root {
+  --radius: 0.45rem;
+  --background: #14171c;
+  --foreground: #d7dce4;
+  --card: #1c2028;
+  --card-foreground: #d7dce4;
+  --popover: #1c2028;
+  --popover-foreground: #d7dce4;
+  --primary: #5b8def;
+  --primary-foreground: #0f141a;
+  --secondary: #252a33;
+  --secondary-foreground: #d7dce4;
+  --muted: #252a33;
+  --muted-foreground: #8a929e;
+  --accent: #2a3140;
+  --accent-foreground: #e8edf4;
+  --destructive: #c15c5c;
+  --border: #2e3540;
+  --input: #2e3540;
+  --ring: #5b8def;
+  --add: #5e9a72;
+  --del: #c15c5c;
+  --warn: #c9a227;
+  --add-bg: color-mix(in srgb, #5e9a72 16%, transparent);
+  --del-bg: color-mix(in srgb, #c15c5c 16%, transparent);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
