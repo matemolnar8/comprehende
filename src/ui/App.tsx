@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import {
   fetchBlame,
@@ -51,6 +51,7 @@ export function App() {
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<Inspector | null>(null);
   const [loading, setLoading] = useState(true);
+  const mainRef = useRef<HTMLElement>(null);
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell",
     panelIds: ["stack", "main", "rail"],
@@ -106,6 +107,13 @@ export function App() {
     };
   }, [selectedKey]);
 
+  const scrollToHunk = useCallback((index: number) => {
+    setActiveHunk(index);
+    requestAnimationFrame(() => {
+      document.querySelector(`[data-hunk="${index}"]`)?.scrollIntoView({ block: "nearest" });
+    });
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) {
@@ -135,7 +143,7 @@ export function App() {
         );
         const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
         if (next !== undefined) {
-          setActiveHunk(next.firstIndex);
+          scrollToHunk(next.firstIndex);
         }
       } else if (event.key === "k") {
         const files = filesFromHunks(hunks, layerPatches);
@@ -144,7 +152,7 @@ export function App() {
         );
         const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
         if (previous !== undefined) {
-          setActiveHunk(previous.firstIndex);
+          scrollToHunk(previous.firstIndex);
         }
       } else if (event.key === "[") {
         shiftSelection(meta, selection, setSelection, -1);
@@ -154,11 +162,11 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, hunks, layerPatches, load, meta, selection]);
+  }, [activeHunk, hunks, layerPatches, load, meta, scrollToHunk, selection]);
 
   useEffect(() => {
-    document.querySelector(`[data-hunk="${activeHunk}"]`)?.scrollIntoView({ block: "nearest" });
-  }, [activeHunk]);
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [selection]);
 
   const selectedGroup = useMemo(() => {
     if (meta === null || selection?.kind !== "group") {
@@ -338,7 +346,7 @@ export function App() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="56" minSize="30%" className="min-h-0 min-w-0">
-            <main className="h-full overflow-auto px-6 py-5">
+            <main ref={mainRef} className="h-full overflow-auto px-6 py-5">
               {selection?.kind === "overview" ? (
                 <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
               ) : selection?.kind === "unassigned" ? (
@@ -394,7 +402,7 @@ export function App() {
                   onClose={() => setInspector(null)}
                 />
               ) : selection?.kind === "group" && hunks.length > 0 ? (
-                <FileRail hunks={hunks} patches={layerPatches} active={activeHunk} onSelect={setActiveHunk} />
+                <FileRail hunks={hunks} patches={layerPatches} active={activeHunk} onSelect={scrollToHunk} />
               ) : (
                 <FileTree
                   files={meta.files}
