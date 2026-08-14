@@ -3,9 +3,9 @@ import { commitsTouching, listCommits, type CommitInfo } from "../git/log.ts";
 import { hunkKey } from "../schema/identity.ts";
 import type { HunkIndex, HunkRef, ReviewDocument, ReviewGroup, Ticket } from "../schema/types.ts";
 
-type Kind = "contracts" | "feature" | "tests" | "docs" | "chores";
+export type Kind = "contracts" | "feature" | "tests" | "docs" | "chores";
 
-type Cluster = {
+export type Cluster = {
   id: string;
   kind: Kind;
   title: string;
@@ -33,30 +33,41 @@ export async function generateReviewDocument(
   index: HunkIndex,
 ): Promise<ReviewDocument> {
   const clusters = clusterHunks(index.hunks);
-  const groups: ReviewGroup[] = [];
+  const drafts: { group: ReviewGroup; kind: Kind }[] = [];
   let order = 0;
   for (const cluster of clusters) {
     const paths = unique(
       cluster.hunks.flatMap((hunk) => (hunk.oldPath !== undefined ? [hunk.oldPath, hunk.path] : [hunk.path])),
     );
     const commits = await commitsTouching(cwd, index.source.baseRef, index.source.headRef, paths);
-    groups.push({
+    const brief = briefGroup(cluster, paths, commits);
+    const group: ReviewGroup = {
       id: cluster.id,
       title: cluster.title,
-      summary: summarize(cluster, paths, commits),
+      summary: brief.summary,
       suggestedOrder: order,
       hunkRefs: cluster.hunks.map(toHunkRef),
-    });
+    };
+    if (brief.lookFor.length > 0) {
+      group.lookFor = brief.lookFor;
+    }
+    drafts.push({ group, kind: cluster.kind });
     order += 1;
   }
+  assignDependsOn(drafts);
 
-  const tickets = ticketsFromCommits(await listCommits(cwd, index.source.baseRef, index.source.headRef));
+  const allCommits = await listCommits(cwd, index.source.baseRef, index.source.headRef);
+  const tickets = ticketsFromCommits(allCommits);
+  const walkthrough = walkthroughFrom(allCommits);
 
   const document: ReviewDocument = {
     version: 1,
     source: index.source,
-    groups,
+    groups: drafts.map((draft) => draft.group),
   };
+  if (walkthrough !== undefined) {
+    document.walkthrough = walkthrough;
+  }
   if (tickets.length > 0) {
     document.tickets = tickets;
   }
@@ -193,19 +204,102 @@ function testTitle(path: string): string {
   return `Tests for ${featureTitle(key)}`;
 }
 
-function summarize(cluster: Cluster, paths: string[], commits: CommitInfo[]): string {
-  const fileList = paths.length <= 4 ? paths.join(", ") : `${paths.slice(0, 3).join(", ")} +${paths.length - 3} more`;
-  const hunkCount = cluster.hunks.length;
-  const commitLine =
-    commits.length === 0
-      ? "No commit subjects in this range for these paths (range may be a single merge-base diff)."
-      : commits.length === 1
-        ? `Commit: ${commits[0]?.subject ?? ""}.`
-        : `Commits: ${commits
-            .slice(0, 3)
-            .map((commit) => commit.subject)
-            .join("; ")}${commits.length > 3 ? "…" : ""}.`;
-  return `${commitLine} ${hunkCount} hunk${hunkCount === 1 ? "" : "s"} across ${fileList}.`;
+export type GroupBrief = {
+  summary: string;
+  lookFor: string[];
+};
+
+export function briefGroup(cluster: Cluster, paths: string[], commits: CommitInfo[]): GroupBrief {
+  const subjects = unique(commits.map((commit) => commit.subject.trim()).filter((subject) => subject.length > 0));
+  const summary = subjects[0] ?? fallbackSummary(cluster);
+  const lookFor: string[] = [];
+
+  for (const extra of subjects.slice(1, 5)) {
+    lookFor.push(extra);
+  }
+
+  for (const hunk of cluster.hunks) {
+    if (hunk.oldPath !== undefined) {
+      lookFor.push(`Rename ${hunk.oldPath} → ${hunk.path}`);
+    }
+  }
+
+  const added = unique(
+    cluster.hunks.filter((hunk) => hunk.oldStart === 0 && hunk.oldLines === 0 && hunk.oldPath === undefined).map((hunk) => hunk.path),
+  );
+  for (const path of added.slice(0, 4)) {
+    lookFor.push(`New file ${path}`);
+  }
+
+  const deleted = unique(
+    cluster.hunks.filter((hunk) => hunk.newStart === 0 && hunk.newLines === 0).map((hunk) => hunk.path),
+  );
+  for (const path of deleted.slice(0, 3)) {
+    lookFor.push(`Deleted ${path}`);
+  }
+
+  const hasTests = paths.some((path) => classify(path) === "tests");
+  const hasImpl = paths.some((path) => classify(path) === "feature" || classify(path) === "contracts");
+  if (hasTests && hasImpl) {
+    lookFor.push("Paired tests are in this layer — check they pin the new behavior.");
+  } else if (cluster.kind === "tests") {
+    lookFor.push("Read after the implementation layer.");
+  } else if (cluster.kind === "contracts") {
+    lookFor.push("Foundation: later layers depend on these shapes.");
+  } else if (cluster.kind === "chores") {
+    lookFor.push("Confirm the manifest matches the code layers, then move on.");
+  } else if (cluster.kind === "docs") {
+    lookFor.push("Confirm the prose matches what the code layers actually do.");
+  }
+
+  return { summary, lookFor: unique(lookFor).slice(0, 8) };
+}
+
+export function assignDependsOn(drafts: { group: ReviewGroup; kind: Kind }[]): void {
+  const ids = (kind: Kind): string[] => drafts.filter((draft) => draft.kind === kind).map((draft) => draft.group.id);
+  const contracts = ids("contracts");
+  const features = ids("feature");
+  const implementation = [...contracts, ...features];
+  for (const draft of drafts) {
+    let deps: string[] = [];
+    if (draft.kind === "feature") {
+      deps = contracts;
+    } else if (draft.kind === "tests") {
+      deps = implementation;
+    } else if (draft.kind === "docs" || draft.kind === "chores") {
+      deps = implementation;
+    }
+    deps = deps.filter((id) => id !== draft.group.id);
+    if (deps.length > 0) {
+      draft.group.dependsOn = deps;
+    }
+  }
+}
+
+function fallbackSummary(cluster: Cluster): string {
+  switch (cluster.kind) {
+    case "contracts":
+      return "Types and contracts that later layers consume.";
+    case "tests":
+      return "Tests for the behavior in earlier layers.";
+    case "docs":
+      return "Documentation for this change.";
+    case "chores":
+      return "Manifest and lockfile updates.";
+    default:
+      return `${cluster.title} implementation.`;
+  }
+}
+
+function walkthroughFrom(commits: CommitInfo[]): string | undefined {
+  const subjects = unique(commits.map((commit) => commit.subject.trim()).filter((subject) => subject.length > 0)).slice(
+    0,
+    2,
+  );
+  if (subjects.length === 0) {
+    return undefined;
+  }
+  return subjects.join(" · ");
 }
 
 function ticketsFromCommits(commits: CommitInfo[]): Ticket[] {

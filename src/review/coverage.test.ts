@@ -87,6 +87,10 @@ describe("example repo index/validate/generate", () => {
     const { coverage } = await coverReview(repo.root, document);
     assert.equal(coverage.unassigned.length, 0);
     assert.equal(coverage.stale.length, 0);
+    for (const group of document.groups) {
+      assert.equal(group.summary.includes("hunks across"), false);
+      assert.equal(group.summary.startsWith("Commit:"), false);
+    }
 
     const broken = structuredClone(document);
     const first = broken.groups[0];

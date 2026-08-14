@@ -1,6 +1,7 @@
 export type ReviewDocument = {
   version: 1;
   source: ReviewSource;
+  walkthrough?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];
 };
@@ -20,7 +21,12 @@ export type Ticket = {
 export type ReviewGroup = {
   id: string;
   title: string;
+  /** One sentence: what this layer is and why it exists. */
   summary: string;
+  /** Scannable bullets of what to look at. Not a paragraph. */
+  lookFor?: string[];
+  /** Earlier layer ids this one depends on. */
+  dependsOn?: string[];
   suggestedOrder: number;
   hunkRefs: HunkRef[];
 };

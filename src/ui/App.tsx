@@ -4,18 +4,29 @@ import {
   fetchFile,
   fetchHunks,
   fetchReview,
+  layerIndex,
+  padLayer,
   shortSha,
   type LiveHunk,
   type ReviewMeta,
 } from "./api.ts";
 import { highlightLine } from "./highlight.ts";
+import { addedSymbols, hunkContext, lineDelta } from "../schema/hunk-meta.ts";
 
-type Selection = { kind: "group"; id: string } | { kind: "unassigned" };
+type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" };
 
 type Inspector = {
   path: string;
   mode: "file" | "blame";
   side: "old" | "new";
+};
+
+const EFFORT: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "trivial",
+  2: "small",
+  3: "medium",
+  4: "large",
+  5: "very large",
 };
 
 export function App() {
@@ -47,10 +58,12 @@ export function App() {
     void load();
   }, [load]);
 
-  const selectedKey = selection?.kind === "group" ? selection.id : selection?.kind === "unassigned" ? "unassigned" : null;
+  const selectedKey =
+    selection?.kind === "group" ? selection.id : selection?.kind === "unassigned" ? "unassigned" : null;
 
   useEffect(() => {
     if (selectedKey === null) {
+      setHunks([]);
       return;
     }
     let cancelled = false;
@@ -79,16 +92,20 @@ export function App() {
         setWrap((value) => !value);
       } else if (event.key === "r") {
         void load();
+      } else if (event.key === "o") {
+        setSelection({ kind: "overview" });
+      } else if (event.key === "u") {
+        setSelection({ kind: "unassigned" });
       } else if (event.key === "Escape") {
         setInspector(null);
       } else if (event.key === "j") {
-        setActiveHunk((value) => Math.min(hunks.length - 1, value + 1));
+        setActiveHunk((value) => Math.min(Math.max(0, hunks.length - 1), value + 1));
       } else if (event.key === "k") {
         setActiveHunk((value) => Math.max(0, value - 1));
       } else if (event.key === "[") {
-        shiftGroup(meta, selection, setSelection, -1);
+        shiftSelection(meta, selection, setSelection, -1);
       } else if (event.key === "]") {
-        shiftGroup(meta, selection, setSelection, 1);
+        shiftSelection(meta, selection, setSelection, 1);
       }
     };
     window.addEventListener("keydown", onKey);
@@ -118,6 +135,7 @@ export function App() {
 
   const coverageRatio = meta.coverage.totalHunks === 0 ? 1 : meta.coverage.assignedHunks / meta.coverage.totalHunks;
   const incomplete = meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0;
+  const highlightFiles = new Set(selectedGroup?.files ?? (selection?.kind === "unassigned" ? meta.unassigned.files : []));
 
   return (
     <div className="app">
@@ -155,18 +173,31 @@ export function App() {
       </header>
 
       <nav className="groups">
-        <h2>Review groups</h2>
+        <h2>Stack</h2>
         <ul>
-          {meta.groups.map((group) => (
+          <li>
+            <button
+              type="button"
+              className={selection?.kind === "overview" ? "active" : ""}
+              onClick={() => setSelection({ kind: "overview" })}
+            >
+              <span className="title">Overview</span>
+              <span className="count">{EFFORT[meta.effort.score]}</span>
+            </button>
+          </li>
+        </ul>
+        <ul>
+          {meta.groups.map((group, index) => (
             <li key={group.id}>
               <button
                 type="button"
                 className={selection?.kind === "group" && selection.id === group.id ? "active" : ""}
                 onClick={() => setSelection({ kind: "group", id: group.id })}
               >
+                <span className="layer-index">{padLayer(index + 1)}</span>
                 <span className="title">{group.title}</span>
                 <span className="count">
-                  {group.hunkCount}
+                  {group.files.length}f
                   {group.staleCount > 0 ? ` · ${group.staleCount} stale` : ""}
                 </span>
               </button>
@@ -205,71 +236,59 @@ export function App() {
             </ul>
           </section>
         ) : null}
-        <section>
-          <h2>Commits</h2>
-          <ul className="commits">
-            {meta.commits.map((commit) => (
-              <li key={commit.sha} title={`${commit.author} ${commit.date}`}>
-                <code>{commit.shortSha}</code> {commit.subject}
-              </li>
-            ))}
-            {meta.commits.length === 0 ? <li className="muted">No commits in range.</li> : null}
-          </ul>
-        </section>
       </nav>
 
       <main className="diff">
-        <div className="summary">
-          {selection?.kind === "unassigned" ? (
-            <>
-              <h1>Unassigned hunks</h1>
-              <p>
-                Live git still has these hunks, and no group points at them. Coverage cannot hide. Fix the review document
-                — never the diff.
-              </p>
-            </>
-          ) : selectedGroup !== null ? (
-            <>
-              <h1>{selectedGroup.title}</h1>
-              <p>{selectedGroup.summary}</p>
-              {selectedGroup.staleCount > 0 ? (
-                <p className="stale">
-                  {selectedGroup.staleCount} hunk ref{selectedGroup.staleCount === 1 ? "" : "s"} no longer match live git
-                  (rebase or uncommitted edit). Git wins; the pointer is flagged, not replaced.
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <h1>Select a group</h1>
-          )}
-        </div>
+        {selection?.kind === "overview" ? (
+          <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
+        ) : selection?.kind === "unassigned" ? (
+          <div className="brief">
+            <p className="kicker">Unassigned</p>
+            <h1>Not in any layer</h1>
+            <p className="intent">
+              Live git still has these hunks, and no group points at them. Coverage cannot hide. Fix the review document
+              — never the diff.
+            </p>
+          </div>
+        ) : selectedGroup !== null ? (
+          <LayerBrief
+            group={selectedGroup}
+            index={layerIndex(meta.groups, selectedGroup.id)}
+            groups={meta.groups}
+            onOpenLayer={(id) => setSelection({ kind: "group", id })}
+          />
+        ) : (
+          <h1>Select a layer</h1>
+        )}
         {hunkError !== null ? <p className="stale">{hunkError}</p> : null}
-        {hunks.length === 0 && hunkError === null ? <p className="muted">No hunks in this group.</p> : null}
-        <div className={`hunks ${wrap ? "wrap" : ""}`}>
-          {hunks.map((hunk, index) => (
-            <HunkView
-              key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}
-              hunk={hunk}
-              active={index === activeHunk}
-              index={index}
-              onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
-            />
-          ))}
-        </div>
+        {selection?.kind !== "overview" ? (
+          <>
+            {hunks.length === 0 && hunkError === null ? <p className="muted">No hunks in this layer.</p> : null}
+            <div className={`hunks ${wrap ? "wrap" : ""}`}>
+              {hunks.map((hunk, index) => (
+                <HunkView
+                  key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}
+                  hunk={hunk}
+                  active={index === activeHunk}
+                  index={index}
+                  onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
+                />
+              ))}
+            </div>
+          </>
+        ) : null}
       </main>
 
       <aside className="files">
         {inspector !== null ? (
-          <Inspector
-            inspector={inspector}
-            setInspector={setInspector}
-            onClose={() => setInspector(null)}
-          />
+          <Inspector inspector={inspector} setInspector={setInspector} onClose={() => setInspector(null)} />
+        ) : selection?.kind === "group" && hunks.length > 0 ? (
+          <RangeRail hunks={hunks} active={activeHunk} onSelect={setActiveHunk} />
         ) : (
           <FileTree
             files={meta.files}
             skipped={meta.skipped}
-            highlight={new Set(selectedGroup?.files ?? meta.unassigned.files)}
+            highlight={highlightFiles}
             onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
           />
         )}
@@ -279,14 +298,13 @@ export function App() {
 }
 
 function defaultSelection(meta: ReviewMeta): Selection {
-  const first = meta.groups[0];
-  if (first !== undefined) {
-    return { kind: "group", id: first.id };
+  if (meta.groups.length > 0) {
+    return { kind: "overview" };
   }
   return { kind: "unassigned" };
 }
 
-function shiftGroup(
+function shiftSelection(
   meta: ReviewMeta | null,
   selection: Selection | null,
   setSelection: (selection: Selection) => void,
@@ -295,28 +313,184 @@ function shiftGroup(
   if (meta === null) {
     return;
   }
-  const ids: Selection[] = meta.groups.map((group) => ({ kind: "group", id: group.id }));
+  const ids: Selection[] = [{ kind: "overview" }, ...meta.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
   ids.push({ kind: "unassigned" });
-  const current = ids.findIndex((item) =>
-    selection?.kind === "unassigned"
-      ? item.kind === "unassigned"
-      : item.kind === "group" && selection?.kind === "group" && item.id === selection.id,
-  );
+  const current = ids.findIndex((item) => sameSelection(item, selection));
   const next = ids[(current + delta + ids.length) % ids.length];
   if (next !== undefined) {
     setSelection(next);
   }
 }
 
+function sameSelection(a: Selection, b: Selection | null): boolean {
+  if (b === null) {
+    return false;
+  }
+  if (a.kind === "overview") {
+    return b.kind === "overview";
+  }
+  if (a.kind === "unassigned") {
+    return b.kind === "unassigned";
+  }
+  return b.kind === "group" && b.id === a.id;
+}
+
+function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }) {
+  const { meta, onOpenLayer } = props;
+  return (
+    <div className="brief overview">
+      <p className="kicker">Overview</p>
+      <h1>Review stack</h1>
+      {meta.document.walkthrough !== undefined ? <p className="intent">{meta.document.walkthrough}</p> : null}
+      <p className="effort">
+        Review effort {meta.effort.score}/5 · {EFFORT[meta.effort.score]} · {meta.effort.files} files · {meta.effort.hunks}{" "}
+        hunks
+      </p>
+      <h2>Read in this order</h2>
+      <ol className="stack-list">
+        {meta.groups.map((group, index) => (
+          <li key={group.id}>
+            <button type="button" onClick={() => onOpenLayer(group.id)}>
+              <span className="layer-index">{padLayer(index + 1)}</span>
+              <span>
+                <strong>{group.title}</strong>
+                <span className="muted"> {group.summary}</span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <h2>Files by layer</h2>
+      <table className="file-summary">
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Path</th>
+            <th>Hunks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {meta.groups.flatMap((group, index) =>
+            group.files.map((path) => (
+              <tr key={`${group.id}:${path}`}>
+                <td className="num">{padLayer(index + 1)}</td>
+                <td>{path}</td>
+                <td className="num">{meta.files.find((file) => file.path === path)?.hunkCount ?? ""}</td>
+              </tr>
+            )),
+          )}
+        </tbody>
+      </table>
+      {meta.commits.length > 0 ? (
+        <>
+          <h2>Commits</h2>
+          <ul className="commits">
+            {meta.commits.map((commit) => (
+              <li key={commit.sha}>
+                <code>{commit.shortSha}</code> {commit.subject}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function LayerBrief(props: {
+  group: ReviewMeta["groups"][number];
+  index: number;
+  groups: ReviewMeta["groups"];
+  onOpenLayer: (id: string) => void;
+}) {
+  const { group, index, groups, onOpenLayer } = props;
+  return (
+    <div className="brief">
+      <p className="kicker">
+        Layer {padLayer(index)} · {group.files.length} file{group.files.length === 1 ? "" : "s"} · {group.hunkCount} hunk
+        {group.hunkCount === 1 ? "" : "s"}
+      </p>
+      <h1>{group.title}</h1>
+      <p className="intent">{group.summary}</p>
+      {group.dependsOn.length > 0 ? (
+        <p className="depends">
+          Depends on{" "}
+          {group.dependsOn.map((id, i) => {
+            const dep = groups.find((item) => item.id === id);
+            const label =
+              dep !== undefined ? `${padLayer(layerIndex(groups, id))} ${dep.title}` : id;
+            return (
+              <span key={id}>
+                {i > 0 ? ", " : ""}
+                <button type="button" className="link" onClick={() => onOpenLayer(id)}>
+                  {label}
+                </button>
+              </span>
+            );
+          })}
+        </p>
+      ) : null}
+      {group.lookFor.length > 0 ? (
+        <>
+          <h2>Look for</h2>
+          <ul className="look-for">
+            {group.lookFor.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {group.staleCount > 0 ? (
+        <p className="stale">
+          {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the pointer is
+          flagged, not replaced.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function RangeRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: number) => void }) {
+  return (
+    <>
+      <h2>Ranges in this layer</h2>
+      <ul className="ranges">
+        {props.hunks.map((hunk, index) => {
+          const ctx = hunkContext(hunk.header);
+          const symbols = addedSymbols(hunk.lines.filter((line) => line.kind === "add").map((line) => line.text));
+          const delta = lineDelta(hunk.lines);
+          const label = ctx ?? (symbols[0] !== undefined ? symbols[0] : hunk.path);
+          return (
+            <li key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}>
+              <button type="button" className={index === props.active ? "active" : ""} onClick={() => props.onSelect(index)}>
+                <span className="name">{label}</span>
+                <span className="count">
+                  −{delta.removed} +{delta.added}
+                </span>
+              </button>
+              <div className="range-meta">
+                {hunk.path}
+                {symbols.length > 0 ? ` · ${symbols.join(", ")}` : ""}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
+
 function HunkView(props: { hunk: LiveHunk; active: boolean; index: number; onOpen: (path: string) => void }) {
   const { hunk, active, index, onOpen } = props;
+  const ctx = hunkContext(hunk.header);
   return (
     <article className={`hunk ${active ? "active" : ""}`} data-hunk={index}>
       <header>
         <button type="button" className="path" onClick={() => onOpen(hunk.path)}>
           {hunk.oldPath !== undefined ? `${hunk.oldPath} → ${hunk.path}` : hunk.path}
         </button>
-        <code className="header">{hunk.header}</code>
+        {ctx !== undefined ? <span className="symbol">{ctx}</span> : null}
+        <code className="header">{hunk.header.match(/^@@ [^@]+ @@/)?.[0] ?? hunk.header}</code>
       </header>
       <table>
         <tbody>
@@ -416,7 +590,7 @@ function Inspector(props: {
     <div className="inspector">
       <div className="inspector-top">
         <button type="button" onClick={onClose}>
-          files
+          back
         </button>
         <strong>{inspector.path}</strong>
       </div>

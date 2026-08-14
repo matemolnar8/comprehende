@@ -37,8 +37,9 @@ Default `--head` is `HEAD`. Default `--base` is `origin/HEAD` (fallback `main` /
 
 - Group by **review concern**, not by directory, unless the concern *is* a layer (schema, CLI, UI).
 - The same hunk may appear in multiple groups when it matters in more than one story.
-- Reading order: contracts / foundations first, then call sites, then tests, then chores.
-- Summaries say what changed and why it matters for the reviewer. Use commit subjects, ticket ids, and path lists. Do not paraphrase the patch line-by-line.
+- Reading order: contracts / foundations first, then call sites, then tests, then chores. Encode that with `dependsOn` (earlier layer ids).
+- `summary` is **one sentence**: what this layer is. `lookFor` is a short bullet list of what to inspect. Do not pack commits, file lists, and hunk counts into a single paragraph.
+- The UI also has an **Overview** of the stack. Optional document `walkthrough` is one or two sentences for the whole change (commit subjects are fine). Do not paraphrase the patch.
 - Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 

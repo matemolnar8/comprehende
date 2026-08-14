@@ -10,12 +10,17 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "headRef": "HEAD",
     "range": "origin/main...HEAD"
   },
+  "walkthrough": "Hunk refs are identity; serve joins live git.",
   "tickets": [{ "id": "#12", "title": "Split the git index from the UI" }],
   "groups": [
     {
       "id": "contracts",
       "title": "Review document contract",
       "summary": "Hunk refs are identity; no patch fields on the document.",
+      "lookFor": [
+        "Unknown fields on the document must fail validation.",
+        "Foundation: later layers depend on these shapes."
+      ],
       "suggestedOrder": 0,
       "hunkRefs": [
         {
@@ -31,6 +36,8 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "git",
       "title": "Live git join",
       "summary": "Serve-time diff is joined by (path, oldStart, newStart).",
+      "lookFor": ["Stale refs are flagged; git still wins."],
+      "dependsOn": ["contracts"],
       "suggestedOrder": 1,
       "hunkRefs": [
         {

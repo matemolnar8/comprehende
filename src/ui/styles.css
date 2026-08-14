@@ -216,6 +216,15 @@ pre {
   white-space: nowrap;
 }
 
+.layer-index {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  width: 1.6em;
+  flex: none;
+}
+
 .groups .count,
 .files .count {
   color: var(--muted);
@@ -253,15 +262,136 @@ pre {
   padding: 16px 20px 48px;
 }
 
-.summary h1 {
+.brief {
+  margin-bottom: 20px;
+  max-width: 72ch;
+}
+
+.brief .kicker {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brief h1 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: 20px;
   color: var(--fg-strong);
 }
 
-.summary p {
+.brief h2 {
+  margin: 20px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.intent {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--fg-strong);
+}
+
+.effort,
+.depends {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+.look-for {
   margin: 0 0 16px;
-  max-width: 72ch;
+  padding-left: 18px;
+}
+
+.look-for li {
+  margin-bottom: 6px;
+}
+
+button.link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  border-radius: 0;
+}
+
+.stack-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stack-list li button {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  text-align: left;
+  margin-bottom: 6px;
+  background: var(--bg-raised);
+}
+
+.file-summary {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+}
+
+.file-summary th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  padding: 4px 8px 4px 0;
+}
+
+.file-summary td {
+  padding: 4px 8px 4px 0;
+  border-top: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.hunk .symbol {
+  color: var(--fg-strong);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.ranges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ranges li {
+  margin: 0 8px 10px;
+}
+
+.ranges button {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+}
+
+.ranges button.active {
+  background: var(--bg-raised);
+  border-color: var(--border);
+}
+
+.range-meta {
+  margin-top: 2px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .muted {

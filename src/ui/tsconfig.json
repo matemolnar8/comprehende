@@ -16,5 +16,5 @@
     "types": ["vite/client"],
     "allowImportingTsExtensions": true
   },
-  "include": [".", "../schema/types.ts"]
+  "include": [".", "../schema/types.ts", "../schema/hunk-meta.ts"]
 }

@@ -18,6 +18,7 @@
         "range": { "type": "string", "minLength": 1 }
       }
     },
+    "walkthrough": { "type": "string", "minLength": 1 },
     "tickets": {
       "type": "array",
       "items": {
@@ -41,6 +42,14 @@
           "id": { "type": "string", "minLength": 1 },
           "title": { "type": "string", "minLength": 1 },
           "summary": { "type": "string" },
+          "lookFor": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
           "suggestedOrder": { "type": "number" },
           "hunkRefs": {
             "type": "array",

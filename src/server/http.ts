@@ -2,6 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { coverReview } from "../review/coverage.ts";
+import { reviewEffort } from "../review/effort.ts";
 import { fileLanguage, readHunkIndex, resolveSource, toHunkRef } from "../git/diff.ts";
 import { listCommits } from "../git/log.ts";
 import { blameFile } from "../git/blame.ts";
@@ -131,6 +132,8 @@ async function reviewPayload(opts: ServeOptions) {
         id: group.group.id,
         title: group.group.title,
         summary: group.group.summary,
+        lookFor: group.group.lookFor ?? [],
+        dependsOn: group.group.dependsOn ?? [],
         suggestedOrder: group.group.suggestedOrder,
         hunkCount: group.hunks.length,
         staleCount: group.stale.length,
@@ -150,6 +153,11 @@ async function reviewPayload(opts: ServeOptions) {
     })),
     skipped: index.skipped,
     commits,
+    effort: {
+      score: reviewEffort(files.length, coverage.totalHunks),
+      files: files.length,
+      hunks: coverage.totalHunks,
+    },
   };
 }
 
