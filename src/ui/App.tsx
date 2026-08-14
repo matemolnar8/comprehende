@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
-import { Toggle } from "@/components/ui/toggle.tsx";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 
@@ -218,10 +217,16 @@ export function App() {
           <div className="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Toggle size="sm" variant="outline" pressed={wrap} onPressedChange={setWrap} aria-label="Wrap lines">
+                <Button
+                  size="sm"
+                  variant={wrap ? "secondary" : "outline"}
+                  aria-pressed={wrap}
+                  aria-label="Wrap lines"
+                  onClick={() => setWrap((value) => !value)}
+                >
                   Wrap
                   <Kbd>w</Kbd>
-                </Toggle>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>Wrap long lines</TooltipContent>
             </Tooltip>
