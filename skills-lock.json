@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "comprehende": {
+      "source": ".",
+      "sourceType": "local",
+      "computedHash": "01d0db901757b26a64fcea292a493c6cab0a2008ada25d443312ff19d612910a"
+    }
+  }
+}
