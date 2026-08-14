@@ -8,6 +8,7 @@ import "@fontsource/ibm-plex-mono/500.css";
 import "@fontsource/source-serif-4/400.css";
 import "@fontsource/source-serif-4/600.css";
 import { App } from "./App.tsx";
+import { PierreDiffPool } from "./PierreDiff.tsx";
 import "./styles.css";
 
 const root = document.getElementById("root");
@@ -16,6 +17,8 @@ if (root === null) {
 }
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <PierreDiffPool>
+      <App />
+    </PierreDiffPool>
   </StrictMode>,
 );

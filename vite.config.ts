@@ -14,6 +14,12 @@ export default defineConfig({
       "@": uiRoot,
     },
   },
+  optimizeDeps: {
+    include: ["@pierre/diffs", "@pierre/diffs/react"],
+  },
+  worker: {
+    format: "es",
+  },
   build: {
     outDir: fileURLToPath(new URL("./dist/ui", import.meta.url)),
     emptyOutDir: true,

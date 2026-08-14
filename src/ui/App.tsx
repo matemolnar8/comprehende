@@ -12,7 +12,8 @@ import {
   type ReviewMeta,
 } from "./api.ts";
 import { highlightLine, highlightSource, languageFromPath } from "./highlight.ts";
-import { addedSymbols, hunkRangeLabel, lineDelta, splitDiffRows, type SplitSide } from "../schema/hunk-meta.ts";
+import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
+import { PierreFileDiff } from "./PierreDiff.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
@@ -45,6 +46,7 @@ export function App() {
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
   const [split, setSplit] = useState(false);
+  const [splitRatio, setSplitRatio] = useState(0.5);
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<Inspector | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,7 +110,12 @@ export function App() {
       if (event.key === "w") {
         setWrap((value) => !value);
       } else if (event.key === "s") {
-        setSplit((value) => !value);
+        setSplit((value) => {
+          if (!value) {
+            setSplitRatio(0.5);
+          }
+          return !value;
+        });
       } else if (event.key === "r") {
         void load();
       } else if (event.key === "o") {
@@ -118,9 +125,23 @@ export function App() {
       } else if (event.key === "Escape") {
         setInspector(null);
       } else if (event.key === "j") {
-        setActiveHunk((value) => Math.min(Math.max(0, hunks.length - 1), value + 1));
+        const files = filesFromHunks(hunks);
+        const current = files.findIndex(
+          (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
+        );
+        const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
+        if (next !== undefined) {
+          setActiveHunk(next.firstIndex);
+        }
       } else if (event.key === "k") {
-        setActiveHunk((value) => Math.max(0, value - 1));
+        const files = filesFromHunks(hunks);
+        const current = files.findIndex(
+          (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
+        );
+        const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
+        if (previous !== undefined) {
+          setActiveHunk(previous.firstIndex);
+        }
       } else if (event.key === "[") {
         shiftSelection(meta, selection, setSelection, -1);
       } else if (event.key === "]") {
@@ -129,7 +150,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [hunks.length, load, meta, selection]);
+  }, [activeHunk, hunks, load, meta, selection]);
 
   useEffect(() => {
     document.querySelector(`[data-hunk="${activeHunk}"]`)?.scrollIntoView({ block: "nearest" });
@@ -141,6 +162,8 @@ export function App() {
     }
     return meta.groups.find((group) => group.id === selection.id) ?? null;
   }, [meta, selection]);
+
+  const layerFiles = useMemo(() => filesFromHunks(hunks), [hunks]);
 
   if (loading && meta === null) {
     return <Boot>Reading git…</Boot>;
@@ -220,7 +243,12 @@ export function App() {
                     size="sm"
                     variant={split ? "secondary" : "ghost"}
                     className="rounded-none border-0"
-                    onClick={() => setSplit(true)}
+                    onClick={() => {
+                      setSplit(true);
+                      if (!split) {
+                        setSplitRatio(0.5);
+                      }
+                    }}
                     aria-pressed={split}
                   >
                     Split
@@ -332,14 +360,17 @@ export function App() {
                   {hunks.length === 0 && hunkError === null ? (
                     <p className="mt-4 text-muted-foreground">No hunks in this layer.</p>
                   ) : null}
-                  <div className={cn("mt-4 space-y-4", wrap && "hunks-wrap")}>
-                    {hunks.map((hunk, index) => (
+                  <div className="mt-4 space-y-4">
+                    {layerFiles.map((file) => (
                       <HunkView
-                        key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}
-                        hunk={hunk}
-                        active={index === activeHunk}
-                        index={index}
+                        key={file.path}
+                        file={file}
+                        active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
+                        index={file.firstIndex}
                         split={split}
+                        splitRatio={splitRatio}
+                        wrap={wrap}
+                        onSplitRatio={setSplitRatio}
                         onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
                       />
                     ))}
@@ -572,18 +603,18 @@ function LayerBrief(props: {
   );
 }
 
-function filesFromHunks(hunks: LiveHunk[]): {
+type LayerFile = {
   path: string;
   oldPath?: string;
   added: number;
   removed: number;
   hunkCount: number;
   firstIndex: number;
-}[] {
-  const map = new Map<
-    string,
-    { path: string; oldPath?: string; added: number; removed: number; hunkCount: number; firstIndex: number }
-  >();
+  hunks: LiveHunk[];
+};
+
+function filesFromHunks(hunks: LiveHunk[]): LayerFile[] {
+  const map = new Map<string, LayerFile>();
   hunks.forEach((hunk, index) => {
     const delta = lineDelta(hunk.lines);
     const existing = map.get(hunk.path);
@@ -595,12 +626,14 @@ function filesFromHunks(hunks: LiveHunk[]): {
         removed: delta.removed,
         hunkCount: 1,
         firstIndex: index,
+        hunks: [hunk],
       });
       return;
     }
     existing.added += delta.added;
     existing.removed += delta.removed;
     existing.hunkCount += 1;
+    existing.hunks.push(hunk);
   });
   return [...map.values()];
 }
@@ -644,28 +677,34 @@ function FileRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: 
 }
 
 function HunkView(props: {
-  hunk: LiveHunk;
+  file: LayerFile;
   active: boolean;
   index: number;
   split: boolean;
+  splitRatio: number;
+  wrap: boolean;
+  onSplitRatio: (ratio: number) => void;
   onOpen: (path: string) => void;
 }) {
-  const { hunk, active, index, split, onOpen } = props;
-  const symbols = addedSymbols(hunk.lines.filter((line) => line.kind === "add").map((line) => line.text));
-  const delta = lineDelta(hunk.lines);
-  const splitRows = split ? splitDiffRows(hunk.lines) : [];
+  const { file, active, index, split, splitRatio, wrap, onSplitRatio, onOpen } = props;
+  const first = file.hunks[0];
+  const symbols = addedSymbols(
+    file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
+  );
   return (
     <article
       className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
       data-hunk={index}
     >
       <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-card px-3 py-2">
-        <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(hunk.path)}>
-          {hunk.oldPath !== undefined ? `${hunk.oldPath} → ${hunk.path}` : hunk.path}
+        <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(file.path)}>
+          {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
         </Button>
-        <code className="font-mono text-xs text-muted-foreground">{hunkRangeLabel(hunk.header)}</code>
+        <code className="font-mono text-xs text-muted-foreground">
+          {file.hunkCount === 1 && first !== undefined ? hunkRangeLabel(first.header) : `${file.hunkCount} hunks`}
+        </code>
         <span className="ml-auto font-mono text-[11px] tabular-nums">
-          <span className="text-del">−{delta.removed}</span> <span className="text-add">+{delta.added}</span>
+          <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
         </span>
         {symbols.length > 0
           ? symbols.map((name) => (
@@ -675,55 +714,14 @@ function HunkView(props: {
             ))
           : null}
       </header>
-      {split ? (
-        <div className="overflow-x-auto">
-          <table className="hunk-table split">
-            <tbody>
-              {splitRows.map((row, rowIndex) => (
-                <tr key={rowIndex}>
-                  <SplitCell side={row.left} language={hunk.language} />
-                  <SplitCell side={row.right} language={hunk.language} start />
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="hunk-table">
-            <tbody>
-              {hunk.lines.map((line, lineIndex) => (
-                <tr key={lineIndex} className={line.kind}>
-                  <td className="num">{line.oldNumber ?? ""}</td>
-                  <td className="num">{line.newNumber ?? ""}</td>
-                  <td className="sign">{line.kind === "add" ? "+" : line.kind === "del" ? "-" : " "}</td>
-                  <td className="code">
-                    <code dangerouslySetInnerHTML={{ __html: highlightLine(line.text, hunk.language) }} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <PierreFileDiff
+        hunks={file.hunks}
+        split={split}
+        wrap={wrap}
+        splitRatio={splitRatio}
+        onSplitRatio={onSplitRatio}
+      />
     </article>
-  );
-}
-
-function SplitCell(props: { side: SplitSide | null; language: string; start?: boolean }) {
-  const { side, language, start = false } = props;
-  const tone = side === null ? "empty" : side.kind;
-  return (
-    <>
-      <td className={cn("num", start && "split-start", tone)}>{side?.number ?? ""}</td>
-      <td className={cn("code", start && "split-start", tone)}>
-        {side !== null ? (
-          <code dangerouslySetInnerHTML={{ __html: highlightLine(side.text, language) }} />
-        ) : (
-          "\u00a0"
-        )}
-      </td>
-    </>
   );
 }
 
