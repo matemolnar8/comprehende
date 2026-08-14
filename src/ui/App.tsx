@@ -30,13 +30,9 @@ type Inspector = {
   side: "old" | "new";
 };
 
-const EFFORT: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: "trivial",
-  2: "small",
-  3: "medium",
-  4: "large",
-  5: "very large",
-};
+function sizeLabel(size: ReviewMeta["document"]["size"]): string {
+  return size.replace("-", " ");
+}
 
 export function App() {
   const [meta, setMeta] = useState<ReviewMeta | null>(null);
@@ -294,7 +290,7 @@ export function App() {
                     active={selection?.kind === "overview"}
                     onClick={() => setSelection({ kind: "overview" })}
                     title="Overview"
-                    count={EFFORT[meta.effort.score]}
+                    count={sizeLabel(meta.document.size)}
                   />
                 </li>
               </ul>
@@ -519,8 +515,7 @@ function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }
         <p className="mb-3 font-serif text-[17px] leading-snug text-foreground">{meta.document.walkthrough}</p>
       ) : null}
       <p className="mb-3 text-muted-foreground">
-        Review effort {meta.effort.score}/5 · {EFFORT[meta.effort.score]} · {meta.effort.files} files · {meta.effort.hunks}{" "}
-        hunks
+        {sizeLabel(meta.document.size)} · {meta.files.length} files · {meta.coverage.totalHunks} hunks
       </p>
       <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
         Read in this order

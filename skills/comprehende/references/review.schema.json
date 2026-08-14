@@ -5,9 +5,14 @@
   "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "source", "groups"],
+  "required": ["version", "source", "size", "groups"],
   "properties": {
     "version": { "const": 1 },
+    "size": {
+      "type": "string",
+      "enum": ["trivial", "small", "medium", "large", "very-large"],
+      "description": "Human review burden of this change, not file or hunk count. A 40-file mechanical import rename in one layer is small. A 3-file contract rewrite the rest of the stack hangs on can be large."
+    },
     "source": {
       "type": "object",
       "additionalProperties": false,

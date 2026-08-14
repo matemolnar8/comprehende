@@ -11,6 +11,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "walkthrough": "Hunk refs are identity; serve joins live git.",
+  "size": "small",
   "tickets": [{ "id": "#12", "title": "Split the git index from the UI" }],
   "groups": [
     {

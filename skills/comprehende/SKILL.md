@@ -28,7 +28,7 @@ If the package is linked globally (`pnpm link --global` from the comprehende che
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base/head SHAs (or the merge-base), not current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
 2. Run `comprehende index [--base <ref>] [--head <ref>]` and save the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
 3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by **review concern**. Index is not enough to group.
-4. Write `review.json` by **copying hunk objects** from the index into groups. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text.
+4. Write `review.json` by **copying hunk objects** from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text.
 5. Run `comprehende validate --data review.json`. On failure, fix groups or coverage — never the diff.
 6. Run `comprehende serve --data review.json --open` and give the user the localhost URL (`127.0.0.1` only).
 
@@ -43,6 +43,7 @@ Tickets (`id`, optional `url` / `title`) may be copied from whatever tracker the
 - Reading order: contracts / foundations first, then call sites, then tests, then chores. Encode that with `dependsOn` (earlier layer ids).
 - `summary` is **one sentence**: what this layer is. `lookFor` is a short bullet list of what to inspect. Do not pack commits, file lists, and hunk counts into a single paragraph.
 - The UI also has an **Overview** of the stack. Optional document `walkthrough` is one or two sentences for the whole change (commit subjects are fine). Do not paraphrase the patch.
+- Set document `size` to the **human review burden**, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.
 - Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 

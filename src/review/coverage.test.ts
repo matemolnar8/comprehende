@@ -37,6 +37,7 @@ describe("coverage join", () => {
       {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
+        size: "small",
         groups: [
           {
             id: "g",
@@ -60,6 +61,7 @@ describe("coverage join", () => {
       {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
+        size: "small",
         groups: [{ id: "g", title: "G", summary: "", suggestedOrder: 0, hunkRefs: [] }],
       },
       live,

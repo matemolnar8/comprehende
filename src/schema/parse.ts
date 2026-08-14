@@ -1,4 +1,4 @@
-import type { HunkRef, ReviewDocument, ReviewGroup, ReviewSource, Ticket } from "./types.ts";
+import { isReviewSize, REVIEW_SIZES, type HunkRef, type ReviewDocument, type ReviewGroup, type ReviewSize, type ReviewSource, type Ticket } from "./types.ts";
 
 export type ParseFailure = {
   ok: false;
@@ -12,7 +12,7 @@ export type ParseSuccess = {
 
 export type ParseResult = ParseSuccess | ParseFailure;
 
-const DOCUMENT_KEYS = new Set(["version", "source", "walkthrough", "tickets", "groups"]);
+const DOCUMENT_KEYS = new Set(["version", "source", "size", "walkthrough", "tickets", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
 const TICKET_KEYS = new Set(["id", "url", "title"]);
 const GROUP_KEYS = new Set(["id", "title", "summary", "lookFor", "dependsOn", "suggestedOrder", "hunkRefs"]);
@@ -31,18 +31,20 @@ export function parseReviewDocument(input: unknown): ParseResult {
   }
 
   const source = parseSource(input.source, errors);
+  const size = parseSize(input.size, errors);
   const tickets = parseTickets(input.tickets, errors);
   const groups = parseGroups(input.groups, errors);
   const walkthrough =
     input.walkthrough === undefined ? undefined : requiredString(input.walkthrough, "walkthrough", errors);
 
-  if (errors.length > 0 || source === undefined) {
+  if (errors.length > 0 || source === undefined || size === undefined) {
     return { ok: false, errors };
   }
 
   const document: ReviewDocument = {
     version: 1,
     source,
+    size,
     groups,
   };
   if (walkthrough !== undefined) {
@@ -62,6 +64,14 @@ export function parseReviewJson(text: string): ParseResult {
     return { ok: false, errors: ["review document is not valid JSON"] };
   }
   return parseReviewDocument(value);
+}
+
+function parseSize(value: unknown, errors: string[]): ReviewSize | undefined {
+  if (isReviewSize(value)) {
+    return value;
+  }
+  errors.push(`size must be one of ${REVIEW_SIZES.join(", ")}`);
+  return undefined;
 }
 
 function parseSource(value: unknown, errors: string[]): ReviewSource | undefined {

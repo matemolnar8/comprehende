@@ -1,6 +1,16 @@
+export const REVIEW_SIZES = ["trivial", "small", "medium", "large", "very-large"] as const;
+
+export type ReviewSize = (typeof REVIEW_SIZES)[number];
+
+export function isReviewSize(value: unknown): value is ReviewSize {
+  return typeof value === "string" && (REVIEW_SIZES as readonly string[]).includes(value);
+}
+
 export type ReviewDocument = {
   version: 1;
   source: ReviewSource;
+  /** Human review burden of this change, not file or hunk count. */
+  size: ReviewSize;
   walkthrough?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];

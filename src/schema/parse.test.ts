@@ -8,6 +8,7 @@ describe("parseReviewDocument", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
       walkthrough: "Split the review document from live git.",
       groups: [
         {
@@ -29,6 +30,7 @@ describe("parseReviewDocument", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
       groups: [
         {
           id: "g1",
@@ -57,6 +59,7 @@ describe("parseReviewDocument", () => {
     const dup = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
       groups: [group, { ...group, title: "B" }],
     });
     assert.equal(dup.ok, false);
@@ -64,12 +67,33 @@ describe("parseReviewDocument", () => {
     const missing = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
       groups: [{ ...group, dependsOn: ["nope"] }],
     });
     assert.equal(missing.ok, false);
     if (!missing.ok) {
       assert.match(missing.errors.join("\n"), /dependsOn unknown group/);
     }
+  });
+
+  it("requires a known size", () => {
+    const missing = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      groups: [],
+    });
+    assert.equal(missing.ok, false);
+    if (!missing.ok) {
+      assert.match(missing.errors.join("\n"), /size must be one of/);
+    }
+
+    const bad = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "huge",
+      groups: [],
+    });
+    assert.equal(bad.ok, false);
   });
 });
 

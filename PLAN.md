@@ -68,6 +68,7 @@ type ReviewDocument = {
     range?: string
   }
   walkthrough?: string // extra: whole-change read for Overview
+  size: "trivial" | "small" | "medium" | "large" | "very-large" // extra: human review burden, not file count
   tickets?: { id: string; url?: string; title?: string }[]
   groups: ReviewGroup[]
 }

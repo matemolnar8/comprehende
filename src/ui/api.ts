@@ -27,6 +27,7 @@ export type LayerFile = {
 export type ReviewMeta = {
   document: {
     version: 1;
+    size: "trivial" | "small" | "medium" | "large" | "very-large";
     walkthrough?: string;
     tickets?: { id: string; url?: string; title?: string }[];
   };
@@ -65,7 +66,6 @@ export type ReviewMeta = {
   }[];
   skipped: { path: string; reason: string }[];
   commits: { sha: string; shortSha: string; subject: string; author: string; date: string }[];
-  effort: { score: 1 | 2 | 3 | 4 | 5; files: number; hunks: number };
 };
 
 async function getJson<T>(path: string): Promise<T> {
