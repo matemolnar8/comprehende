@@ -11,8 +11,8 @@ import {
   type LiveHunk,
   type ReviewMeta,
 } from "./api.ts";
-import { highlightLine, languageFromPath } from "./highlight.ts";
 import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
+import { groupBlameRuns } from "../schema/blame-runs.ts";
 import { PierreFile, PierreFileDiff } from "./PierreDiff.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -793,21 +793,41 @@ function Inspector(props: {
 }) {
   const { inspector, wrap, setInspector, onClose } = props;
   const [content, setContent] = useState<string>("");
-  const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string }[] | null>(null);
+  const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string; timestamp: number }[] | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const blameLanguage = languageFromPath(inspector.path);
+  const blameContents = useMemo(
+    () => (blame === null ? "" : blame.map((line) => line.text).join("\n")),
+    [blame],
+  );
+  const blameAnnotations = useMemo(() => {
+    if (blame === null) {
+      return undefined;
+    }
+    return groupBlameRuns(blame).map((run) => ({
+      lineNumber: run.lineNumber,
+      metadata: {
+        sha: run.sha,
+        author: run.author,
+        timestamp: run.timestamp,
+        lines: run.lines,
+      },
+    }));
+  }, [blame]);
 
   useEffect(() => {
     let cancelled = false;
     setError(null);
     setLoading(true);
+    setContent("");
+    setBlame(null);
     if (inspector.mode === "file") {
       void fetchFile(inspector.path, inspector.side)
         .then((payload) => {
           if (!cancelled) {
             setContent(payload.content);
-            setBlame(null);
             setLoading(false);
           }
         })
@@ -887,21 +907,10 @@ function Inspector(props: {
           <PierreFile path={inspector.path} contents={content} wrap={wrap} />
         </div>
       ) : null}
-      {inspector.mode === "blame" && blame !== null ? (
-        <table className="w-full flex-1 border-collapse overflow-auto p-2 text-[11px]">
-          <tbody>
-            {blame.map((line) => (
-              <tr key={line.line}>
-                <td className="pr-2 text-right align-top whitespace-nowrap text-muted-foreground">{line.line}</td>
-                <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.sha.slice(0, 7)}</td>
-                <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.author}</td>
-                <td className={cn("align-top", wrap ? "whitespace-pre-wrap" : "whitespace-pre")}>
-                  <code dangerouslySetInnerHTML={{ __html: highlightLine(line.text, blameLanguage) }} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {inspector.mode === "blame" && error === null && !loading && blame !== null ? (
+        <div className="min-h-0 flex-1 overflow-auto">
+          <PierreFile path={inspector.path} contents={blameContents} wrap={wrap} annotations={blameAnnotations} />
+        </div>
       ) : null}
     </div>
   );

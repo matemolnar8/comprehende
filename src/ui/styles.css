@@ -94,28 +94,3 @@
   }
 }
 
-.hljs-keyword,
-.hljs-selector-tag,
-.hljs-title.class_ {
-  color: #d27d7d;
-}
-
-.hljs-string,
-.hljs-attr {
-  color: #8eb8e8;
-}
-
-.hljs-number,
-.hljs-literal {
-  color: #5b8def;
-}
-
-.hljs-comment {
-  color: #8a929e;
-  font-style: italic;
-}
-
-.hljs-function,
-.hljs-title.function_ {
-  color: #b9a6e0;
-}

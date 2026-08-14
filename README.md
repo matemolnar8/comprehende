@@ -1,6 +1,6 @@
 # Comprehende
 
-Local review assistant for git diffs. Groups changes by review concern and shows them in a fixed UI. Diffs always come from git in the repo you run the CLI in — never from the model, never stored in the review document. The review UI paints `git diff` output with [`@pierre/diffs`](https://diffs.com), the same renderer [T3 Code](https://github.com/pingdotgg/t3code) uses. The file inspector paints `git show` with Pierre’s file view.
+Local review assistant for git diffs. Groups changes by review concern and shows them in a fixed UI. Diffs always come from git in the repo you run the CLI in — never from the model, never stored in the review document. The review UI paints `git diff` output with [`@pierre/diffs`](https://diffs.com), the same renderer [T3 Code](https://github.com/pingdotgg/t3code) uses. Full file and blame views use Pierre’s file renderer from `git show` / `git blame`.
 
 Product intent: [AGENTS.md](./AGENTS.md). Implementation plan: [PLAN.md](./PLAN.md).
 

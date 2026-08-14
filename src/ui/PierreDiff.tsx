@@ -1,4 +1,4 @@
-import { parsePatchFiles, type FileDiffMetadata } from "@pierre/diffs";
+import { parsePatchFiles, type FileDiffMetadata, type LineAnnotation } from "@pierre/diffs";
 import { File, FileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
 import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
@@ -124,14 +124,15 @@ const StablePierreFile = memo(function StablePierreFile(props: {
   path: string;
   contents: string;
   wrap: boolean;
+  annotations?: FileAnnotation[];
 }) {
   const file = useMemo(
     () => ({
       name: props.path,
       contents: props.contents,
-      cacheKey: `${props.path}:${props.contents.length}:${props.contents.slice(0, 32)}`,
+      cacheKey: `${props.path}:${props.contents.length}:${props.contents.slice(0, 32)}:${props.annotations?.length ?? 0}`,
     }),
-    [props.path, props.contents],
+    [props.annotations?.length, props.contents, props.path],
   );
   const options = useMemo(
     () => ({
@@ -144,13 +145,54 @@ const StablePierreFile = memo(function StablePierreFile(props: {
     }),
     [props.wrap],
   );
-  return <File className="block w-full" file={file} options={options} />;
+  return (
+    <File
+      className="block w-full"
+      file={file}
+      options={options}
+      lineAnnotations={props.annotations}
+      renderAnnotation={props.annotations === undefined ? undefined : renderBlameAnnotation}
+    />
+  );
 });
 
-export function PierreFile(props: { path: string; contents: string; wrap: boolean }) {
+export type FileAnnotation = {
+  lineNumber: number;
+  metadata: {
+    sha: string;
+    author: string;
+    timestamp: number;
+    lines: number;
+  };
+};
+
+function renderBlameAnnotation(annotation: LineAnnotation<FileAnnotation["metadata"]>): ReactNode {
+  const meta = annotation.metadata;
+  const day = new Date(meta.timestamp * 1000).toISOString().slice(0, 10);
+  return (
+    <div className="flex min-w-0 items-baseline gap-2 px-2 py-1 font-sans text-[11px] text-muted-foreground">
+      <code className="text-primary">{meta.sha.slice(0, 7)}</code>
+      <span className="min-w-0 truncate">{meta.author}</span>
+      <span className="shrink-0 tabular-nums">{day}</span>
+      {meta.lines > 1 ? <span className="shrink-0 tabular-nums">{meta.lines} lines</span> : null}
+    </div>
+  );
+}
+
+export function PierreFile(props: {
+  path: string;
+  contents: string;
+  wrap: boolean;
+  annotations?: FileAnnotation[];
+}) {
   return (
     <div className="min-h-0 min-w-0">
-      <StablePierreFile path={props.path} contents={props.contents} wrap={props.wrap} />
+      <StablePierreFile
+        path={props.path}
+        contents={props.contents}
+        wrap={props.wrap}
+        annotations={props.annotations}
+      />
     </div>
   );
 }
