@@ -1,6 +1,7 @@
+import { parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseUnifiedDiff } from "./diff.ts";
+import { filePatchFromGit, parseUnifiedDiff } from "./diff.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
 index 111..222 100644
@@ -57,5 +58,27 @@ describe("parseUnifiedDiff", () => {
     assert.ok(binary);
     assert.equal(binary.binary, true);
     assert.equal(binary.hunks.length, 0);
+  });
+
+  it("keeps git's file patches as slices of the original diff", () => {
+    const files = parseUnifiedDiff(SAMPLE);
+    assert.equal(files.map((file) => file.patch).join(""), SAMPLE);
+    assert.equal(files[0]?.patch.includes("index 111..222 100644"), true);
+    assert.equal(files[0]?.headerPatch.startsWith("diff --git a/src/app.ts b/src/app.ts\n"), true);
+    assert.equal(files[0]?.headerPatch.includes("@@"), false);
+    assert.equal(files[0]?.hunks[0]?.patch.startsWith("@@ -1,3 +1,4 @@\n"), true);
+
+    const first = files[0];
+    const firstHunk = first?.hunks[0];
+    assert.ok(first);
+    assert.ok(firstHunk);
+    const subset = filePatchFromGit(first, [firstHunk]);
+    assert.equal(subset.includes("index 111..222 100644"), true);
+    assert.equal(subset.includes("export const extra = true;"), true);
+    assert.equal(subset.includes("export const tail = 1;"), false);
+    assert.equal(filePatchFromGit(first, first.hunks), first.patch);
+    const parsed = parsePatchFiles(first.patch, "git");
+    assert.equal(parsed[0]?.files[0]?.name, "src/app.ts");
+    assert.equal(parsed[0]?.files[0]?.hunks.length, 2);
   });
 });

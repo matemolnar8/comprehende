@@ -63,6 +63,7 @@ export type DiffLine = {
 export type LiveHunk = HunkRef & {
   header: string;
   lines: DiffLine[];
+  patch: string;
 };
 
 export type FileStatus = "added" | "deleted" | "modified" | "renamed";
@@ -72,5 +73,7 @@ export type DiffFile = {
   oldPath?: string;
   status: FileStatus;
   binary: boolean;
+  headerPatch: string;
+  patch: string;
   hunks: LiveHunk[];
 };

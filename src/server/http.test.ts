@@ -55,15 +55,28 @@ describe("serve API", () => {
     assert.ok(group);
     const hunksRes = await fetch(`${running.url}/api/hunks?group=${encodeURIComponent(group.id)}`);
     assert.equal(hunksRes.status, 200);
-    const payload = (await hunksRes.json()) as { hunks: { path: string; lines: { text: string }[] }[] };
+    const payload = (await hunksRes.json()) as {
+      hunks: { path: string; lines: { text: string }[] }[];
+      files: { path: string; patch: string }[];
+    };
     assert.ok(payload.hunks.length > 0);
+    assert.ok(payload.files.length > 0);
+    assert.equal(payload.files[0]?.patch.startsWith("diff --git "), true);
+    assert.equal(payload.files.some((file) => file.patch.includes("\nindex ")), true);
 
     const appGroup = document.groups.find((item) => item.hunkRefs.some((ref) => ref.path === "src/app.ts"));
     assert.ok(appGroup);
     const appHunks = await fetch(`${running.url}/api/hunks?group=${encodeURIComponent(appGroup.id)}`);
-    const appPayload = (await appHunks.json()) as { hunks: { lines: { kind: string; text: string }[] }[] };
+    const appPayload = (await appHunks.json()) as {
+      hunks: { lines: { kind: string; text: string }[] }[];
+      files: { path: string; patch: string }[];
+    };
     const texts = appPayload.hunks.flatMap((hunk) => hunk.lines.map((line) => line.text)).join("\n");
     assert.equal(texts.includes(SECRET_ADD), true);
+    const appPatch = appPayload.files.find((file) => file.path === "src/app.ts")?.patch;
+    assert.ok(appPatch);
+    assert.equal(appPatch.includes(`+${SECRET_ADD}`) || appPatch.includes(SECRET_ADD), true);
+    assert.equal(appPatch.startsWith("diff --git "), true);
 
     const fileRes = await fetch(`${running.url}/api/file?path=src/app.ts&side=new`);
     assert.equal(fileRes.status, 200);

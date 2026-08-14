@@ -10,8 +10,6 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { hunksToUnifiedPatch } from "../schema/hunk-patch.ts";
-import type { LiveHunk } from "../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 
 /** Theme tokens follow T3 Code's Pierre adapter: map the host palette into the shadow tree. */
@@ -89,8 +87,7 @@ export function PierreDiffPool(props: { children: ReactNode }) {
   );
 }
 
-function parseHunksForPierre(hunks: LiveHunk[]): FileDiffMetadata | undefined {
-  const patch = hunksToUnifiedPatch(hunks);
+function parseGitPatch(patch: string): FileDiffMetadata | undefined {
   if (patch.trim() === "") {
     return undefined;
   }
@@ -124,17 +121,17 @@ const StableFileDiff = memo(function StableFileDiff(props: {
 });
 
 export function PierreFileDiff(props: {
-  hunks: LiveHunk[];
+  patch: string;
   split: boolean;
   wrap: boolean;
   splitRatio: number;
   onSplitRatio: (ratio: number) => void;
 }) {
-  const { hunks, split, wrap, splitRatio, onSplitRatio } = props;
-  const fileDiff = useMemo(() => parseHunksForPierre(hunks), [hunks]);
+  const { patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const fileDiff = useMemo(() => parseGitPatch(patch), [patch]);
 
   if (fileDiff === undefined) {
-    return <p className="px-3 py-2 text-xs text-warn">Could not render this hunk as a patch.</p>;
+    return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
   }
 
   return (

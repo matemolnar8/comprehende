@@ -68,32 +68,37 @@ export function toHunkRef(hunk: HunkRef): HunkRef {
 export function parseUnifiedDiff(text: string): DiffFile[] {
   const files: DiffFile[] = [];
   let current: FileBuilder | undefined;
-
-  const flush = (): void => {
-    if (current !== undefined) {
-      files.push(current.finish());
-      current = undefined;
-    }
-  };
-
-  const lines = text.split(/\n/);
-  for (let i = 0; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (line === undefined) {
-      continue;
-    }
+  let offset = 0;
+  while (offset < text.length) {
+    const newline = text.indexOf("\n", offset);
+    const lineEnd = newline === -1 ? text.length : newline;
+    const line = text.slice(offset, lineEnd);
+    const rawLine = text.slice(offset, newline === -1 ? text.length : newline + 1);
     if (line.startsWith("diff --git ")) {
-      flush();
-      current = new FileBuilder(line);
-      continue;
+      if (current !== undefined) {
+        files.push(current.finish());
+      }
+      current = new FileBuilder(line, rawLine);
+    } else if (current !== undefined) {
+      current.consume(line, rawLine);
     }
-    if (current === undefined) {
-      continue;
-    }
-    current.consume(line);
+    offset = newline === -1 ? text.length : newline + 1;
   }
-  flush();
+  if (current !== undefined) {
+    files.push(current.finish());
+  }
   return files;
+}
+
+export function filePatchFromGit(file: DiffFile, hunks: LiveHunk[]): string {
+  if (hunks.length === 0) {
+    return "";
+  }
+  const selected = new Set(hunks);
+  if (file.hunks.length === selected.size && file.hunks.every((hunk) => selected.has(hunk))) {
+    return file.patch;
+  }
+  return `${file.headerPatch}${hunks.map((hunk) => hunk.patch).join("")}`;
 }
 
 class FileBuilder {
@@ -107,16 +112,36 @@ class FileBuilder {
   private renameFrom: string | undefined;
   private renameTo: string | undefined;
   private activeHunk: LiveHunk | undefined;
+  private hunkRaw = "";
+  private headerPatch: string;
+  private patch: string;
   private oldCursor = 0;
   private newCursor = 0;
 
-  constructor(diffGitLine: string) {
+  constructor(diffGitLine: string, rawLine: string) {
     const parsed = parseDiffGitLine(diffGitLine);
     this.oldPath = parsed.oldPath;
     this.path = parsed.newPath;
+    this.headerPatch = rawLine;
+    this.patch = rawLine;
   }
 
-  consume(line: string): void {
+  consume(line: string, rawLine: string): void {
+    this.patch += rawLine;
+    const hunkMatch = HUNK_HEADER.exec(line);
+    if (hunkMatch) {
+      this.closeHunk();
+      this.startHunk(line, hunkMatch, rawLine);
+      return;
+    }
+    if (this.activeHunk !== undefined) {
+      this.hunkRaw += rawLine;
+      if (!line.startsWith("\\")) {
+        this.pushHunkLine(line);
+      }
+      return;
+    }
+    this.headerPatch += rawLine;
     if (line.startsWith("rename from ")) {
       this.renameFrom = line.slice("rename from ".length);
       return;
@@ -145,7 +170,6 @@ class FileBuilder {
     }
     if (line.startsWith("Binary files ") || line.startsWith("GIT binary patch")) {
       this.binary = true;
-      this.activeHunk = undefined;
       return;
     }
     if (line.startsWith("--- ")) {
@@ -154,18 +178,6 @@ class FileBuilder {
     }
     if (line.startsWith("+++ ")) {
       this.newFile = stripDiffPath(line.slice(4));
-      return;
-    }
-    const hunkMatch = HUNK_HEADER.exec(line);
-    if (hunkMatch) {
-      this.startHunk(line, hunkMatch);
-      return;
-    }
-    if (line.startsWith("\\")) {
-      return;
-    }
-    if (this.activeHunk !== undefined) {
-      this.pushHunkLine(line);
     }
   }
 
@@ -193,21 +205,28 @@ class FileBuilder {
           }
           return next;
         });
-    const file: DiffFile = { path, status, binary: this.binary, hunks };
+    const file: DiffFile = {
+      path,
+      status,
+      binary: this.binary,
+      headerPatch: this.headerPatch,
+      patch: this.patch,
+      hunks,
+    };
     if (oldPath !== undefined) {
       file.oldPath = oldPath;
     }
     return file;
   }
 
-  private startHunk(header: string, match: RegExpExecArray): void {
-    this.closeHunk();
+  private startHunk(header: string, match: RegExpExecArray, rawLine: string): void {
     const oldStart = Number(match[1]);
     const oldLines = match[2] === undefined ? 1 : Number(match[2]);
     const newStart = Number(match[3]);
     const newLines = match[4] === undefined ? 1 : Number(match[4]);
     this.oldCursor = oldStart;
     this.newCursor = newStart;
+    this.hunkRaw = rawLine;
     this.activeHunk = {
       path: this.path,
       oldStart,
@@ -216,6 +235,7 @@ class FileBuilder {
       newLines,
       header,
       lines: [],
+      patch: "",
     };
   }
 
@@ -243,8 +263,10 @@ class FileBuilder {
 
   private closeHunk(): void {
     if (this.activeHunk !== undefined) {
+      this.activeHunk.patch = this.hunkRaw;
       this.hunks.push(this.activeHunk);
       this.activeHunk = undefined;
+      this.hunkRaw = "";
     }
   }
 }

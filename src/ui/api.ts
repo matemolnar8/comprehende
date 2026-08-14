@@ -17,6 +17,13 @@ export type LiveHunk = {
   lines: DiffLine[];
 };
 
+export type LayerFile = {
+  path: string;
+  oldPath?: string;
+  patch: string;
+  hunks: LiveHunk[];
+};
+
 export type ReviewMeta = {
   document: {
     version: 1;
@@ -83,8 +90,8 @@ export function fetchReview(): Promise<ReviewMeta> {
   return getJson<ReviewMeta>("/api/review");
 }
 
-export function fetchHunks(group: string): Promise<{ hunks: LiveHunk[] }> {
-  return getJson<{ hunks: LiveHunk[] }>(`/api/hunks?group=${encodeURIComponent(group)}`);
+export function fetchHunks(group: string): Promise<{ hunks: LiveHunk[]; files: LayerFile[] }> {
+  return getJson<{ hunks: LiveHunk[]; files: LayerFile[] }>(`/api/hunks?group=${encodeURIComponent(group)}`);
 }
 
 export function fetchFile(path: string, side: "old" | "new"): Promise<{ path: string; ref: string; content: string; language: string }> {

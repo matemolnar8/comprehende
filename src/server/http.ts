@@ -3,7 +3,7 @@ import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { coverReview } from "../review/coverage.ts";
 import { reviewEffort } from "../review/effort.ts";
-import { fileLanguage, readHunkIndex, resolveSource, toHunkRef } from "../git/diff.ts";
+import { fileLanguage, filePatchFromGit, readHunkIndex, resolveSource, toHunkRef } from "../git/diff.ts";
 import { listCommits } from "../git/log.ts";
 import { blameFile } from "../git/blame.ts";
 import { showFile } from "../git/show.ts";
@@ -161,20 +161,51 @@ async function reviewPayload(opts: ServeOptions) {
   };
 }
 
-async function hunksPayload(opts: ServeOptions, groupId: string | null): Promise<{ hunks: SerializedHunk[] }> {
+async function hunksPayload(
+  opts: ServeOptions,
+  groupId: string | null,
+): Promise<{ hunks: SerializedHunk[]; files: SerializedFile[] }> {
   if (groupId === null || groupId === "") {
     throw new HttpError(400, "missing group query");
   }
   const document = await loadDocument(opts.dataPath);
-  const { coverage } = await coverReview(opts.cwd, document);
+  const { files, coverage } = await coverReview(opts.cwd, document);
   if (groupId === "unassigned") {
-    return { hunks: coverage.unassigned.map(serializeHunk) };
+    return serializeLayer(files, coverage.unassigned);
   }
   const group = coverage.groups.find((item) => item.group.id === groupId);
   if (group === undefined) {
     throw new HttpError(404, `unknown group "${groupId}"`);
   }
-  return { hunks: group.hunks.map(serializeHunk) };
+  return serializeLayer(files, group.hunks);
+}
+
+function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): { hunks: SerializedHunk[]; files: SerializedFile[] } {
+  const groups: { file: DiffFile; hunks: LiveHunk[] }[] = [];
+  for (const hunk of hunks) {
+    const existing = groups.find((group) => group.file.path === hunk.path);
+    if (existing !== undefined) {
+      existing.hunks.push(hunk);
+      continue;
+    }
+    const file = files.find((item) => item.path === hunk.path);
+    if (file === undefined) {
+      continue;
+    }
+    groups.push({ file, hunks: [hunk] });
+  }
+  const serializedFiles = groups.map(({ file, hunks: fileHunks }) => {
+    const next: SerializedFile = {
+      path: file.path,
+      patch: filePatchFromGit(file, fileHunks),
+      hunks: fileHunks.map(serializeHunk),
+    };
+    if (file.oldPath !== undefined) {
+      next.oldPath = file.oldPath;
+    }
+    return next;
+  });
+  return { hunks: hunks.map(serializeHunk), files: serializedFiles };
 }
 
 async function filePayload(opts: ServeOptions, params: URLSearchParams) {
@@ -243,6 +274,13 @@ type SerializedHunk = HunkRef & {
   header: string;
   language: string;
   lines: LiveHunk["lines"];
+};
+
+type SerializedFile = {
+  path: string;
+  oldPath?: string;
+  patch: string;
+  hunks: SerializedHunk[];
 };
 
 function serializeHunk(hunk: LiveHunk): SerializedHunk {

@@ -43,6 +43,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [hunks, setHunks] = useState<LiveHunk[]>([]);
+  const [layerPatches, setLayerPatches] = useState<Map<string, string>>(() => new Map());
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
   const [split, setSplit] = useState(false);
@@ -80,6 +81,7 @@ export function App() {
   useEffect(() => {
     if (selectedKey === null) {
       setHunks([]);
+      setLayerPatches(new Map());
       return;
     }
     let cancelled = false;
@@ -88,12 +90,14 @@ export function App() {
       .then((payload) => {
         if (!cancelled) {
           setHunks(payload.hunks);
+          setLayerPatches(new Map(payload.files.map((file) => [file.path, file.patch])));
           setActiveHunk(0);
         }
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
           setHunks([]);
+          setLayerPatches(new Map());
           setHunkError(cause instanceof Error ? cause.message : String(cause));
         }
       });
@@ -125,7 +129,7 @@ export function App() {
       } else if (event.key === "Escape") {
         setInspector(null);
       } else if (event.key === "j") {
-        const files = filesFromHunks(hunks);
+        const files = filesFromHunks(hunks, layerPatches);
         const current = files.findIndex(
           (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
         );
@@ -134,7 +138,7 @@ export function App() {
           setActiveHunk(next.firstIndex);
         }
       } else if (event.key === "k") {
-        const files = filesFromHunks(hunks);
+        const files = filesFromHunks(hunks, layerPatches);
         const current = files.findIndex(
           (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
         );
@@ -150,7 +154,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, hunks, load, meta, selection]);
+  }, [activeHunk, hunks, layerPatches, load, meta, selection]);
 
   useEffect(() => {
     document.querySelector(`[data-hunk="${activeHunk}"]`)?.scrollIntoView({ block: "nearest" });
@@ -163,7 +167,7 @@ export function App() {
     return meta.groups.find((group) => group.id === selection.id) ?? null;
   }, [meta, selection]);
 
-  const layerFiles = useMemo(() => filesFromHunks(hunks), [hunks]);
+  const layerFiles = useMemo(() => filesFromHunks(hunks, layerPatches), [hunks, layerPatches]);
 
   if (loading && meta === null) {
     return <Boot>Reading git…</Boot>;
@@ -390,7 +394,7 @@ export function App() {
                   onClose={() => setInspector(null)}
                 />
               ) : selection?.kind === "group" && hunks.length > 0 ? (
-                <FileRail hunks={hunks} active={activeHunk} onSelect={setActiveHunk} />
+                <FileRail hunks={hunks} patches={layerPatches} active={activeHunk} onSelect={setActiveHunk} />
               ) : (
                 <FileTree
                   files={meta.files}
@@ -606,6 +610,7 @@ function LayerBrief(props: {
 type LayerFile = {
   path: string;
   oldPath?: string;
+  patch: string;
   added: number;
   removed: number;
   hunkCount: number;
@@ -613,7 +618,7 @@ type LayerFile = {
   hunks: LiveHunk[];
 };
 
-function filesFromHunks(hunks: LiveHunk[]): LayerFile[] {
+function filesFromHunks(hunks: LiveHunk[], patches: Map<string, string>): LayerFile[] {
   const map = new Map<string, LayerFile>();
   hunks.forEach((hunk, index) => {
     const delta = lineDelta(hunk.lines);
@@ -622,6 +627,7 @@ function filesFromHunks(hunks: LiveHunk[]): LayerFile[] {
       map.set(hunk.path, {
         path: hunk.path,
         oldPath: hunk.oldPath,
+        patch: patches.get(hunk.path) ?? "",
         added: delta.added,
         removed: delta.removed,
         hunkCount: 1,
@@ -638,8 +644,13 @@ function filesFromHunks(hunks: LiveHunk[]): LayerFile[] {
   return [...map.values()];
 }
 
-function FileRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: number) => void }) {
-  const files = filesFromHunks(props.hunks);
+function FileRail(props: {
+  hunks: LiveHunk[];
+  patches: Map<string, string>;
+  active: number;
+  onSelect: (index: number) => void;
+}) {
+  const files = filesFromHunks(props.hunks, props.patches);
   const activePath = props.hunks[props.active]?.path;
   return (
     <>
@@ -715,7 +726,7 @@ function HunkView(props: {
           : null}
       </header>
       <PierreFileDiff
-        hunks={file.hunks}
+        patch={file.patch}
         split={split}
         wrap={wrap}
         splitRatio={splitRatio}

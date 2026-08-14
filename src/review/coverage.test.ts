@@ -29,6 +29,7 @@ describe("coverage join", () => {
         newLines: 2,
         header: "@@ -1,1 +1,2 @@",
         lines: [{ kind: "add", oldNumber: null, newNumber: 1, text: "x" }],
+        patch: "@@ -1,1 +1,2 @@\n+x\n",
       },
     ];
     const coverage = joinCoverage(
