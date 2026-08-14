@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json",
+  "title": "Comprehende ReviewDocument",
+  "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "source", "groups"],
+  "properties": {
+    "version": { "const": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseRef", "headRef"],
+      "properties": {
+        "baseRef": { "type": "string", "minLength": 1 },
+        "headRef": { "type": "string", "minLength": 1 },
+        "range": { "type": "string", "minLength": 1 }
+      }
+    },
+    "tickets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "summary", "suggestedOrder", "hunkRefs"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string" },
+          "suggestedOrder": { "type": "number" },
+          "hunkRefs": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/hunkRef" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hunkRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "oldStart", "oldLines", "newStart", "newLines"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "oldPath": { "type": "string", "minLength": 1 },
+        "oldStart": { "type": "integer", "minimum": 0 },
+        "oldLines": { "type": "integer", "minimum": 0 },
+        "newStart": { "type": "integer", "minimum": 0 },
+        "newLines": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

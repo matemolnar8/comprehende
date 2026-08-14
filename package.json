@@ -1,6 +1,6 @@
 {
   "name": "comprehende",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Local review assistant that groups git diffs so humans can comprehend AI code changes.",
   "type": "module",
   "bin": {
@@ -11,9 +11,11 @@
     "skills"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json && vite build",
     "dev": "tsx src/cli/main.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json",
+    "test": "tsx --test src/**/*.test.ts",
+    "fixture": "tsx scripts/build-fixture.ts"
   },
   "engines": {
     "node": ">=24"
@@ -30,7 +32,14 @@
   "homepage": "https://github.com/matemolnar8/comprehende#readme",
   "devDependencies": {
     "@types/node": "^24.13.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "highlight.js": "^11.11.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
     "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite": "^7.3.1"
   }
 }

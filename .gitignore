@@ -5,3 +5,6 @@ dist/
 .env
 .env.*
 !.env.example
+fixtures/repo/
+fixtures/example/review.json
+/review.json

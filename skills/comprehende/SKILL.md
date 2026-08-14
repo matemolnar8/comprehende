@@ -7,18 +7,60 @@ compatibility: Requires Node.js 24+, git, and a git work tree as the current wor
 
 # Comprehende
 
-Local review assistant. Always run the CLI inside the repository under review.
+Local review assistant. Always run the CLI **inside** the repository under review. Cwd is the repo. There is no `--repo` flag.
 
-## Status
+The review document is interpretation only: groups, summaries, hunk pointers. **Never** copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins — fix groups, never invent a replacement hunk.
 
-Skeleton. `index`, `validate`, and `serve` are not implemented yet.
+## Resolve the CLI
 
-## Intended workflow
+Prefer a built binary so cwd stays the repo under review:
 
-1. Resolve the git range (PR, `main...HEAD`, or user-specified).
-2. Run `comprehende index [--base <ref>] [--head <ref>]`.
-3. Write `review.json` with groups, summaries, and hunk refs only. Never copy patch text or file contents into the document.
-4. Run `comprehende validate --data review.json`. On failure, fix groups, never the diff.
-5. Run `comprehende serve --data review.json` and give the user the localhost URL.
+```sh
+node /path/to/comprehende/dist/cli/main.js <command>
+```
 
-During local development of this repo, invoke the CLI with `pnpm exec comprehende` or `pnpm dev -- <command>` from the comprehende checkout, still with cwd set to the repo under review.
+During development of this checkout, `pnpm dev -- <command>` is only valid when this repo is the one being reviewed.
+
+If the package is linked globally (`pnpm link --global` from the comprehende checkout), `comprehende` works from any cwd.
+
+## Workflow
+
+1. Resolve the git range (PR, `origin/main...HEAD`, or user-specified). GitHub PRs are three-dot: `base...head`.
+2. Run `comprehende index [--base <ref>] [--head <ref>]`. This prints hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
+3. Write `review.json` from those refs. On this experimental branch you may run `comprehende generate --data review.json` to draft groups, then edit. Do not paste patch text into the file.
+4. Run `comprehende validate --data review.json`. On failure, fix groups or coverage — never the diff.
+5. Run `comprehende serve --data review.json` and give the user the localhost URL (`127.0.0.1` only).
+
+Default `--head` is `HEAD`. Default `--base` is `origin/HEAD` (fallback `main` / `master`).
+
+## Grouping rules
+
+- Group by **review concern**, not by directory, unless the concern *is* a layer (schema, CLI, UI).
+- The same hunk may appear in multiple groups when it matters in more than one story.
+- Reading order: contracts / foundations first, then call sites, then tests, then chores.
+- Summaries say what changed and why it matters for the reviewer. Use commit subjects, ticket ids, and path lists. Do not paraphrase the patch line-by-line.
+- Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
+- Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
+
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory.
+
+Schema: [references/schema.md](./references/schema.md). Example document: [references/example.md](./references/example.md).
+
+## GitHub PR
+
+```sh
+git fetch origin pull/<n>/head:pr-<n>
+# cwd = that clone
+comprehende generate --base origin/<default-branch> --head pr-<n> --data /tmp/review.json
+comprehende validate --data /tmp/review.json
+comprehende serve --data /tmp/review.json --open
+```
+
+If `gh` is available you may attach ticket metadata (`id`, optional `url` / `title`) from `gh pr view`. Never required.
+
+## Accuracy
+
+- Do not generate, clean up, or rewrite diffs.
+- Do not snapshot the repo into the data layer.
+- Opening a review whose `source` refs do not resolve in cwd is a user error; the CLI must refuse.
+- The UI is a projector. The browser never computes diffs.
