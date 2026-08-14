@@ -32,24 +32,23 @@ node /path/to/comprehende/dist/cli/main.js index --base origin/main
 
 ## Review a GitHub repo (or PR)
 
-Clone the repo, fetch the range, then generate a review document and serve it. `generate` is experimental: it writes groups and hunk pointers only. Patch text still comes from git at serve time.
+Clone the repo, then generate a review document and serve it. `generate` is experimental: it writes groups and hunk pointers only. Patch text still comes from git at serve time. There is no `--repo` flag — cwd is the clone.
 
 ```sh
-git clone https://github.com/expressjs/express.git
-cd express
-git fetch origin pull/6327/head:pr-6327
-git checkout pr-6327
+git clone https://github.com/matemolnar8/vitadeck.git
+cd vitadeck
+# private: git clone git@github.com:matemolnar8/cigster.git && cd cigster
 
 node /path/to/comprehende/dist/cli/main.js generate \
-  --base origin/master \
+  --base origin/main \
   --head HEAD \
-  --data /tmp/express-review.json
+  --data /tmp/review.json
 
-node /path/to/comprehende/dist/cli/main.js validate --data /tmp/express-review.json
-node /path/to/comprehende/dist/cli/main.js serve --data /tmp/express-review.json --open
+node /path/to/comprehende/dist/cli/main.js validate --data /tmp/review.json
+node /path/to/comprehende/dist/cli/main.js serve --data /tmp/review.json --open
 ```
 
-Use the repo's default branch as `--base` (`master` for Express, `main` for most others). Three-dot range (`base...head`) matches GitHub's PR diff.
+To review a branch that is not `HEAD`, check it out (or pass `--head <ref>`). Three-dot range (`base...head`) matches GitHub's PR diff. `--base` defaults to `origin/HEAD` (or `main`/`master`).
 
 ## Install the skill
 
