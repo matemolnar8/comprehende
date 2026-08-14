@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [".", "../schema/types.ts", "../schema/hunk-meta.ts"]
 }

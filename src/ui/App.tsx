@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useDefaultLayout } from "react-resizable-panels";
 import {
   fetchBlame,
   fetchFile,
@@ -11,7 +12,14 @@ import {
   type ReviewMeta,
 } from "./api.ts";
 import { highlightLine } from "./highlight.ts";
-import { addedSymbols, hunkContext, lineDelta } from "../schema/hunk-meta.ts";
+import { addedSymbols, hunkRangeLabel, lineDelta } from "../schema/hunk-meta.ts";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
+import { Separator } from "@/components/ui/separator.tsx";
+import { Toggle } from "@/components/ui/toggle.tsx";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+import { cn } from "@/lib/utils.ts";
 
 type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" };
 
@@ -39,6 +47,11 @@ export function App() {
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<Inspector | null>(null);
   const [loading, setLoading] = useState(true);
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "comprehende-shell",
+    panelIds: ["stack", "main", "rail"],
+    onlySaveAfterUserInteractions: true,
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,10 +137,10 @@ export function App() {
   }, [meta, selection]);
 
   if (loading && meta === null) {
-    return <div className="boot">Reading git…</div>;
+    return <Boot>Reading git…</Boot>;
   }
   if (error !== null && meta === null) {
-    return <div className="boot error">{error}</div>;
+    return <Boot className="text-warn">{error}</Boot>;
   }
   if (meta === null) {
     return null;
@@ -135,165 +148,231 @@ export function App() {
 
   const coverageRatio = meta.coverage.totalHunks === 0 ? 1 : meta.coverage.assignedHunks / meta.coverage.totalHunks;
   const incomplete = meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0;
-  const highlightFiles = new Set(selectedGroup?.files ?? (selection?.kind === "unassigned" ? meta.unassigned.files : []));
+  const highlightFiles = new Set(
+    selectedGroup?.files ?? (selection?.kind === "unassigned" ? meta.unassigned.files : []),
+  );
 
   return (
-    <div className="app">
-      <header className="top">
-        <div className="brand">
-          <span className="wordmark">Comprehende</span>
-          <span className="tagline">diffs from git · groups are interpretation</span>
-        </div>
-        <div className="range" title={`${meta.resolved.baseSha} ... ${meta.resolved.headSha}`}>
-          <code>{meta.resolved.baseRef}</code>
-          <span className="dots">...</span>
-          <code>{meta.resolved.headRef}</code>
-          <span className="shas">
-            {shortSha(meta.resolved.baseSha)} → {shortSha(meta.resolved.headSha)}
-          </span>
-        </div>
-        <div className={`coverage ${incomplete ? "warn" : "ok"}`}>
-          <span>
-            {meta.coverage.assignedHunks}/{meta.coverage.totalHunks} hunks grouped
-            {meta.coverage.unassignedCount > 0 ? ` · ${meta.coverage.unassignedCount} unassigned` : ""}
-            {meta.coverage.staleCount > 0 ? ` · ${meta.coverage.staleCount} stale` : ""}
-          </span>
-          <div className="bar">
-            <div className="fill" style={{ width: `${Math.round(coverageRatio * 100)}%` }} />
+    <TooltipProvider>
+      <div className="flex h-full min-h-0 flex-col">
+        <header className="flex items-center gap-4 border-b border-border bg-card px-3 py-2">
+          <div className="flex min-w-52 flex-col">
+            <span className="font-serif text-base leading-none text-foreground">Comprehende</span>
+            <span className="mt-1 text-[11px] text-muted-foreground">diffs from git · groups are interpretation</span>
           </div>
-        </div>
-        <div className="actions">
-          <button type="button" className={wrap ? "on" : ""} onClick={() => setWrap((value) => !value)}>
-            wrap
-          </button>
-          <button type="button" onClick={() => void load()}>
-            refresh
-          </button>
-        </div>
-      </header>
+          <div
+            className="flex min-w-0 flex-1 items-baseline gap-2 text-sm"
+            title={`${meta.resolved.baseSha} ... ${meta.resolved.headSha}`}
+          >
+            <code className="text-primary">{meta.resolved.baseRef}</code>
+            <span className="text-muted-foreground">...</span>
+            <code className="text-primary">{meta.resolved.headRef}</code>
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {shortSha(meta.resolved.baseSha)} → {shortSha(meta.resolved.headSha)}
+            </span>
+          </div>
+          <div className={cn("min-w-56 text-xs", incomplete ? "text-warn" : "text-add")}>
+            <span>
+              {meta.coverage.assignedHunks}/{meta.coverage.totalHunks} hunks grouped
+              {meta.coverage.unassignedCount > 0 ? ` · ${meta.coverage.unassignedCount} unassigned` : ""}
+              {meta.coverage.staleCount > 0 ? ` · ${meta.coverage.staleCount} stale` : ""}
+            </span>
+            <div className="mt-1 h-1 overflow-hidden rounded-full bg-secondary">
+              <div
+                className={cn("h-full", incomplete ? "bg-warn" : "bg-add")}
+                style={{ width: `${Math.round(coverageRatio * 100)}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Toggle size="sm" variant="outline" pressed={wrap} onPressedChange={setWrap} aria-label="Wrap lines">
+                  Wrap
+                </Toggle>
+              </TooltipTrigger>
+              <TooltipContent>Wrap long lines (w)</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button size="sm" variant="outline" onClick={() => void load()}>
+                  Refresh
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reload live git (r)</TooltipContent>
+            </Tooltip>
+          </div>
+        </header>
 
-      <nav className="groups">
-        <h2>Stack</h2>
-        <ul>
-          <li>
-            <button
-              type="button"
-              className={selection?.kind === "overview" ? "active" : ""}
-              onClick={() => setSelection({ kind: "overview" })}
-            >
-              <span className="title">Overview</span>
-              <span className="count">{EFFORT[meta.effort.score]}</span>
-            </button>
-          </li>
-        </ul>
-        <ul>
-          {meta.groups.map((group, index) => (
-            <li key={group.id}>
-              <button
-                type="button"
-                className={selection?.kind === "group" && selection.id === group.id ? "active" : ""}
-                onClick={() => setSelection({ kind: "group", id: group.id })}
-              >
-                <span className="layer-index">{padLayer(index + 1)}</span>
-                <span className="title">{group.title}</span>
-                <span className="count">
-                  {group.files.length}f
-                  {group.staleCount > 0 ? ` · ${group.staleCount} stale` : ""}
-                </span>
-              </button>
-            </li>
-          ))}
-          <li>
-            <button
-              type="button"
-              className={`unassigned ${selection?.kind === "unassigned" ? "active" : ""}`}
-              onClick={() => setSelection({ kind: "unassigned" })}
-            >
-              <span className="title">Unassigned</span>
-              <span className="count">{meta.unassigned.hunkCount}</span>
-            </button>
-          </li>
-        </ul>
-        {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (
-          <section>
-            <h2>Tickets</h2>
-            <ul className="tickets">
-              {meta.document.tickets.map((ticket) => (
-                <li key={ticket.id}>
-                  {ticket.url !== undefined ? (
-                    <a href={ticket.url} target="_blank" rel="noreferrer">
-                      {ticket.id}
-                      {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                    </a>
-                  ) : (
-                    <span>
-                      {ticket.id}
-                      {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                    </span>
-                  )}
+        <ResizablePanelGroup
+          className="min-h-0 flex-1"
+          defaultLayout={defaultLayout}
+          onLayoutChanged={onLayoutChanged}
+        >
+          <ResizablePanel id="stack" defaultSize="22" minSize="14%" className="min-h-0">
+            <nav className="h-full overflow-auto bg-card py-3">
+              <PaneLabel>Stack</PaneLabel>
+              <ul className="mb-3 list-none p-0">
+                <li>
+                  <StackItem
+                    active={selection?.kind === "overview"}
+                    onClick={() => setSelection({ kind: "overview" })}
+                    title="Overview"
+                    count={EFFORT[meta.effort.score]}
+                  />
                 </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-      </nav>
-
-      <main className="diff">
-        {selection?.kind === "overview" ? (
-          <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
-        ) : selection?.kind === "unassigned" ? (
-          <div className="brief">
-            <p className="kicker">Unassigned</p>
-            <h1>Not in any layer</h1>
-            <p className="intent">
-              Live git still has these hunks, and no group points at them. Coverage cannot hide. Fix the review document
-              — never the diff.
-            </p>
-          </div>
-        ) : selectedGroup !== null ? (
-          <LayerBrief
-            group={selectedGroup}
-            index={layerIndex(meta.groups, selectedGroup.id)}
-            groups={meta.groups}
-            onOpenLayer={(id) => setSelection({ kind: "group", id })}
-          />
-        ) : (
-          <h1>Select a layer</h1>
-        )}
-        {hunkError !== null ? <p className="stale">{hunkError}</p> : null}
-        {selection?.kind !== "overview" ? (
-          <>
-            {hunks.length === 0 && hunkError === null ? <p className="muted">No hunks in this layer.</p> : null}
-            <div className={`hunks ${wrap ? "wrap" : ""}`}>
-              {hunks.map((hunk, index) => (
-                <HunkView
-                  key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}
-                  hunk={hunk}
-                  active={index === activeHunk}
-                  index={index}
+              </ul>
+              <ul className="mb-3 list-none p-0">
+                {meta.groups.map((group, index) => (
+                  <li key={group.id}>
+                    <StackItem
+                      active={selection?.kind === "group" && selection.id === group.id}
+                      onClick={() => setSelection({ kind: "group", id: group.id })}
+                      index={padLayer(index + 1)}
+                      title={group.title}
+                      count={`${group.files.length}f${group.staleCount > 0 ? ` · ${group.staleCount} stale` : ""}`}
+                    />
+                  </li>
+                ))}
+                <li>
+                  <StackItem
+                    active={selection?.kind === "unassigned"}
+                    onClick={() => setSelection({ kind: "unassigned" })}
+                    title="Unassigned"
+                    count={String(meta.unassigned.hunkCount)}
+                    warn
+                  />
+                </li>
+              </ul>
+              {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (
+                <section>
+                  <PaneLabel>Tickets</PaneLabel>
+                  <ul className="space-y-1.5 px-3 text-xs text-muted-foreground">
+                    {meta.document.tickets.map((ticket) => (
+                      <li key={ticket.id}>
+                        {ticket.url !== undefined ? (
+                          <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
+                            {ticket.id}
+                            {ticket.title !== undefined ? ` ${ticket.title}` : ""}
+                          </a>
+                        ) : (
+                          <span>
+                            {ticket.id}
+                            {ticket.title !== undefined ? ` ${ticket.title}` : ""}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </nav>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel id="main" defaultSize="56" minSize="30%" className="min-h-0">
+            <main className="h-full overflow-auto px-6 py-5">
+              {selection?.kind === "overview" ? (
+                <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
+              ) : selection?.kind === "unassigned" ? (
+                <Brief kicker="Unassigned" title="Not in any layer">
+                  <p className="font-serif text-[17px] leading-snug text-foreground">
+                    Live git still has these hunks, and no group points at them. Coverage cannot hide. Fix the review
+                    document — never the diff.
+                  </p>
+                </Brief>
+              ) : selectedGroup !== null ? (
+                <LayerBrief
+                  group={selectedGroup}
+                  index={layerIndex(meta.groups, selectedGroup.id)}
+                  groups={meta.groups}
+                  onOpenLayer={(id) => setSelection({ kind: "group", id })}
+                />
+              ) : (
+                <h1 className="font-serif text-xl">Select a layer</h1>
+              )}
+              {hunkError !== null ? <p className="mt-3 text-warn">{hunkError}</p> : null}
+              {selection?.kind !== "overview" ? (
+                <>
+                  {hunks.length === 0 && hunkError === null ? (
+                    <p className="mt-4 text-muted-foreground">No hunks in this layer.</p>
+                  ) : null}
+                  <div className={cn("mt-4 space-y-4", wrap && "hunks-wrap")}>
+                    {hunks.map((hunk, index) => (
+                      <HunkView
+                        key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}
+                        hunk={hunk}
+                        active={index === activeHunk}
+                        index={index}
+                        onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
+                      />
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </main>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel id="rail" defaultSize="22" minSize="14%" className="min-h-0">
+            <aside className="h-full overflow-auto bg-card py-3">
+              {inspector !== null ? (
+                <Inspector inspector={inspector} setInspector={setInspector} onClose={() => setInspector(null)} />
+              ) : selection?.kind === "group" && hunks.length > 0 ? (
+                <FileRail hunks={hunks} active={activeHunk} onSelect={setActiveHunk} />
+              ) : (
+                <FileTree
+                  files={meta.files}
+                  skipped={meta.skipped}
+                  highlight={highlightFiles}
                   onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
                 />
-              ))}
-            </div>
-          </>
-        ) : null}
-      </main>
+              )}
+            </aside>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+    </TooltipProvider>
+  );
+}
 
-      <aside className="files">
-        {inspector !== null ? (
-          <Inspector inspector={inspector} setInspector={setInspector} onClose={() => setInspector(null)} />
-        ) : selection?.kind === "group" && hunks.length > 0 ? (
-          <RangeRail hunks={hunks} active={activeHunk} onSelect={setActiveHunk} />
-        ) : (
-          <FileTree
-            files={meta.files}
-            skipped={meta.skipped}
-            highlight={highlightFiles}
-            onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
-          />
-        )}
-      </aside>
-    </div>
+function Boot(props: { children: string; className?: string }) {
+  return <div className={cn("p-12 text-muted-foreground", props.className)}>{props.children}</div>;
+}
+
+function PaneLabel(props: { children: string }) {
+  return (
+    <h2 className="mb-2 px-3 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+      {props.children}
+    </h2>
+  );
+}
+
+function StackItem(props: {
+  active: boolean;
+  onClick: () => void;
+  title: string;
+  count: string;
+  index?: string;
+  warn?: boolean;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={props.onClick}
+      className={cn(
+        "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] justify-start gap-2 rounded-md px-2 py-1.5 font-normal",
+        props.active && "bg-secondary text-foreground",
+        props.warn && "text-warn hover:text-warn",
+      )}
+    >
+      {props.index !== undefined ? (
+        <span className="w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
+      ) : null}
+      <span className="min-w-0 flex-1 truncate text-left">{props.title}</span>
+      <span className={cn("text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
+        {props.count}
+      </span>
+    </Button>
   );
 }
 
@@ -335,47 +414,68 @@ function sameSelection(a: Selection, b: Selection | null): boolean {
   return b.kind === "group" && b.id === a.id;
 }
 
+function Brief(props: { kicker: string; title: string; children: ReactNode }) {
+  return (
+    <div className="mb-5 max-w-[72ch]">
+      <p className="mb-1.5 text-[11px] tracking-[0.04em] text-muted-foreground uppercase">{props.kicker}</p>
+      <h1 className="mb-2 font-serif text-[22px] leading-tight text-foreground">{props.title}</h1>
+      {props.children}
+    </div>
+  );
+}
+
 function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }) {
   const { meta, onOpenLayer } = props;
   return (
-    <div className="brief overview">
-      <p className="kicker">Overview</p>
-      <h1>Review stack</h1>
-      {meta.document.walkthrough !== undefined ? <p className="intent">{meta.document.walkthrough}</p> : null}
-      <p className="effort">
+    <Brief kicker="Overview" title="Review stack">
+      {meta.document.walkthrough !== undefined ? (
+        <p className="mb-3 font-serif text-[17px] leading-snug text-foreground">{meta.document.walkthrough}</p>
+      ) : null}
+      <p className="mb-3 text-muted-foreground">
         Review effort {meta.effort.score}/5 · {EFFORT[meta.effort.score]} · {meta.effort.files} files · {meta.effort.hunks}{" "}
         hunks
       </p>
-      <h2>Read in this order</h2>
-      <ol className="stack-list">
+      <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+        Read in this order
+      </h2>
+      <ol className="m-0 list-none p-0">
         {meta.groups.map((group, index) => (
-          <li key={group.id}>
-            <button type="button" onClick={() => onOpenLayer(group.id)}>
-              <span className="layer-index">{padLayer(index + 1)}</span>
+          <li key={group.id} className="mb-1.5">
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-auto w-full justify-start gap-2.5 px-3 py-2 text-left font-normal"
+              onClick={() => onOpenLayer(group.id)}
+            >
+              <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{padLayer(index + 1)}</span>
               <span>
-                <strong>{group.title}</strong>
-                <span className="muted"> {group.summary}</span>
+                <strong className="font-medium text-foreground">{group.title}</strong>
+                <span className="text-muted-foreground"> {group.summary}</span>
               </span>
-            </button>
+            </Button>
           </li>
         ))}
       </ol>
-      <h2>Files by layer</h2>
-      <table className="file-summary">
+      <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+        Files by layer
+      </h2>
+      <table className="w-full border-collapse text-xs">
         <thead>
           <tr>
-            <th>Layer</th>
-            <th>Path</th>
-            <th>Hunks</th>
+            <th className="pb-1 text-left font-medium text-muted-foreground">Layer</th>
+            <th className="pb-1 text-left font-medium text-muted-foreground">Path</th>
+            <th className="pb-1 text-left font-medium text-muted-foreground">Hunks</th>
           </tr>
         </thead>
         <tbody>
           {meta.groups.flatMap((group, index) =>
             group.files.map((path) => (
-              <tr key={`${group.id}:${path}`}>
-                <td className="num">{padLayer(index + 1)}</td>
-                <td>{path}</td>
-                <td className="num">{meta.files.find((file) => file.path === path)?.hunkCount ?? ""}</td>
+              <tr key={`${group.id}:${path}`} className="border-t border-border">
+                <td className="py-1 pr-2 font-mono tabular-nums">{padLayer(index + 1)}</td>
+                <td className="py-1 pr-2">{path}</td>
+                <td className="py-1 font-mono tabular-nums">
+                  {meta.files.find((file) => file.path === path)?.hunkCount ?? ""}
+                </td>
               </tr>
             )),
           )}
@@ -383,17 +483,19 @@ function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }
       </table>
       {meta.commits.length > 0 ? (
         <>
-          <h2>Commits</h2>
-          <ul className="commits">
+          <h2 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+            Commits
+          </h2>
+          <ul className="space-y-1.5 text-xs text-muted-foreground">
             {meta.commits.map((commit) => (
               <li key={commit.sha}>
-                <code>{commit.shortSha}</code> {commit.subject}
+                <code className="text-primary">{commit.shortSha}</code> {commit.subject}
               </li>
             ))}
           </ul>
         </>
       ) : null}
-    </div>
+    </Brief>
   );
 }
 
@@ -405,26 +507,23 @@ function LayerBrief(props: {
 }) {
   const { group, index, groups, onOpenLayer } = props;
   return (
-    <div className="brief">
-      <p className="kicker">
-        Layer {padLayer(index)} · {group.files.length} file{group.files.length === 1 ? "" : "s"} · {group.hunkCount} hunk
-        {group.hunkCount === 1 ? "" : "s"}
-      </p>
-      <h1>{group.title}</h1>
-      <p className="intent">{group.summary}</p>
+    <Brief
+      kicker={`Layer ${padLayer(index)} · ${group.files.length} file${group.files.length === 1 ? "" : "s"} · ${group.hunkCount} hunk${group.hunkCount === 1 ? "" : "s"}`}
+      title={group.title}
+    >
+      <p className="mb-3 font-serif text-[17px] leading-snug text-foreground">{group.summary}</p>
       {group.dependsOn.length > 0 ? (
-        <p className="depends">
+        <p className="mb-3 text-muted-foreground">
           Depends on{" "}
           {group.dependsOn.map((id, i) => {
             const dep = groups.find((item) => item.id === id);
-            const label =
-              dep !== undefined ? `${padLayer(layerIndex(groups, id))} ${dep.title}` : id;
+            const label = dep !== undefined ? `${padLayer(layerIndex(groups, id))} ${dep.title}` : id;
             return (
               <span key={id}>
                 {i > 0 ? ", " : ""}
-                <button type="button" className="link" onClick={() => onOpenLayer(id)}>
+                <Button type="button" variant="link" className="h-auto p-0" onClick={() => onOpenLayer(id)}>
                   {label}
-                </button>
+                </Button>
               </span>
             );
           })}
@@ -432,8 +531,10 @@ function LayerBrief(props: {
       ) : null}
       {group.lookFor.length > 0 ? (
         <>
-          <h2>Look for</h2>
-          <ul className="look-for">
+          <h2 className="mt-4 mb-2 text-[11px] font-semibold tracking-[0.04em] text-muted-foreground uppercase">
+            Look for
+          </h2>
+          <ul className="mb-4 list-disc space-y-1.5 pl-4">
             {group.lookFor.map((item) => (
               <li key={item}>{item}</li>
             ))}
@@ -441,40 +542,81 @@ function LayerBrief(props: {
         </>
       ) : null}
       {group.staleCount > 0 ? (
-        <p className="stale">
-          {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the pointer is
-          flagged, not replaced.
+        <p className="text-warn">
+          {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the pointer
+          is flagged, not replaced.
         </p>
       ) : null}
-    </div>
+    </Brief>
   );
 }
 
-function RangeRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: number) => void }) {
+function filesFromHunks(hunks: LiveHunk[]): {
+  path: string;
+  oldPath?: string;
+  added: number;
+  removed: number;
+  hunkCount: number;
+  firstIndex: number;
+}[] {
+  const map = new Map<
+    string,
+    { path: string; oldPath?: string; added: number; removed: number; hunkCount: number; firstIndex: number }
+  >();
+  hunks.forEach((hunk, index) => {
+    const delta = lineDelta(hunk.lines);
+    const existing = map.get(hunk.path);
+    if (existing === undefined) {
+      map.set(hunk.path, {
+        path: hunk.path,
+        oldPath: hunk.oldPath,
+        added: delta.added,
+        removed: delta.removed,
+        hunkCount: 1,
+        firstIndex: index,
+      });
+      return;
+    }
+    existing.added += delta.added;
+    existing.removed += delta.removed;
+    existing.hunkCount += 1;
+  });
+  return [...map.values()];
+}
+
+function FileRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index: number) => void }) {
+  const files = filesFromHunks(props.hunks);
+  const activePath = props.hunks[props.active]?.path;
   return (
     <>
-      <h2>Ranges in this layer</h2>
-      <ul className="ranges">
-        {props.hunks.map((hunk, index) => {
-          const ctx = hunkContext(hunk.header);
-          const symbols = addedSymbols(hunk.lines.filter((line) => line.kind === "add").map((line) => line.text));
-          const delta = lineDelta(hunk.lines);
-          const label = ctx ?? (symbols[0] !== undefined ? symbols[0] : hunk.path);
-          return (
-            <li key={`${hunk.path}:${hunk.oldStart}:${hunk.newStart}`}>
-              <button type="button" className={index === props.active ? "active" : ""} onClick={() => props.onSelect(index)}>
-                <span className="name">{label}</span>
-                <span className="count">
-                  −{delta.removed} +{delta.added}
+      <PaneLabel>Files in this layer</PaneLabel>
+      <ul className="list-none p-0">
+        {files.map((file) => (
+          <li key={file.path} className="mb-0.5">
+            <Button
+              type="button"
+              variant="ghost"
+              className={cn(
+                "mx-2 h-auto w-[calc(100%-16px)] flex-col items-stretch gap-0.5 rounded-md px-2 py-1.5 font-normal",
+                file.path === activePath && "bg-secondary text-foreground",
+              )}
+              onClick={() => props.onSelect(file.firstIndex)}
+            >
+              <span className="flex w-full items-baseline gap-2">
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
                 </span>
-              </button>
-              <div className="range-meta">
-                {hunk.path}
-                {symbols.length > 0 ? ` · ${symbols.join(", ")}` : ""}
-              </div>
-            </li>
-          );
-        })}
+                <span className="shrink-0 font-mono text-[11px] tabular-nums">
+                  <span className="text-del">−{file.removed}</span>{" "}
+                  <span className="text-add">+{file.added}</span>
+                </span>
+              </span>
+              <span className="text-left text-[11px] text-muted-foreground">
+                {file.hunkCount} hunk{file.hunkCount === 1 ? "" : "s"}
+              </span>
+            </Button>
+          </li>
+        ))}
       </ul>
     </>
   );
@@ -482,17 +624,30 @@ function RangeRail(props: { hunks: LiveHunk[]; active: number; onSelect: (index:
 
 function HunkView(props: { hunk: LiveHunk; active: boolean; index: number; onOpen: (path: string) => void }) {
   const { hunk, active, index, onOpen } = props;
-  const ctx = hunkContext(hunk.header);
+  const symbols = addedSymbols(hunk.lines.filter((line) => line.kind === "add").map((line) => line.text));
+  const delta = lineDelta(hunk.lines);
   return (
-    <article className={`hunk ${active ? "active" : ""}`} data-hunk={index}>
-      <header>
-        <button type="button" className="path" onClick={() => onOpen(hunk.path)}>
+    <article
+      className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
+      data-hunk={index}
+    >
+      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-card px-3 py-2">
+        <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(hunk.path)}>
           {hunk.oldPath !== undefined ? `${hunk.oldPath} → ${hunk.path}` : hunk.path}
-        </button>
-        {ctx !== undefined ? <span className="symbol">{ctx}</span> : null}
-        <code className="header">{hunk.header.match(/^@@ [^@]+ @@/)?.[0] ?? hunk.header}</code>
+        </Button>
+        <code className="font-mono text-xs text-muted-foreground">{hunkRangeLabel(hunk.header)}</code>
+        <span className="ml-auto font-mono text-[11px] tabular-nums">
+          <span className="text-del">−{delta.removed}</span> <span className="text-add">+{delta.added}</span>
+        </span>
+        {symbols.length > 0
+          ? symbols.map((name) => (
+              <Badge key={name} variant="outline" className="font-mono font-normal">
+                {name}
+              </Badge>
+            ))
+          : null}
       </header>
-      <table>
+      <table className="hunk-table">
         <tbody>
           {hunk.lines.map((line, lineIndex) => (
             <tr key={lineIndex} className={line.kind}>
@@ -518,26 +673,43 @@ function FileTree(props: {
 }) {
   return (
     <>
-      <h2>Files in the live diff</h2>
-      <ul>
+      <PaneLabel>Files in the live diff</PaneLabel>
+      <ul className="list-none p-0">
         {props.files.map((file) => (
           <li key={file.path}>
-            <button
+            <Button
               type="button"
-              className={props.highlight.has(file.path) ? "in-group" : ""}
+              variant="ghost"
+              className={cn(
+                "mx-2 mb-0.5 h-auto w-[calc(100%-16px)] justify-start gap-2 px-2 py-1.5 font-normal",
+                props.highlight.has(file.path) && "bg-secondary",
+              )}
               onClick={() => props.onOpen(file.path)}
               disabled={file.binary}
             >
-              <span className={`status ${file.status}`}>{file.status[0]?.toUpperCase()}</span>
-              <span className="name">
+              <span
+                className={cn(
+                  "w-3 font-semibold",
+                  file.status === "added" && "text-add",
+                  file.status === "deleted" && "text-del",
+                  file.status === "renamed" && "text-primary",
+                )}
+              >
+                {file.status[0]?.toUpperCase()}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-left">
                 {file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path}
               </span>
-              <span className="count">{file.binary ? "binary" : file.hunkCount}</span>
-            </button>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                {file.binary ? "binary" : file.hunkCount}
+              </span>
+            </Button>
           </li>
         ))}
       </ul>
-      {props.skipped.length > 0 ? <p className="muted">Binary files are skipped in the hunk index.</p> : null}
+      {props.skipped.length > 0 ? (
+        <p className="px-3 text-xs text-muted-foreground">Binary files are skipped in the hunk index.</p>
+      ) : null}
     </>
   );
 }
@@ -587,54 +759,61 @@ function Inspector(props: {
   }, [inspector]);
 
   return (
-    <div className="inspector">
-      <div className="inspector-top">
-        <button type="button" onClick={onClose}>
-          back
-        </button>
-        <strong>{inspector.path}</strong>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex items-center gap-2 px-2">
+        <Button type="button" size="sm" variant="outline" onClick={onClose}>
+          Back
+        </Button>
+        <strong className="min-w-0 truncate text-xs">{inspector.path}</strong>
       </div>
-      <div className="inspector-tabs">
-        <button
+      <div className="flex gap-1 px-2 py-2">
+        <Button
           type="button"
-          className={inspector.mode === "file" ? "on" : ""}
+          size="sm"
+          variant={inspector.mode === "file" ? "secondary" : "ghost"}
           onClick={() => setInspector({ ...inspector, mode: "file" })}
         >
-          file
-        </button>
-        <button
+          File
+        </Button>
+        <Button
           type="button"
-          className={inspector.mode === "blame" ? "on" : ""}
+          size="sm"
+          variant={inspector.mode === "blame" ? "secondary" : "ghost"}
           onClick={() => setInspector({ ...inspector, mode: "blame" })}
         >
-          blame
-        </button>
-        <button
+          Blame
+        </Button>
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Button
           type="button"
-          className={inspector.side === "old" ? "on" : ""}
+          size="sm"
+          variant={inspector.side === "old" ? "secondary" : "ghost"}
           onClick={() => setInspector({ ...inspector, side: "old" })}
         >
-          old
-        </button>
-        <button
+          Old
+        </Button>
+        <Button
           type="button"
-          className={inspector.side === "new" ? "on" : ""}
+          size="sm"
+          variant={inspector.side === "new" ? "secondary" : "ghost"}
           onClick={() => setInspector({ ...inspector, side: "new" })}
         >
-          new
-        </button>
+          New
+        </Button>
       </div>
-      {error !== null ? <p className="stale">{error}</p> : null}
-      {inspector.mode === "file" && error === null ? <pre className="file-body">{content}</pre> : null}
+      {error !== null ? <p className="px-3 text-warn">{error}</p> : null}
+      {inspector.mode === "file" && error === null ? (
+        <pre className="flex-1 overflow-auto p-2 font-mono text-[11px]">{content}</pre>
+      ) : null}
       {inspector.mode === "blame" && blame !== null ? (
-        <table className="blame">
+        <table className="w-full flex-1 border-collapse overflow-auto p-2 text-[11px]">
           <tbody>
             {blame.map((line) => (
               <tr key={line.line}>
-                <td className="num">{line.line}</td>
-                <td className="sha">{line.sha.slice(0, 7)}</td>
-                <td className="author">{line.author}</td>
-                <td className="code">
+                <td className="pr-2 text-right align-top whitespace-nowrap text-muted-foreground">{line.line}</td>
+                <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.sha.slice(0, 7)}</td>
+                <td className="pr-2 align-top whitespace-nowrap text-muted-foreground">{line.author}</td>
+                <td className="align-top">
                   <code>{line.text}</code>
                 </td>
               </tr>

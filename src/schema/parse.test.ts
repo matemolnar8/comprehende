@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseReviewDocument } from "./parse.ts";
-import { addedSymbols, hunkContext } from "./hunk-meta.ts";
+import { addedSymbols, hunkContext, hunkRangeLabel } from "./hunk-meta.ts";
 
 describe("parseReviewDocument", () => {
   it("accepts a minimal valid document", () => {
@@ -81,5 +81,21 @@ describe("hunk-meta", () => {
       "createInvitation",
       "Id",
     ]);
+  });
+
+  it("does not treat nearby markdown or prose as hunk context", () => {
+    assert.equal(
+      hunkContext(
+        "@@ -19,6 +19,10 @@ Composer 2.5: Cheap model, preferred to use when possible for: low complexity si",
+      ),
+      undefined,
+    );
+    assert.equal(hunkContext("@@ -1,3 +1,8 @@ # Heading"), undefined);
+    assert.equal(
+      hunkRangeLabel(
+        "@@ -19,6 +19,10 @@ Composer 2.5: Cheap model, preferred to use when possible for: low complexity si",
+      ),
+      "@@ -19,6 +19,10 @@",
+    );
   });
 });
