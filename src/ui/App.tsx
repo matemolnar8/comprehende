@@ -7,8 +7,9 @@ import { Inspector, type InspectorState } from "./components/Inspector.tsx";
 import { Brief, LayerBrief } from "./components/LayerBrief.tsx";
 import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
-import { filesFromHunks } from "./lib/layer-files.ts";
+import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
 import { defaultSelection, shiftSelection, type Selection } from "./lib/selection.ts";
+import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -86,6 +87,8 @@ export function App() {
     setInspector(null);
   }, [selection]);
 
+  const { viewedPaths, setFileViewed } = useViewedFiles(meta?.resolved.baseSha, meta?.resolved.headSha);
+
   const scrollToHunk = useCallback((index: number) => {
     setActiveHunk(index);
     requestAnimationFrame(() => {
@@ -130,27 +133,29 @@ export function App() {
         return;
       } else if (event.key === "j") {
         const files = filesFromHunks(hunks, layerPatches);
-        const current = files.findIndex(
-          (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
-        );
+        const current = fileIndexAtHunk(files, activeHunk);
         const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
         if (next !== undefined) {
           scrollToHunk(next.firstIndex);
         }
       } else if (event.key === "k") {
         const files = filesFromHunks(hunks, layerPatches);
-        const current = files.findIndex(
-          (file) => activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount,
-        );
+        const current = fileIndexAtHunk(files, activeHunk);
         const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
         if (previous !== undefined) {
           scrollToHunk(previous.firstIndex);
+        }
+      } else if (event.key === "v") {
+        const files = filesFromHunks(hunks, layerPatches);
+        const current = files[Math.max(0, fileIndexAtHunk(files, activeHunk))];
+        if (current !== undefined) {
+          setFileViewed(current.path, !viewedPaths.has(current.path));
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, hunks, inspector, layerPatches, load, meta, scrollToHunk, selection]);
+  }, [activeHunk, hunks, inspector, layerPatches, load, meta, scrollToHunk, selection, setFileViewed, viewedPaths]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
@@ -236,7 +241,12 @@ export function App() {
                     {hunks.length === 0 && hunkError === null ? (
                       <p className="mt-8 text-muted-foreground">No hunks in this layer.</p>
                     ) : null}
-                    <div className="mt-8 space-y-8">
+                    {layerFiles.length > 0 ? (
+                      <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
+                        {layerFiles.filter((file) => viewedPaths.has(file.path)).length} of {layerFiles.length} files viewed
+                      </p>
+                    ) : null}
+                    <div className={layerFiles.length > 0 ? "mt-4 space-y-8" : "mt-8 space-y-8"}>
                       {layerFiles.map((file) => (
                         <HunkView
                           key={file.path}
@@ -246,8 +256,10 @@ export function App() {
                           split={split}
                           splitRatio={splitRatio}
                           wrap={wrap}
+                          viewed={viewedPaths.has(file.path)}
                           onSplitRatio={setSplitRatio}
                           onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
+                          onViewed={setFileViewed}
                         />
                       ))}
                     </div>

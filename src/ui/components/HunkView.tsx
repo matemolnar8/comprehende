@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { LayerFile } from "../lib/layer-files.ts";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { useEffect, useId, useState, type MouseEvent } from "react";
 
 export function HunkView(props: {
   file: LayerFile;
@@ -13,24 +15,64 @@ export function HunkView(props: {
   split: boolean;
   splitRatio: number;
   wrap: boolean;
+  viewed: boolean;
   onSplitRatio: (ratio: number) => void;
   onOpen: (path: string) => void;
+  onViewed: (path: string, viewed: boolean) => void;
 }) {
-  const { file, active, index, split, splitRatio, wrap, onSplitRatio, onOpen } = props;
+  const { file, active, index, split, splitRatio, wrap, viewed, onSplitRatio, onOpen, onViewed } = props;
+  const [collapsed, setCollapsed] = useState(viewed);
   const first = file.hunks[0];
   const symbols = addedSymbols(
     file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
   );
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
+  const bodyId = useId();
+  const Chevron = collapsed ? ChevronRightIcon : ChevronDownIcon;
+
+  useEffect(() => {
+    setCollapsed(viewed);
+  }, [viewed]);
+
+  const toggleCollapsed = (event: MouseEvent) => {
+    if (event.target instanceof Element && event.target.closest("button, input, label, a") !== null) {
+      return;
+    }
+    setCollapsed((value) => !value);
+  };
+
   return (
     <article
       className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
       data-hunk={index}
     >
-      <header className="sticky top-0 z-10 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-border bg-card px-4 py-3">
+      <header
+        className={cn(
+          "sticky top-0 z-10 flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 bg-card px-3 py-2",
+          collapsed ? null : "border-b border-border",
+        )}
+        onClick={toggleCollapsed}
+      >
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="size-6"
+          aria-expanded={!collapsed}
+          aria-controls={bodyId}
+          aria-label={collapsed ? "Expand file" : "Collapse file"}
+          onClick={() => setCollapsed((value) => !value)}
+        >
+          <Chevron className="size-4" />
+        </Button>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button type="button" variant="link" className="h-auto p-0 font-mono text-sm" onClick={() => onOpen(file.path)}>
+            <Button
+              type="button"
+              variant="link"
+              className={cn("h-auto p-0 font-mono text-sm", viewed && "text-muted-foreground")}
+              onClick={() => onOpen(file.path)}
+            >
               {label}
             </Button>
           </TooltipTrigger>
@@ -39,7 +81,7 @@ export function HunkView(props: {
         <code className="font-mono text-xs text-muted-foreground">
           {file.hunkCount === 1 && first !== undefined ? hunkRangeLabel(first.header) : `${file.hunkCount} hunks`}
         </code>
-        <span className="ml-auto font-mono text-[11px] tabular-nums">
+        <span className="font-mono text-[11px] tabular-nums">
           <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
         </span>
         {symbols.length > 0
@@ -49,14 +91,32 @@ export function HunkView(props: {
               </Badge>
             ))
           : null}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <label className="ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none">
+              <input
+                type="checkbox"
+                className="size-3.5 accent-primary"
+                checked={viewed}
+                onChange={(event) => onViewed(file.path, event.target.checked)}
+              />
+              Viewed
+            </label>
+          </TooltipTrigger>
+          <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>
+        </Tooltip>
       </header>
-      <PierreFileDiff
-        patch={file.patch}
-        split={split}
-        wrap={wrap}
-        splitRatio={splitRatio}
-        onSplitRatio={onSplitRatio}
-      />
+      <div id={bodyId} hidden={collapsed}>
+        {collapsed ? null : (
+          <PierreFileDiff
+            patch={file.patch}
+            split={split}
+            wrap={wrap}
+            splitRatio={splitRatio}
+            onSplitRatio={onSplitRatio}
+          />
+        )}
+      </div>
     </article>
   );
 }

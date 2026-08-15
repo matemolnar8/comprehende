@@ -37,3 +37,9 @@ export function filesFromHunks(hunks: LiveHunk[], patches: Map<string, string>):
   });
   return [...map.values()];
 }
+
+export function fileIndexAtHunk(files: LayerFile[], hunkIndex: number): number {
+  return files.findIndex(
+    (file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount,
+  );
+}
