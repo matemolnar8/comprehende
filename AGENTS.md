@@ -32,3 +32,4 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 - Useful summaries of the issues/tickets.
 - UI is always the same, not generated on the fly - only the data changes.
 - Works locally, no need for hosted services, deployed packages
+- Simple easy-to-understand wording throughout the UI and in the generated answers, using ASD-STE100 Simplified Technical English

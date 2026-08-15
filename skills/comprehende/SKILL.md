@@ -9,6 +9,15 @@ compatibility: Requires Node.js 24+, git, and a git work tree as the current wor
 
 Local review assistant. Always run the CLI **inside** the repository under review. Cwd is the repo. There is no `--repo` flag.
 
+## Purpose
+
+AI agents write a lot of code. That creates **comprehension debt**: the gap between what is in the repo and what humans actually understand. Unlike technical debt, nobody chooses it, and it stays invisible until something breaks.
+
+- **Cognitive offloading**: hand off the *how*, keep the *what*. The human still has a view of the change.
+- **Cognitive surrender**: adopt the agent's answer with no view of your own. That is how the debt grows.
+
+This skill is for offloading, not surrender. Group and summarize so a human can form their own view, then drill into the live git diff. Do not rubber-stamp. Do not hide risk behind file lists.
+
 The review document is interpretation only: groups, summaries, hunk pointers. **Never** copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins — fix groups, never invent a replacement hunk.
 
 ## Resolve the CLI
@@ -41,7 +50,7 @@ Tickets (`id`, optional `url` / `title`) may be copied from whatever tracker the
 - Group by **review concern**, not by directory, unless the concern *is* a layer (schema, CLI, UI).
 - The same hunk may appear in multiple groups when it matters in more than one story.
 - Reading order: contracts / foundations first, then call sites, then tests, then chores. Encode that with `dependsOn` (earlier layer ids).
-- `summary` is **one sentence**: what this layer is. `lookFor` is a short bullet list of what to inspect. Do not pack commits, file lists, and hunk counts into a single paragraph.
+- `summary` is **one sentence**: what this layer is, so a human can keep the *what*. `lookFor` is a short bullet list of what to inspect before accepting. Do not pack commits, file lists, and hunk counts into a single paragraph.
 - The UI also has an **Overview** of the stack. Optional document `walkthrough` is one or two sentences for the whole change (commit subjects are fine). Do not paraphrase the patch.
 - Set document `size` to the **human review burden**, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.
 - Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
