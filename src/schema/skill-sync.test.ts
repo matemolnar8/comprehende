@@ -1,61 +1,33 @@
 import assert from "node:assert/strict";
-import { readFile, readdir } from "node:fs/promises";
-import { join, relative } from "node:path";
 import { describe, it } from "node:test";
-import { skillPaths } from "./skill-paths.ts";
-
-const paths = skillPaths();
+import { applyCliPin, cliPinErrors } from "./cli-pin.ts";
+import { loadWorkingTreeSkillSync, skillSyncErrors } from "./skill-sync.ts";
 
 describe("skill schema sync", () => {
-  it("keeps the published and installed skill schemas identical to src/schema/review.schema.json", async () => {
-    const canonical = await readFile(paths.canonicalSchema, "utf8");
-    const published = await readFile(paths.publishedSchema, "utf8");
-    const installed = await readFile(paths.installedSchema, "utf8");
-    assert.equal(
-      published,
-      canonical,
-      "skills/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill",
-    );
-    assert.equal(
-      installed,
-      canonical,
-      ".agents/skills/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill",
-    );
-  });
-
-  it("mirrors skills/comprehende into .agents/skills/comprehende", async () => {
-    const published = await listFiles(paths.publishedSkill);
-    const installed = await listFiles(paths.installedSkill);
-    assert.deepEqual(
-      installed,
-      published,
-      ".agents/skills/comprehende is not a copy of skills/comprehende. Run: pnpm sync:skill",
-    );
-    for (const rel of published) {
-      const a = await readFile(join(paths.publishedSkill, rel));
-      const b = await readFile(join(paths.installedSkill, rel));
-      assert.equal(
-        b.equals(a),
-        true,
-        `${rel} differs between skills/ and .agents/. Run: pnpm sync:skill`,
-      );
-    }
+  it("keeps package version, schema, and skill copies in sync", async () => {
+    assert.deepEqual(skillSyncErrors(await loadWorkingTreeSkillSync()), []);
   });
 });
 
-async function listFiles(root: string): Promise<string[]> {
-  const out: string[] = [];
-  const walk = async (dir: string): Promise<void> => {
-    for (const entry of await readdir(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) {
-        await walk(full);
-        continue;
-      }
-      out.push(relative(root, full));
-    }
-  };
-  await walk(root);
-  out.sort();
-  return out;
-}
+describe("cli pin rewrite", () => {
+  it("rewrites every npx comprehende@ pin to the given version", () => {
+    const markdown = ["npx comprehende@0.0.1 index", "`npx comprehende@9.9.9`", "npx comprehende@0.1.0 serve"].join(
+      "\n",
+    );
+    const updated = applyCliPin(markdown, "1.2.3");
+    assert.equal(updated.includes("npx comprehende@1.2.3"), true);
+    assert.equal(updated.includes("npx comprehende@0.0.1"), false);
+    assert.equal(updated.includes("npx comprehende@9.9.9"), false);
+    assert.deepEqual(cliPinErrors(updated, "1.2.3"), []);
+  });
+
+  it("fails when the skill has no pin", () => {
+    assert.deepEqual(cliPinErrors("run comprehende index", "0.1.0"), ["SKILL.md must pin npx comprehende@0.1.0"]);
+  });
+
+  it("fails when a pin does not match package.json", () => {
+    assert.deepEqual(cliPinErrors("npx comprehende@0.2.0 index", "0.1.0"), [
+      "SKILL.md pins npx comprehende@0.2.0, package.json version is 0.1.0",
+    ]);
+  });
+});

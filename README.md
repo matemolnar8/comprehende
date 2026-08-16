@@ -45,7 +45,7 @@ Once the package is on npm:
 npx skills add matemolnar8/comprehende
 ```
 
-The skill is the agent workflow: `index` → read the git diffs → write `review.json` (refs + summaries only) → `validate` → `serve`. Edit `src/schema/review.schema.json` and run `pnpm sync:skill` so the copy in the skill folder stays identical.
+The skill is the agent workflow: `index` → read the git diffs → write `review.json` (refs + summaries only) → `validate` → `serve`. It calls `npx comprehende@<version>` with the same version as `package.json`. Edit `src/schema/review.schema.json` or bump `version`, then run `pnpm sync:skill`. Tests fail if the pin, schema, or `.agents` copy drift.
 
 ## Commands
 
@@ -77,7 +77,7 @@ pnpm dev -- --help
 
 ## Release
 
-Bump `version` in `package.json` when the CLI or UI changes. Do not bump it for skill-only edits.
+Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and skill pin differ. Do not bump for skill-only edits.
 
 Push to `main`. CI packs and tests the tarball on every change. If the version is not on npm yet, CI publishes it. Skill-only commits keep the same version, so they do not publish.
 

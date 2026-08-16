@@ -22,24 +22,22 @@ The review document is interpretation only: groups, summaries, hunk pointers. **
 
 ## Resolve the CLI
 
-Prefer a built binary so cwd stays the repo under review:
+Always invoke the published CLI with the pinned version. Run it **inside** the repository under review so cwd is that repo.
 
 ```sh
-node /path/to/comprehende/dist/cli/main.js <command>
+npx comprehende@0.1.0 <command>
 ```
 
-During development of this checkout, `pnpm dev -- <command>` is only valid when this repo is the one being reviewed.
-
-If the package is linked globally (`pnpm link --global` from the comprehende checkout), `comprehende` works from any cwd.
+Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base/head SHAs (or the merge-base), not current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `comprehende index [--base <ref>] [--head <ref>]` and save the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
+2. Run `npx comprehende@0.1.0 index [--base <ref>] [--head <ref>]` and save the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
 3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by **review concern**. Index is not enough to group.
 4. Write `review.json` by **copying hunk objects** from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text.
-5. Run `comprehende validate --data review.json`. On failure, fix groups or coverage — never the diff.
-6. Run `comprehende serve --data review.json --open` and give the user the localhost URL (`127.0.0.1` only).
+5. Run `npx comprehende@0.1.0 validate --data review.json`. On failure, fix groups or coverage — never the diff.
+6. Run `npx comprehende@0.1.0 serve --data review.json --open` and give the user the localhost URL (`127.0.0.1` only).
 
 Default `--head` is `HEAD`. Default `--base` is `origin/HEAD` (fallback `main` / `master`).
 
