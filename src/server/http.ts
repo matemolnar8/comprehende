@@ -304,7 +304,7 @@ async function serveStatic(res: ServerResponse, uiRoot: string, pathname: string
   if (!existsSync(uiRoot)) {
     throw new HttpError(
       503,
-      "UI build is missing. From the comprehende checkout run `pnpm build` (Vite emits dist/ui).",
+      "UI is missing from this install. Reinstall comprehende from npm, or from a git checkout run `pnpm build`.",
     );
   }
   const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");

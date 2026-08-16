@@ -177,18 +177,9 @@ Unit tests cover index, validate, coverage, stale refs, and HTTP smoke (`serve` 
 
 ### Prerequisite to 5 — npm-publishable package
 
-The skill cannot be finalized until `npx comprehende@<version>` is a real, pin-able install. Checkout paths (`node dist/cli/main.js`, `pnpm dev`, global link) are development-only.
+Done mechanically. `prepack` builds CLI + UI; UI libraries are `devDependencies`; `pnpm pack:smoke` installs the tarball in a foreign cwd and runs `index` / `validate` / `serve`. README uses `npx comprehende@0.1.0`. CI publishes from `main` when `package.json` version is new.
 
-Gaps today:
-
-- `dist/` is gitignored; `"files"` includes `dist` and `skills`; there is no `prepublishOnly` / `prepare` that builds. A publish without a build step cannot serve the UI (`serve` requires `dist/ui`).
-- Missing-UI error text still assumes a git checkout.
-- UI-only libraries sit in `dependencies` (`@pierre/diffs`, Radix, fonts, lucide, `react-resizable-panels`, …). The compiled CLI does not import them; Vite bundles the SPA. `npx` should not download that graph unless we have a reason.
-- No pack/CI check that the tarball runs `index` / `validate` / `serve` from a foreign cwd.
-- README install path is still the built binary. `npx skills add matemolnar8/comprehende` is documented as “once published.”
-- First npm publish (unscoped name `comprehende`, account, provenance) is Máté’s.
-
-Done when a packed tarball, installed somewhere that is not this checkout, can serve a review against git in that cwd.
+First npm publish (unscoped name `comprehende`, account, trusted publisher for workflow `ci.yml`) is Máté’s. Until that exists, CI skips publish.
 
 Issue: [#2](https://github.com/matemolnar8/comprehende/issues/2)
 

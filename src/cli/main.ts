@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
@@ -83,13 +84,26 @@ function openUrl(url: string): void {
   spawn(command, args, { stdio: "ignore", detached: true }).unref();
 }
 
-const thisFile = fileURLToPath(import.meta.url).replaceAll("\\", "/");
-const entry = process.argv[1];
-const isDirect =
-  entry !== undefined &&
-  (thisFile === resolve(entry).replaceAll("\\", "/") ||
-    /(?:^|\/)src\/cli\/main\.ts$/.test(resolve(entry)) ||
-    /(?:^|\/)dist\/cli\/main\.js$/.test(resolve(entry)));
-if (isDirect) {
+const thisFile = fileURLToPath(import.meta.url);
+if (isCliEntry(thisFile, process.argv[1])) {
   process.exitCode = await run(process.argv.slice(2));
+}
+
+export function isCliEntry(modulePath: string, argv1: string | undefined): boolean {
+  if (argv1 === undefined) {
+    return false;
+  }
+  try {
+    if (realpathSync(modulePath) === realpathSync(argv1)) {
+      return true;
+    }
+  } catch {
+    // argv[1] may not exist as a real path (tsx, some shims)
+  }
+  const entry = resolve(argv1).replaceAll("\\", "/");
+  return (
+    /(?:^|\/)src\/cli\/main\.ts$/.test(entry) ||
+    /(?:^|\/)dist\/cli\/main\.js$/.test(entry) ||
+    /(?:^|\/)comprehende$/.test(entry)
+  );
 }

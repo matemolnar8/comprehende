@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm pack:smoke
+
+  publish:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: npm install -g npm@latest
+      - run: pnpm install --frozen-lockfile
+      - name: Publish if this version is new
+        run: |
+          set -euo pipefail
+          VERSION="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json','utf8')).version)")"
+          if npm view "comprehende@${VERSION}" version >/dev/null 2>&1; then
+            echo "comprehende@${VERSION} is already on npm — skipping publish"
+            exit 0
+          fi
+          if ! npm view comprehende name >/dev/null 2>&1; then
+            echo "comprehende is not on npm yet. First publish is manual: pnpm publish --access public"
+            echo "Then add a GitHub Actions trusted publisher for workflow ci.yml"
+            exit 0
+          fi
+          echo "Publishing comprehende@${VERSION}"
+          npm publish --access public

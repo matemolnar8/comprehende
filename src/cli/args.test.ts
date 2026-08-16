@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseArgv } from "./args.ts";
-import { run } from "./main.ts";
+import { isCliEntry, run } from "./main.ts";
 
 describe("parseArgv", () => {
   it("parses serve flags", () => {
@@ -47,5 +47,15 @@ describe("run", () => {
       console.log = log;
       console.error = err;
     }
+  });
+});
+
+describe("isCliEntry", () => {
+  it("accepts the npm bin shim and the built file", () => {
+    assert.equal(isCliEntry("/tmp/dist/cli/main.js", "/tmp/node_modules/.bin/comprehende"), true);
+    assert.equal(isCliEntry("/tmp/dist/cli/main.js", "/tmp/dist/cli/main.js"), true);
+    assert.equal(isCliEntry("/tmp/src/cli/main.ts", "/tmp/src/cli/main.ts"), true);
+    assert.equal(isCliEntry("/tmp/dist/cli/main.js", "/tmp/src/cli/args.test.ts"), false);
+    assert.equal(isCliEntry("/tmp/dist/cli/main.js", undefined), false);
   });
 });

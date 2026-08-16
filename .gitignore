@@ -7,4 +7,5 @@ dist/
 !.env.example
 fixtures/repo/
 fixtures/example/review.json
+*.tgz
 /review.json

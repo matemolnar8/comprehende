@@ -4,49 +4,32 @@ Local review assistant for git diffs. Groups changes by review concern and shows
 
 Product intent: [AGENTS.md](./AGENTS.md). Implementation plan: [PLAN.md](./PLAN.md).
 
-## Develop
+## Install
 
-Node.js 24 (current LTS) and [pnpm](https://pnpm.io/).
-
-```sh
-pnpm install
-pnpm test
-pnpm typecheck
-pnpm build
-pnpm sync:skill
-pnpm dev -- --help
-```
-
-`pnpm build` emits `dist/cli` and `dist/ui`. The `comprehende` bin points at that output.
-
-Run the CLI **inside** the repository you want to review. There is no `--repo` flag. To review a different project, `cd` into it and invoke the built binary by absolute path (or a global link):
+Node.js 24+. Run the CLI **inside** the repository you want to review. There is no `--repo` flag.
 
 ```sh
-# from this checkout
-pnpm build
-
-# from the repository under review
-node /path/to/comprehende/dist/cli/main.js index --base origin/main
+npx comprehende@0.1.0 index --base origin/main
+npx comprehende@0.1.0 validate --data review.json
+npx comprehende@0.1.0 serve --data review.json --open
 ```
 
-`pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when *this* repo is the one under review.
+Pin the version. After a release, that version is on npm.
 
 ## Review a clone
-
-Clone the repo, `cd` into it, then index, write a review document, validate, and serve. There is no `--repo` flag — cwd is the clone. Diffs always come from git at serve time.
 
 ```sh
 git clone <url>
 cd <repo>
 
-node /path/to/comprehende/dist/cli/main.js index --base origin/main
+npx comprehende@0.1.0 index --base origin/main
 # write review.json from those hunk refs (the skill does this)
 
-node /path/to/comprehende/dist/cli/main.js validate --data /tmp/review.json
-node /path/to/comprehende/dist/cli/main.js serve --data /tmp/review.json --open
+npx comprehende@0.1.0 validate --data review.json
+npx comprehende@0.1.0 serve --data review.json --open
 ```
 
-Three-dot range (`base...head`) is the merge-request / branch diff. `--base` defaults to `origin/HEAD` (or `main`/`master`). `--head` defaults to `HEAD`.
+Three-dot range (`base...head`) is the merge-request / branch diff. `--base` defaults to `origin/HEAD` (or `main`/`master`). `--head` defaults to `HEAD`. `serve` binds `127.0.0.1` only and re-reads git on every request.
 
 ## Install the skill
 
@@ -56,7 +39,7 @@ From this checkout:
 npx skills add ./ --skill comprehende
 ```
 
-Once published:
+Once the package is on npm:
 
 ```sh
 npx skills add matemolnar8/comprehende
@@ -72,7 +55,33 @@ comprehende validate --data <review.json>
 comprehende serve --data <review.json> [--port] [--open]
 ```
 
-Defaults: `--head HEAD`, `--base` is `origin/HEAD` (or `main`/`master`). `serve` binds `127.0.0.1` only and re-reads git on every request.
+Defaults: `--head HEAD`, `--base` is `origin/HEAD` (or `main`/`master`).
+
+## Develop
+
+[pnpm](https://pnpm.io/).
+
+```sh
+pnpm install
+pnpm test
+pnpm typecheck
+pnpm build
+pnpm pack:smoke
+pnpm sync:skill
+pnpm dev -- --help
+```
+
+`pnpm build` emits `dist/cli` and `dist/ui`. `prepack` runs that build, so `pnpm pack` / `pnpm publish` always ship the UI.
+
+`pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when *this* repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.1.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
+
+## Release
+
+Bump `version` in `package.json` when the CLI or UI changes. Do not bump it for skill-only edits.
+
+Push to `main`. CI packs and tests the tarball on every change. If the version is not on npm yet, CI publishes it. Skill-only commits keep the same version, so they do not publish.
+
+The first publish is manual (`pnpm publish --access public`) so you can claim the name. After that, add a GitHub Actions trusted publisher on npmjs.com for workflow `ci.yml`.
 
 ## Fixture
 
