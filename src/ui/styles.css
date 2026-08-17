@@ -34,30 +34,78 @@
 }
 
 :root {
+  color-scheme: light;
   --radius: 0.45rem;
-  --background: #14171c;
-  --foreground: #d7dce4;
-  --card: #1c2028;
-  --card-foreground: #d7dce4;
-  --popover: #1c2028;
-  --popover-foreground: #d7dce4;
-  --primary: #5b8def;
-  --primary-foreground: #0f141a;
+  --background: #f4f6f8;
+  --foreground: #171b22;
+  --card: #ffffff;
+  --card-foreground: #171b22;
+  --popover: #ffffff;
+  --popover-foreground: #171b22;
+  --primary: #3d4fd8;
+  --primary-foreground: #ffffff;
+  --secondary: #e8ecf1;
+  --secondary-foreground: #171b22;
+  --muted: #e8ecf1;
+  --muted-foreground: #5c6570;
+  --accent: #e4e8f4;
+  --accent-foreground: #171b22;
+  --destructive: #cf222e;
+  --border: #d5dbe3;
+  --input: #d5dbe3;
+  --ring: #3d4fd8;
+  --add: #1a7f37;
+  --del: #cf222e;
+  --warn: #9a6700;
+  --add-bg: color-mix(in srgb, #1a7f37 16%, transparent);
+  --del-bg: color-mix(in srgb, #cf222e 16%, transparent);
+  --diff-canvas: #ffffff;
+  --diff-fg: #1f2328;
+  --diff-add-line: #e6ffec;
+  --diff-add-num: #ccffd8;
+  --diff-add-word: #abf2bc;
+  --diff-del-line: #ffebe9;
+  --diff-del-num: #ffd7d5;
+  --diff-del-word: #ff818266;
+  --diff-hunk: #ddf4ff;
+  --diff-hover: #f6f8fa;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #12151c;
+  --foreground: #e6eaf0;
+  --card: #1a1e27;
+  --card-foreground: #e6eaf0;
+  --popover: #1a1e27;
+  --popover-foreground: #e6eaf0;
+  --primary: #8b9cff;
+  --primary-foreground: #12151c;
   --secondary: #252a33;
-  --secondary-foreground: #d7dce4;
+  --secondary-foreground: #e6eaf0;
   --muted: #252a33;
-  --muted-foreground: #8a929e;
-  --accent: #2a3140;
-  --accent-foreground: #e8edf4;
-  --destructive: #c15c5c;
-  --border: #2e3540;
-  --input: #2e3540;
-  --ring: #5b8def;
-  --add: #5e9a72;
-  --del: #c15c5c;
-  --warn: #c9a227;
-  --add-bg: color-mix(in srgb, #5e9a72 16%, transparent);
-  --del-bg: color-mix(in srgb, #c15c5c 16%, transparent);
+  --muted-foreground: #8b939e;
+  --accent: #2a3148;
+  --accent-foreground: #e6eaf0;
+  --destructive: #f85149;
+  --border: #2c3340;
+  --input: #2c3340;
+  --ring: #8b9cff;
+  --add: #3fb950;
+  --del: #f85149;
+  --warn: #d4a017;
+  --add-bg: color-mix(in srgb, #3fb950 16%, transparent);
+  --del-bg: color-mix(in srgb, #f85149 16%, transparent);
+  --diff-canvas: #0d1117;
+  --diff-fg: #e6edf3;
+  --diff-add-line: rgba(46, 160, 67, 0.15);
+  --diff-add-num: rgba(46, 160, 67, 0.4);
+  --diff-add-word: rgba(46, 160, 67, 0.4);
+  --diff-del-line: rgba(248, 81, 73, 0.15);
+  --diff-del-num: rgba(248, 81, 73, 0.4);
+  --diff-del-word: rgba(248, 81, 73, 0.4);
+  --diff-hunk: rgba(56, 139, 253, 0.1);
+  --diff-hover: #161b22;
 }
 
 @layer base {
@@ -93,4 +141,3 @@
     transition-duration: 0.01ms !important;
   }
 }
-

@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Comprehende</title>
+    <script>
+      (() => {
+        try {
+          const stored = localStorage.getItem("comprehende.theme");
+          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const dark = stored === "dark" || (stored !== "light" && prefersDark);
+          document.documentElement.classList.toggle("dark", dark);
+          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+        } catch {
+          // private mode
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

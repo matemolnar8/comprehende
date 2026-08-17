@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 export function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) => void }) {
   const { meta, onOpenLayer } = props;
   return (
-    <div className="mb-8 max-w-[68ch]">
+    <div className="mb-8">
       {meta.document.walkthrough !== undefined ? (
         <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{meta.document.walkthrough}</h1>
       ) : (
@@ -19,7 +19,7 @@ export function Overview(props: { meta: ReviewMeta; onOpenLayer: (id: string) =>
             <Button
               type="button"
               variant="ghost"
-              className="h-auto w-full min-w-0 items-start justify-start gap-3 px-3 py-3 text-left font-normal whitespace-normal"
+              className="h-auto w-full min-w-0 items-start justify-start gap-4 rounded-md px-4 py-4 text-left font-normal whitespace-normal"
               onClick={() => onOpenLayer(group.id)}
             >
               <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">

@@ -10,9 +10,11 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { DIFF_THEMES } from "@/lib/theme.ts";
+import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 
-/** Theme tokens follow T3 Code's Pierre adapter: map the host palette into the shadow tree. */
+/** GitHub Primer diffblob colors, mapped into Pierre's shadow tree. */
 const PIERRE_UNSAFE_CSS = `
 [data-diffs-header],
 [data-diff],
@@ -21,25 +23,38 @@ const PIERRE_UNSAFE_CSS = `
 [data-virtualizer-buffer] {
   --diffs-header-font-family: var(--font-sans) !important;
   --diffs-font-family: var(--font-mono) !important;
-  --diffs-bg: var(--card) !important;
-  --diffs-light-bg: var(--card) !important;
-  --diffs-dark-bg: var(--card) !important;
+  --diffs-bg: var(--diff-canvas) !important;
+  --diffs-light-bg: var(--diff-canvas) !important;
+  --diffs-dark-bg: var(--diff-canvas) !important;
   --diffs-token-light-bg: transparent;
   --diffs-token-dark-bg: transparent;
-  --diffs-bg-context-override: color-mix(in srgb, var(--card) 97%, var(--foreground));
-  --diffs-bg-hover-override: color-mix(in srgb, var(--card) 94%, var(--foreground));
-  --diffs-bg-separator-override: color-mix(in srgb, var(--card) 95%, var(--foreground));
-  --diffs-bg-buffer-override: color-mix(in srgb, var(--card) 90%, var(--foreground));
-  --diffs-bg-addition-override: color-mix(in srgb, var(--card) 70%, var(--add));
-  --diffs-bg-addition-number-override: color-mix(in srgb, var(--card) 55%, var(--add));
-  --diffs-bg-addition-hover-override: color-mix(in srgb, var(--card) 85%, var(--add));
-  --diffs-bg-addition-emphasis-override: color-mix(in srgb, var(--card) 80%, var(--add));
-  --diffs-bg-deletion-override: color-mix(in srgb, var(--card) 70%, var(--del));
-  --diffs-bg-deletion-number-override: color-mix(in srgb, var(--card) 55%, var(--del));
-  --diffs-bg-deletion-hover-override: color-mix(in srgb, var(--card) 85%, var(--del));
-  --diffs-bg-deletion-emphasis-override: color-mix(in srgb, var(--card) 80%, var(--del));
-  background-color: var(--card) !important;
-  color: var(--foreground) !important;
+  --diffs-bg-context-override: var(--diff-canvas);
+  --diffs-bg-hover-override: var(--diff-hover);
+  --diffs-bg-separator-override: var(--diff-hunk);
+  --diffs-bg-buffer-override: var(--diff-hunk);
+  --diffs-bg-addition-override: var(--diff-add-line);
+  --diffs-bg-addition-number-override: var(--diff-add-num);
+  --diffs-bg-addition-hover-override: var(--diff-add-line);
+  --diffs-bg-addition-emphasis-override: var(--diff-add-word);
+  --diffs-bg-deletion-override: var(--diff-del-line);
+  --diffs-bg-deletion-number-override: var(--diff-del-num);
+  --diffs-bg-deletion-hover-override: var(--diff-del-line);
+  --diffs-bg-deletion-emphasis-override: var(--diff-del-word);
+  background-color: var(--diff-canvas) !important;
+  color: var(--diff-fg) !important;
+}
+
+[data-line-type="change-addition"] {
+  background-color: var(--diff-add-line) !important;
+}
+[data-line-type="change-addition"][data-column-number] {
+  background-color: var(--diff-add-num) !important;
+}
+[data-line-type="change-deletion"] {
+  background-color: var(--diff-del-line) !important;
+}
+[data-line-type="change-deletion"][data-column-number] {
+  background-color: var(--diff-del-num) !important;
 }
 
 [data-diff-type="split"][data-overflow="scroll"] {
@@ -73,7 +88,7 @@ export function PierreDiffPool(props: { children: ReactNode }) {
   }, []);
   const highlighterOptions = useMemo(
     () => ({
-      theme: "pierre-dark" as const,
+      theme: DIFF_THEMES,
       tokenizeMaxLineLength: 1000,
       useTokenTransformer: true,
       lineDiffType: "none" as const,
@@ -103,11 +118,12 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   fileDiff: FileDiffMetadata;
   split: boolean;
   wrap: boolean;
+  themeType: "light" | "dark";
 }) {
   const options = useMemo(
     () => ({
-      theme: "pierre-dark" as const,
-      themeType: "dark" as const,
+      theme: DIFF_THEMES,
+      themeType: props.themeType,
       diffStyle: props.split ? ("split" as const) : ("unified" as const),
       overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
       disableFileHeader: true,
@@ -115,7 +131,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       lineDiffType: "none" as const,
       unsafeCSS: PIERRE_UNSAFE_CSS,
     }),
-    [props.split, props.wrap],
+    [props.split, props.themeType, props.wrap],
   );
   return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
 });
@@ -124,6 +140,7 @@ const StablePierreFile = memo(function StablePierreFile(props: {
   path: string;
   contents: string;
   wrap: boolean;
+  themeType: "light" | "dark";
   annotations?: FileAnnotation[];
 }) {
   const file = useMemo(
@@ -136,14 +153,14 @@ const StablePierreFile = memo(function StablePierreFile(props: {
   );
   const options = useMemo(
     () => ({
-      theme: "pierre-dark" as const,
-      themeType: "dark" as const,
+      theme: DIFF_THEMES,
+      themeType: props.themeType,
       overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
       disableFileHeader: true,
       stickyHeader: false,
       unsafeCSS: PIERRE_UNSAFE_CSS,
     }),
-    [props.wrap],
+    [props.themeType, props.wrap],
   );
   return (
     <File
@@ -185,12 +202,14 @@ export function PierreFile(props: {
   wrap: boolean;
   annotations?: FileAnnotation[];
 }) {
+  const { resolved } = useTheme();
   return (
     <div className="min-h-0 min-w-0">
       <StablePierreFile
         path={props.path}
         contents={props.contents}
         wrap={props.wrap}
+        themeType={resolved}
         annotations={props.annotations}
       />
     </div>
@@ -205,6 +224,7 @@ export function PierreFileDiff(props: {
   onSplitRatio: (ratio: number) => void;
 }) {
   const { patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const { resolved } = useTheme();
   const fileDiff = useMemo(() => parseGitPatch(patch), [patch]);
 
   if (fileDiff === undefined) {
@@ -221,7 +241,7 @@ export function PierreFileDiff(props: {
         } as CSSProperties
       }
     >
-      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} />
+      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );

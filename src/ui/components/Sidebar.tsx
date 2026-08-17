@@ -82,8 +82,8 @@ function StackItem(props: {
       variant="ghost"
       onClick={props.onClick}
       className={cn(
-        "mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal",
-        props.active && "bg-secondary text-foreground",
+        "relative mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal",
+        props.active && "bg-accent text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary",
         props.warn && "text-warn hover:text-warn",
       )}
     >

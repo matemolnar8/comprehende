@@ -1,6 +1,8 @@
+import { MoonIcon, SunIcon } from "lucide-react";
 import { shortSha, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Kbd } from "./Kbd.tsx";
 
@@ -78,6 +80,7 @@ export function Header(props: {
           </div>
           <Kbd>s</Kbd>
         </div>
+        <ThemeToggle />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button size="sm" variant="outline" onClick={onRefresh}>
@@ -89,6 +92,26 @@ export function Header(props: {
         </Tooltip>
       </div>
     </header>
+  );
+}
+
+function ThemeToggle() {
+  const { resolved, toggleTheme } = useTheme();
+  const next = resolved === "dark" ? "light" : "dark";
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon-sm"
+          variant="outline"
+          aria-label={`Use ${next} theme`}
+          onClick={toggleTheme}
+        >
+          {resolved === "dark" ? <SunIcon /> : <MoonIcon />}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Use {next} theme</TooltipContent>
+    </Tooltip>
   );
 }
 
