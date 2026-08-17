@@ -33,3 +33,11 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 - UI is always the same, not generated on the fly - only the data changes.
 - Works locally, no need for hosted services, deployed packages
 - Simple easy-to-understand wording throughout the UI and in the generated answers, using ASD-STE100 Simplified Technical English
+
+## Notes from Máté, the repo owner
+
+I love to see simple code solving real, complex problems. I want you to always keep in mind what the project is about, and make every change, create every design and write every text in spirit of that.
+
+The skill is going to be reviewed and adjusted by me manually, but you should also write the skill with the above principles in mind.
+
+Type safety is one of the most useful things for humans and agents alike. Make good use of it when writing code. Rely on it as much as you can.
