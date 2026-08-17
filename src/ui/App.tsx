@@ -8,7 +8,7 @@ import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
 import { runViewTransition } from "./lib/motion.ts";
-import { defaultSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
+import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
 import { colorIndexByLayerId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
@@ -41,7 +41,7 @@ export function App() {
     try {
       const next = await fetchReview();
       setMeta(next);
-      setSelection((current) => current ?? defaultSelection(next));
+      setSelection((current) => current ?? initialSelection(next));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -52,6 +52,13 @@ export function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (meta === null || selection === null) {
+      return;
+    }
+    persistSelection(meta, selection);
+  }, [meta, selection]);
 
   const selectedKey =
     selection?.kind === "group" ? selection.id : selection?.kind === "unassigned" ? "unassigned" : null;

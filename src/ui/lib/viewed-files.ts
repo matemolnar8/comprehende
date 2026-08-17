@@ -33,7 +33,8 @@ export function setPathViewed(paths: Set<string>, path: string, viewed: boolean)
 
 export function readViewed(key: string): Set<string> {
   try {
-    return parseViewed(localStorage.getItem(key));
+    forgetLocalViewed(key);
+    return parseViewed(sessionStorage.getItem(key));
   } catch {
     return new Set();
   }
@@ -41,8 +42,17 @@ export function readViewed(key: string): Set<string> {
 
 export function writeViewed(key: string, paths: Set<string>): void {
   try {
-    localStorage.setItem(key, serializeViewed(paths));
+    forgetLocalViewed(key);
+    sessionStorage.setItem(key, serializeViewed(paths));
   } catch {
     // quota / private mode
+  }
+}
+
+function forgetLocalViewed(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // private mode
   }
 }
