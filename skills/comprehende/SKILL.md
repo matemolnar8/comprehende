@@ -47,7 +47,11 @@ Tickets (`id`, optional `url` / `title`) may be copied from whatever tracker the
 
 - Group by **review concern**, not by directory, unless the concern *is* a layer (schema, CLI, UI).
 - The same hunk may appear in multiple groups when it matters in more than one story.
-- Reading order: contracts / foundations first, then call sites, then tests, then chores. Encode that with `dependsOn` (earlier layer ids).
+- `dependsOn` is a real dependency: the reader needs the earlier layer to understand this one. Use it only inside the same story. Reading order inside a story: contracts / foundations first, then call sites, then tests.
+- Do not chain unrelated concerns with `dependsOn` just to force a reading order. Independent work — a second feature, a chore that does not hang on the main change, a drive-by that could have been its own PR — is its own group with no `dependsOn`, and no other group depends on it.
+- Give each independent story a short `part` name. A few words, not a sentence. Put the same `part` on every layer in that story. Independent work gets its own `part`. The UI colors layers that share a `part` together.
+- If you are not sure two concerns depend on each other, leave `dependsOn` empty and give them different `part` names. A false split is easy to see. A false chain hides a mixed PR.
+- Use `suggestedOrder` for the walk through the whole review, including independent parts.
 - `summary` is **one sentence**: what this layer is, so a human can keep the *what*. `lookFor` is a short bullet list of what to inspect before accepting. Do not pack commits, file lists, and hunk counts into a single paragraph.
 - The UI also has an **Overview** of the stack. Optional document `walkthrough` is one or two sentences for the whole change (commit subjects are fine). Do not paraphrase the patch.
 - Set document `size` to the **human review burden**, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.

@@ -69,6 +69,12 @@
   --diff-del-word: #ff818266;
   --diff-hunk: #ddf4ff;
   --diff-hover: #f6f8fa;
+  --strand-0: #2458b5;
+  --strand-1: #9a5b00;
+  --strand-2: #6b3d96;
+  --strand-3: #0b6e78;
+  --strand-4: #9a356e;
+  --strand-5: #3a5366;
 }
 
 .dark {
@@ -106,6 +112,12 @@
   --diff-del-word: rgba(248, 81, 73, 0.4);
   --diff-hunk: rgba(56, 139, 253, 0.1);
   --diff-hover: #161b22;
+  --strand-0: #8fb4f0;
+  --strand-1: #e0a64a;
+  --strand-2: #c9a3e8;
+  --strand-3: #6ed0d6;
+  --strand-4: #e399c0;
+  --strand-5: #9ab0c2;
 }
 
 @layer base {

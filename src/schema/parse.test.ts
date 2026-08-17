@@ -26,6 +26,28 @@ describe("parseReviewDocument", () => {
     assert.equal(result.ok, true);
   });
 
+  it("accepts a part name on a group", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          summary: "Adds a command.",
+          part: "Flags",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.groups[0]?.part, "Flags");
+    }
+  });
+
   it("rejects patch text fields", () => {
     const result = parseReviewDocument({
       version: 1,

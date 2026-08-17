@@ -15,7 +15,7 @@ export type ParseResult = ParseSuccess | ParseFailure;
 const DOCUMENT_KEYS = new Set(["version", "source", "size", "walkthrough", "tickets", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
 const TICKET_KEYS = new Set(["id", "url", "title"]);
-const GROUP_KEYS = new Set(["id", "title", "summary", "lookFor", "dependsOn", "suggestedOrder", "hunkRefs"]);
+const GROUP_KEYS = new Set(["id", "title", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
 const HUNK_KEYS = new Set(["path", "oldPath", "oldStart", "oldLines", "newStart", "newLines"]);
 
 export function parseReviewDocument(input: unknown): ParseResult {
@@ -153,6 +153,7 @@ function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
     const hunkRefs = parseHunkRefs(item.hunkRefs, `groups[${i}].hunkRefs`, errors);
     const lookFor = parseStringList(item.lookFor, `groups[${i}].lookFor`, errors);
     const dependsOn = parseStringList(item.dependsOn, `groups[${i}].dependsOn`, errors);
+    const part = item.part === undefined ? undefined : requiredString(item.part, `groups[${i}].part`, errors);
     if (id === undefined || title === undefined || summary === undefined || suggestedOrder === undefined) {
       return;
     }
@@ -166,6 +167,9 @@ function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
     }
     if (dependsOn !== undefined) {
       group.dependsOn = dependsOn;
+    }
+    if (part !== undefined) {
+      group.part = part;
     }
     groups.push(group);
   });

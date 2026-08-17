@@ -9,6 +9,7 @@ import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
 import { defaultSelection, shiftSelection, type Selection } from "./lib/selection.ts";
+import { colorIndexByLayerId, groupParts, isMixedReview } from "./lib/parts.ts";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
@@ -169,6 +170,9 @@ export function App() {
   }, [meta, selection]);
 
   const layerFiles = useMemo(() => filesFromHunks(hunks, layerPatches), [hunks, layerPatches]);
+  const parts = useMemo(() => groupParts(meta?.groups ?? []), [meta]);
+  const colorById = useMemo(() => colorIndexByLayerId(parts), [parts]);
+  const mixed = isMixedReview(parts);
 
   if (loading && meta === null) {
     return <Boot>Reading git…</Boot>;
@@ -204,7 +208,7 @@ export function App() {
           onLayoutChanged={onLayoutChanged}
         >
           <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-            <Sidebar meta={meta} selection={selection} onSelect={setSelection} />
+            <Sidebar meta={meta} selection={selection} parts={parts} onSelect={setSelection} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
@@ -218,7 +222,7 @@ export function App() {
             ) : (
               <main ref={mainRef} className="h-full overflow-auto px-10 py-8">
                 {selection?.kind === "overview" ? (
-                  <Overview meta={meta} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
+                  <Overview meta={meta} parts={parts} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
                 ) : selection?.kind === "unassigned" ? (
                   <Brief kicker="Unassigned" title="Not in any layer">
                     <p className="font-serif text-lg leading-relaxed text-foreground">
@@ -230,6 +234,8 @@ export function App() {
                     group={selectedGroup}
                     index={layerIndex(meta.groups, selectedGroup.id)}
                     groups={meta.groups}
+                    colorIndex={mixed ? colorById.get(selectedGroup.id) : undefined}
+                    partTitle={mixed ? selectedGroup.part : undefined}
                     onOpenLayer={(id) => setSelection({ kind: "group", id })}
                   />
                 ) : (

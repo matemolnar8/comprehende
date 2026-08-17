@@ -50,6 +50,7 @@ export type ReviewMeta = {
     summary: string;
     lookFor: string[];
     dependsOn: string[];
+    part?: string;
     suggestedOrder: number;
     hunkCount: number;
     staleCount: number;

@@ -2,6 +2,8 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part.
+
 ```json
 {
   "version": 1,
@@ -18,6 +20,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "contracts",
       "title": "Review document contract",
       "summary": "Hunk refs are identity; no patch fields on the document.",
+      "part": "Hunk identity",
       "lookFor": [
         "Unknown fields on the document must fail validation.",
         "Foundation: later layers depend on these shapes."
@@ -37,6 +40,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "git",
       "title": "Live git join",
       "summary": "Serve-time diff is joined by (path, oldStart, newStart).",
+      "part": "Hunk identity",
       "lookFor": ["Stale refs are flagged; git still wins."],
       "dependsOn": ["contracts"],
       "suggestedOrder": 1,
@@ -47,6 +51,23 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
           "oldLines": 8,
           "newStart": 10,
           "newLines": 24
+        }
+      ]
+    },
+    {
+      "id": "docs",
+      "title": "README wording",
+      "summary": "Docs only; the contract does not depend on this.",
+      "part": "README",
+      "lookFor": ["No code imports this file."],
+      "suggestedOrder": 2,
+      "hunkRefs": [
+        {
+          "path": "README.md",
+          "oldStart": 1,
+          "oldLines": 4,
+          "newStart": 1,
+          "newLines": 8
         }
       ]
     }

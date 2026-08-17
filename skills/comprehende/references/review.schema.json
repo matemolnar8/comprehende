@@ -61,8 +61,13 @@
           },
           "dependsOn": {
             "type": "array",
-            "description": "Ids of earlier layers in the stack.",
+            "description": "Ids of earlier layers this one depends on. Same story only. Omit when this layer does not depend on other layers.",
             "items": { "type": "string", "minLength": 1 }
+          },
+          "part": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Short name of the independent story this layer belongs to. Same name = same story. Different names could have been separate PRs."
           },
           "suggestedOrder": { "type": "number" },
           "hunkRefs": {

@@ -35,8 +35,10 @@ export type ReviewGroup = {
   summary: string;
   /** Scannable bullets of what to look at. Not a paragraph. */
   lookFor?: string[];
-  /** Earlier layer ids this one depends on. */
+  /** Earlier layer ids this one depends on. Same story only. Omit when independent. */
   dependsOn?: string[];
+  /** Short name of the independent story this layer belongs to. Same name = same story. */
+  part?: string;
   suggestedOrder: number;
   hunkRefs: HunkRef[];
 };

@@ -1,14 +1,19 @@
+import type { CSSProperties } from "react";
 import { padLayer, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
+import { colorIndexByLayerId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 
 export function Sidebar(props: {
   meta: ReviewMeta;
   selection: Selection | null;
+  parts: Part[];
   onSelect: (selection: Selection) => void;
 }) {
-  const { meta, selection, onSelect } = props;
+  const { meta, selection, parts, onSelect } = props;
+  const mixed = isMixedReview(parts);
+  const colors = mixed ? colorIndexByLayerId(parts) : new Map<string, number>();
   return (
     <nav className="h-full overflow-auto py-6">
       <ul className="mb-6 list-none p-0">
@@ -30,6 +35,7 @@ export function Sidebar(props: {
               index={padLayer(index + 1)}
               title={group.title}
               count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
+              colorIndex={colors.get(group.id)}
             />
           </li>
         ))}
@@ -75,15 +81,21 @@ function StackItem(props: {
   count?: string;
   index?: string;
   warn?: boolean;
+  colorIndex?: number;
 }) {
+  const colorIndex = props.colorIndex;
   return (
     <Button
       type="button"
       variant="ghost"
       onClick={props.onClick}
+      style={colorIndex !== undefined ? ({ "--strand": partColor(colorIndex) } as CSSProperties) : undefined}
       className={cn(
         "relative mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal",
-        props.active && "bg-accent text-foreground before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary",
+        props.active && "bg-accent text-foreground",
+        props.active && colorIndex === undefined && "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary",
+        colorIndex !== undefined && "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-(--strand)",
+        colorIndex !== undefined && !props.active && "before:opacity-45",
         props.warn && "text-warn hover:text-warn",
       )}
     >

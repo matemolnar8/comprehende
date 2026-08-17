@@ -133,6 +133,7 @@ async function reviewPayload(opts: ServeOptions) {
         summary: group.group.summary,
         lookFor: group.group.lookFor ?? [],
         dependsOn: group.group.dependsOn ?? [],
+        part: group.group.part,
         suggestedOrder: group.group.suggestedOrder,
         hunkCount: group.hunks.length,
         staleCount: group.stale.length,
