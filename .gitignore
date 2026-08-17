@@ -8,4 +8,3 @@ dist/
 fixtures/repo/
 fixtures/example/review.json
 *.tgz
-/review.json

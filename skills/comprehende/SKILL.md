@@ -33,11 +33,24 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base/head SHAs (or the merge-base), not current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `npx comprehende@0.1.0 index [--base <ref>] [--head <ref>]` and save the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**.
+2. Run `npx comprehende@0.1.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**. Do not write the index into the work tree.
 3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by **review concern**. Index is not enough to group.
-4. Write `review.json` by **copying hunk objects** from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text.
-5. Run `npx comprehende@0.1.0 validate --data review.json`. On failure, fix groups or coverage — never the diff.
-6. Run `npx comprehende@0.1.0 serve --data review.json --open` and give the user the localhost URL (`127.0.0.1` only).
+4. Create a temporary directory **outside** the repository, then write `review.json` there by **copying hunk objects** from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the **absolute** path to `--data`.
+
+   Create the directory with the OS temp tools:
+   - macOS / Linux: `mktemp -d` (or a unique name under `$TMPDIR` / `/tmp`)
+   - Windows: a unique folder under `%TEMP%` (cmd) or `[System.IO.Path]::GetTempPath()` (PowerShell)
+   - Node (any OS): `fs.mkdtempSync(path.join(os.tmpdir(), "comprehende-"))`
+
+   Unix example:
+
+   ```sh
+   REVIEW_DIR=$(mktemp -d)
+   # write $REVIEW_DIR/review.json
+   ```
+
+5. Run `npx comprehende@0.1.0 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage — never the diff.
+6. Run `npx comprehende@0.1.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 Default `--head` is `HEAD`. Default `--base` is `origin/HEAD` (fallback `main` / `master`).
 
@@ -66,5 +79,6 @@ Schema: [references/review.schema.json](./references/review.schema.json). Exampl
 
 - Do not generate, clean up, or rewrite diffs.
 - Do not snapshot the repo into the data layer.
+- Do not write `review.json` or the index dump into the repository under review. Use a temp directory.
 - Opening a review whose `source` refs do not resolve in cwd is a user error; the CLI must refuse.
 - The UI is a projector. The browser never computes diffs.
