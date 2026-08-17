@@ -35,6 +35,10 @@
 
 :root {
   color-scheme: light;
+  --motion: 180ms;
+  --motion-brief: 500ms;
+  --motion-brief-gap: 50ms;
+  --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --radius: 0.45rem;
   --background: #f4f6f8;
   --foreground: #171b22;
@@ -131,6 +135,10 @@
     height: 100%;
   }
 
+  html {
+    view-transition-name: none;
+  }
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-size: 14px;
@@ -144,6 +152,238 @@
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  [data-slot="button"],
+  [data-slot="toggle"],
+  [data-slot="badge"] {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: var(--motion);
+    transition-timing-function: var(--motion-ease);
+  }
+
+  .review-main {
+    scroll-behavior: smooth;
+  }
+
+  .hunk-card {
+    transition: border-color var(--motion) var(--motion-ease);
+  }
+
+  .hunk-chevron {
+    transition: transform var(--motion) var(--motion-ease);
+  }
+
+  .file-path {
+    transition: color var(--motion) var(--motion-ease);
+  }
+
+  .stack-strand {
+    transition: opacity var(--motion) var(--motion-ease);
+  }
+
+  .stack-selection {
+    transition-property: top, left, width, height;
+    transition-duration: var(--motion);
+    transition-timing-function: var(--motion-ease);
+  }
+
+  [data-slot="resizable-handle"]::after {
+    transition: background-color var(--motion) var(--motion-ease);
+  }
+}
+
+html[data-motion="layer"] .review-brief-strand {
+  view-transition-name: review-strand;
+}
+
+html[data-motion="layer"] .review-brief-copy {
+  view-transition-name: review-copy;
+}
+
+html[data-motion="layer"] .review-overview {
+  view-transition-name: review-overview;
+}
+
+html[data-motion="scene"] .review-scene {
+  view-transition-name: review-scene;
+}
+
+.review-brief {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.review-brief-strand {
+  width: 3px;
+  flex: none;
+  border-radius: 1px;
+}
+
+.review-brief-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+::view-transition-old(review-strand),
+::view-transition-new(review-strand),
+::view-transition-old(review-copy),
+::view-transition-new(review-copy),
+::view-transition-old(review-overview),
+::view-transition-new(review-overview),
+::view-transition-old(review-scene),
+::view-transition-new(review-scene) {
+  mix-blend-mode: normal;
+  animation-timing-function: var(--motion-ease);
+  animation-fill-mode: both;
+}
+
+::view-transition-old(review-strand),
+::view-transition-new(review-strand) {
+  height: 100%;
+  overflow: clip;
+  animation-duration: var(--motion-brief);
+}
+
+::view-transition-old(review-strand) {
+  animation-name: motion-fade-out;
+}
+
+::view-transition-new(review-strand) {
+  animation-name: motion-fade-in;
+}
+
+::view-transition-group(review-strand) {
+  animation-duration: var(--motion-brief);
+  animation-timing-function: var(--motion-ease);
+}
+
+::view-transition-image-pair(review-strand) {
+  isolation: isolate;
+}
+
+::view-transition-old(review-copy) {
+  animation-name: motion-slide-down-out;
+  animation-duration: calc((var(--motion-brief) - var(--motion-brief-gap)) / 2);
+}
+
+::view-transition-new(review-copy) {
+  animation-name: motion-slide-up-in;
+  animation-duration: calc((var(--motion-brief) - var(--motion-brief-gap)) / 2);
+  animation-delay: calc((var(--motion-brief) + var(--motion-brief-gap)) / 2);
+}
+
+::view-transition-group(review-copy) {
+  animation: none;
+}
+
+::view-transition-old(review-overview) {
+  animation-name: motion-fade-out;
+  animation-duration: var(--motion-brief);
+}
+
+::view-transition-new(review-overview) {
+  animation-name: motion-fade-in;
+  animation-duration: var(--motion-brief);
+}
+
+::view-transition-group(review-overview) {
+  animation: none;
+}
+
+::view-transition-old(review-scene) {
+  animation-name: motion-fade-out;
+  animation-duration: var(--motion);
+}
+
+::view-transition-new(review-scene) {
+  animation-name: motion-fade-in;
+  animation-duration: var(--motion);
+}
+
+::view-transition-group(review-scene) {
+  animation-duration: var(--motion);
+  animation-timing-function: var(--motion-ease);
+}
+
+::view-transition-image-pair(review-scene) {
+  isolation: isolate;
+}
+
+.stack {
+  position: relative;
+}
+
+.stack-item-active {
+  background-color: var(--accent);
+}
+
+.stack-selection {
+  display: none;
+}
+
+.stack-strand {
+  pointer-events: none;
+  position: absolute;
+  inset: 0.375rem auto 0.375rem 0;
+  z-index: 1;
+  width: 0.125rem;
+  border-radius: 9999px;
+  background-color: var(--strand, var(--primary));
+}
+
+.stack-item:hover:not(.stack-item-active) {
+  background-color: var(--accent);
+}
+
+@supports (anchor-name: --stack-active) {
+  .stack-item-active {
+    background-color: transparent;
+    anchor-name: --stack-active;
+  }
+
+  .stack-selection {
+    display: block;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+    position-anchor: --stack-active;
+    top: anchor(top);
+    left: anchor(left);
+    width: anchor-size(width);
+    height: anchor-size(height);
+    border-radius: var(--radius);
+    background-color: var(--accent);
+  }
+}
+
+@keyframes motion-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motion-slide-down-out {
+  to {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+}
+
+@keyframes motion-slide-up-in {
+  from {
+    opacity: 0;
+    translate: 0 0.75rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -151,5 +391,12 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

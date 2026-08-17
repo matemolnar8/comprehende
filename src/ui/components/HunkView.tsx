@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { LayerFile } from "../lib/layer-files.ts";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useState, type MouseEvent } from "react";
 
 export function HunkView(props: {
@@ -28,7 +28,6 @@ export function HunkView(props: {
   );
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
   const bodyId = useId();
-  const Chevron = collapsed ? ChevronRightIcon : ChevronDownIcon;
 
   useEffect(() => {
     setCollapsed(viewed);
@@ -43,7 +42,7 @@ export function HunkView(props: {
 
   return (
     <article
-      className={cn("overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
+      className={cn("hunk-card overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
       data-hunk={index}
     >
       <header
@@ -63,14 +62,14 @@ export function HunkView(props: {
           aria-label={collapsed ? "Expand file" : "Collapse file"}
           onClick={() => setCollapsed((value) => !value)}
         >
-          <Chevron className="size-4" />
+          <ChevronDownIcon className={cn("hunk-chevron size-4", collapsed && "-rotate-90")} />
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="link"
-              className={cn("h-auto p-0 font-mono text-sm", viewed && "text-muted-foreground")}
+              className={cn("file-path h-auto p-0 font-mono text-sm", viewed && "text-muted-foreground")}
               onClick={() => onOpen(file.path)}
             >
               {label}

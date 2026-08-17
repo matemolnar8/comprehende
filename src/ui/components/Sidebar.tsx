@@ -16,41 +16,44 @@ export function Sidebar(props: {
   const colors = mixed ? colorIndexByLayerId(parts) : new Map<string, number>();
   return (
     <nav className="h-full overflow-auto py-6">
-      <ul className="mb-6 list-none p-0">
-        <li>
-          <StackItem
-            active={selection?.kind === "overview"}
-            onClick={() => onSelect({ kind: "overview" })}
-            title="Overview"
-            count={sizeLabel(meta.document.size)}
-          />
-        </li>
-      </ul>
-      <ul className="mb-6 list-none p-0">
-        {meta.groups.map((group, index) => (
-          <li key={group.id}>
-            <StackItem
-              active={selection?.kind === "group" && selection.id === group.id}
-              onClick={() => onSelect({ kind: "group", id: group.id })}
-              index={padLayer(index + 1)}
-              title={group.title}
-              count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
-              colorIndex={colors.get(group.id)}
-            />
-          </li>
-        ))}
-        {meta.unassigned.hunkCount > 0 ? (
+      <div className="stack">
+        <span className="stack-selection" aria-hidden />
+        <ul className="mb-6 list-none p-0">
           <li>
             <StackItem
-              active={selection?.kind === "unassigned"}
-              onClick={() => onSelect({ kind: "unassigned" })}
-              title="Unassigned"
-              count={String(meta.unassigned.hunkCount)}
-              warn
+              active={selection?.kind === "overview"}
+              onClick={() => onSelect({ kind: "overview" })}
+              title="Overview"
+              count={sizeLabel(meta.document.size)}
             />
           </li>
-        ) : null}
-      </ul>
+        </ul>
+        <ul className="mb-6 list-none p-0">
+          {meta.groups.map((group, index) => (
+            <li key={group.id}>
+              <StackItem
+                active={selection?.kind === "group" && selection.id === group.id}
+                onClick={() => onSelect({ kind: "group", id: group.id })}
+                index={padLayer(index + 1)}
+                title={group.title}
+                count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
+                colorIndex={colors.get(group.id)}
+              />
+            </li>
+          ))}
+          {meta.unassigned.hunkCount > 0 ? (
+            <li>
+              <StackItem
+                active={selection?.kind === "unassigned"}
+                onClick={() => onSelect({ kind: "unassigned" })}
+                title="Unassigned"
+                count={String(meta.unassigned.hunkCount)}
+                warn
+              />
+            </li>
+          ) : null}
+        </ul>
+      </div>
       {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (
         <ul className="space-y-2 px-4 text-sm text-muted-foreground">
           {meta.document.tickets.map((ticket) => (
@@ -84,6 +87,7 @@ function StackItem(props: {
   colorIndex?: number;
 }) {
   const colorIndex = props.colorIndex;
+  const showStrand = colorIndex !== undefined || props.active;
   return (
     <Button
       type="button"
@@ -91,14 +95,14 @@ function StackItem(props: {
       onClick={props.onClick}
       style={colorIndex !== undefined ? ({ "--strand": partColor(colorIndex) } as CSSProperties) : undefined}
       className={cn(
-        "relative mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal",
-        props.active && "bg-accent text-foreground",
-        props.active && colorIndex === undefined && "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-primary",
-        colorIndex !== undefined && "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full before:bg-(--strand)",
-        colorIndex !== undefined && !props.active && "before:opacity-45",
+        "stack-item relative z-1 mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal hover:bg-transparent",
+        props.active && "stack-item-active text-foreground",
         props.warn && "text-warn hover:text-warn",
       )}
     >
+      {showStrand ? (
+        <span className={cn("stack-strand", colorIndex !== undefined && !props.active && "opacity-45")} aria-hidden />
+      ) : null}
       {props.index !== undefined ? (
         <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
       ) : null}

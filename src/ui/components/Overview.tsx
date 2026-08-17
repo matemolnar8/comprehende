@@ -14,7 +14,7 @@ export function Overview(props: {
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
 
   return (
-    <div className="mb-8">
+    <div className="review-overview mb-8">
       {meta.document.walkthrough !== undefined ? (
         <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{meta.document.walkthrough}</h1>
       ) : (

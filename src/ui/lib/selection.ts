@@ -2,11 +2,24 @@ import type { ReviewMeta } from "../api.ts";
 
 export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" };
 
+export type SelectionStackSource = {
+  groups: { id: string }[];
+  unassigned: { hunkCount: number };
+};
+
 export function defaultSelection(meta: ReviewMeta): Selection {
   if (meta.groups.length > 0) {
     return { kind: "overview" };
   }
   return { kind: "unassigned" };
+}
+
+export function selectionStack(source: SelectionStackSource): Selection[] {
+  const ids: Selection[] = [{ kind: "overview" }, ...source.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
+  if (source.unassigned.hunkCount > 0) {
+    ids.push({ kind: "unassigned" });
+  }
+  return ids;
 }
 
 export function shiftSelection(
@@ -18,10 +31,7 @@ export function shiftSelection(
   if (meta === null) {
     return;
   }
-  const ids: Selection[] = [{ kind: "overview" }, ...meta.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
-  if (meta.unassigned.hunkCount > 0) {
-    ids.push({ kind: "unassigned" });
-  }
+  const ids = selectionStack(meta);
   const current = ids.findIndex((item) => sameSelection(item, selection));
   const next = ids[(current + delta + ids.length) % ids.length];
   if (next !== undefined) {

@@ -287,7 +287,7 @@ function SplitResizeHandle(props: { ratio: number; onRatio: (ratio: number) => v
       tabIndex={0}
       className={cn(
         "absolute inset-y-0 z-10 flex w-3 -translate-x-1/2 cursor-col-resize touch-none items-center justify-center select-none",
-        "after:absolute after:inset-y-0 after:w-px after:bg-border hover:after:bg-primary/70",
+        "after:absolute after:inset-y-0 after:w-px after:bg-border hover:after:bg-primary/70 motion-safe:after:transition-colors",
       )}
       style={{ left: `${props.ratio * 100}%` }}
       onPointerDown={onPointerDown}

@@ -86,7 +86,7 @@ export function Inspector(props: {
   }, [inspector]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="review-inspector flex h-full min-h-0 flex-col">
       <div className="flex flex-wrap items-center gap-3 px-8 pt-6 pb-4">
         <Tooltip>
           <TooltipTrigger asChild>

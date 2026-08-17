@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
-import { fetchHunks, fetchReview, layerIndex, type LiveHunk, type ReviewMeta } from "./api.ts";
+import { fetchHunks, fetchReview, type LiveHunk, type ReviewMeta } from "./api.ts";
 import { Header } from "./components/Header.tsx";
-import { HunkView } from "./components/HunkView.tsx";
 import { Inspector, type InspectorState } from "./components/Inspector.tsx";
-import { Brief, LayerBrief } from "./components/LayerBrief.tsx";
+import { Layer } from "./components/Layer.tsx";
 import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
-import { defaultSelection, shiftSelection, type Selection } from "./lib/selection.ts";
-import { colorIndexByLayerId, groupParts, isMixedReview } from "./lib/parts.ts";
+import { runViewTransition } from "./lib/motion.ts";
+import { defaultSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
+import { colorIndexByLayerId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
@@ -84,9 +84,32 @@ export function App() {
     };
   }, [selectedKey]);
 
-  useEffect(() => {
-    setInspector(null);
-  }, [selection]);
+  const selectWithMotion = useCallback(
+    (next: Selection) => {
+      if (sameSelection(next, selection) && inspector === null) {
+        return;
+      }
+      const kind = inspector !== null ? "scene" : "layer";
+      runViewTransition(() => {
+        setSelection(next);
+        setInspector(null);
+      }, kind);
+    },
+    [inspector, selection],
+  );
+
+  const openInspector = useCallback((path: string) => {
+    runViewTransition(() => {
+      setInspector({ path, mode: "file", side: "new" });
+    }, "scene");
+  }, []);
+
+  const closeInspector = useCallback(() => {
+    if (inspector === null) {
+      return;
+    }
+    runViewTransition(() => setInspector(null), "scene");
+  }, [inspector]);
 
   const { viewedPaths, setFileViewed } = useViewedFiles(meta?.resolved.baseSha, meta?.resolved.headSha);
 
@@ -121,15 +144,15 @@ export function App() {
       } else if (event.key === "r") {
         void load();
       } else if (event.key === "o") {
-        setSelection({ kind: "overview" });
+        selectWithMotion({ kind: "overview" });
       } else if (event.key === "u") {
-        setSelection({ kind: "unassigned" });
+        selectWithMotion({ kind: "unassigned" });
       } else if (event.key === "Escape") {
-        setInspector(null);
+        closeInspector();
       } else if (event.key === "[") {
-        shiftSelection(meta, selection, setSelection, -1);
+        shiftSelection(meta, selection, selectWithMotion, -1);
       } else if (event.key === "]") {
-        shiftSelection(meta, selection, setSelection, 1);
+        shiftSelection(meta, selection, selectWithMotion, 1);
       } else if (inspector !== null) {
         return;
       } else if (event.key === "j") {
@@ -156,7 +179,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, hunks, inspector, layerPatches, load, meta, scrollToHunk, selection, setFileViewed, viewedPaths]);
+  }, [activeHunk, closeInspector, hunks, inspector, layerPatches, load, meta, scrollToHunk, selectWithMotion, selection, setFileViewed, viewedPaths]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
@@ -173,6 +196,8 @@ export function App() {
   const parts = useMemo(() => groupParts(meta?.groups ?? []), [meta]);
   const colorById = useMemo(() => colorIndexByLayerId(parts), [parts]);
   const mixed = isMixedReview(parts);
+  const strandColor =
+    mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
 
   if (loading && meta === null) {
     return <Boot>Reading git…</Boot>;
@@ -208,71 +233,44 @@ export function App() {
           onLayoutChanged={onLayoutChanged}
         >
           <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-            <Sidebar meta={meta} selection={selection} parts={parts} onSelect={setSelection} />
+            <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectWithMotion} />
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-            {inspector !== null ? (
-              <Inspector
-                inspector={inspector}
-                wrap={wrap}
-                setInspector={setInspector}
-                onClose={() => setInspector(null)}
-              />
-            ) : (
-              <main ref={mainRef} className="h-full overflow-auto px-10 py-8">
-                {selection?.kind === "overview" ? (
-                  <Overview meta={meta} parts={parts} onOpenLayer={(id) => setSelection({ kind: "group", id })} />
-                ) : selection?.kind === "unassigned" ? (
-                  <Brief kicker="Unassigned" title="Not in any layer">
-                    <p className="font-serif text-lg leading-relaxed text-foreground">
-                      These hunks are in git and in no layer. Fix the review document — never the diff.
-                    </p>
-                  </Brief>
-                ) : selectedGroup !== null ? (
-                  <LayerBrief
-                    group={selectedGroup}
-                    index={layerIndex(meta.groups, selectedGroup.id)}
-                    groups={meta.groups}
-                    colorIndex={mixed ? colorById.get(selectedGroup.id) : undefined}
-                    partTitle={mixed ? selectedGroup.part : undefined}
-                    onOpenLayer={(id) => setSelection({ kind: "group", id })}
-                  />
-                ) : (
-                  <h1 className="font-serif text-2xl">Select a layer</h1>
-                )}
-                {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
-                {selection?.kind !== "overview" ? (
-                  <>
-                    {hunks.length === 0 && hunkError === null ? (
-                      <p className="mt-8 text-muted-foreground">No hunks in this layer.</p>
-                    ) : null}
-                    {layerFiles.length > 0 ? (
-                      <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
-                        {layerFiles.filter((file) => viewedPaths.has(file.path)).length} of {layerFiles.length} files viewed
-                      </p>
-                    ) : null}
-                    <div className={layerFiles.length > 0 ? "mt-4 space-y-8" : "mt-8 space-y-8"}>
-                      {layerFiles.map((file) => (
-                        <HunkView
-                          key={file.path}
-                          file={file}
-                          active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
-                          index={file.firstIndex}
-                          split={split}
-                          splitRatio={splitRatio}
-                          wrap={wrap}
-                          viewed={viewedPaths.has(file.path)}
-                          onSplitRatio={setSplitRatio}
-                          onOpen={(path) => setInspector({ path, mode: "file", side: "new" })}
-                          onViewed={setFileViewed}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-              </main>
-            )}
+            <div className="review-scene h-full min-h-0">
+              {inspector !== null ? (
+                <Inspector
+                  inspector={inspector}
+                  wrap={wrap}
+                  setInspector={setInspector}
+                  onClose={closeInspector}
+                />
+              ) : (
+                <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8">
+                  {selection?.kind === "overview" ? (
+                    <Overview meta={meta} parts={parts} onOpenLayer={(id) => selectWithMotion({ kind: "group", id })} />
+                  ) : (
+                    <Layer
+                      group={selectedGroup}
+                      groups={meta.groups}
+                      mixed={mixed}
+                      strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
+                      hunkError={hunkError}
+                      files={layerFiles}
+                      activeHunk={activeHunk}
+                      split={split}
+                      splitRatio={splitRatio}
+                      wrap={wrap}
+                      viewedPaths={viewedPaths}
+                      onOpenLayer={(id) => selectWithMotion({ kind: "group", id })}
+                      onOpenFile={openInspector}
+                      onSplitRatio={setSplitRatio}
+                      onViewed={setFileViewed}
+                    />
+                  )}
+                </main>
+              )}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
