@@ -26,7 +26,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 ### Goals
 
-- 100% accuracy - every diff must match the repo as is - this means diffs are never AI generated, they must always come from source control such as Git
+- 100% accuracy - every diff must match the repo as is. Diffs always come from git at serve time. The review document holds groups, summaries, and hunk pointers only - never patch text, file bodies, or blame.
 - Easy on the eyes, easy to read
 - Allow drilling down - view full files instead of the diff, git blames, commit messages, branches, ticket/issue references
 - Useful summaries of the issues/tickets.

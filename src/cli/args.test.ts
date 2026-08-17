@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readPackageVersion } from "../package-root.ts";
 import { parseArgv } from "./args.ts";
 import { isCliEntry, run } from "./main.ts";
 
@@ -41,7 +42,7 @@ describe("run", () => {
       assert.equal(await run(["nope"]), 1);
       const text = lines.join("\n");
       assert.match(text, /Usage: comprehende/);
-      assert.match(text, /0\.1\.0/);
+      assert.ok(text.includes(readPackageVersion()));
       assert.match(text, /Unknown command: nope/);
     } finally {
       console.log = log;
