@@ -4,7 +4,8 @@ export type ApiResource =
   | { kind: "review" }
   | { kind: "hunks"; group: string }
   | { kind: "file"; path: string; side: FileSide }
-  | { kind: "blame"; path: string; side: FileSide };
+  | { kind: "blame"; path: string; side: FileSide }
+  | { kind: "image"; path: string; side: FileSide };
 
 export function apiHref(resource: ApiResource): string {
   switch (resource.kind) {
@@ -16,6 +17,8 @@ export function apiHref(resource: ApiResource): string {
       return `api/files/${resource.side}/${encodeFilePath(resource.path)}.json`;
     case "blame":
       return `api/blame/${resource.side}/${encodeFilePath(resource.path)}.json`;
+    case "image":
+      return `api/images/${resource.side}/${encodeFilePath(resource.path)}`;
   }
 }
 
@@ -30,6 +33,8 @@ export function apiFsRel(resource: ApiResource): string {
       return `api/files/${resource.side}/${resource.path}.json`;
     case "blame":
       return `api/blame/${resource.side}/${resource.path}.json`;
+    case "image":
+      return `api/images/${resource.side}/${resource.path}`;
   }
 }
 
@@ -47,6 +52,17 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
       return undefined;
     }
     return { kind: "hunks", group };
+  }
+  if (parts[1] === "images" && parts.length >= 4 && parts[2] !== undefined) {
+    const side = parts[2];
+    if (side !== "old" && side !== "new") {
+      return undefined;
+    }
+    const path = parts.slice(3).join("/");
+    if (!isRepoPath(path)) {
+      return undefined;
+    }
+    return { kind: "image", path, side };
   }
   if ((parts[1] === "files" || parts[1] === "blame") && parts.length >= 4 && parts[2] !== undefined) {
     const side = parts[2];

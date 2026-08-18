@@ -67,6 +67,14 @@ describe("export static site", () => {
       if (liveRes.status !== 200) {
         continue;
       }
+      if (resource.kind === "image") {
+        assert.deepEqual(
+          Buffer.from(await frozenRes.arrayBuffer()),
+          Buffer.from(await liveRes.arrayBuffer()),
+          apiHref(resource),
+        );
+        continue;
+      }
       assert.deepEqual(await frozenRes.json(), await liveRes.json(), apiHref(resource));
     }
 

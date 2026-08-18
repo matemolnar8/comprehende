@@ -1,5 +1,6 @@
 import { loadDocument } from "../cli/commands.ts";
 import { blameFile } from "../git/blame.ts";
+import { readImageBlob } from "../git/blob.ts";
 import { fileLanguage, filePatchFromGit, resolveSource, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
@@ -10,6 +11,19 @@ import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiLayerFile, ApiReview, FileSide } from "./types.ts";
+
+export type JsonSnapshot = {
+  encoding: "json";
+  body: unknown;
+};
+
+export type BytesSnapshot = {
+  encoding: "bytes";
+  mediaType: string;
+  body: Uint8Array;
+};
+
+export type Snapshot = JsonSnapshot | BytesSnapshot;
 
 export type ReviewContext = {
   cwd: string;
@@ -82,6 +96,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
         path: file.path,
         status: file.status,
         binary: file.binary,
+        image: file.image,
         hunkCount: file.hunks.length,
       };
       if (file.oldPath !== undefined) {
@@ -89,7 +104,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       }
       return entry;
     }),
-    skipped: files.filter((file) => file.binary).map((file) => ({ path: file.path, reason: "binary" })),
+    skipped: files.filter((file) => file.binary && !file.image).map((file) => ({ path: file.path, reason: "binary" })),
     commits,
   };
 }
@@ -134,16 +149,40 @@ export async function blamePayload(ctx: ReviewContext, path: string, side: FileS
   }
 }
 
-export async function renderResource(ctx: ReviewContext, resource: ApiResource): Promise<unknown> {
+export async function imagePayload(ctx: ReviewContext, path: string, side: FileSide): Promise<BytesSnapshot> {
+  const file = findFile(ctx.files, path);
+  if (!file.image) {
+    throw new ApiError(404, "path is not an image in the live diff");
+  }
+  const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
+  assertSideExists(file, side);
+  const ref = side === "old" ? ctx.mergeBaseSha : ctx.document.source.headRef;
+  try {
+    const blob = await readImageBlob(ctx.cwd, ref, lookup);
+    if (!blob.ok) {
+      throw new ApiError(404, `Git LFS object sha256:${blob.oid} is not in this clone`);
+    }
+    return { encoding: "bytes", mediaType: blob.mediaType, body: blob.bytes };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(404, error instanceof Error ? error.message : "image not found");
+  }
+}
+
+export async function renderResource(ctx: ReviewContext, resource: ApiResource): Promise<Snapshot> {
   switch (resource.kind) {
     case "review":
-      return reviewPayload(ctx);
+      return { encoding: "json", body: reviewPayload(ctx) };
     case "hunks":
-      return hunksPayload(ctx, resource.group);
+      return { encoding: "json", body: hunksPayload(ctx, resource.group) };
     case "file":
-      return filePayload(ctx, resource.path, resource.side);
+      return { encoding: "json", body: await filePayload(ctx, resource.path, resource.side) };
     case "blame":
-      return blamePayload(ctx, resource.path, resource.side);
+      return { encoding: "json", body: await blamePayload(ctx, resource.path, resource.side) };
+    case "image":
+      return imagePayload(ctx, resource.path, resource.side);
   }
 }
 
@@ -153,6 +192,12 @@ export function listResources(ctx: ReviewContext): ApiResource[] {
     resources.push({ kind: "hunks", group: group.id });
   }
   for (const file of ctx.files) {
+    if (file.image) {
+      for (const side of sidesFor(file)) {
+        resources.push({ kind: "image", path: file.path, side });
+      }
+      continue;
+    }
     for (const side of sidesFor(file)) {
       resources.push({ kind: "file", path: file.path, side });
       resources.push({ kind: "blame", path: file.path, side });
@@ -188,7 +233,9 @@ function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
   const serializedFiles = groups.map(({ file, hunks: fileHunks }) => {
     const next: ApiLayerFile = {
       path: file.path,
-      patch: filePatchFromGit(file, fileHunks),
+      kind: file.image ? "image" : "text",
+      status: file.status,
+      patch: file.image ? file.headerPatch : filePatchFromGit(file, fileHunks),
       hunks: fileHunks.map(serializeHunk),
     };
     if (file.oldPath !== undefined) {

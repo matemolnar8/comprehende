@@ -30,12 +30,21 @@ export async function git(cwd: string, args: string[], opts?: { allowFail?: bool
     if (opts?.allowFail) {
       return failure.stdout;
     }
-    throw new GitError(
-      `git ${args.join(" ")} failed: ${failure.stderr.trim() || failure.message}`,
-      args,
-      failure.stderr,
-      failure.code,
-    );
+    throw gitFailure(args, failure);
+  }
+}
+
+export async function gitBuffer(cwd: string, args: string[], opts?: { input?: Uint8Array }): Promise<Buffer> {
+  try {
+    const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
+      cwd,
+      encoding: "buffer",
+      maxBuffer: 64 * 1024 * 1024,
+      ...(opts?.input !== undefined ? { input: Buffer.from(opts.input) } : {}),
+    });
+    return stdout;
+  } catch (error) {
+    throw gitFailure(args, asExecFailure(error));
   }
 }
 
@@ -65,10 +74,29 @@ function asExecFailure(error: unknown): ExecFailure {
     };
     return {
       message: typeof record.message === "string" ? record.message : "git failed",
-      stdout: typeof record.stdout === "string" ? record.stdout : "",
-      stderr: typeof record.stderr === "string" ? record.stderr : "",
+      stdout: bufferText(record.stdout),
+      stderr: bufferText(record.stderr),
       code: typeof record.code === "number" ? record.code : null,
     };
   }
   return { message: "git failed", stdout: "", stderr: "", code: null };
+}
+
+function bufferText(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Buffer) {
+    return value.toString("utf8");
+  }
+  return "";
+}
+
+function gitFailure(args: string[], failure: ExecFailure): GitError {
+  return new GitError(
+    `git ${args.join(" ")} failed: ${failure.stderr.trim() || failure.message}`,
+    args,
+    failure.stderr,
+    failure.code,
+  );
 }

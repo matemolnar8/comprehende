@@ -1,7 +1,7 @@
 import { parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { filePatchFromGit, parseUnifiedDiff } from "./diff.ts";
+import { classifyDiffFiles, filePatchFromGit, parseUnifiedDiff } from "./diff.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
 index 111..222 100644
@@ -57,6 +57,7 @@ describe("parseUnifiedDiff", () => {
     const binary = files[2];
     assert.ok(binary);
     assert.equal(binary.binary, true);
+    assert.equal(binary.image, false);
     assert.equal(binary.hunks.length, 0);
   });
 
@@ -80,5 +81,49 @@ describe("parseUnifiedDiff", () => {
     const parsed = parsePatchFiles(first.patch, "git");
     assert.equal(parsed[0]?.files[0]?.name, "src/app.ts");
     assert.equal(parsed[0]?.files[0]?.hunks.length, 2);
+  });
+});
+
+const IMAGE_SAMPLE = `diff --git a/assets/shot.png b/assets/shot.png
+index 111..222 100644
+Binary files a/assets/shot.png and b/assets/shot.png differ
+diff --git a/shots/home.png b/shots/home.png
+index 111..222 100644
+--- a/shots/home.png
++++ b/shots/home.png
+@@ -1,3 +1,3 @@
+ version https://git-lfs.github.com/spec/v1
+-oid sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
++oid sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+ size 12
+`;
+
+describe("classifyDiffFiles", () => {
+  it("turns binary and LFS pointer image files into one image hunk", () => {
+    const files = classifyDiffFiles(parseUnifiedDiff(IMAGE_SAMPLE));
+    assert.equal(files.length, 2);
+
+    const binary = files[0];
+    assert.ok(binary);
+    assert.equal(binary.image, true);
+    assert.equal(binary.hunks.length, 1);
+    assert.equal(binary.hunks[0]?.oldStart, 0);
+    assert.equal(binary.hunks[0]?.newStart, 0);
+    assert.equal(binary.hunks[0]?.header, "image");
+
+    const lfs = files[1];
+    assert.ok(lfs);
+    assert.equal(lfs.binary, false);
+    assert.equal(lfs.image, true);
+    assert.equal(lfs.hunks.length, 1);
+    assert.equal(lfs.hunks[0]?.path, "shots/home.png");
+  });
+
+  it("leaves non-image binaries without hunks", () => {
+    const files = classifyDiffFiles(parseUnifiedDiff(SAMPLE));
+    const binary = files[2];
+    assert.ok(binary);
+    assert.equal(binary.image, false);
+    assert.equal(binary.hunks.length, 0);
   });
 });
