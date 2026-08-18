@@ -15,16 +15,19 @@ nvm use default
 
 corepack enable
 
-# The Cloud runtime injects a Node shim at /exec-daemon that shadows nvm in
-# every shell (login and non-login), so `node`/`pnpm` would otherwise be the
-# runtime's older Node. /usr/local/cargo/bin is on PATH ahead of that shim, so
-# link this repo's Node toolchain there to make it win everywhere.
-shim_dir="/usr/local/cargo/bin"
-node_bin="$(dirname "$(nvm which "$node_version")")"
-if [ -d "$shim_dir" ] && [ -w "$shim_dir" ]; then
-  for bin in "$node_bin"/*; do
-    ln -sf "$bin" "$shim_dir/$(basename "$bin")"
-  done
+# The Cloud runtime pre-seeds nvm's bin dir behind its own Node shim (/exec-daemon)
+# on PATH, so nvm leaves it there and the shim's older Node wins in the agent's
+# shells. Prepend nvm's active bin in ~/.bashrc (which the shells source, after
+# nvm is loaded and NVM_BIN is set) so the pinned Node wins. Version-agnostic and
+# idempotent.
+bashrc="$HOME/.bashrc"
+marker="# comprehende: prefer nvm's Node over the runtime Node shim"
+if [ -f "$bashrc" ] && ! grep -qF "$marker" "$bashrc"; then
+  {
+    echo ""
+    echo "$marker"
+    echo '[ -n "${NVM_BIN:-}" ] && export PATH="$NVM_BIN:$PATH"'
+  } >> "$bashrc"
 fi
 
 pnpm install --frozen-lockfile
