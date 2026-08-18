@@ -14,8 +14,24 @@ describe("parseArgv", () => {
       base: undefined,
       head: undefined,
       data: "review.json",
+      out: undefined,
       port: 0,
       open: true,
+    });
+  });
+
+  it("parses export flags", () => {
+    const req = parseArgv(["export", "--data", "review.json", "--out", "dist/review"], "/repo");
+    assert.deepEqual(req, {
+      kind: "command",
+      command: "export",
+      cwd: "/repo",
+      base: undefined,
+      head: undefined,
+      data: "review.json",
+      out: "dist/review",
+      port: 4567,
+      open: false,
     });
   });
 
@@ -42,6 +58,7 @@ describe("run", () => {
       assert.equal(await run(["nope"]), 1);
       const text = lines.join("\n");
       assert.match(text, /Usage: comprehende/);
+      assert.match(text, /export/);
       assert.ok(text.includes(readPackageVersion()));
       assert.match(text, /Unknown command: nope/);
     } finally {

@@ -5,9 +5,10 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdIndex, cmdValidate, loadDocument, resolveDataPath } from "./commands.ts";
-import { resolveSource } from "../git/diff.ts";
-import { coverReview, coverageErrors } from "../review/coverage.ts";
+import { cmdIndex, cmdValidate, resolveDataPath, resolveOutPath } from "./commands.ts";
+import { exportStaticSite } from "../api/snapshot.ts";
+import { openReview } from "../api/live.ts";
+import { coverageErrors } from "../review/coverage.ts";
 import { assertWorkTree } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
 import { startServer } from "../server/http.ts";
@@ -44,13 +45,8 @@ export async function run(argv: string[]): Promise<number> {
       }
       case "serve": {
         const dataPath = resolveDataPath(request.data, request.cwd);
-        const document = await loadDocument(dataPath);
-        await resolveSource(request.cwd, document.source.baseRef, document.source.headRef);
-        const { coverage } = await coverReview(request.cwd, document);
-        const problems = coverageErrors(coverage);
-        if (problems.length > 0) {
-          console.error(`coverage issues (serve continues; git wins, unassigned/stale are visible):\n${problems.join("\n\n")}`);
-        }
+        const ctx = await openReview(request.cwd, dataPath);
+        warnCoverage(ctx.coverage, "serve continues; git wins, unassigned/stale are visible");
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port });
         console.log(running.url);
         console.error(`serving ${dataPath}  cwd=${request.cwd}  localhost only`);
@@ -60,10 +56,27 @@ export async function run(argv: string[]): Promise<number> {
         await waitForClose(running.server);
         return 0;
       }
+      case "export": {
+        const dataPath = resolveDataPath(request.data, request.cwd);
+        const outDir = resolveOutPath(request.out, request.cwd);
+        const ctx = await openReview(request.cwd, dataPath);
+        warnCoverage(ctx.coverage, "export continues; git wins, unassigned/stale are visible");
+        const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
+        console.log(result.outDir);
+        console.error(`exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`);
+        return 0;
+      }
     }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
+  }
+}
+
+function warnCoverage(coverage: Parameters<typeof coverageErrors>[0], note: string): void {
+  const problems = coverageErrors(coverage);
+  if (problems.length > 0) {
+    console.error(`coverage issues (${note}):\n${problems.join("\n\n")}`);
   }
 }
 

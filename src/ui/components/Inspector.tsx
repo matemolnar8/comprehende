@@ -135,7 +135,7 @@ export function Inspector(props: {
         </div>
       </div>
       {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
-      {loading && error === null ? <p className="px-8 text-sm text-muted-foreground">Reading git…</p> : null}
+      {loading && error === null ? <p className="px-8 text-sm text-muted-foreground">Loading…</p> : null}
       {inspector.mode === "file" && error === null && !loading ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={content} wrap={wrap} />

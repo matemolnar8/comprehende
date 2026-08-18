@@ -21,3 +21,5 @@ console.log(`head: ${repo.head}`);
 console.log(`review: ${dataPath}`);
 console.log(`serve with cwd=${repo.root}:`);
 console.log(`  node dist/cli/main.js serve --data ${dataPath} --port 4567`);
+console.log(`export with cwd=${repo.root}:`);
+console.log(`  node dist/cli/main.js export --data ${dataPath} --out fixtures/site`);

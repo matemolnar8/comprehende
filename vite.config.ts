@@ -8,7 +8,7 @@ const uiRoot = fileURLToPath(new URL("./src/ui", import.meta.url));
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   root: uiRoot,
-  base: "/",
+  base: "./",
   resolve: {
     alias: {
       "@": uiRoot,
