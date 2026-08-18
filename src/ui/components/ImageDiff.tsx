@@ -1,4 +1,13 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
 import { fitImageStage, stageCaption } from "../lib/image-stage.ts";
@@ -46,7 +55,7 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
             <ModeButton active={mode === "slider"} onClick={() => setMode("slider")} hint="Drag to wipe between old and new">
               Slider
             </ModeButton>
-            <ModeButton active={mode === "diff"} onClick={() => setMode("diff")} hint="Changed pixels">
+            <ModeButton active={mode === "diff"} onClick={() => setMode("diff")} hint="Pixels that differ">
               Diff
             </ModeButton>
           </div>
@@ -62,7 +71,7 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
       {missing !== null ? <p className="px-3 py-2 text-sm text-warn">{missing}</p> : null}
       {!ready && missing === null ? <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p> : null}
       {ready && (mode === "side-by-side" || !both) ? (
-        <div className="flex flex-wrap">
+        <div className="flex w-fit max-w-full flex-wrap">
           {hasOld ? (
             <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
               {oldUrl !== undefined && !oldImage.error ? (
@@ -137,7 +146,7 @@ function ModeButton(props: { active: boolean; onClick: () => void; children: str
 
 function LabeledStage(props: { label: string; width: number; height: number; children: ReactNode; rule?: boolean }) {
   return (
-    <figure className={cn("min-w-0", props.rule === true && "border-r border-border")}>
+    <figure className={cn("w-fit min-w-0", props.rule === true && "border-r border-border")}>
       <figcaption className="border-b border-border px-3 py-1 font-mono text-[11px] text-muted-foreground">{props.label}</figcaption>
       <StageFrame width={props.width} height={props.height}>
         {props.children}
@@ -146,11 +155,22 @@ function LabeledStage(props: { label: string; width: number; height: number; chi
   );
 }
 
-function StageFrame(props: { width: number; height: number; children: ReactNode; className?: string }) {
+function StageFrame(props: {
+  width: number;
+  height: number;
+  children: ReactNode;
+  className?: string;
+  ref?: Ref<HTMLDivElement>;
+  onPointerDown?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerMove?: (event: ReactPointerEvent<HTMLDivElement>) => void;
+}) {
   return (
     <div
-      className={cn("relative overflow-hidden bg-[var(--diff-canvas)]", props.className)}
+      ref={props.ref}
+      className={cn("image-stage relative shrink-0 overflow-hidden", props.className)}
       style={{ width: props.width, height: props.height }}
+      onPointerDown={props.onPointerDown}
+      onPointerMove={props.onPointerMove}
     >
       {props.children}
     </div>
@@ -214,11 +234,12 @@ function WipeStage(props: {
   };
 
   return (
-    <figure className="min-w-0">
-      <div
+    <figure className="w-fit min-w-0">
+      <StageFrame
         ref={frameRef}
-        className="relative cursor-col-resize touch-none overflow-hidden bg-[var(--diff-canvas)]"
-        style={{ width, height }}
+        width={width}
+        height={height}
+        className="cursor-col-resize touch-none"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
       >
@@ -226,9 +247,12 @@ function WipeStage(props: {
         <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 0 0 ${100 - wipe}%)` }}>
           <StageImage src={newUrl} alt="New" width={width} height={height} />
         </div>
-        <div className="pointer-events-none absolute inset-y-0 w-0.5 bg-primary" style={{ left: `${wipe}%` }} aria-hidden />
-      </div>
-      <label className="flex items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground" htmlFor={id}>
+        <div className="pointer-events-none absolute inset-y-0" style={{ left: `${wipe}%` }} aria-hidden>
+          <span className="absolute inset-y-0 left-0 w-px -translate-x-1/2 bg-primary" />
+          <span className="absolute top-1/2 left-0 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-card" />
+        </div>
+      </StageFrame>
+      <label className="flex w-full items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground" htmlFor={id}>
         Old
         <input
           id={id}
@@ -280,12 +304,10 @@ function PixelStage(props: {
   }, [props.naturalHeight, props.naturalWidth, props.newImage, props.oldImage]);
 
   return (
-    <figure className="min-w-0">
-      <canvas
-        ref={canvasRef}
-        className="block bg-[var(--diff-canvas)]"
-        style={{ width: props.width, height: props.height }}
-      />
+    <figure className="w-fit min-w-0">
+      <StageFrame width={props.width} height={props.height}>
+        <canvas ref={canvasRef} className="block size-full" />
+      </StageFrame>
       {stats !== null ? (
         <figcaption className="px-3 py-2 font-mono text-[11px] tabular-nums text-muted-foreground">
           {stats.changed.toLocaleString()} of {stats.total.toLocaleString()} pixels differ
