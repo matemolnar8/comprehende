@@ -1,7 +1,9 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
+import { fitImageStage, stageCaption } from "../lib/image-stage.ts";
 import { Button } from "@/components/ui/button.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { FileStatus } from "../api.ts";
 
@@ -14,116 +16,219 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
   const oldUrl = hasOld ? resourceHref({ kind: "image", path, side: "old" }) : undefined;
   const newUrl = hasNew ? resourceHref({ kind: "image", path, side: "new" }) : undefined;
   const both = oldUrl !== undefined && newUrl !== undefined;
+  const oldImage = useLoadedImage(oldUrl);
+  const newImage = useLoadedImage(newUrl);
+  const host = useHostBox();
   const [mode, setMode] = useState<ImageMode>("side-by-side");
   const [wipe, setWipe] = useState(50);
-  const [oldError, setOldError] = useState<string | null>(null);
-  const [newError, setNewError] = useState<string | null>(null);
+
+  const naturalWidth = Math.max(oldImage.naturalWidth, newImage.naturalWidth);
+  const naturalHeight = Math.max(oldImage.naturalHeight, newImage.naturalHeight);
+  const stage = fitImageStage(naturalWidth, naturalHeight, host.width, host.maxHeight);
+  const ready = stage.width > 0 && (oldImage.ok || newImage.ok);
+  const missing =
+    oldImage.error && newImage.error
+      ? "These images are not in this clone. Fetch Git LFS objects, then refresh."
+      : oldImage.error
+        ? "The old image is not in this clone. Fetch Git LFS objects, then refresh."
+        : newImage.error
+          ? "The new image is not in this clone. Fetch Git LFS objects, then refresh."
+          : null;
 
   return (
-    <div className="px-3 py-3">
-      {both ? (
-        <div className="mb-3 flex overflow-hidden rounded-md border border-input">
-          <ModeButton active={mode === "side-by-side"} onClick={() => setMode("side-by-side")}>
-            Side by side
-          </ModeButton>
-          <ModeButton active={mode === "slider"} onClick={() => setMode("slider")}>
-            Slider
-          </ModeButton>
-          <ModeButton active={mode === "diff"} onClick={() => setMode("diff")}>
-            Diff
-          </ModeButton>
-        </div>
-      ) : null}
-      {mode === "side-by-side" || !both ? (
-        <div className={cn("grid gap-3", both ? "grid-cols-2" : "grid-cols-1")}>
+    <div ref={host.ref} className="min-w-0">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-3 py-2">
+        {both ? (
+          <div className="flex overflow-hidden rounded-md border border-input">
+            <ModeButton active={mode === "side-by-side"} onClick={() => setMode("side-by-side")} hint="Old and new at the same size">
+              Side by side
+            </ModeButton>
+            <ModeButton active={mode === "slider"} onClick={() => setMode("slider")} hint="Drag to wipe between old and new">
+              Slider
+            </ModeButton>
+            <ModeButton active={mode === "diff"} onClick={() => setMode("diff")} hint="Changed pixels">
+              Diff
+            </ModeButton>
+          </div>
+        ) : (
+          <span className="font-mono text-[11px] text-muted-foreground">{status === "added" ? "Added" : "Deleted"}</span>
+        )}
+        {ready ? (
+          <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
+            {stageCaption(naturalWidth, naturalHeight, stage.scale)}
+          </span>
+        ) : null}
+      </div>
+      {missing !== null ? <p className="px-3 py-2 text-sm text-warn">{missing}</p> : null}
+      {!ready && missing === null ? <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p> : null}
+      {ready && (mode === "side-by-side" || !both) ? (
+        <div className="flex flex-wrap">
           {hasOld ? (
-            <ImagePane
-              label="Old"
-              src={oldUrl}
-              onError={() => setOldError("Old image is missing. For Git LFS, fetch the object into this clone.")}
-              error={oldError}
-            />
+            <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
+              {oldUrl !== undefined && !oldImage.error ? (
+                <StageImage src={oldUrl} alt="Old" width={stage.width} height={stage.height} />
+              ) : (
+                <Missing />
+              )}
+            </LabeledStage>
           ) : (
-            <EmptyPane label="Added — no old image" />
+            <LabeledStage label="Old" width={stage.width} height={stage.height}>
+              <Missing text="Added — no old image" />
+            </LabeledStage>
           )}
           {hasNew ? (
-            <ImagePane
-              label="New"
-              src={newUrl}
-              onError={() => setNewError("New image is missing. For Git LFS, fetch the object into this clone.")}
-              error={newError}
-            />
+            <LabeledStage label="New" width={stage.width} height={stage.height}>
+              {newUrl !== undefined && !newImage.error ? (
+                <StageImage src={newUrl} alt="New" width={stage.width} height={stage.height} />
+              ) : (
+                <Missing />
+              )}
+            </LabeledStage>
           ) : (
-            <EmptyPane label="Deleted — no new image" />
+            <LabeledStage label="New" width={stage.width} height={stage.height}>
+              <Missing text="Deleted — no new image" />
+            </LabeledStage>
           )}
         </div>
       ) : null}
-      {mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
-        <SliderCompare oldUrl={oldUrl} newUrl={newUrl} wipe={wipe} onWipe={setWipe} />
+      {ready && mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
+        <WipeStage
+          oldUrl={oldUrl}
+          newUrl={newUrl}
+          width={stage.width}
+          height={stage.height}
+          wipe={wipe}
+          onWipe={setWipe}
+        />
       ) : null}
-      {mode === "diff" && both && oldUrl !== undefined && newUrl !== undefined ? (
-        <PixelCompare oldUrl={oldUrl} newUrl={newUrl} />
+      {ready && mode === "diff" && both && oldImage.element !== null && newImage.element !== null ? (
+        <PixelStage
+          oldImage={oldImage.element}
+          newImage={newImage.element}
+          naturalWidth={naturalWidth}
+          naturalHeight={naturalHeight}
+          width={stage.width}
+          height={stage.height}
+        />
       ) : null}
     </div>
   );
 }
 
-function ModeButton(props: { active: boolean; onClick: () => void; children: string }) {
+function ModeButton(props: { active: boolean; onClick: () => void; children: string; hint: string }) {
   return (
-    <Button
-      type="button"
-      size="sm"
-      variant={props.active ? "secondary" : "ghost"}
-      className="rounded-none border-0"
-      aria-pressed={props.active}
-      onClick={props.onClick}
-    >
-      {props.children}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          size="sm"
+          variant={props.active ? "secondary" : "ghost"}
+          className="rounded-none border-0"
+          aria-pressed={props.active}
+          onClick={props.onClick}
+        >
+          {props.children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{props.hint}</TooltipContent>
+    </Tooltip>
   );
 }
 
-function ImagePane(props: { label: string; src?: string; error: string | null; onError: () => void }) {
+function LabeledStage(props: { label: string; width: number; height: number; children: ReactNode; rule?: boolean }) {
   return (
-    <figure className="min-w-0">
-      <figcaption className="mb-1 font-mono text-[11px] text-muted-foreground">{props.label}</figcaption>
-      {props.error !== null ? <p className="text-sm text-warn">{props.error}</p> : null}
-      {props.src !== undefined && props.error === null ? (
-        <img
-          src={props.src}
-          alt={props.label}
-          className="max-h-[70vh] w-full rounded-md border border-border bg-[var(--diff-canvas)] object-contain"
-          onError={props.onError}
-        />
-      ) : null}
+    <figure className={cn("min-w-0", props.rule === true && "border-r border-border")}>
+      <figcaption className="border-b border-border px-3 py-1 font-mono text-[11px] text-muted-foreground">{props.label}</figcaption>
+      <StageFrame width={props.width} height={props.height}>
+        {props.children}
+      </StageFrame>
     </figure>
   );
 }
 
-function EmptyPane(props: { label: string }) {
-  return <p className="rounded-md border border-dashed border-border p-6 text-sm text-muted-foreground">{props.label}</p>;
+function StageFrame(props: { width: number; height: number; children: ReactNode; className?: string }) {
+  return (
+    <div
+      className={cn("relative overflow-hidden bg-[var(--diff-canvas)]", props.className)}
+      style={{ width: props.width, height: props.height }}
+    >
+      {props.children}
+    </div>
+  );
 }
 
-function SliderCompare(props: { oldUrl: string; newUrl: string; wipe: number; onWipe: (value: number) => void }) {
-  const { oldUrl, newUrl, wipe, onWipe } = props;
+function StageImage(props: { src: string; alt: string; width: number; height: number }) {
+  return (
+    <img
+      src={props.src}
+      alt={props.alt}
+      width={props.width}
+      height={props.height}
+      className="absolute top-0 left-0 max-w-none"
+      style={{ width: props.width, height: props.height, objectFit: "contain", objectPosition: "left top" }}
+    />
+  );
+}
+
+function Missing(props: { text?: string }) {
+  return (
+    <p className="flex h-full items-center px-3 text-sm text-muted-foreground">{props.text ?? "Image missing"}</p>
+  );
+}
+
+function WipeStage(props: {
+  oldUrl: string;
+  newUrl: string;
+  width: number;
+  height: number;
+  wipe: number;
+  onWipe: (value: number) => void;
+}) {
+  const { oldUrl, newUrl, width, height, wipe, onWipe } = props;
   const id = useId();
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  const move = (clientX: number) => {
+    const frame = frameRef.current;
+    if (frame === null) {
+      return;
+    }
+    const rect = frame.getBoundingClientRect();
+    if (rect.width === 0) {
+      return;
+    }
+    onWipe(Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)));
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    move(event.clientX);
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.buttons === 0) {
+      return;
+    }
+    move(event.clientX);
+  };
+
   return (
     <figure className="min-w-0">
-      <div className="relative overflow-hidden rounded-md border border-border bg-[var(--diff-canvas)]">
-        <img src={oldUrl} alt="Old" className="block max-h-[70vh] w-full object-contain" />
-        <img
-          src={newUrl}
-          alt="New"
-          className="absolute inset-0 max-h-[70vh] w-full object-contain"
-          style={{ clipPath: `inset(0 ${100 - wipe}% 0 0)` }}
-        />
-        <div
-          className="pointer-events-none absolute inset-y-0 w-px bg-primary"
-          style={{ left: `${wipe}%` }}
-          aria-hidden
-        />
+      <div
+        ref={frameRef}
+        className="relative cursor-col-resize touch-none overflow-hidden bg-[var(--diff-canvas)]"
+        style={{ width, height }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+      >
+        <StageImage src={oldUrl} alt="Old" width={width} height={height} />
+        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 0 0 ${100 - wipe}%)` }}>
+          <StageImage src={newUrl} alt="New" width={width} height={height} />
+        </div>
+        <div className="pointer-events-none absolute inset-y-0 w-0.5 bg-primary" style={{ left: `${wipe}%` }} aria-hidden />
       </div>
-      <label className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground" htmlFor={id}>
+      <label className="flex items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground" htmlFor={id}>
         Old
         <input
           id={id}
@@ -131,6 +236,7 @@ function SliderCompare(props: { oldUrl: string; newUrl: string; wipe: number; on
           min={0}
           max={100}
           value={wipe}
+          aria-label="Wipe between old and new"
           className="min-w-0 flex-1 accent-primary"
           onChange={(event) => onWipe(Number(event.target.value))}
         />
@@ -140,65 +246,142 @@ function SliderCompare(props: { oldUrl: string; newUrl: string; wipe: number; on
   );
 }
 
-function PixelCompare(props: { oldUrl: string; newUrl: string }) {
+function PixelStage(props: {
+  oldImage: HTMLImageElement;
+  newImage: HTMLImageElement;
+  naturalWidth: number;
+  naturalHeight: number;
+  width: number;
+  height: number;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stats, setStats] = useState<{ changed: number; total: number } | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
-    setError(null);
-    setStats(null);
-    void (async () => {
-      try {
-        const [oldImg, newImg] = await Promise.all([loadImage(props.oldUrl), loadImage(props.newUrl)]);
-        if (cancelled) {
-          return;
-        }
-        const width = Math.max(oldImg.naturalWidth, newImg.naturalWidth);
-        const height = Math.max(oldImg.naturalHeight, newImg.naturalHeight);
-        const oldPixels = raster(oldImg, width, height);
-        const newPixels = raster(newImg, width, height);
-        const diff = diffRgba(oldPixels, newPixels, width, height);
-        const canvas = canvasRef.current;
-        if (canvas === null) {
-          return;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx === null) {
-          return;
-        }
-        const imageData = ctx.createImageData(width, height);
-        imageData.data.set(diff.pixels);
-        ctx.putImageData(imageData, 0, 0);
-        setStats({ changed: diff.changed, total: diff.total });
-      } catch {
-        if (!cancelled) {
-          setError("Could not compare images. For Git LFS, fetch the object into this clone.");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [props.newUrl, props.oldUrl]);
+    const canvas = canvasRef.current;
+    if (canvas === null) {
+      return;
+    }
+    const width = props.naturalWidth;
+    const height = props.naturalHeight;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) {
+      return;
+    }
+    const oldPixels = raster(props.oldImage, width, height);
+    const newPixels = raster(props.newImage, width, height);
+    const diff = diffRgba(oldPixels, newPixels, width, height);
+    const imageData = ctx.createImageData(width, height);
+    imageData.data.set(diff.pixels);
+    ctx.putImageData(imageData, 0, 0);
+    setStats({ changed: diff.changed, total: diff.total });
+  }, [props.naturalHeight, props.naturalWidth, props.newImage, props.oldImage]);
 
   return (
     <figure className="min-w-0">
-      {error !== null ? <p className="text-sm text-warn">{error}</p> : null}
       <canvas
         ref={canvasRef}
-        className="max-h-[70vh] max-w-full rounded-md border border-border bg-[var(--diff-canvas)]"
+        className="block bg-[var(--diff-canvas)]"
+        style={{ width: props.width, height: props.height }}
       />
       {stats !== null ? (
-        <figcaption className="mt-2 font-mono text-[11px] text-muted-foreground">
+        <figcaption className="px-3 py-2 font-mono text-[11px] tabular-nums text-muted-foreground">
           {stats.changed.toLocaleString()} of {stats.total.toLocaleString()} pixels differ
         </figcaption>
       ) : null}
     </figure>
   );
+}
+
+type LoadedImage = {
+  ok: boolean;
+  error: boolean;
+  element: HTMLImageElement | null;
+  naturalWidth: number;
+  naturalHeight: number;
+};
+
+function useLoadedImage(url: string | undefined): LoadedImage {
+  const [state, setState] = useState<LoadedImage>({
+    ok: false,
+    error: false,
+    element: null,
+    naturalWidth: 0,
+    naturalHeight: 0,
+  });
+
+  useEffect(() => {
+    if (url === undefined) {
+      setState({ ok: false, error: false, element: null, naturalWidth: 0, naturalHeight: 0 });
+      return;
+    }
+    let cancelled = false;
+    setState({ ok: false, error: false, element: null, naturalWidth: 0, naturalHeight: 0 });
+    void loadImage(url)
+      .then((image) => {
+        if (!cancelled) {
+          setState({
+            ok: true,
+            error: false,
+            element: image,
+            naturalWidth: image.naturalWidth,
+            naturalHeight: image.naturalHeight,
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setState({ ok: false, error: true, element: null, naturalWidth: 0, naturalHeight: 0 });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+
+  return state;
+}
+
+function useHostBox(): { ref: (node: HTMLDivElement | null) => void; width: number; maxHeight: number } {
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const [box, setBox] = useState({ width: 0, maxHeight: 0 });
+
+  const measure = () => {
+    const node = nodeRef.current;
+    if (node === null) {
+      return;
+    }
+    setBox({
+      width: Math.floor(node.clientWidth),
+      maxHeight: Math.max(120, Math.round(window.innerHeight * 0.7)),
+    });
+  };
+
+  const ref = (node: HTMLDivElement | null) => {
+    nodeRef.current = node;
+    if (node !== null) {
+      measure();
+    }
+  };
+
+  useLayoutEffect(() => {
+    const node = nodeRef.current;
+    if (node === null) {
+      return;
+    }
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
+  return { ref, width: box.width, maxHeight: box.maxHeight };
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {

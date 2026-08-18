@@ -149,7 +149,7 @@ export function Inspector(props: {
           <img
             src={resourceHref({ kind: "image", path: inspector.path, side: inspector.side })}
             alt={`${inspector.side} ${inspector.path}`}
-            className="max-h-full max-w-full rounded-md border border-border bg-[var(--diff-canvas)] object-contain"
+            className="h-auto max-w-full bg-[var(--diff-canvas)]"
           />
         </div>
       ) : null}
