@@ -89,9 +89,19 @@ async function run(): Promise<void> {
     const html = await page.text();
     assert.match(html, /<div id="root">/);
   } finally {
-    child.kill("SIGTERM");
+  child.kill("SIGTERM");
     await waitForExit(child);
   }
+
+  const outDir = join(work, "site");
+  const exportOut = execFileSync(bin, ["export", "--data", dataPath, "--out", outDir], {
+    cwd: repo.root,
+    encoding: "utf8",
+  });
+  assert.equal(existsSync(join(outDir, "index.html")), true, "export must copy the UI");
+  assert.equal(existsSync(join(outDir, "api/review.json")), true, "export must write frozen review JSON");
+  assert.equal(existsSync(join(outDir, ".git")), false, "export must not copy git");
+  assert.match(exportOut, /\/site/);
 
   console.log("pack-smoke ok");
 }

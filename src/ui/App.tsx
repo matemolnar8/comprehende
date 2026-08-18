@@ -207,7 +207,7 @@ export function App() {
     mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
 
   if (loading && meta === null) {
-    return <Boot>Reading git…</Boot>;
+    return <Boot>Loading review…</Boot>;
   }
   if (error !== null && meta === null) {
     return <Boot className="text-warn">{error}</Boot>;

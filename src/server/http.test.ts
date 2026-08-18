@@ -7,6 +7,7 @@ import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
+import { apiHref } from "../api/paths.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 
 const roots: string[] = [];
@@ -40,7 +41,7 @@ describe("serve API", () => {
     const health = await fetch(`${running.url}/api/health`);
     assert.equal(health.status, 200);
 
-    const reviewRes = await fetch(`${running.url}/api/review`);
+    const reviewRes = await fetch(new URL(apiHref({ kind: "review" }), `${running.url}/`));
     assert.equal(reviewRes.status, 200);
     const review = (await reviewRes.json()) as {
       coverage: { totalHunks: number; unassignedCount: number };
@@ -55,7 +56,7 @@ describe("serve API", () => {
 
     const group = document.groups[0];
     assert.ok(group);
-    const hunksRes = await fetch(`${running.url}/api/hunks?group=${encodeURIComponent(group.id)}`);
+    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: group.id }), `${running.url}/`));
     assert.equal(hunksRes.status, 200);
     const payload = (await hunksRes.json()) as {
       hunks: { path: string; lines: { text: string }[] }[];
@@ -68,7 +69,7 @@ describe("serve API", () => {
 
     const appGroup = document.groups.find((item) => item.hunkRefs.some((ref) => ref.path === "src/app.ts"));
     assert.ok(appGroup);
-    const appHunks = await fetch(`${running.url}/api/hunks?group=${encodeURIComponent(appGroup.id)}`);
+    const appHunks = await fetch(new URL(apiHref({ kind: "hunks", group: appGroup.id }), `${running.url}/`));
     const appPayload = (await appHunks.json()) as {
       hunks: { lines: { kind: string; text: string }[] }[];
       files: { path: string; patch: string }[];
@@ -80,12 +81,12 @@ describe("serve API", () => {
     assert.equal(appPatch.includes(`+${SECRET_ADD}`) || appPatch.includes(SECRET_ADD), true);
     assert.equal(appPatch.startsWith("diff --git "), true);
 
-    const fileRes = await fetch(`${running.url}/api/file?path=src/app.ts&side=new`);
+    const fileRes = await fetch(new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`));
     assert.equal(fileRes.status, 200);
     const file = (await fileRes.json()) as { content: string };
     assert.equal(file.content.includes(SECRET_ADD), true);
 
-    const blameRes = await fetch(`${running.url}/api/blame?path=src/app.ts&side=new`);
+    const blameRes = await fetch(new URL(apiHref({ kind: "blame", path: "src/app.ts", side: "new" }), `${running.url}/`));
     assert.equal(blameRes.status, 200);
     const blame = (await blameRes.json()) as { lines: unknown[] };
     assert.ok(blame.lines.length > 0);

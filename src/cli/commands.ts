@@ -38,6 +38,13 @@ export function resolveDataPath(data: string | undefined, cwd: string): string {
   return isAbsolute(data) ? data : resolve(cwd, data);
 }
 
+export function resolveOutPath(out: string | undefined, cwd: string): string {
+  if (out === undefined) {
+    throw new Error("missing --out <dir>");
+  }
+  return isAbsolute(out) ? out : resolve(cwd, out);
+}
+
 export async function cmdValidate(cwd: string, dataPath: string): Promise<{ document: ReviewDocument; warnings: string[] }> {
   const document = await loadDocument(dataPath);
   await resolveSource(cwd, document.source.baseRef, document.source.headRef);

@@ -1,0 +1,92 @@
+import type { DiffLine, FileStatus, HunkRef, ReviewDocument, SkippedFile } from "../schema/types.ts";
+
+export type FileSide = "old" | "new";
+
+export type ApiHunk = HunkRef & {
+  header: string;
+  language: string;
+  lines: DiffLine[];
+};
+
+export type ApiLayerFile = {
+  path: string;
+  oldPath?: string;
+  patch: string;
+  hunks: ApiHunk[];
+};
+
+export type ApiHunks = {
+  hunks: ApiHunk[];
+  files: ApiLayerFile[];
+};
+
+export type ApiCommit = {
+  sha: string;
+  shortSha: string;
+  subject: string;
+  author: string;
+  date: string;
+};
+
+export type ApiBlameLine = {
+  sha: string;
+  author: string;
+  timestamp: number;
+  line: number;
+  text: string;
+};
+
+export type ApiReview = {
+  document: ReviewDocument;
+  resolved: {
+    baseRef: string;
+    headRef: string;
+    range: string;
+    baseSha: string;
+    headSha: string;
+  };
+  coverage: {
+    totalHunks: number;
+    assignedHunks: number;
+    unassignedCount: number;
+    staleCount: number;
+  };
+  groups: {
+    id: string;
+    title: string;
+    summary: string;
+    lookFor: string[];
+    dependsOn: string[];
+    part?: string;
+    suggestedOrder: number;
+    hunkCount: number;
+    staleCount: number;
+    files: string[];
+  }[];
+  unassigned: { hunkCount: number; files: string[] };
+  stale: { path: string; oldStart: number; newStart: number }[];
+  files: {
+    path: string;
+    oldPath?: string;
+    status: FileStatus;
+    binary: boolean;
+    hunkCount: number;
+  }[];
+  skipped: SkippedFile[];
+  commits: ApiCommit[];
+};
+
+export type ApiFile = {
+  path: string;
+  ref: string;
+  side: FileSide;
+  content: string;
+  language: string;
+};
+
+export type ApiBlame = {
+  path: string;
+  ref: string;
+  side: FileSide;
+  lines: ApiBlameLine[];
+};

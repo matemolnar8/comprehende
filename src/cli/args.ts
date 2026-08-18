@@ -1,4 +1,4 @@
-export type CommandName = "index" | "validate" | "serve";
+export type CommandName = "index" | "validate" | "serve" | "export";
 
 export type CliRequest =
   | { kind: "help" }
@@ -11,11 +11,12 @@ export type CliRequest =
       base?: string;
       head?: string;
       data?: string;
+      out?: string;
       port: number;
       open: boolean;
     };
 
-const COMMANDS = new Set<CommandName>(["index", "validate", "serve"]);
+const COMMANDS = new Set<CommandName>(["index", "validate", "serve", "export"]);
 
 export const USAGE = `Usage: comprehende <command> [options]
 
@@ -31,16 +32,21 @@ Commands:
   serve     --data <review.json> [--port <n>] [--open]
             Serve the local UI on 127.0.0.1 (re-reads git on each request)
 
+  export    --data <review.json> --out <dir>
+            Write a static site (same UI + frozen git payloads). No server after that.
+
 Options:
   --base <ref>     Base ref (default: origin/HEAD or main/master)
   --head <ref>     Head ref (default: HEAD)
   --data <path>    Review document path
+  --out <dir>      Output directory for export
   --port <n>       Listen port (default: 4567, 0 for ephemeral)
   --open           Open the UI in a browser
   -h, --help       Show this help
   -v, --version    Show version
 
 Diffs always come from git in cwd. The review document is interpretation only.
+Export is a point-in-time copy. Rebase or new commits need a new export.
 `;
 
 export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
@@ -73,6 +79,7 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
       base: flag(rest, "--base"),
       head: flag(rest, "--head"),
       data: flag(rest, "--data"),
+      out: flag(rest, "--out"),
       port,
       open: rest.includes("--open"),
     };

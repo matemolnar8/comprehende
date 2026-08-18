@@ -88,7 +88,7 @@ export function Header(props: {
               <Kbd>r</Kbd>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Reload live git</TooltipContent>
+          <TooltipContent>Reload review</TooltipContent>
         </Tooltip>
       </div>
     </header>
