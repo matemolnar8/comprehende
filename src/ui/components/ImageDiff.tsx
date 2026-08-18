@@ -344,33 +344,22 @@ function useLoadedImage(url: string | undefined): LoadedImage {
   return state;
 }
 
-function useHostBox(): { ref: (node: HTMLDivElement | null) => void; width: number; maxHeight: number } {
+function useHostBox() {
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const [box, setBox] = useState({ width: 0, maxHeight: 0 });
-
-  const measure = () => {
-    const node = nodeRef.current;
-    if (node === null) {
-      return;
-    }
-    setBox({
-      width: Math.floor(node.clientWidth),
-      maxHeight: Math.max(120, Math.round(window.innerHeight * 0.7)),
-    });
-  };
-
-  const ref = (node: HTMLDivElement | null) => {
-    nodeRef.current = node;
-    if (node !== null) {
-      measure();
-    }
-  };
 
   useLayoutEffect(() => {
     const node = nodeRef.current;
     if (node === null) {
       return;
     }
+    const measure = () => {
+      const width = Math.floor(node.clientWidth);
+      const maxHeight = Math.max(120, Math.round(window.innerHeight * 0.7));
+      setBox((current) =>
+        current.width === width && current.maxHeight === maxHeight ? current : { width, maxHeight },
+      );
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
@@ -381,7 +370,7 @@ function useHostBox(): { ref: (node: HTMLDivElement | null) => void; width: numb
     };
   }, []);
 
-  return { ref, width: box.width, maxHeight: box.maxHeight };
+  return { ref: nodeRef, width: box.width, maxHeight: box.maxHeight };
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
