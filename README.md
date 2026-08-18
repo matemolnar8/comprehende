@@ -32,7 +32,7 @@ pnpm dev -- --help
 
 `comprehende serve` and `comprehende export` share one UI and one git payload layer. Serve computes those payloads on each request. Export writes the same JSON next to the UI so any static file server can host the review.
 
-`pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.3.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
+`pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.2.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
 
 ## Release
 
