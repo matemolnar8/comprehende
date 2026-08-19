@@ -1,10 +1,12 @@
 import { MoonIcon, SunIcon } from "lucide-react";
 import { shortSha, type ReviewMeta } from "../api.ts";
+import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Kbd } from "./Kbd.tsx";
+import { WaitMark } from "./WaitMark.tsx";
 
 export function Header(props: {
   meta: ReviewMeta;
@@ -14,8 +16,9 @@ export function Header(props: {
   onUnified: () => void;
   onSplit: () => void;
   onRefresh: () => void;
+  busy?: boolean;
 }) {
-  const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh } = props;
+  const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
     <header className="flex items-center gap-6 border-b border-border px-5 py-3">
       <span className="font-serif text-lg leading-none text-foreground">Comprehende</span>
@@ -83,12 +86,13 @@ export function Header(props: {
         <ThemeToggle />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button size="sm" variant="outline" onClick={onRefresh}>
+            <Button size="sm" variant="outline" onClick={onRefresh} aria-busy={busy}>
+              {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
               Refresh
               <Kbd>r</Kbd>
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Reload review</TooltipContent>
+          <TooltipContent>{busy ? waitCopy.review : "Reload review"}</TooltipContent>
         </Tooltip>
       </div>
     </header>

@@ -1,13 +1,16 @@
 import { layerIndex, type ReviewMeta } from "../api.ts";
 import type { LayerFile } from "../lib/layer-files.ts";
+import { waitCopy } from "../lib/wait.ts";
 import { HunkView } from "./HunkView.tsx";
 import { Brief, LayerBrief } from "./LayerBrief.tsx";
+import { WaitMark } from "./WaitMark.tsx";
 
 export function Layer(props: {
   group: ReviewMeta["groups"][number] | null;
   groups: ReviewMeta["groups"];
   mixed: boolean;
   strandColor?: string;
+  loading: boolean;
   hunkError: string | null;
   files: LayerFile[];
   activeHunk: number;
@@ -20,7 +23,7 @@ export function Layer(props: {
   onSplitRatio: (ratio: number) => void;
   onViewed: (path: string, viewed: boolean) => void;
 }) {
-  const { group, groups, mixed, strandColor, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
+  const { group, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
 
   return (
@@ -48,29 +51,38 @@ export function Layer(props: {
         </div>
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
-      {files.length === 0 && hunkError === null ? <p className="mt-8 text-muted-foreground">No hunks in this layer.</p> : null}
-      {files.length > 0 ? (
+      {loading ? (
+        <article className="hunk-card mt-8 overflow-hidden rounded-lg border border-border bg-card">
+          <WaitMark label={waitCopy.layer} />
+        </article>
+      ) : null}
+      {!loading && files.length === 0 && hunkError === null ? (
+        <p className="mt-8 text-muted-foreground">No hunks in this layer.</p>
+      ) : null}
+      {!loading && files.length > 0 ? (
         <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
           {files.filter((file) => viewedPaths.has(file.path)).length} of {files.length} files viewed
         </p>
       ) : null}
-      <div className={files.length > 0 ? "mt-4 space-y-8" : "mt-8 space-y-8"}>
-        {files.map((file) => (
-          <HunkView
-            key={file.path}
-            file={file}
-            active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
-            index={file.firstIndex}
-            split={split}
-            splitRatio={splitRatio}
-            wrap={wrap}
-            viewed={viewedPaths.has(file.path)}
-            onSplitRatio={props.onSplitRatio}
-            onOpen={props.onOpenFile}
-            onViewed={props.onViewed}
-          />
-        ))}
-      </div>
+      {!loading && files.length > 0 ? (
+        <div className="mt-4 space-y-8">
+          {files.map((file) => (
+            <HunkView
+              key={file.path}
+              file={file}
+              active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
+              index={file.firstIndex}
+              split={split}
+              splitRatio={splitRatio}
+              wrap={wrap}
+              viewed={viewedPaths.has(file.path)}
+              onSplitRatio={props.onSplitRatio}
+              onOpen={props.onOpenFile}
+              onViewed={props.onViewed}
+            />
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }

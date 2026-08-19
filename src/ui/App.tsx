@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type LiveHunk, type ReviewMeta } from "./api.ts";
 import { Header } from "./components/Header.tsx";
@@ -6,6 +6,8 @@ import { Inspector, type InspectorState } from "./components/Inspector.tsx";
 import { Layer } from "./components/Layer.tsx";
 import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
+import { WaitMark } from "./components/WaitMark.tsx";
+import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
@@ -20,6 +22,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [hunks, setHunks] = useState<LiveHunk[]>([]);
+  const [hunksKey, setHunksKey] = useState<string | null>(null);
   const [layerPatches, setLayerPatches] = useState<Map<string, string>>(() => new Map());
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
@@ -67,6 +70,7 @@ export function App() {
     if (selectedKey === null) {
       setHunks([]);
       setLayerPatches(new Map());
+      setHunksKey(null);
       return;
     }
     let cancelled = false;
@@ -76,6 +80,7 @@ export function App() {
         if (!cancelled) {
           setHunks(payload.hunks);
           setLayerPatches(new Map(payload.files.map((file) => [file.path, file.patch])));
+          setHunksKey(selectedKey);
           setActiveHunk(0);
         }
       })
@@ -83,6 +88,7 @@ export function App() {
         if (!cancelled) {
           setHunks([]);
           setLayerPatches(new Map());
+          setHunksKey(selectedKey);
           setHunkError(cause instanceof Error ? cause.message : String(cause));
         }
       });
@@ -90,6 +96,8 @@ export function App() {
       cancelled = true;
     };
   }, [selectedKey]);
+
+  const hunksLoading = selectedKey !== null && selectedKey !== hunksKey;
 
   const selectWithMotion = useCallback(
     (next: Selection) => {
@@ -207,7 +215,12 @@ export function App() {
     mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
 
   if (loading && meta === null) {
-    return <Boot>Loading review…</Boot>;
+    return (
+      <Boot>
+        <p className="mb-5 font-serif text-lg leading-none text-foreground">Comprehende</p>
+        <WaitMark layout="page" label={waitCopy.review} />
+      </Boot>
+    );
   }
   if (error !== null && meta === null) {
     return <Boot className="text-warn">{error}</Boot>;
@@ -218,7 +231,7 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
         <Header
           meta={meta}
           wrap={wrap}
@@ -232,6 +245,7 @@ export function App() {
             }
           }}
           onRefresh={() => void load()}
+          busy={loading}
         />
 
         <ResizablePanelGroup
@@ -253,7 +267,7 @@ export function App() {
                   onClose={closeInspector}
                 />
               ) : (
-                <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8">
+                <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
                     <Overview meta={meta} parts={parts} onOpenLayer={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (
@@ -262,8 +276,9 @@ export function App() {
                       groups={meta.groups}
                       mixed={mixed}
                       strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
+                      loading={hunksLoading}
                       hunkError={hunkError}
-                      files={layerFiles}
+                      files={hunksLoading ? [] : layerFiles}
                       activeHunk={activeHunk}
                       split={split}
                       splitRatio={splitRatio}
@@ -285,6 +300,6 @@ export function App() {
   );
 }
 
-function Boot(props: { children: string; className?: string }) {
-  return <div className={cn("p-16 text-muted-foreground", props.className)}>{props.children}</div>;
+function Boot(props: { children: ReactNode; className?: string }) {
+  return <div className={cn("px-10 py-8 text-muted-foreground", props.className)}>{props.children}</div>;
 }

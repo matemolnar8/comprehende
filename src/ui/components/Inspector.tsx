@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchBlame, fetchFile } from "../api.ts";
 import { groupBlameRuns } from "../../schema/blame-runs.ts";
 import { PierreFile } from "../PierreDiff.tsx";
+import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { Kbd } from "./Kbd.tsx";
+import { WaitMark } from "./WaitMark.tsx";
 
 export type InspectorState = {
   path: string;
@@ -25,7 +27,7 @@ export function Inspector(props: {
     null,
   );
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const blameContents = useMemo(
     () => (blame === null ? "" : blame.map((line) => line.text).join("\n")),
     [blame],
@@ -86,7 +88,7 @@ export function Inspector(props: {
   }, [inspector]);
 
   return (
-    <div className="review-inspector flex h-full min-h-0 flex-col">
+    <div className="review-inspector flex h-full min-h-0 flex-col" aria-busy={loading}>
       <div className="flex flex-wrap items-center gap-3 px-8 pt-6 pb-4">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -135,7 +137,13 @@ export function Inspector(props: {
         </div>
       </div>
       {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
-      {loading && error === null ? <p className="px-8 text-sm text-muted-foreground">Loading…</p> : null}
+      {loading && error === null ? (
+        <div className="px-8 pt-2">
+          <WaitMark
+            label={inspector.mode === "file" ? waitCopy.file : waitCopy.blame}
+          />
+        </div>
+      ) : null}
       {inspector.mode === "file" && error === null && !loading ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={content} wrap={wrap} />
