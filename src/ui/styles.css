@@ -169,10 +169,6 @@
     transition: border-color var(--motion) var(--motion-ease);
   }
 
-  .wait-gutter-walker {
-    animation: wait-walk 1.7s var(--motion-ease) infinite;
-  }
-
   .hunk-chevron {
     transition: transform var(--motion) var(--motion-ease);
   }
@@ -385,79 +381,6 @@ html[data-motion="scene"] .review-scene {
   from {
     opacity: 0;
     translate: 0 0.75rem;
-  }
-}
-
-.wait-mark {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.wait-mark-well {
-  padding: 1.25rem 0.75rem;
-}
-
-.wait-mark-inline {
-  gap: 0;
-  flex: none;
-}
-
-.wait-mark-label {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.025em;
-  color: var(--muted-foreground);
-}
-
-.wait-gutter {
-  display: flex;
-  flex: none;
-  gap: 0.28rem;
-  height: 1.75rem;
-}
-
-.wait-mark-inline .wait-gutter {
-  height: 1.1rem;
-}
-
-.wait-gutter-rail {
-  position: relative;
-  overflow: hidden;
-  width: 3px;
-  height: 100%;
-  border-radius: 1px;
-  background: color-mix(in srgb, var(--rail) 38%, transparent);
-}
-
-.wait-mark-inline .wait-gutter-rail {
-  width: 2px;
-}
-
-.wait-gutter-rail[data-kind="del"] {
-  --rail: var(--del);
-}
-
-.wait-gutter-rail[data-kind="add"] {
-  --rail: var(--add);
-}
-
-.wait-gutter-walker {
-  position: absolute;
-  inset-inline: 0;
-  top: 28%;
-  height: 44%;
-  border-radius: inherit;
-  background: var(--rail);
-}
-
-@keyframes wait-walk {
-  from {
-    top: -40%;
-  }
-  to {
-    top: 100%;
   }
 }
 
