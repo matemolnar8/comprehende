@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fitImageStage, stageCaption, wipeOverlayWidth } from "./lib/image-stage.ts";
+import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "./lib/image-stage.ts";
 
 describe("fitImageStage", () => {
   it("keeps native pixels when the image fits", () => {
@@ -14,6 +14,22 @@ describe("fitImageStage", () => {
 
   it("returns an empty stage until the host is measured", () => {
     assert.deepEqual(fitImageStage(320, 180, 0, 800), { width: 0, height: 0, scale: 1 });
+  });
+});
+
+describe("fitTwoColumnStage", () => {
+  it("keeps two native panes when they already fit", () => {
+    const pane = fitTwoColumnStage(320, 180, 900, 800);
+    assert.deepEqual(pane, { width: 320, height: 180, scale: 1 });
+    assert.ok(pane.width * 2 + 1 <= 900);
+  });
+
+  it("scales 1920 × 1080 so two columns stay in the host", () => {
+    const pane = fitTwoColumnStage(1920, 1080, 1000, 800);
+    assert.equal(pane.width, 499);
+    assert.equal(pane.height, 281);
+    assert.ok(pane.width * 2 + 1 <= 1000);
+    assert.ok(pane.scale < 1);
   });
 });
 

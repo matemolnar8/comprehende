@@ -10,7 +10,7 @@ import {
 } from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
-import { fitImageStage, stageCaption, wipeOverlayWidth } from "../lib/image-stage.ts";
+import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "../lib/image-stage.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -33,7 +33,10 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
 
   const naturalWidth = Math.max(oldImage.naturalWidth, newImage.naturalWidth);
   const naturalHeight = Math.max(oldImage.naturalHeight, newImage.naturalHeight);
-  const stage = fitImageStage(naturalWidth, naturalHeight, host.width, host.maxHeight);
+  const columns = mode === "side-by-side" || !both;
+  const stage = columns
+    ? fitTwoColumnStage(naturalWidth, naturalHeight, host.width, host.maxHeight)
+    : fitImageStage(naturalWidth, naturalHeight, host.width, host.maxHeight);
   const ready = stage.width > 0 && (oldImage.ok || newImage.ok);
   const missing =
     oldImage.error && newImage.error
@@ -72,7 +75,7 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
       {!ready && missing === null ? <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p> : null}
       <div className="flex w-full justify-center">
       {ready && (mode === "side-by-side" || !both) ? (
-        <div className="flex flex-wrap">
+        <div className="flex">
           {hasOld ? (
             <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
               {oldUrl !== undefined && !oldImage.error ? (

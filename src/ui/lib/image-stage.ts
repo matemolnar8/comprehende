@@ -22,6 +22,16 @@ export function fitImageStage(
   };
 }
 
+/** One pane of a two-column pair, including a 1px divider. Never upscale. */
+export function fitTwoColumnStage(
+  naturalWidth: number,
+  naturalHeight: number,
+  hostWidth: number,
+  maxHeight: number,
+): ImageStageSize {
+  return fitImageStage(naturalWidth, naturalHeight, Math.floor(Math.max(0, hostWidth - 1) / 2), maxHeight);
+}
+
 export function stageCaption(naturalWidth: number, naturalHeight: number, scale: number): string {
   const pixels = `${naturalWidth} × ${naturalHeight}`;
   if (scale >= 0.995) {
