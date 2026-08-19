@@ -10,7 +10,7 @@ import {
 } from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
-import { fitImageStage, stageCaption } from "../lib/image-stage.ts";
+import { fitImageStage, stageCaption, wipeClipPath } from "../lib/image-stage.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -52,7 +52,7 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
             <ModeButton active={mode === "side-by-side"} onClick={() => setMode("side-by-side")} hint="Old and new at the same size">
               Side by side
             </ModeButton>
-            <ModeButton active={mode === "slider"} onClick={() => setMode("slider")} hint="Drag to wipe between old and new">
+            <ModeButton active={mode === "slider"} onClick={() => setMode("slider")} hint="Drag to reveal new over old">
               Slider
             </ModeButton>
             <ModeButton active={mode === "diff"} onClick={() => setMode("diff")} hint="Pixels that differ">
@@ -71,7 +71,7 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
       {missing !== null ? <p className="px-3 py-2 text-sm text-warn">{missing}</p> : null}
       {!ready && missing === null ? <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p> : null}
       {ready && (mode === "side-by-side" || !both) ? (
-        <div className="flex w-fit max-w-full flex-wrap">
+        <div className="flex max-w-full flex-wrap justify-center">
           {hasOld ? (
             <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
               {oldUrl !== undefined && !oldImage.error ? (
@@ -234,7 +234,7 @@ function WipeStage(props: {
   };
 
   return (
-    <figure className="w-fit min-w-0">
+    <figure className="mx-auto w-fit min-w-0">
       <StageFrame
         ref={frameRef}
         width={width}
@@ -244,7 +244,7 @@ function WipeStage(props: {
         onPointerMove={onPointerMove}
       >
         <StageImage src={oldUrl} alt="Old" width={width} height={height} />
-        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 0 0 ${100 - wipe}%)` }}>
+        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: wipeClipPath(wipe) }}>
           <StageImage src={newUrl} alt="New" width={width} height={height} />
         </div>
         <div className="pointer-events-none absolute inset-y-0" style={{ left: `${wipe}%` }} aria-hidden>
@@ -304,7 +304,7 @@ function PixelStage(props: {
   }, [props.naturalHeight, props.naturalWidth, props.newImage, props.oldImage]);
 
   return (
-    <figure className="w-fit min-w-0">
+    <figure className="mx-auto w-fit min-w-0">
       <StageFrame width={props.width} height={props.height}>
         <canvas ref={canvasRef} className="block size-full" />
       </StageFrame>

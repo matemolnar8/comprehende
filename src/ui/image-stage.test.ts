@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fitImageStage, stageCaption } from "./lib/image-stage.ts";
+import { fitImageStage, stageCaption, wipeClipPath } from "./lib/image-stage.ts";
 
 describe("fitImageStage", () => {
   it("keeps native pixels when the image fits", () => {
@@ -21,5 +21,13 @@ describe("stageCaption", () => {
   it("states native size, and the scale only when shrunk", () => {
     assert.equal(stageCaption(320, 180, 1), "320 × 180");
     assert.equal(stageCaption(320, 180, 0.5), "320 × 180 at 50%");
+  });
+});
+
+describe("wipeClipPath", () => {
+  it("reveals new from the left as wipe moves toward New", () => {
+    assert.equal(wipeClipPath(0), "inset(0 100% 0 0)");
+    assert.equal(wipeClipPath(25), "inset(0 75% 0 0)");
+    assert.equal(wipeClipPath(100), "inset(0 0% 0 0)");
   });
 });
