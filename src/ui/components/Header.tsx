@@ -84,10 +84,10 @@ export function Header(props: {
           <Kbd>s</Kbd>
         </div>
         <ThemeToggle />
+        {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button size="sm" variant="outline" onClick={onRefresh} aria-busy={busy}>
-              {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
               Refresh
               <Kbd>r</Kbd>
             </Button>

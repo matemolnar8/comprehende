@@ -14,8 +14,9 @@ export function WaitMark(props: {
   if (!visible) {
     return null;
   }
+  const Tag = layout === "inline" ? "span" : "div";
   return (
-    <div
+    <Tag
       className={cn("wait-mark", `wait-mark-${layout}`, props.className)}
       role={layout === "inline" ? undefined : "status"}
       aria-live={layout === "inline" ? undefined : "polite"}
@@ -29,6 +30,6 @@ export function WaitMark(props: {
         </span>
       </span>
       {layout === "inline" ? <span className="sr-only">{props.label}</span> : <p className="wait-mark-label">{props.label}</p>}
-    </div>
+    </Tag>
   );
 }

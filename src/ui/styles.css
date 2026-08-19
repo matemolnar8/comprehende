@@ -419,7 +419,7 @@ html[data-motion="scene"] .review-scene {
 }
 
 .wait-mark-inline .wait-gutter {
-  height: 0.85rem;
+  height: 1.1rem;
 }
 
 .wait-gutter-rail {
@@ -428,7 +428,7 @@ html[data-motion="scene"] .review-scene {
   width: 3px;
   height: 100%;
   border-radius: 1px;
-  background: color-mix(in srgb, var(--rail) 22%, transparent);
+  background: color-mix(in srgb, var(--rail) 38%, transparent);
 }
 
 .wait-mark-inline .wait-gutter-rail {
@@ -446,8 +446,8 @@ html[data-motion="scene"] .review-scene {
 .wait-gutter-walker {
   position: absolute;
   inset-inline: 0;
-  top: 31%;
-  height: 38%;
+  top: 28%;
+  height: 44%;
   border-radius: inherit;
   background: var(--rail);
 }
