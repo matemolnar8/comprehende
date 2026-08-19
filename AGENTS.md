@@ -8,7 +8,7 @@ Usage of AI agents to write code has given us previously unseen ability to write
 
 Three concepts are important to understand:
 
-- Cognitive offloading: when we use tools by handing off the _how_ but keeping the _what_ - like a calculator adding numbers, we tell it the two numbers to add together, it doesn't invent them
+- Cognitive offloading: when we use tools by handing off the _how_ but keeping the _why_ and the _what_ - like a calculator adding numbers, we know why we need the sum, we tell it the two numbers to add together, it doesn't invent them
 - Cognitive surrender: when we stop constructing an answer and adopt the answer from the tool instead, without having our own view to compare against - like letting the calculator add two numbers together, letting it make up the numbers and accepting the answer.
 - Comprehension debt: the gap between the amount of code in the system and the amount of understanding the humans developing, maintaining or operating the system has.
   - Comprehension debt compares to technical debt in a way, but there are very important differences
@@ -33,6 +33,50 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 - UI is always the same, not generated on the fly - only the data changes.
 - Works locally, no need for hosted services, deployed packages
 - Simple easy-to-understand wording throughout the UI and in the generated answers, using ASD-STE100 Simplified Technical English
+
+## Glossary
+
+### Concepts
+
+**Cognitive offloading.** Hand off the *how*. Keep the *why* and the *what*. The human still has a view of the change to compare against.
+
+**Cognitive surrender.** Stop constructing an answer and adopt the tool's answer, with no *why* or *what* of your own. That is how comprehension debt grows.
+
+**Comprehension debt.** The gap between the code in the system and the understanding the humans who develop, maintain, or operate it have. Unlike technical debt, nobody chooses it. It stays invisible until something breaks.
+
+**The why.** Why this work exists. The ticket, the incident, the decision that caused the change. The human should keep this. Copy tickets from the request. Do not invent a motive from the patch.
+
+**The what.** What this layer is. Named so a human has a view of the change before they read the diff. The summary is this, per layer.
+
+**The how.** How the change is implemented. The live git diff is the how. The agent may group and summarize it. The agent must not replace it.
+
+### Code
+
+**Review document.** Interpretation only. Groups, summaries, hunk pointers. Never patch text. Source refs must resolve in cwd.
+
+**Group / layer.** Same object. Schema says group. UI says layer.
+
+**Review concern.** Why these hunks are read together. Not a directory, unless that directory is the concern.
+
+**Part / story.** Independent work. Could have been its own PR. `dependsOn` only inside a story.
+
+**Size.** Review burden. Not file or hunk count.
+
+**Hunk ref.** Pointer into live git. Copy from `index`. Never invent.
+
+**Index.** Hunk list for the agent. No line content. Not stored in the UI.
+
+**Live git.** `git` in cwd at serve time. Git wins.
+
+**Coverage.** Every live hunk in at least one group. Duplicates allowed.
+
+**Unassigned.** Live hunks with no group. Still shown.
+
+**Stale ref.** Pointer that does not match live git. Serve still starts. Do not invent a replacement.
+
+**Skill.** Grouping instructions. Does not talk to git.
+
+**CLI.** Git, validate, serve. Cwd is the repo. No `--repo`.
 
 ## Notes from Máté, the repo owner
 
