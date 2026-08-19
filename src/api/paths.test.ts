@@ -11,6 +11,7 @@ describe("api paths", () => {
       { kind: "file", path: "src/app.ts", side: "new" },
       { kind: "blame", path: "src/helpers.ts", side: "old" },
       { kind: "file", path: "weird name/foo.ts", side: "new" },
+      { kind: "image", path: "shots/home.png", side: "old" },
     ];
     for (const resource of resources) {
       assert.deepEqual(parseApiPath(`/${apiHref(resource)}`), resource);
@@ -21,6 +22,13 @@ describe("api paths", () => {
     const resource = { kind: "file", path: "weird name/foo.ts", side: "new" } as const;
     assert.equal(apiHref(resource), "api/files/new/weird%20name/foo.ts.json");
     assert.equal(apiFsRel(resource), "api/files/new/weird name/foo.ts.json");
+  });
+
+  it("writes image bytes without a json suffix", () => {
+    const resource = { kind: "image", path: "shots/home.png", side: "new" } as const;
+    assert.equal(apiHref(resource), "api/images/new/shots/home.png");
+    assert.equal(apiFsRel(resource), "api/images/new/shots/home.png");
+    assert.deepEqual(parseApiPath("/api/images/new/shots/home.png"), resource);
   });
 
   it("rejects path traversal", () => {

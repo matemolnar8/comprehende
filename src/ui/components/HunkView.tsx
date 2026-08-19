@@ -1,5 +1,6 @@
 import { addedSymbols, hunkRangeLabel } from "../../schema/hunk-meta.ts";
 import { PierreFileDiff } from "../PierreDiff.tsx";
+import { ImageDiff } from "./ImageDiff.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
@@ -78,11 +79,19 @@ export function HunkView(props: {
           <TooltipContent>Open file</TooltipContent>
         </Tooltip>
         <code className="font-mono text-xs text-muted-foreground">
-          {file.hunkCount === 1 && first !== undefined ? hunkRangeLabel(first.header) : `${file.hunkCount} hunks`}
+          {file.kind === "image"
+            ? "image"
+            : file.hunkCount === 1 && first !== undefined
+              ? hunkRangeLabel(first.header)
+              : `${file.hunkCount} hunks`}
         </code>
-        <span className="font-mono text-[11px] tabular-nums">
-          <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
-        </span>
+        {file.kind === "image" ? (
+          <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
+        ) : (
+          <span className="font-mono text-[11px] tabular-nums">
+            <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+          </span>
+        )}
         {symbols.length > 0
           ? symbols.map((name) => (
               <Badge key={name} variant="outline" className="font-mono font-normal">
@@ -106,7 +115,9 @@ export function HunkView(props: {
         </Tooltip>
       </header>
       <div id={bodyId} hidden={collapsed}>
-        {collapsed ? null : (
+        {collapsed ? null : file.kind === "image" ? (
+          <ImageDiff path={file.path} status={file.status} />
+        ) : (
           <PierreFileDiff
             patch={file.patch}
             split={split}

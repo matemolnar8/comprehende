@@ -1,7 +1,11 @@
 import { apiHref, type ApiResource } from "../api/paths.ts";
-import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiLayerFile, ApiReview } from "../api/types.ts";
+import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiLayerFile, ApiReview, FileKind, FileStatus } from "../api/types.ts";
 
-export type { ApiHunk as LiveHunk, ApiLayerFile as LayerFile, ApiReview as ReviewMeta };
+export type { ApiHunk as LiveHunk, ApiLayerFile as LayerFile, ApiReview as ReviewMeta, FileKind, FileStatus };
+
+export function resourceHref(resource: ApiResource): string {
+  return new URL(apiHref(resource), new URL("./", document.baseURI)).href;
+}
 
 async function getJson<T>(resource: ApiResource): Promise<T> {
   const path = new URL(apiHref(resource), new URL("./", document.baseURI)).href;

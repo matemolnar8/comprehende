@@ -150,6 +150,14 @@
   kbd {
     font-family: var(--font-mono);
   }
+
+  /* Hairline + bench so native screenshot size stays visible on the card. */
+  .image-stage {
+    background-color: var(--diff-canvas);
+    background-image: repeating-conic-gradient(var(--muted) 0% 25%, var(--diff-canvas) 0% 50%);
+    background-size: 12px 12px;
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

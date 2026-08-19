@@ -30,7 +30,7 @@ pnpm dev -- --help
 
 `pnpm build` emits `dist/cli` and `dist/ui`. `prepack` runs that build, so `pnpm pack` / `pnpm publish` always ship the UI.
 
-`comprehende serve` and `comprehende export` share one UI and one git payload layer. Serve computes those payloads on each request. Export writes the same JSON next to the UI so any static file server can host the review.
+`comprehende serve` and `comprehende export` share one UI and one git payload layer. Serve computes those payloads on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review.
 
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.2.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
 
@@ -56,7 +56,7 @@ Export a static copy (cwd still `fixtures/repo`):
 node ../../dist/cli/main.js export --data ../example/review.json --out ../../fixtures/site
 ```
 
-The folder has the UI plus frozen `api/*.json` payloads. There is no git in that folder. Host it with any static file server:
+The folder has the UI plus frozen `api/*.json` payloads and image bytes. There is no git in that folder. Host it with any static file server:
 
 ```sh
 python3 -m http.server --directory ../../fixtures/site 8080

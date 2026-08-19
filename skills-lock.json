@@ -5,6 +5,12 @@
       "source": ".",
       "sourceType": "local",
       "computedHash": "01d0db901757b26a64fcea292a493c6cab0a2008ada25d443312ff19d612910a"
+    },
+    "unslop": {
+      "source": "cursor/plugins",
+      "sourceType": "github",
+      "skillPath": "pstack/skills/unslop/SKILL.md",
+      "computedHash": "3dfc2afeda677e12c6065497a40df7d895859de1c7d1cffb899b1559d129fe4f"
     }
   }
 }

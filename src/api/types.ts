@@ -1,6 +1,10 @@
 import type { DiffLine, FileStatus, HunkRef, ReviewDocument, SkippedFile } from "../schema/types.ts";
 
+export type { FileStatus };
+
 export type FileSide = "old" | "new";
+
+export type FileKind = "text" | "image";
 
 export type ApiHunk = HunkRef & {
   header: string;
@@ -11,6 +15,8 @@ export type ApiHunk = HunkRef & {
 export type ApiLayerFile = {
   path: string;
   oldPath?: string;
+  kind: FileKind;
+  status: FileStatus;
   patch: string;
   hunks: ApiHunk[];
 };
@@ -70,6 +76,7 @@ export type ApiReview = {
     oldPath?: string;
     status: FileStatus;
     binary: boolean;
+    image: boolean;
     hunkCount: number;
   }[];
   skipped: SkippedFile[];

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
-import { fetchHunks, fetchReview, type LiveHunk, type ReviewMeta } from "./api.ts";
+import { fetchHunks, fetchReview, type LayerFile as ApiLayerFile, type ReviewMeta } from "./api.ts";
 import { Header } from "./components/Header.tsx";
 import { Inspector, type InspectorState } from "./components/Inspector.tsx";
 import { Layer } from "./components/Layer.tsx";
@@ -8,7 +8,7 @@ import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
-import { fileIndexAtHunk, filesFromHunks } from "./lib/layer-files.ts";
+import { fileIndexAtHunk, filesFromPayload } from "./lib/layer-files.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
 import { colorIndexByLayerId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
@@ -21,9 +21,8 @@ export function App() {
   const [meta, setMeta] = useState<ReviewMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [hunks, setHunks] = useState<LiveHunk[]>([]);
+  const [payloadFiles, setPayloadFiles] = useState<ApiLayerFile[]>([]);
   const [hunksKey, setHunksKey] = useState<string | null>(null);
-  const [layerPatches, setLayerPatches] = useState<Map<string, string>>(() => new Map());
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
   const [split, setSplit] = useState(false);
@@ -68,8 +67,7 @@ export function App() {
 
   useEffect(() => {
     if (selectedKey === null) {
-      setHunks([]);
-      setLayerPatches(new Map());
+      setPayloadFiles([]);
       setHunksKey(null);
       return;
     }
@@ -78,16 +76,14 @@ export function App() {
     void fetchHunks(selectedKey)
       .then((payload) => {
         if (!cancelled) {
-          setHunks(payload.hunks);
-          setLayerPatches(new Map(payload.files.map((file) => [file.path, file.patch])));
+          setPayloadFiles(payload.files);
           setHunksKey(selectedKey);
           setActiveHunk(0);
         }
       })
       .catch((cause: unknown) => {
         if (!cancelled) {
-          setHunks([]);
-          setLayerPatches(new Map());
+          setPayloadFiles([]);
           setHunksKey(selectedKey);
           setHunkError(cause instanceof Error ? cause.message : String(cause));
         }
@@ -171,21 +167,21 @@ export function App() {
       } else if (inspector !== null) {
         return;
       } else if (event.key === "j") {
-        const files = filesFromHunks(hunks, layerPatches);
+        const files = filesFromPayload(payloadFiles);
         const current = fileIndexAtHunk(files, activeHunk);
         const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
         if (next !== undefined) {
           scrollToHunk(next.firstIndex);
         }
       } else if (event.key === "k") {
-        const files = filesFromHunks(hunks, layerPatches);
+        const files = filesFromPayload(payloadFiles);
         const current = fileIndexAtHunk(files, activeHunk);
         const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
         if (previous !== undefined) {
           scrollToHunk(previous.firstIndex);
         }
       } else if (event.key === "v") {
-        const files = filesFromHunks(hunks, layerPatches);
+        const files = filesFromPayload(payloadFiles);
         const current = files[Math.max(0, fileIndexAtHunk(files, activeHunk))];
         if (current !== undefined) {
           setFileViewed(current.path, !viewedPaths.has(current.path));
@@ -194,7 +190,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, closeInspector, hunks, inspector, layerPatches, load, meta, scrollToHunk, selectWithMotion, selection, setFileViewed, viewedPaths]);
+  }, [activeHunk, closeInspector, inspector, payloadFiles, load, meta, scrollToHunk, selectWithMotion, selection, setFileViewed, viewedPaths]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0 });
@@ -207,7 +203,7 @@ export function App() {
     return meta.groups.find((group) => group.id === selection.id) ?? null;
   }, [meta, selection]);
 
-  const layerFiles = useMemo(() => filesFromHunks(hunks, layerPatches), [hunks, layerPatches]);
+  const layerFiles = useMemo(() => filesFromPayload(payloadFiles), [payloadFiles]);
   const parts = useMemo(() => groupParts(meta?.groups ?? []), [meta]);
   const colorById = useMemo(() => colorIndexByLayerId(parts), [parts]);
   const mixed = isMixedReview(parts);

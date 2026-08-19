@@ -1,9 +1,11 @@
 import { lineDelta } from "../../schema/hunk-meta.ts";
-import type { LiveHunk } from "../api.ts";
+import type { FileKind, FileStatus, LiveHunk } from "../api.ts";
 
 export type LayerFile = {
   path: string;
   oldPath?: string;
+  kind: FileKind;
+  status: FileStatus;
   patch: string;
   added: number;
   removed: number;
@@ -12,34 +14,38 @@ export type LayerFile = {
   hunks: LiveHunk[];
 };
 
-export function filesFromHunks(hunks: LiveHunk[], patches: Map<string, string>): LayerFile[] {
-  const map = new Map<string, LayerFile>();
-  hunks.forEach((hunk, index) => {
-    const delta = lineDelta(hunk.lines);
-    const existing = map.get(hunk.path);
-    if (existing === undefined) {
-      map.set(hunk.path, {
-        path: hunk.path,
-        oldPath: hunk.oldPath,
-        patch: patches.get(hunk.path) ?? "",
-        added: delta.added,
-        removed: delta.removed,
-        hunkCount: 1,
-        firstIndex: index,
-        hunks: [hunk],
-      });
-      return;
+export function filesFromPayload(
+  files: {
+    path: string;
+    oldPath?: string;
+    kind?: FileKind;
+    status?: FileStatus;
+    patch: string;
+    hunks: LiveHunk[];
+  }[],
+): LayerFile[] {
+  let firstIndex = 0;
+  return files.map((file) => {
+    const delta = lineDelta(file.hunks.flatMap((hunk) => hunk.lines));
+    const layer: LayerFile = {
+      path: file.path,
+      kind: file.kind ?? "text",
+      status: file.status ?? "modified",
+      patch: file.patch,
+      added: delta.added,
+      removed: delta.removed,
+      hunkCount: file.hunks.length,
+      firstIndex,
+      hunks: file.hunks,
+    };
+    if (file.oldPath !== undefined) {
+      layer.oldPath = file.oldPath;
     }
-    existing.added += delta.added;
-    existing.removed += delta.removed;
-    existing.hunkCount += 1;
-    existing.hunks.push(hunk);
+    firstIndex += Math.max(file.hunks.length, 1);
+    return layer;
   });
-  return [...map.values()];
 }
 
 export function fileIndexAtHunk(files: LayerFile[], hunkIndex: number): number {
-  return files.findIndex(
-    (file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount,
-  );
+  return files.findIndex((file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount);
 }
