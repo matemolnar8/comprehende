@@ -1,0 +1,14 @@
+@keyframes wait-walk {
+  from {
+    top: -40%;
+  }
+  to {
+    top: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wait-gutter-walker {
+    animation: wait-walk 1.7s var(--motion-ease) infinite;
+  }
+}
