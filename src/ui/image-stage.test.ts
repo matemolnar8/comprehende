@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fitImageStage, stageCaption, wipeClipPath } from "./lib/image-stage.ts";
+import { fitImageStage, stageCaption, wipeOverlayWidth } from "./lib/image-stage.ts";
 
 describe("fitImageStage", () => {
   it("keeps native pixels when the image fits", () => {
@@ -24,10 +24,10 @@ describe("stageCaption", () => {
   });
 });
 
-describe("wipeClipPath", () => {
+describe("wipeOverlayWidth", () => {
   it("reveals new from the left as wipe moves toward New", () => {
-    assert.equal(wipeClipPath(0), "inset(0 100% 0 0)");
-    assert.equal(wipeClipPath(25), "inset(0 75% 0 0)");
-    assert.equal(wipeClipPath(100), "inset(0 0% 0 0)");
+    assert.equal(wipeOverlayWidth(0), "0%");
+    assert.equal(wipeOverlayWidth(25), "25%");
+    assert.equal(wipeOverlayWidth(100), "100%");
   });
 });

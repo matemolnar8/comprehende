@@ -30,7 +30,7 @@ export function stageCaption(naturalWidth: number, naturalHeight: number, scale:
   return `${pixels} at ${Math.round(scale * 100)}%`;
 }
 
-/** New image is visible from the left edge up to wipe percent (0 = all old, 100 = all new). */
-export function wipeClipPath(wipe: number): string {
-  return `inset(0 ${100 - wipe}% 0 0)`;
+/** New image overlay width. 0 = all old, 100 = all new, revealed from the left. */
+export function wipeOverlayWidth(wipe: number): string {
+  return `${wipe}%`;
 }
