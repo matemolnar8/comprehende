@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchBlame, fetchFile } from "../api.ts";
+import { fetchBlame, fetchFile, resourceHref } from "../api.ts";
+import { isImagePath } from "../../schema/image.ts";
 import { groupBlameRuns } from "../../schema/blame-runs.ts";
 import { PierreFile } from "../PierreDiff.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -20,6 +21,7 @@ export function Inspector(props: {
   onClose: () => void;
 }) {
   const { inspector, wrap, setInspector, onClose } = props;
+  const image = isImagePath(inspector.path);
   const [content, setContent] = useState<string>("");
   const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string; timestamp: number }[] | null>(
     null,
@@ -51,6 +53,10 @@ export function Inspector(props: {
     setLoading(true);
     setContent("");
     setBlame(null);
+    if (image) {
+      setLoading(false);
+      return;
+    }
     if (inspector.mode === "file") {
       void fetchFile(inspector.path, inspector.side)
         .then((payload) => {
@@ -83,7 +89,7 @@ export function Inspector(props: {
     return () => {
       cancelled = true;
     };
-  }, [inspector]);
+  }, [image, inspector]);
 
   return (
     <div className="review-inspector flex h-full min-h-0 flex-col">
@@ -107,14 +113,16 @@ export function Inspector(props: {
           >
             File
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={inspector.mode === "blame" ? "secondary" : "ghost"}
-            onClick={() => setInspector({ ...inspector, mode: "blame" })}
-          >
-            Blame
-          </Button>
+          {image ? null : (
+            <Button
+              type="button"
+              size="sm"
+              variant={inspector.mode === "blame" ? "secondary" : "ghost"}
+              onClick={() => setInspector({ ...inspector, mode: "blame" })}
+            >
+              Blame
+            </Button>
+          )}
           <Separator orientation="vertical" className="mx-1 h-6" />
           <Button
             type="button"
@@ -135,13 +143,22 @@ export function Inspector(props: {
         </div>
       </div>
       {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
-      {loading && error === null ? <p className="px-8 text-sm text-muted-foreground">Loading…</p> : null}
-      {inspector.mode === "file" && error === null && !loading ? (
+      {loading && error === null && !image ? <p className="px-8 text-sm text-muted-foreground">Loading…</p> : null}
+      {image ? (
+        <div className="min-h-0 flex-1 overflow-auto px-8 pb-8">
+          <img
+            src={resourceHref({ kind: "image", path: inspector.path, side: inspector.side })}
+            alt={`${inspector.side} ${inspector.path}`}
+            className="h-auto max-w-full bg-[var(--diff-canvas)]"
+          />
+        </div>
+      ) : null}
+      {!image && inspector.mode === "file" && error === null && !loading ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={content} wrap={wrap} />
         </div>
       ) : null}
-      {inspector.mode === "blame" && error === null && !loading && blame !== null ? (
+      {!image && inspector.mode === "blame" && error === null && !loading && blame !== null ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
           <PierreFile path={inspector.path} contents={blameContents} wrap={wrap} annotations={blameAnnotations} />
         </div>

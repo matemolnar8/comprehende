@@ -85,6 +85,7 @@ export type DiffFile = {
   oldPath?: string;
   status: FileStatus;
   binary: boolean;
+  image: boolean;
   headerPatch: string;
   patch: string;
   hunks: LiveHunk[];

@@ -9,6 +9,7 @@ import {
   renderResource,
   snapshotJson,
   type ReviewContext,
+  type Snapshot,
 } from "./live.ts";
 import { apiFsRel } from "./paths.ts";
 
@@ -45,7 +46,7 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
 
   const apiFiles: string[] = [];
   for (const resource of listResources(ctx)) {
-    let body: unknown;
+    let body: Snapshot;
     try {
       body = await renderResource(ctx, resource);
     } catch (error) {
@@ -57,7 +58,11 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     const rel = apiFsRel(resource);
     const abs = join(outDir, ...rel.split("/"));
     await mkdir(dirname(abs), { recursive: true });
-    await writeFile(abs, snapshotJson(body));
+    if (body.encoding === "json") {
+      await writeFile(abs, snapshotJson(body.body));
+    } else {
+      await writeFile(abs, Buffer.from(body.body));
+    }
     apiFiles.push(rel);
   }
   return { outDir, apiFiles };

@@ -1,3 +1,4 @@
+import { isImagePath, isLfsPointerText } from "../schema/image.ts";
 import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, ReviewSource } from "../schema/types.ts";
 import { git } from "./exec.ts";
 import { rangeLabel, resolveCommit } from "./repo.ts";
@@ -31,7 +32,7 @@ export async function readDiff(cwd: string, baseRef: string, headRef: string): P
     "--end-of-options",
     `${baseRef}...${headRef}`,
   ]);
-  return parseUnifiedDiff(stdout);
+  return classifyDiffFiles(parseUnifiedDiff(stdout));
 }
 
 export async function readHunkIndex(cwd: string, baseRef: string, headRef: string): Promise<HunkIndex> {
@@ -40,6 +41,12 @@ export async function readHunkIndex(cwd: string, baseRef: string, headRef: strin
   const hunks: HunkRef[] = [];
   const skipped: HunkIndex["skipped"] = [];
   for (const file of files) {
+    if (file.image) {
+      for (const hunk of file.hunks) {
+        hunks.push(toHunkRef(hunk));
+      }
+      continue;
+    }
     if (file.binary) {
       skipped.push({ path: file.path, reason: "binary" });
       continue;
@@ -209,6 +216,7 @@ class FileBuilder {
       path,
       status,
       binary: this.binary,
+      image: false,
       headerPatch: this.headerPatch,
       patch: this.patch,
       hunks,
@@ -301,7 +309,7 @@ function stripDiffPath(raw: string): string | undefined {
 export function flattenHunks(files: DiffFile[]): LiveHunk[] {
   const hunks: LiveHunk[] = [];
   for (const file of files) {
-    if (file.binary) {
+    if (file.binary && !file.image) {
       continue;
     }
     hunks.push(...file.hunks);
@@ -309,7 +317,45 @@ export function flattenHunks(files: DiffFile[]): LiveHunk[] {
   return hunks;
 }
 
+export function classifyDiffFiles(files: DiffFile[]): DiffFile[] {
+  return files.map(classifyDiffFile);
+}
+
+function classifyDiffFile(file: DiffFile): DiffFile {
+  if (!isImagePath(file.path) && (file.oldPath === undefined || !isImagePath(file.oldPath))) {
+    return file;
+  }
+  if (file.binary || isLfsPointerText(file.patch)) {
+    return asImageFile(file);
+  }
+  return file;
+}
+
+function asImageFile(file: DiffFile): DiffFile {
+  return { ...file, image: true, hunks: [imageLiveHunk(file.path, file.oldPath)] };
+}
+
+export function imageLiveHunk(path: string, oldPath?: string): LiveHunk {
+  const hunk: LiveHunk = {
+    path,
+    oldStart: 0,
+    oldLines: 0,
+    newStart: 0,
+    newLines: 0,
+    header: "image",
+    lines: [],
+    patch: "",
+  };
+  if (oldPath !== undefined) {
+    hunk.oldPath = oldPath;
+  }
+  return hunk;
+}
+
 export function fileLanguage(path: string): string {
+  if (isImagePath(path)) {
+    return "image";
+  }
   const ext = path.split(".").pop()?.toLowerCase();
   switch (ext) {
     case "ts":

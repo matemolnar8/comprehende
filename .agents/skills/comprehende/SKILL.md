@@ -33,7 +33,7 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base/head SHAs (or the merge-base), not current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `npx comprehende@0.2.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This is the catalog of hunk refs (path + `@@` ranges) and skipped binaries. It contains **no line content**. Do not write the index into the work tree.
+2. Run `npx comprehende@0.2.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This is the catalog of hunk refs (path + `@@` ranges), image files, and skipped non-image binaries. Image files use `oldStart`/`newStart` 0. It contains **no line content** and **no image bytes**. Do not write the index into the work tree.
 3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by **review concern**. Index is not enough to group.
 4. Create a temporary directory **outside** the repository, then write `review.json` there by **copying hunk objects** from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the **absolute** path to `--data`.
 
@@ -71,7 +71,7 @@ Tickets (`id`, optional `url` / `title`) may be copied from whatever tracker the
 - Coverage: every hunk from `index` must appear in ≥1 group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as **Unassigned** in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 
-Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory.
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory. Image files are hunks too — copy those refs into groups. Other binaries stay in `skipped`. Git LFS images are read from `.git/lfs/objects` in the clone. If the object is missing, the image slot is empty. Do not paste image bytes into `review.json`.
 
 Schema: [references/review.schema.json](./references/review.schema.json). Example document: [references/example.md](./references/example.md).
 
