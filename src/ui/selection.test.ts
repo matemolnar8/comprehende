@@ -21,9 +21,11 @@ describe("layer selection storage", () => {
   it("round-trips overview, unassigned, and a layer", () => {
     const overview = { kind: "overview" } as const;
     const unassigned = { kind: "unassigned" } as const;
+    const lockfiles = { kind: "lockfiles" } as const;
     const group = { kind: "group", id: "auth" } as const;
     assert.deepEqual(parseSelection(serializeSelection(overview)), overview);
     assert.deepEqual(parseSelection(serializeSelection(unassigned)), unassigned);
+    assert.deepEqual(parseSelection(serializeSelection(lockfiles)), lockfiles);
     assert.deepEqual(parseSelection(serializeSelection(group)), group);
   });
 
@@ -46,6 +48,16 @@ describe("layer selection storage", () => {
   it("falls back from unassigned when no leftover hunks remain", () => {
     assert.deepEqual(
       restoreSelection({ groups: [{ id: "auth" }], unassigned: { hunkCount: 0 } }, { kind: "unassigned" }),
+      { kind: "overview" },
+    );
+  });
+
+  it("falls back from lockfiles when none remain", () => {
+    assert.deepEqual(
+      restoreSelection(
+        { groups: [{ id: "auth" }], unassigned: { hunkCount: 0 }, lockfiles: { fileCount: 0 } },
+        { kind: "lockfiles" },
+      ),
       { kind: "overview" },
     );
   });

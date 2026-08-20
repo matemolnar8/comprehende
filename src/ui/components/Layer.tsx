@@ -7,6 +7,7 @@ import { WaitMark } from "./WaitMark.tsx";
 
 export function Layer(props: {
   group: ReviewMeta["groups"][number] | null;
+  bucket?: "unassigned" | "lockfiles";
   groups: ReviewMeta["groups"];
   mixed: boolean;
   strandColor?: string;
@@ -23,7 +24,7 @@ export function Layer(props: {
   onSplitRatio: (ratio: number) => void;
   onViewed: (path: string, viewed: boolean) => void;
 }) {
-  const { group, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
+  const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
 
   return (
@@ -41,6 +42,12 @@ export function Layer(props: {
               partTitle={mixed ? group.part : undefined}
               onOpenLayer={props.onOpenLayer}
             />
+          ) : bucket === "lockfiles" ? (
+            <Brief kicker="Lockfiles" title="Generated lockfiles">
+              <p className="font-serif text-lg leading-relaxed text-foreground">
+                These stay closed until you open one. Opening one loads the live git diff.
+              </p>
+            </Brief>
           ) : (
             <Brief kicker="Unassigned" title="Not in any layer">
               <p className="font-serif text-lg leading-relaxed text-foreground">

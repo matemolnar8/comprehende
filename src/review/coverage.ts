@@ -28,12 +28,8 @@ export async function coverReview(
 
 export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): ReviewCoverage {
   const liveByKey = new Map<string, LiveHunk>();
-  const lockfileByPath = new Map<string, LiveHunk>();
   for (const hunk of live) {
     liveByKey.set(hunkKey(hunk), hunk);
-    if (isLockfilePath(hunk.path)) {
-      lockfileByPath.set(hunk.path, hunk);
-    }
   }
 
   const assignedKeys = new Set<string>();
@@ -42,15 +38,16 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
     const hunks: LiveHunk[] = [];
     const stale: HunkRef[] = [];
     for (const ref of group.hunkRefs) {
-      const match = liveByKey.get(hunkKey(ref)) ?? (isLockfilePath(ref.path) ? lockfileByPath.get(ref.path) : undefined);
+      if (isLockfilePath(ref.path)) {
+        continue;
+      }
+      const match = liveByKey.get(hunkKey(ref));
       if (match === undefined) {
         stale.push(ref);
         allStale.push(ref);
         continue;
       }
-      if (!hunks.some((hunk) => hunkKey(hunk) === hunkKey(match))) {
-        hunks.push(match);
-      }
+      hunks.push(match);
       assignedKeys.add(hunkKey(match));
     }
     return { group, hunks, stale };

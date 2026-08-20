@@ -46,9 +46,15 @@ describe("lockfile payloads", () => {
     servers.push(live.server);
 
     const reviewRes = await fetch(new URL(apiHref({ kind: "review" }), `${live.url}/`));
-    const review = (await reviewRes.json()) as { groups: { id: string }[] };
+    const review = (await reviewRes.json()) as {
+      groups: { id: string }[];
+      lockfiles: { fileCount: number; files: string[] };
+    };
     const groupId = review.groups[0]?.id;
     assert.ok(groupId);
+    assert.equal(review.lockfiles.fileCount, 2);
+    assert.ok(review.lockfiles.files.includes("package-lock.json"));
+    assert.ok(review.lockfiles.files.includes("apps/web/yarn.lock"));
 
     const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: groupId }), `${live.url}/`));
     const payload = (await hunksRes.json()) as {
@@ -57,22 +63,28 @@ describe("lockfile payloads", () => {
     const encoded = JSON.stringify(payload);
     assert.equal(encoded.includes(LOCKFILE_SECRET), false);
     assert.equal(encoded.includes(APP_SECRET), true);
-
-    const lock = payload.files.find((file) => file.path === "package-lock.json");
-    assert.ok(lock);
-    assert.equal(lock.kind, "lockfile");
-    assert.equal(lock.patch, "");
-    assert.ok((lock.added ?? 0) > 0);
-
-    const yarn = payload.files.find((file) => file.path === "apps/web/yarn.lock");
-    assert.ok(yarn);
-    assert.equal(yarn.kind, "lockfile");
-    assert.equal(yarn.patch, "");
+    assert.equal(payload.files.some((file) => file.path === "package-lock.json"), false);
 
     const app = payload.files.find((file) => file.path === "src/app.ts");
     assert.ok(app);
     assert.equal(app.kind, "text");
     assert.equal(app.patch.includes(APP_SECRET), true);
+
+    const lockfilesRes = await fetch(new URL(apiHref({ kind: "hunks", group: "lockfiles" }), `${live.url}/`));
+    const lockfiles = (await lockfilesRes.json()) as {
+      files: { path: string; kind: string; patch: string; added?: number; removed?: number }[];
+    };
+    assert.equal(JSON.stringify(lockfiles).includes(LOCKFILE_SECRET), false);
+    const lock = lockfiles.files.find((file) => file.path === "package-lock.json");
+    assert.ok(lock);
+    assert.equal(lock.kind, "lockfile");
+    assert.equal(lock.patch, "");
+    assert.ok((lock.added ?? 0) > 0);
+
+    const yarn = lockfiles.files.find((file) => file.path === "apps/web/yarn.lock");
+    assert.ok(yarn);
+    assert.equal(yarn.kind, "lockfile");
+    assert.equal(yarn.patch, "");
 
     const patchRes = await fetch(new URL(apiHref({ kind: "patch", path: "package-lock.json" }), `${live.url}/`));
     assert.equal(patchRes.status, 200);

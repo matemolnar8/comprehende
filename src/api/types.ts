@@ -72,6 +72,7 @@ export type ApiReview = {
     files: string[];
   }[];
   unassigned: { hunkCount: number; files: string[] };
+  lockfiles: { fileCount: number; files: string[] };
   stale: { path: string; oldStart: number; newStart: number }[];
   files: {
     path: string;

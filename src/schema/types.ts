@@ -60,7 +60,7 @@ export type HunkIndex = {
 
 export type SkippedFile = {
   path: string;
-  reason: "binary";
+  reason: "binary" | "lockfile";
 };
 
 export type DiffLineKind = "ctx" | "add" | "del";

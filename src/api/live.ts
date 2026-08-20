@@ -63,6 +63,7 @@ export async function openReview(cwd: string, dataPath: string): Promise<ReviewC
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
   const { document, resolved, files, coverage, commits } = ctx;
+  const lockfiles = lockfileFiles(files);
   return {
     document,
     resolved,
@@ -91,6 +92,10 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       hunkCount: coverage.unassigned.length,
       files: uniquePaths(coverage.unassigned),
     },
+    lockfiles: {
+      fileCount: lockfiles.length,
+      files: lockfiles.map((file) => file.path),
+    },
     stale: coverage.stale,
     files: files.map((file) => {
       const entry: ApiReview["files"][number] = {
@@ -116,6 +121,9 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
   }
   if (groupId === "unassigned") {
     return serializeLayer(ctx.files, ctx.coverage.unassigned);
+  }
+  if (groupId === "lockfiles") {
+    return serializeLockfiles(ctx.files);
   }
   const group = ctx.coverage.groups.find((item) => item.group.id === groupId);
   if (group === undefined) {
@@ -190,7 +198,11 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
 }
 
 export function listResources(ctx: ReviewContext): ApiResource[] {
-  const resources: ApiResource[] = [{ kind: "review" }, { kind: "hunks", group: "unassigned" }];
+  const resources: ApiResource[] = [
+    { kind: "review" },
+    { kind: "hunks", group: "unassigned" },
+    { kind: "hunks", group: "lockfiles" },
+  ];
   for (const group of ctx.document.groups) {
     resources.push({ kind: "hunks", group: group.id });
   }
@@ -238,6 +250,15 @@ function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
   }
   const serializedFiles = groups.map(({ file, hunks: fileHunks }) => serializeLayerFile(file, fileHunks, true));
   return { hunks: hunks.map(serializeHunk), files: serializedFiles };
+}
+
+function serializeLockfiles(files: DiffFile[]): ApiHunks {
+  const serializedFiles = lockfileFiles(files).map((file) => serializeLayerFile(file, [], true));
+  return { hunks: [], files: serializedFiles };
+}
+
+function lockfileFiles(files: DiffFile[]): DiffFile[] {
+  return files.filter((file) => isLockfilePath(file.path) && !file.binary && !file.image);
 }
 
 async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiLayerFile> {

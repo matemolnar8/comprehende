@@ -154,10 +154,7 @@ describe("lockfile diffs", () => {
     const lock = files.find((file) => file.path === "package-lock.json");
     assert.ok(lock);
     assert.equal(lock.patch, "");
-    assert.equal(lock.hunks.length, 1);
-    assert.equal(lock.hunks[0]?.oldStart, 0);
-    assert.equal(lock.hunks[0]?.newStart, 0);
-    assert.equal(lock.hunks[0]?.header, "lockfile");
+    assert.equal(lock.hunks.length, 0);
     assert.ok((lock.added ?? 0) > 0);
 
     const yarn = files.find((file) => file.path === "apps/web/yarn.lock");
@@ -180,10 +177,9 @@ describe("lockfile diffs", () => {
 
     const index = await readHunkIndex(repo.root, repo.base, repo.head);
     assert.equal(JSON.stringify(index).includes(LOCKFILE_SECRET), false);
-    const lockHunks = index.hunks.filter((hunk) => hunk.path === "package-lock.json");
-    assert.equal(lockHunks.length, 1);
-    assert.equal(lockHunks[0]?.oldStart, 0);
-    assert.equal(lockHunks[0]?.newStart, 0);
+    assert.equal(index.hunks.some((hunk) => hunk.path === "package-lock.json"), false);
+    assert.ok(index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"));
+    assert.ok(index.skipped.some((item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile"));
     assert.ok(index.skipped.some((item) => item.path === "bun.lockb"));
   });
 });

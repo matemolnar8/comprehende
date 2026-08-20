@@ -52,6 +52,16 @@ export function Sidebar(props: {
               />
             </li>
           ) : null}
+          {meta.lockfiles.fileCount > 0 ? (
+            <li>
+              <StackItem
+                active={selection?.kind === "lockfiles"}
+                onClick={() => onSelect({ kind: "lockfiles" })}
+                title="Lockfiles"
+                count={String(meta.lockfiles.fileCount)}
+              />
+            </li>
+          ) : null}
         </ul>
       </div>
       {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (

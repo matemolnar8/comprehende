@@ -36,14 +36,14 @@ export function filesFromPayload(
       patch: file.patch,
       added: file.added ?? delta.added,
       removed: file.removed ?? delta.removed,
-      hunkCount: file.hunks.length,
+      hunkCount: Math.max(file.hunks.length, 1),
       firstIndex,
       hunks: file.hunks,
     };
     if (file.oldPath !== undefined) {
       layer.oldPath = file.oldPath;
     }
-    firstIndex += Math.max(file.hunks.length, 1);
+    firstIndex += layer.hunkCount;
     return layer;
   });
 }

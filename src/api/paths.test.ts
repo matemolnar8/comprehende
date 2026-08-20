@@ -7,6 +7,7 @@ describe("api paths", () => {
     const resources: ApiResource[] = [
       { kind: "review" },
       { kind: "hunks", group: "unassigned" },
+      { kind: "hunks", group: "lockfiles" },
       { kind: "hunks", group: "all" },
       { kind: "file", path: "src/app.ts", side: "new" },
       { kind: "blame", path: "src/helpers.ts", side: "old" },

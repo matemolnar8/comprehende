@@ -117,6 +117,10 @@ export async function readHunkIndex(cwd: string, baseRef: string, headRef: strin
       skipped.push({ path: file.path, reason: "binary" });
       continue;
     }
+    if (isLockfilePath(file.path)) {
+      skipped.push({ path: file.path, reason: "lockfile" });
+      continue;
+    }
     for (const hunk of file.hunks) {
       hunks.push(toHunkRef(hunk));
     }
@@ -378,6 +382,9 @@ export function flattenHunks(files: DiffFile[]): LiveHunk[] {
     if (file.binary && !file.image) {
       continue;
     }
+    if (isLockfilePath(file.path)) {
+      continue;
+    }
     hunks.push(...file.hunks);
   }
   return hunks;
@@ -402,21 +409,13 @@ function asImageFile(file: DiffFile): DiffFile {
 }
 
 export function imageLiveHunk(path: string, oldPath?: string): LiveHunk {
-  return markerHunk(path, oldPath, "image");
-}
-
-export function lockfileLiveHunk(path: string, oldPath?: string): LiveHunk {
-  return markerHunk(path, oldPath, "lockfile");
-}
-
-function markerHunk(path: string, oldPath: string | undefined, header: string): LiveHunk {
   const hunk: LiveHunk = {
     path,
     oldStart: 0,
     oldLines: 0,
     newStart: 0,
     newLines: 0,
-    header,
+    header: "image",
     lines: [],
     patch: "",
   };
@@ -435,7 +434,7 @@ function lockfileDiffFile(entry: NameStatusEntry, stat: NumstatEntry | undefined
     image: false,
     headerPatch: "",
     patch: "",
-    hunks: binary ? [] : [lockfileLiveHunk(entry.path, entry.oldPath)],
+    hunks: [],
   };
   if (entry.oldPath !== undefined) {
     file.oldPath = entry.oldPath;
