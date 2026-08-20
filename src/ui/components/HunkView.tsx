@@ -1,11 +1,14 @@
 import { addedSymbols, hunkRangeLabel } from "../../schema/hunk-meta.ts";
 import { PierreFileDiff } from "../PierreDiff.tsx";
+import { fetchPatch } from "../api.ts";
 import { ImageDiff } from "./ImageDiff.tsx";
+import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { LayerFile } from "../lib/layer-files.ts";
+import { waitCopy } from "../lib/wait.ts";
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useState, type MouseEvent } from "react";
 
@@ -22,7 +25,10 @@ export function HunkView(props: {
   onViewed: (path: string, viewed: boolean) => void;
 }) {
   const { file, active, index, split, splitRatio, wrap, viewed, onSplitRatio, onOpen, onViewed } = props;
-  const [collapsed, setCollapsed] = useState(viewed);
+  const deferred = file.kind === "lockfile";
+  const [collapsed, setCollapsed] = useState(viewed || deferred);
+  const [patch, setPatch] = useState(file.patch);
+  const [patchError, setPatchError] = useState<string | null>(null);
   const first = file.hunks[0];
   const symbols = addedSymbols(
     file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
@@ -31,8 +37,29 @@ export function HunkView(props: {
   const bodyId = useId();
 
   useEffect(() => {
-    setCollapsed(viewed);
-  }, [viewed]);
+    setCollapsed(viewed || deferred);
+  }, [deferred, viewed]);
+
+  useEffect(() => {
+    if (collapsed || !deferred || patch !== "" || patchError !== null) {
+      return;
+    }
+    let cancelled = false;
+    void fetchPatch(file.path)
+      .then((next) => {
+        if (!cancelled) {
+          setPatch(next.patch);
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setPatchError(cause instanceof Error ? cause.message : String(cause));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [collapsed, deferred, file.path, patch, patchError]);
 
   const toggleCollapsed = (event: MouseEvent) => {
     if (event.target instanceof Element && event.target.closest("button, input, label, a") !== null) {
@@ -81,9 +108,11 @@ export function HunkView(props: {
         <code className="font-mono text-xs text-muted-foreground">
           {file.kind === "image"
             ? "image"
-            : file.hunkCount === 1 && first !== undefined
-              ? hunkRangeLabel(first.header)
-              : `${file.hunkCount} hunks`}
+            : file.kind === "lockfile"
+              ? "lockfile"
+              : file.hunkCount === 1 && first !== undefined
+                ? hunkRangeLabel(first.header)
+                : `${file.hunkCount} hunks`}
         </code>
         {file.kind === "image" ? (
           <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
@@ -117,9 +146,13 @@ export function HunkView(props: {
       <div id={bodyId} hidden={collapsed}>
         {collapsed ? null : file.kind === "image" ? (
           <ImageDiff path={file.path} status={file.status} />
+        ) : patchError !== null ? (
+          <p className="px-3 py-2 text-sm text-warn">{patchError}</p>
+        ) : deferred && patch === "" ? (
+          <WaitMark label={waitCopy.lockfile} />
         ) : (
           <PierreFileDiff
-            patch={file.patch}
+            patch={patch}
             split={split}
             wrap={wrap}
             splitRatio={splitRatio}

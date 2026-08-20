@@ -12,6 +12,8 @@ describe("api paths", () => {
       { kind: "blame", path: "src/helpers.ts", side: "old" },
       { kind: "file", path: "weird name/foo.ts", side: "new" },
       { kind: "image", path: "shots/home.png", side: "old" },
+      { kind: "patch", path: "package-lock.json" },
+      { kind: "patch", path: "apps/web/pnpm-lock.yaml" },
     ];
     for (const resource of resources) {
       assert.deepEqual(parseApiPath(`/${apiHref(resource)}`), resource);
@@ -29,6 +31,13 @@ describe("api paths", () => {
     assert.equal(apiHref(resource), "api/images/new/shots/home.png");
     assert.equal(apiFsRel(resource), "api/images/new/shots/home.png");
     assert.deepEqual(parseApiPath("/api/images/new/shots/home.png"), resource);
+  });
+
+  it("writes lockfile patches with a json suffix", () => {
+    const resource = { kind: "patch", path: "package-lock.json" } as const;
+    assert.equal(apiHref(resource), "api/patches/package-lock.json.json");
+    assert.equal(apiFsRel(resource), "api/patches/package-lock.json.json");
+    assert.deepEqual(parseApiPath("/api/patches/package-lock.json.json"), resource);
   });
 
   it("rejects path traversal", () => {

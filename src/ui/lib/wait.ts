@@ -5,6 +5,7 @@ export const waitCopy = {
   layer: "Reading git.",
   file: "Reading this file.",
   blame: "Reading blame.",
+  lockfile: "Reading the lockfile.",
 } as const;
 
 export function waitVisible(active: boolean, elapsedMs: number, delayMs = WAIT_REVEAL_MS): boolean {

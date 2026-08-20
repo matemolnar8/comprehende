@@ -21,6 +21,8 @@ export function filesFromPayload(
     kind?: FileKind;
     status?: FileStatus;
     patch: string;
+    added?: number;
+    removed?: number;
     hunks: LiveHunk[];
   }[],
 ): LayerFile[] {
@@ -32,8 +34,8 @@ export function filesFromPayload(
       kind: file.kind ?? "text",
       status: file.status ?? "modified",
       patch: file.patch,
-      added: delta.added,
-      removed: delta.removed,
+      added: file.added ?? delta.added,
+      removed: file.removed ?? delta.removed,
       hunkCount: file.hunks.length,
       firstIndex,
       hunks: file.hunks,

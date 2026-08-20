@@ -69,6 +69,45 @@ describe("coverage join", () => {
     assert.equal(uncovered.unassigned.length, 1);
     assert.equal(uncovered.unassigned[0]?.path, "a.ts");
   });
+
+  it("joins lockfile refs by path when the live hunk is the 0,0 stub", () => {
+    const live: LiveHunk[] = [
+      {
+        path: "package-lock.json",
+        oldStart: 0,
+        oldLines: 0,
+        newStart: 0,
+        newLines: 0,
+        header: "lockfile",
+        lines: [],
+        patch: "",
+      },
+    ];
+    const coverage = joinCoverage(
+      {
+        version: 1,
+        source: { baseRef: "a", headRef: "b" },
+        size: "small",
+        groups: [
+          {
+            id: "g",
+            title: "G",
+            summary: "",
+            suggestedOrder: 0,
+            hunkRefs: [
+              { path: "package-lock.json", oldStart: 12, oldLines: 40, newStart: 12, newLines: 44 },
+              { path: "package-lock.json", oldStart: 80, oldLines: 10, newStart: 84, newLines: 8 },
+            ],
+          },
+        ],
+      },
+      live,
+    );
+    assert.equal(coverage.stale.length, 0);
+    assert.equal(coverage.unassigned.length, 0);
+    assert.equal(coverage.assignedHunks, 1);
+    assert.equal(coverage.groups[0]?.hunks.length, 1);
+  });
 });
 
 describe("example repo index/validate", () => {

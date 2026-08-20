@@ -25,5 +25,6 @@ describe("waitCopy", () => {
     assert.equal(waitCopy.layer, "Reading git.");
     assert.equal(waitCopy.file, "Reading this file.");
     assert.equal(waitCopy.blame, "Reading blame.");
+    assert.equal(waitCopy.lockfile, "Reading the lockfile.");
   });
 });

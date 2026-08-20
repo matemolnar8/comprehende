@@ -89,4 +89,7 @@ export type DiffFile = {
   headerPatch: string;
   patch: string;
   hunks: LiveHunk[];
+  /** Present on lockfile stubs that never loaded patch text. */
+  added?: number;
+  removed?: number;
 };
