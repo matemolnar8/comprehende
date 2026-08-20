@@ -61,6 +61,7 @@ export type ApiReview = {
   groups: {
     id: string;
     title: string;
+    why: string;
     summary: string;
     lookFor: string[];
     dependsOn: string[];

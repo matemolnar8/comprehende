@@ -11,6 +11,7 @@ export function coveringDocument(index: HunkIndex): ReviewDocument {
       {
         id: "all",
         title: "All changes",
+        why: "Covers every hunk in the range.",
         summary: "Every hunk in the range.",
         suggestedOrder: 0,
         hunkRefs: index.hunks.map(toHunkRef),

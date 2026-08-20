@@ -42,6 +42,7 @@ describe("coverage join", () => {
           {
             id: "g",
             title: "G",
+            why: "Joins live hunks to refs.",
             summary: "",
             suggestedOrder: 0,
             hunkRefs: [
@@ -62,7 +63,7 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
-        groups: [{ id: "g", title: "G", summary: "", suggestedOrder: 0, hunkRefs: [] }],
+        groups: [{ id: "g", title: "G", why: "Joins live hunks to refs.", summary: "", suggestedOrder: 0, hunkRefs: [] }],
       },
       live,
     );

@@ -77,6 +77,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       .map((group) => ({
         id: group.group.id,
         title: group.group.title,
+        why: group.group.why,
         summary: group.group.summary,
         lookFor: group.group.lookFor ?? [],
         dependsOn: group.group.dependsOn ?? [],

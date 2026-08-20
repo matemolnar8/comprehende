@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no `walkthrough`. Independent stories must not share one smashed why. Overview shows the ticket as the why. Commit messages come from live git. A coding-agent transcript is another why source when you have one; it is not stored in this file.
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no document `why`: independent stories must not share one smashed why. Each layer has its own `why`. `contracts` enables `git`. `docs` is a separate story.
 
 ```json
 {
@@ -24,6 +24,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "contracts",
       "title": "Review document contract",
+      "why": "Later layers join live git by hunk identity. That contract has to exist first.",
       "summary": "Hunk refs are identity; no patch fields on the document.",
       "part": "Hunk identity",
       "lookFor": [
@@ -44,6 +45,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "git",
       "title": "Live git join",
+      "why": "#12 is the split: serve must join by those refs so the UI never stores a patch.",
       "summary": "Serve-time diff is joined by (path, oldStart, newStart).",
       "part": "Hunk identity",
       "lookFor": ["Stale refs are flagged; git still wins."],
@@ -62,6 +64,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "docs",
       "title": "README wording",
+      "why": "Separate story. The contract does not depend on this.",
       "summary": "Docs only; the contract does not depend on this.",
       "part": "README",
       "lookFor": ["No code imports this file."],

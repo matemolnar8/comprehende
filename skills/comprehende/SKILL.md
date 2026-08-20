@@ -33,7 +33,7 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base and head SHAs, or the merge-base. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
 2. Run `npx comprehende@0.4.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped non-image binaries. Image files use `oldStart`/`newStart` 0. It contains no line content and no image bytes. Do not write the index into the work tree.
-3. Recover the why, then read the change. Copy tickets from the request. Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. If you have a coding-agent transcript for this change, read the human's stated reason. Do not copy commit text or the transcript into `review.json`. Then read `git diff --stat <base>...<head>` and the diffs. Group by review concern. Index is not enough to group. Log is not enough to group.
+3. Recover the why, then read the change. Copy tickets from the request. Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. If you have a coding-agent transcript for this change, read the human's stated reason. Do not copy commit text or the transcript into `review.json`. Then read `git diff --stat <base>...<head>` and the diffs. Group by review concern. Write a `why` on each layer, and a document `why` for the whole change when the sources name one. Index is not enough to group. Log is not enough to group.
 4. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
 
    Create the directory with the OS temp tools:
@@ -55,19 +55,21 @@ Default `--head` is `HEAD`. Default `--base` is `origin/HEAD`, falling back to `
 
 ## The why
 
-The human keeps the why. Recover it from sources you already have. Do not invent it from the patch.
+Write the why. Tickets, commit messages, and coding-agent transcripts are sources. They are not the Overview text.
 
 Tickets. Copy `id`, and optional `url` / `title` / `part`, from the tracker the user named. Host CLIs are never required. If `url` is present, linking is enough. Do not fetch issue bodies.
 
 Commit messages. Read `git log` for `base...head`. Serve reads subjects and bodies from live git. Do not copy them into `review.json`.
 
-Transcripts. If this change was written in a coding-agent session and you have that transcript, copy the human's stated reason for the work. Use a transcript you already have: this session, or a log the user named. Do not call a vendor API to fetch one. Do not paste the transcript into `review.json`. Do not copy the agent's plan, tool trace, or a recap of the diff.
+Transcripts. If this change was written in a coding-agent session and you have that transcript, use the human's stated reason. Use a transcript you already have: this session, or a log the user named. Do not call a vendor API to fetch one. Do not paste the transcript into `review.json`. Do not copy the agent's plan, tool trace, or a recap of the diff.
 
-Overview shows that why first: tickets from the document, commit messages from live git, and `walkthrough` when you copied it from those sources.
+Document `why` is one or two sentences for the whole change. Write it from those sources. Do not paraphrase hunks. If independent stories have different motives, omit document `why`. Do not smash them into one sentence.
 
-`walkthrough` is an optional Overview lede. Copy wording from tickets, commit messages, and/or the transcript. One or two sentences. Do not paraphrase hunks. If independent stories have different motives, omit `walkthrough`. Do not smash them into one sentence. Put `part` on each ticket that belongs to one story, using the same name as that story's layers.
+Each layer has `why`. Write why this layer exists. If a source names this layer's concern, use that. If this layer has no ticket, commit, or transcript of its own, it is enough to say it enables the layers that depend on it, or that later layers in the story need this foundation. Do not invent a product motive from the patch.
 
-If there is no ticket, commit messages are empty or silent (merge boilerplate, trailers only), and the transcript does not name a why, omit `walkthrough`. The UI will say that no source names why the work exists. Do not write a substitute from the diff.
+If sources are silent, omit document `why`. The UI will say that no source names why the whole change exists. Do not write a substitute from the diff. Every layer still needs a `why`, including layers that only exist to enable later ones.
+
+Overview shows document `why` first. Each layer shows its `why` before the what and the live git diff. Put `part` on each ticket that belongs to one story, using the same name as that story's layers.
 
 ## Grouping rules
 
@@ -79,7 +81,7 @@ If there is no ticket, commit messages are empty or silent (merge boilerplate, t
 - If you are not sure two concerns depend on each other, leave `dependsOn` empty and give them different `part` names. A false split is easy to see. A false chain hides a mixed PR.
 - Use `suggestedOrder` for the walk through the whole review, including independent parts.
 - `summary` is one sentence that says what this layer is, so a human can keep the *what*. `lookFor` is a short bullet list of what to inspect before accepting. Do not pack commits, file lists, and hunk counts into a single paragraph.
-- Overview is Why then What. Tickets, live commit messages, and a `walkthrough` copied from those or from a coding-agent transcript are the why. Layer titles and summaries are the what. The live git diff is the how. Do not paraphrase the patch.
+- Overview is Why then What. Document `why` is the why for the whole change. Each layer `why` is the why for that layer. Layer titles and summaries are the what. The live git diff is the how. Do not paraphrase the patch.
 - Set document `size` to the human review burden, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.
 - Every hunk from `index` must appear in at least one group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as Unassigned in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
@@ -91,7 +93,7 @@ Schema: [references/review.schema.json](./references/review.schema.json). Exampl
 ## Accuracy
 
 - Do not generate, clean up, or rewrite diffs.
-- Do not invent the why from the patch. Tickets, commit messages, and coding-agent transcripts are the sources. If all are silent, say so.
+- Do not invent the why from the patch. Write it from tickets, commit messages, coding-agent transcripts, or from how the layers depend on each other. If the whole change has no source, say so.
 - Do not snapshot the repo into `review.json`.
 - Do not write `review.json` or the index dump into the repository under review. Use a temp directory.
 - Opening a review whose `source` refs do not resolve in cwd is a user error. The CLI must refuse.

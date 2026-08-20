@@ -23,10 +23,10 @@
         "range": { "type": "string", "minLength": 1 }
       }
     },
-    "walkthrough": {
+    "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Optional Overview lede for the why. Copy wording from tickets, commit messages, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when independent stories have different motives."
+      "description": "Generated why for the whole change. Write it from tickets, commit messages, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when independent stories have different motives."
     },
     "tickets": {
       "type": "array",
@@ -51,10 +51,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "summary", "suggestedOrder", "hunkRefs"],
+        "required": ["id", "title", "why", "summary", "suggestedOrder", "hunkRefs"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "title": { "type": "string", "minLength": 1 },
+          "why": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Generated why this layer exists. Write it from tickets, commit messages, and/or a transcript when they apply. If this layer has no such source, it may exist to enable later layers in the same story. Do not paraphrase the patch."
+          },
           "summary": {
             "type": "string",
             "description": "One sentence: what this layer is."

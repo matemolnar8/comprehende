@@ -9,11 +9,12 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
-      walkthrough: "Split the review document from live git.",
+      why: "Split the review document from live git.",
       groups: [
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           lookFor: ["Check the flag parsing."],
           suggestedOrder: 0,
@@ -24,6 +25,10 @@ describe("parseReviewDocument", () => {
       ],
     });
     assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.why, "Split the review document from live git.");
+      assert.equal(result.document.groups[0]?.why, "The command is how an agent starts a review.");
+    }
   });
 
   it("accepts a part name on a group", () => {
@@ -35,6 +40,7 @@ describe("parseReviewDocument", () => {
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           part: "Flags",
           suggestedOrder: 0,
@@ -58,6 +64,7 @@ describe("parseReviewDocument", () => {
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           suggestedOrder: 0,
           hunkRefs: [],
@@ -79,6 +86,7 @@ describe("parseReviewDocument", () => {
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           suggestedOrder: 0,
           hunkRefs: [],
@@ -96,6 +104,7 @@ describe("parseReviewDocument", () => {
     const group = {
       id: "g1",
       title: "A",
+      why: "Enables later layers.",
       summary: "",
       suggestedOrder: 0,
       hunkRefs: [],
@@ -138,6 +147,72 @@ describe("parseReviewDocument", () => {
       groups: [],
     });
     assert.equal(bad.ok, false);
+  });
+
+  it("requires a why on each group", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a string/);
+    }
+  });
+
+  it("rejects an empty group why", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "   ",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a non-empty string/);
+    }
+  });
+
+  it("rejects walkthrough as an unknown document field", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      walkthrough: "Stop per-song lookups from flooding the API.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /unknown field "walkthrough"/);
+    }
   });
 });
 

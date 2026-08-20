@@ -11,8 +11,8 @@ export type ReviewDocument = {
   source: ReviewSource;
   /** Human review burden of this change, not file or hunk count. */
   size: ReviewSize;
-  /** Optional Overview lede for the why. Copy from tickets, commit messages, or a coding-agent transcript. Not a patch paraphrase. */
-  walkthrough?: string;
+  /** Generated why for the whole change. From tickets, commits, or a transcript. Not a patch paraphrase. */
+  why?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];
 };
@@ -34,6 +34,8 @@ export type Ticket = {
 export type ReviewGroup = {
   id: string;
   title: string;
+  /** Generated why this layer exists. From sources, or because later layers need it. */
+  why: string;
   /** One sentence: what this layer is. */
   summary: string;
   /** Scannable bullets of what to look at. Not a paragraph. */

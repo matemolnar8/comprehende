@@ -3,7 +3,6 @@ import { padLayer, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
-import { whyModel, type WhyCommit, type WhyTicket } from "../lib/why.ts";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -13,11 +12,8 @@ export function Overview(props: {
   const { meta, parts, onOpenLayer } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
-  const why = whyModel({
-    walkthrough: meta.document.walkthrough,
-    tickets: meta.document.tickets,
-    commits: meta.commits,
-  });
+  const tickets = meta.document.tickets ?? [];
+  const why = meta.document.why;
 
   return (
     <div className="review-overview mb-8">
@@ -25,29 +21,39 @@ export function Overview(props: {
         <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
           Why
         </p>
-        {why.heading !== undefined ? (
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why.heading}</h1>
-        ) : null}
-        {why.tickets.length > 0 || why.commits.length > 0 ? (
-          <div className={why.heading !== undefined ? "border-t border-border" : undefined}>
-            {why.tickets.map((ticket) => (
-              <TicketSource
-                key={ticket.id}
-                ticket={ticket}
-                hideTitle={ticket.id === why.headingTicketId}
-                mixed={mixed}
-                parts={parts}
-              />
-            ))}
-            {why.commits.map((commit) => (
-              <CommitSource key={commit.sha} commit={commit} />
-            ))}
-          </div>
-        ) : null}
-        {!why.hasWhy ? (
-          <p className="font-serif text-lg leading-relaxed text-foreground">
-            No ticket, commit message, or transcript names why this work exists. The diff is not a substitute.
+        {why !== undefined ? (
+          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why}</h1>
+        ) : (
+          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
+            No ticket, commit message, or transcript names why the whole change exists. The diff is not a substitute.
           </p>
+        )}
+        {tickets.length > 0 ? (
+          <ul className="space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
+            {tickets.map((ticket) => {
+              const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
+              return (
+                <li key={ticket.id} className="flex items-center gap-2">
+                  {strand !== undefined ? (
+                    <span
+                      aria-hidden
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: partColor(strand.colorIndex) }}
+                    />
+                  ) : null}
+                  {ticket.url !== undefined ? (
+                    <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
+                      {ticket.id}
+                    </a>
+                  ) : (
+                    <span>{ticket.id}</span>
+                  )}
+                  {ticket.title !== undefined ? <span>{ticket.title}</span> : null}
+                  {ticket.part !== undefined ? <span>· {ticket.part}</span> : null}
+                </li>
+              );
+            })}
+          </ul>
         ) : null}
       </section>
 
@@ -72,59 +78,6 @@ export function Overview(props: {
           ))}
         </div>
       </section>
-    </div>
-  );
-}
-
-function TicketSource(props: {
-  ticket: WhyTicket;
-  hideTitle: boolean;
-  mixed: boolean;
-  parts: Part[];
-}) {
-  const { ticket, hideTitle, mixed, parts } = props;
-  const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
-  const color = strand !== undefined ? partColor(strand.colorIndex) : undefined;
-  return (
-    <div className="border-b border-border py-4 last:border-b-0">
-      <p className="flex items-center gap-2 font-mono text-[11px] tracking-wide text-muted-foreground">
-        {color !== undefined ? (
-          <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-        ) : null}
-        <TicketId ticket={ticket} />
-        {ticket.part !== undefined ? <span>· {ticket.part}</span> : null}
-      </p>
-      {!hideTitle && ticket.title !== undefined ? (
-        <p className="mt-1 font-serif text-lg leading-snug text-foreground">{ticket.title}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function TicketId(props: { ticket: WhyTicket }) {
-  const { ticket } = props;
-  if (ticket.url !== undefined) {
-    return (
-      <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
-        {ticket.id}
-      </a>
-    );
-  }
-  return <span>{ticket.id}</span>;
-}
-
-function CommitSource(props: { commit: WhyCommit }) {
-  const { commit } = props;
-  return (
-    <div className="border-b border-border py-4 last:border-b-0">
-      <p className="font-mono text-[11px] tracking-wide text-muted-foreground">
-        <code className="text-primary">{commit.shortSha}</code>
-        {commit.date !== "" ? <span> · {commit.date}</span> : null}
-      </p>
-      <p className="mt-1 text-foreground">{commit.subject}</p>
-      {commit.body !== "" ? (
-        <p className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">{commit.body}</p>
-      ) : null}
     </div>
   );
 }
@@ -170,7 +123,7 @@ function PartColumn(props: {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block font-medium text-foreground">{group.title}</strong>
-                  <span className="mt-1 block leading-relaxed text-muted-foreground">{group.summary}</span>
+                  <span className="mt-1 block leading-relaxed text-muted-foreground">{group.why}</span>
                 </span>
               </Button>
             </li>
