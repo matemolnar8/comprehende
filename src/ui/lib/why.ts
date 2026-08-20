@@ -70,7 +70,8 @@ export function whyModel(input: {
     ...commit,
     body: stripGitTrailers(commit.body),
   }));
-  const hasWhy = tickets.length > 0 || commits.length > 0;
+  const hasSources = tickets.length > 0 || commits.length > 0;
+  const hasWhy = hasSources || input.walkthrough !== undefined;
   if (input.walkthrough !== undefined) {
     return { tickets, commits, hasWhy, heading: input.walkthrough };
   }

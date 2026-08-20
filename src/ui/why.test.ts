@@ -91,4 +91,24 @@ describe("whyModel", () => {
     assert.equal(why.commits.length, 0);
     assert.equal(why.heading, undefined);
   });
+
+  it("treats walkthrough as why when tickets and commits are silent", () => {
+    const why = whyModel({
+      walkthrough: "Stop per-song MusicBrainz lookups from flooding the API.",
+      commits: [
+        {
+          sha: "1",
+          shortSha: "1",
+          subject: "Merge pull request #1 from x/y",
+          body: "",
+          author: "GitHub",
+          date: "2026-08-01",
+        },
+      ],
+    });
+    assert.equal(why.hasWhy, true);
+    assert.equal(why.heading, "Stop per-song MusicBrainz lookups from flooding the API.");
+    assert.equal(why.tickets.length, 0);
+    assert.equal(why.commits.length, 0);
+  });
 });

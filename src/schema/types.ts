@@ -11,7 +11,7 @@ export type ReviewDocument = {
   source: ReviewSource;
   /** Human review burden of this change, not file or hunk count. */
   size: ReviewSize;
-  /** Optional Overview lede for the why. Copy from tickets or commit messages. Not a patch paraphrase. */
+  /** Optional Overview lede for the why. Copy from tickets, commit messages, or a coding-agent transcript. Not a patch paraphrase. */
   walkthrough?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];

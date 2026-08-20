@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no `walkthrough`. Independent stories must not share one smashed why. Overview shows the ticket as the why. Commit messages come from live git.
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no `walkthrough`. Independent stories must not share one smashed why. Overview shows the ticket as the why. Commit messages come from live git. A coding-agent transcript is another why source when you have one; it is not stored in this file.
 
 ```json
 {

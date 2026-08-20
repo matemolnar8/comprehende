@@ -28,7 +28,7 @@ export function Overview(props: {
         {why.heading !== undefined ? (
           <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why.heading}</h1>
         ) : null}
-        {why.hasWhy ? (
+        {why.tickets.length > 0 || why.commits.length > 0 ? (
           <div className={why.heading !== undefined ? "border-t border-border" : undefined}>
             {why.tickets.map((ticket) => (
               <TicketSource
@@ -43,11 +43,12 @@ export function Overview(props: {
               <CommitSource key={commit.sha} commit={commit} />
             ))}
           </div>
-        ) : (
+        ) : null}
+        {!why.hasWhy ? (
           <p className="font-serif text-lg leading-relaxed text-foreground">
-            No ticket or commit message names why this work exists. The diff is not a substitute.
+            No ticket, commit message, or transcript names why this work exists. The diff is not a substitute.
           </p>
-        )}
+        ) : null}
       </section>
 
       <section aria-labelledby="review-what">

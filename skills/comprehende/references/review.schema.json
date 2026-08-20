@@ -26,7 +26,7 @@
     "walkthrough": {
       "type": "string",
       "minLength": 1,
-      "description": "Optional Overview lede for the why. Copy wording from tickets and/or commit messages. Do not paraphrase the patch. Omit when independent stories have different motives."
+      "description": "Optional Overview lede for the why. Copy wording from tickets, commit messages, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when independent stories have different motives."
     },
     "tickets": {
       "type": "array",
