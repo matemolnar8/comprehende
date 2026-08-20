@@ -26,7 +26,7 @@
     "walkthrough": {
       "type": "string",
       "minLength": 1,
-      "description": "One or two sentences for the whole change. Commit subjects are fine. Do not paraphrase the patch."
+      "description": "Optional Overview lede for the why. Copy wording from tickets and/or commit messages. Do not paraphrase the patch. Omit when independent stories have different motives."
     },
     "tickets": {
       "type": "array",
@@ -37,7 +37,12 @@
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "url": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 }
+          "title": { "type": "string", "minLength": 1 },
+          "part": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Short name of the independent story this ticket belongs to. Same name as the layers in that story. Omit when the ticket is for the whole review."
+          }
         }
       }
     },

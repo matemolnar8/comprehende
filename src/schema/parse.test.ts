@@ -48,6 +48,28 @@ describe("parseReviewDocument", () => {
     }
   });
 
+  it("accepts a part name on a ticket", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      tickets: [{ id: "#12", title: "Split the git index from the UI", part: "Hunk identity" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.tickets?.[0]?.part, "Hunk identity");
+    }
+  });
+
   it("rejects patch text fields", () => {
     const result = parseReviewDocument({
       version: 1,

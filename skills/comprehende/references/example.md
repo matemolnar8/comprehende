@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part.
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no `walkthrough`. Independent stories must not share one smashed why. Overview shows the ticket as the why. Commit messages come from live git.
 
 ```json
 {
@@ -12,9 +12,14 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "headRef": "HEAD",
     "range": "origin/main...HEAD"
   },
-  "walkthrough": "Hunk refs are identity; serve joins live git.",
   "size": "small",
-  "tickets": [{ "id": "#12", "title": "Split the git index from the UI" }],
+  "tickets": [
+    {
+      "id": "#12",
+      "title": "Split the git index from the UI",
+      "part": "Hunk identity"
+    }
+  ],
   "groups": [
     {
       "id": "contracts",

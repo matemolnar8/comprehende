@@ -54,25 +54,6 @@ export function Sidebar(props: {
           ) : null}
         </ul>
       </div>
-      {meta.document.tickets !== undefined && meta.document.tickets.length > 0 ? (
-        <ul className="space-y-2 px-4 text-sm text-muted-foreground">
-          {meta.document.tickets.map((ticket) => (
-            <li key={ticket.id}>
-              {ticket.url !== undefined ? (
-                <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
-                  {ticket.id}
-                  {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                </a>
-              ) : (
-                <span>
-                  {ticket.id}
-                  {ticket.title !== undefined ? ` ${ticket.title}` : ""}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </nav>
   );
 }

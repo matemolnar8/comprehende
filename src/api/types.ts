@@ -30,6 +30,7 @@ export type ApiCommit = {
   sha: string;
   shortSha: string;
   subject: string;
+  body: string;
   author: string;
   date: string;
 };

@@ -24,7 +24,7 @@ The review document is interpretation only: groups, summaries, hunk pointers. Ne
 Run the published CLI at the pinned version, inside the repository under review.
 
 ```sh
-npx comprehende@0.3.0 <command>
+npx comprehende@0.4.0 <command>
 ```
 
 Do not use a git checkout path, `pnpm dev`, or an unpinned install.
@@ -32,8 +32,8 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base and head SHAs, or the merge-base. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `npx comprehende@0.3.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped non-image binaries. Image files use `oldStart`/`newStart` 0. It contains no line content and no image bytes. Do not write the index into the work tree.
-3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by review concern. Index is not enough to group.
+2. Run `npx comprehende@0.4.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped non-image binaries. Image files use `oldStart`/`newStart` 0. It contains no line content and no image bytes. Do not write the index into the work tree.
+3. Recover the why, then read the change. Copy tickets from the request. Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. Do not copy commit text into `review.json`. Then read `git diff --stat <base>...<head>` and the diffs. Group by review concern. Index is not enough to group. Log is not enough to group.
 4. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
 
    Create the directory with the OS temp tools:
@@ -48,12 +48,24 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
    # write $REVIEW_DIR/review.json
    ```
 
-5. Run `npx comprehende@0.3.0 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Never the diff.
-6. Run `npx comprehende@0.3.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+5. Run `npx comprehende@0.4.0 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Never the diff.
+6. Run `npx comprehende@0.4.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 Default `--head` is `HEAD`. Default `--base` is `origin/HEAD`, falling back to `main` or `master`.
 
-Copy tickets (`id`, optional `url` / `title`) from whatever tracker the user mentioned. That is the *why*. Host CLIs are never required.
+## The why
+
+The human keeps the why. Recover it from sources you already have. Do not invent it from the patch.
+
+Tickets. Copy `id`, and optional `url` / `title` / `part`, from the tracker the user named. Host CLIs are never required. If `url` is present, linking is enough. Do not fetch issue bodies.
+
+Commit messages. Read `git log` for `base...head`. Serve reads subjects and bodies from live git. Do not copy them into `review.json`.
+
+Overview shows that why first: tickets from the document, commit messages from live git.
+
+`walkthrough` is an optional Overview lede. Copy wording from tickets and/or commit messages. One or two sentences. Do not paraphrase hunks. If independent stories have different motives, omit `walkthrough`. Do not smash them into one sentence. Put `part` on each ticket that belongs to one story, using the same name as that story's layers.
+
+If there is no ticket and commit messages are empty or silent (merge boilerplate, trailers only), omit `walkthrough`. The UI will say that no source names why the work exists. Do not write a substitute from the diff.
 
 ## Grouping rules
 
@@ -65,7 +77,7 @@ Copy tickets (`id`, optional `url` / `title`) from whatever tracker the user men
 - If you are not sure two concerns depend on each other, leave `dependsOn` empty and give them different `part` names. A false split is easy to see. A false chain hides a mixed PR.
 - Use `suggestedOrder` for the walk through the whole review, including independent parts.
 - `summary` is one sentence that says what this layer is, so a human can keep the *what*. `lookFor` is a short bullet list of what to inspect before accepting. Do not pack commits, file lists, and hunk counts into a single paragraph.
-- The UI has an Overview of the stack. Optional document `walkthrough` is one or two sentences for the whole change. Commit subjects are fine. Do not paraphrase the patch.
+- Overview is Why then What. Tickets and live commit messages are the why. Layer titles and summaries are the what. The live git diff is the how. Optional `walkthrough` is a lede copied from tickets or commit messages. Do not paraphrase the patch.
 - Set document `size` to the human review burden, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.
 - Every hunk from `index` must appear in at least one group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as Unassigned in the UI.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
@@ -77,6 +89,7 @@ Schema: [references/review.schema.json](./references/review.schema.json). Exampl
 ## Accuracy
 
 - Do not generate, clean up, or rewrite diffs.
+- Do not invent the why from the patch. Tickets and commit messages are the sources. If both are silent, say so.
 - Do not snapshot the repo into `review.json`.
 - Do not write `review.json` or the index dump into the repository under review. Use a temp directory.
 - Opening a review whose `source` refs do not resolve in cwd is a user error. The CLI must refuse.

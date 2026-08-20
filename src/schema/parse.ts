@@ -14,7 +14,7 @@ export type ParseResult = ParseSuccess | ParseFailure;
 
 const DOCUMENT_KEYS = new Set(["version", "source", "size", "walkthrough", "tickets", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
-const TICKET_KEYS = new Set(["id", "url", "title"]);
+const TICKET_KEYS = new Set(["id", "url", "title", "part"]);
 const GROUP_KEYS = new Set(["id", "title", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
 const HUNK_KEYS = new Set(["path", "oldPath", "oldStart", "oldLines", "newStart", "newLines"]);
 
@@ -126,6 +126,12 @@ function parseTickets(value: unknown, errors: string[]): Ticket[] | undefined {
       const title = requiredString(item.title, `tickets[${i}].title`, errors);
       if (title !== undefined) {
         ticket.title = title;
+      }
+    }
+    if (item.part !== undefined) {
+      const part = requiredString(item.part, `tickets[${i}].part`, errors);
+      if (part !== undefined) {
+        ticket.part = part;
       }
     }
     tickets.push(ticket);
