@@ -14,53 +14,33 @@ export function Overview(props: {
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const tickets = meta.document.tickets ?? [];
   const why = meta.document.why;
+  const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
 
   return (
     <div className="review-overview mb-8">
-      <section className="mb-12 max-w-[68ch]" aria-labelledby="review-why">
-        <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
-          Why
-        </p>
-        {why !== undefined ? (
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why}</h1>
-        ) : (
-          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
-            No ticket, commit message, or transcript names why the whole change exists. The diff is not a substitute.
+      {why !== undefined ? (
+        <section className="mb-12 max-w-[68ch]" aria-labelledby="review-why">
+          <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
+            Why
           </p>
-        )}
-        {tickets.length > 0 ? (
-          <ul className="space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
-            {tickets.map((ticket) => {
-              const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
-              return (
-                <li key={ticket.id} className="flex items-center gap-2">
-                  {strand !== undefined ? (
-                    <span
-                      aria-hidden
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: partColor(strand.colorIndex) }}
-                    />
-                  ) : null}
-                  {ticket.url !== undefined ? (
-                    <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
-                      {ticket.id}
-                    </a>
-                  ) : (
-                    <span>{ticket.id}</span>
-                  )}
-                  {ticket.title !== undefined ? <span>{ticket.title}</span> : null}
-                  {ticket.part !== undefined ? <span>· {ticket.part}</span> : null}
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-      </section>
+          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why}</h1>
+          {ticketList}
+        </section>
+      ) : ticketList !== null ? (
+        <div className="mb-8 max-w-[68ch]">{ticketList}</div>
+      ) : null}
 
       <section aria-labelledby="review-what">
-        <p id="review-what" className="mb-6 font-mono text-[11px] tracking-wide text-muted-foreground">
+        <p id="review-what" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
           What · {sizeLabel(meta.document.size)} · {meta.files.length} files
         </p>
+        {why !== undefined ? (
+          <p className="mb-8 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">{meta.document.summary}</p>
+        ) : (
+          <h1 className="mb-8 max-w-[68ch] font-serif text-[1.75rem] leading-snug text-foreground">
+            {meta.document.summary}
+          </h1>
+        )}
         <div
           className={
             mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : undefined
@@ -79,6 +59,37 @@ export function Overview(props: {
         </div>
       </section>
     </div>
+  );
+}
+
+function TicketList(props: { tickets: NonNullable<ReviewMeta["document"]["tickets"]>; mixed: boolean; parts: Part[] }) {
+  const { tickets, mixed, parts } = props;
+  return (
+    <ul className="space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
+      {tickets.map((ticket) => {
+        const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
+        return (
+          <li key={ticket.id} className="flex items-center gap-2">
+            {strand !== undefined ? (
+              <span
+                aria-hidden
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: partColor(strand.colorIndex) }}
+              />
+            ) : null}
+            {ticket.url !== undefined ? (
+              <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
+                {ticket.id}
+              </a>
+            ) : (
+              <span>{ticket.id}</span>
+            )}
+            {ticket.title !== undefined ? <span>{ticket.title}</span> : null}
+            {ticket.part !== undefined ? <span>· {ticket.part}</span> : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -123,7 +134,7 @@ function PartColumn(props: {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block font-medium text-foreground">{group.title}</strong>
-                  <span className="mt-1 block leading-relaxed text-muted-foreground">{group.why}</span>
+                  <span className="mt-1 block leading-relaxed text-muted-foreground">{group.summary}</span>
                 </span>
               </Button>
             </li>

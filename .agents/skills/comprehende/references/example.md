@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no document `why`: independent stories must not share one smashed why. Each layer has its own `why`. `contracts` enables `git`. `docs` is a separate story.
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". There is no document `why`: independent stories must not share one smashed why. Document `summary` still names both stories. Each layer has its own `why`. `contracts` enables `git`. `docs` is a separate story.
 
 ```json
 {
@@ -13,6 +13,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "size": "small",
+  "summary": "Hunk identity contract and live git join, plus a separate README wording change.",
   "tickets": [
     {
       "id": "#12",

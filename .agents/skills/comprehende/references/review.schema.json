@@ -5,7 +5,7 @@
   "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "source", "size", "groups"],
+  "required": ["version", "source", "size", "summary", "groups"],
   "properties": {
     "version": { "const": 1 },
     "size": {
@@ -23,10 +23,15 @@
         "range": { "type": "string", "minLength": 1 }
       }
     },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short what of the whole change. Always write this. Name the stories. Do not invent a motive."
+    },
     "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Generated why for the whole change. Write it from tickets, commit messages, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when independent stories have different motives."
+      "description": "Generated why for the whole change. Write it from tickets, issues, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when those sources are silent, or when independent stories have different motives. The UI skips the Why section when this is absent."
     },
     "tickets": {
       "type": "array",

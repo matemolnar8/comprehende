@@ -7,6 +7,7 @@ export function coveringDocument(index: HunkIndex): ReviewDocument {
     version: 1,
     source: index.source,
     size: "small",
+    summary: "Every hunk in the range.",
     groups: [
       {
         id: "all",

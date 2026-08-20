@@ -11,7 +11,9 @@ export type ReviewDocument = {
   source: ReviewSource;
   /** Human review burden of this change, not file or hunk count. */
   size: ReviewSize;
-  /** Generated why for the whole change. From tickets, commits, or a transcript. Not a patch paraphrase. */
+  /** Short what of the whole change. Always present. */
+  summary: string;
+  /** Generated why for the whole change. From tickets, issues, or a transcript. Omit when those sources are silent or mixed. */
   why?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];
