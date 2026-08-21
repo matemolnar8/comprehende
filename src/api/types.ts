@@ -32,6 +32,7 @@ export type ApiCommit = {
   sha: string;
   shortSha: string;
   subject: string;
+  body: string;
   author: string;
   date: string;
 };
@@ -62,6 +63,7 @@ export type ApiReview = {
   groups: {
     id: string;
     title: string;
+    why: string;
     summary: string;
     lookFor: string[];
     dependsOn: string[];

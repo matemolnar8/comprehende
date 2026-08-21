@@ -28,7 +28,10 @@ export function LayerBrief(props: {
       kicker={partTitle !== undefined ? `${partTitle} · ${padLayer(index)}` : padLayer(index)}
       title={group.title}
     >
-      <p className="mb-5 font-serif text-lg leading-relaxed text-foreground">{group.summary}</p>
+      <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
+      <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">{group.why}</p>
+      <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">What</p>
+      <p className="mb-5 leading-relaxed text-foreground">{group.summary}</p>
       {group.dependsOn.length > 0 ? (
         <p className="mb-5 text-muted-foreground">
           Depends on{" "}

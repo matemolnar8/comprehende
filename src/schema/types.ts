@@ -11,7 +11,10 @@ export type ReviewDocument = {
   source: ReviewSource;
   /** Human review burden of this change, not file or hunk count. */
   size: ReviewSize;
-  walkthrough?: string;
+  /** Short what of the whole change. Always present. */
+  summary: string;
+  /** Generated why for the whole change. From tickets, issues, or a transcript. Omit when those sources are silent or mixed. */
+  why?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];
 };
@@ -26,12 +29,16 @@ export type Ticket = {
   id: string;
   url?: string;
   title?: string;
+  /** Independent story this ticket belongs to. Same name as that story's layers. */
+  part?: string;
 };
 
 export type ReviewGroup = {
   id: string;
   title: string;
-  /** One sentence: what this layer is and why it exists. */
+  /** Generated why this layer exists. From sources, or because later layers need it. */
+  why: string;
+  /** One sentence: what this layer is. */
   summary: string;
   /** Scannable bullets of what to look at. Not a paragraph. */
   lookFor?: string[];

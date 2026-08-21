@@ -9,11 +9,13 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
-      walkthrough: "Split the review document from live git.",
+      summary: "Adds a review command.",
+      why: "Split the review document from live git.",
       groups: [
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           lookFor: ["Check the flag parsing."],
           suggestedOrder: 0,
@@ -24,6 +26,11 @@ describe("parseReviewDocument", () => {
       ],
     });
     assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.why, "Split the review document from live git.");
+      assert.equal(result.document.summary, "Adds a review command.");
+      assert.equal(result.document.groups[0]?.why, "The command is how an agent starts a review.");
+    }
   });
 
   it("accepts a part name on a group", () => {
@@ -31,10 +38,12 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      summary: "Adds a review command.",
       groups: [
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           part: "Flags",
           suggestedOrder: 0,
@@ -48,15 +57,41 @@ describe("parseReviewDocument", () => {
     }
   });
 
+  it("accepts a part name on a ticket", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      summary: "Adds a review command.",
+      tickets: [{ id: "#12", title: "Split the git index from the UI", part: "Hunk identity" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.tickets?.[0]?.part, "Hunk identity");
+    }
+  });
+
   it("rejects patch text fields", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      summary: "Adds a review command.",
       groups: [
         {
           id: "g1",
           title: "CLI",
+          why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           suggestedOrder: 0,
           hunkRefs: [],
@@ -74,6 +109,7 @@ describe("parseReviewDocument", () => {
     const group = {
       id: "g1",
       title: "A",
+      why: "Enables later layers.",
       summary: "",
       suggestedOrder: 0,
       hunkRefs: [],
@@ -82,6 +118,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      summary: "Adds a review command.",
       groups: [group, { ...group, title: "B" }],
     });
     assert.equal(dup.ok, false);
@@ -90,6 +127,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      summary: "Adds a review command.",
       groups: [{ ...group, dependsOn: ["nope"] }],
     });
     assert.equal(missing.ok, false);
@@ -116,6 +154,97 @@ describe("parseReviewDocument", () => {
       groups: [],
     });
     assert.equal(bad.ok, false);
+  });
+
+  it("requires a why on each group", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      summary: "Adds a review command.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a string/);
+    }
+  });
+
+  it("requires a summary on the document", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /summary must be a string/);
+    }
+  });
+
+  it("rejects an empty group why", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      summary: "Adds a review command.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "   ",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a non-empty string/);
+    }
+  });
+
+  it("rejects walkthrough as an unknown document field", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      summary: "Adds a review command.",
+      walkthrough: "Stop per-song lookups from flooding the API.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /unknown field "walkthrough"/);
+    }
   });
 });
 

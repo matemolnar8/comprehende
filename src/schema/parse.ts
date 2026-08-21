@@ -12,10 +12,10 @@ export type ParseSuccess = {
 
 export type ParseResult = ParseSuccess | ParseFailure;
 
-const DOCUMENT_KEYS = new Set(["version", "source", "size", "walkthrough", "tickets", "groups"]);
+const DOCUMENT_KEYS = new Set(["version", "source", "size", "summary", "why", "tickets", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
-const TICKET_KEYS = new Set(["id", "url", "title"]);
-const GROUP_KEYS = new Set(["id", "title", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
+const TICKET_KEYS = new Set(["id", "url", "title", "part"]);
+const GROUP_KEYS = new Set(["id", "title", "why", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
 const HUNK_KEYS = new Set(["path", "oldPath", "oldStart", "oldLines", "newStart", "newLines"]);
 
 export function parseReviewDocument(input: unknown): ParseResult {
@@ -32,12 +32,12 @@ export function parseReviewDocument(input: unknown): ParseResult {
 
   const source = parseSource(input.source, errors);
   const size = parseSize(input.size, errors);
+  const summary = requiredString(input.summary, "summary", errors);
   const tickets = parseTickets(input.tickets, errors);
   const groups = parseGroups(input.groups, errors);
-  const walkthrough =
-    input.walkthrough === undefined ? undefined : requiredString(input.walkthrough, "walkthrough", errors);
+  const why = input.why === undefined ? undefined : requiredString(input.why, "why", errors);
 
-  if (errors.length > 0 || source === undefined || size === undefined) {
+  if (errors.length > 0 || source === undefined || size === undefined || summary === undefined) {
     return { ok: false, errors };
   }
 
@@ -45,10 +45,11 @@ export function parseReviewDocument(input: unknown): ParseResult {
     version: 1,
     source,
     size,
+    summary,
     groups,
   };
-  if (walkthrough !== undefined) {
-    document.walkthrough = walkthrough;
+  if (why !== undefined) {
+    document.why = why;
   }
   if (tickets !== undefined) {
     document.tickets = tickets;
@@ -128,6 +129,12 @@ function parseTickets(value: unknown, errors: string[]): Ticket[] | undefined {
         ticket.title = title;
       }
     }
+    if (item.part !== undefined) {
+      const part = requiredString(item.part, `tickets[${i}].part`, errors);
+      if (part !== undefined) {
+        ticket.part = part;
+      }
+    }
     tickets.push(ticket);
   });
   return tickets;
@@ -148,20 +155,21 @@ function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
     extraKeys(item, GROUP_KEYS, `groups[${i}]`, errors);
     const id = requiredString(item.id, `groups[${i}].id`, errors);
     const title = requiredString(item.title, `groups[${i}].title`, errors);
+    const why = requiredString(item.why, `groups[${i}].why`, errors);
     const summary = requiredString(item.summary, `groups[${i}].summary`, errors, { allowEmpty: true });
     const suggestedOrder = requiredNumber(item.suggestedOrder, `groups[${i}].suggestedOrder`, errors);
     const hunkRefs = parseHunkRefs(item.hunkRefs, `groups[${i}].hunkRefs`, errors);
     const lookFor = parseStringList(item.lookFor, `groups[${i}].lookFor`, errors);
     const dependsOn = parseStringList(item.dependsOn, `groups[${i}].dependsOn`, errors);
     const part = item.part === undefined ? undefined : requiredString(item.part, `groups[${i}].part`, errors);
-    if (id === undefined || title === undefined || summary === undefined || suggestedOrder === undefined) {
+    if (id === undefined || title === undefined || why === undefined || summary === undefined || suggestedOrder === undefined) {
       return;
     }
     if (ids.has(id)) {
       errors.push(`duplicate group id "${id}"`);
     }
     ids.add(id);
-    const group: ReviewGroup = { id, title, summary, suggestedOrder, hunkRefs };
+    const group: ReviewGroup = { id, title, why, summary, suggestedOrder, hunkRefs };
     if (lookFor !== undefined) {
       group.lookFor = lookFor;
     }

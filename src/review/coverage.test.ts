@@ -38,10 +38,12 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
+        summary: "Joins live hunks to refs.",
         groups: [
           {
             id: "g",
             title: "G",
+            why: "Joins live hunks to refs.",
             summary: "",
             suggestedOrder: 0,
             hunkRefs: [
@@ -62,7 +64,8 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
-        groups: [{ id: "g", title: "G", summary: "", suggestedOrder: 0, hunkRefs: [] }],
+        summary: "Joins live hunks to refs.",
+        groups: [{ id: "g", title: "G", why: "Joins live hunks to refs.", summary: "", suggestedOrder: 0, hunkRefs: [] }],
       },
       live,
     );
@@ -76,10 +79,12 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
+        summary: "Lockfiles are not coverage hunks.",
         groups: [
           {
             id: "g",
             title: "G",
+            why: "Lockfiles stay in skipped.",
             summary: "",
             suggestedOrder: 0,
             hunkRefs: [

@@ -45,14 +45,21 @@ describe("serve API", () => {
     assert.equal(reviewRes.status, 200);
     const review = (await reviewRes.json()) as {
       coverage: { totalHunks: number; unassignedCount: number };
-      groups: { id: string; hunkCount: number }[];
-      document: unknown;
+      groups: { id: string; why: string; hunkCount: number }[];
+      document: { why?: string; summary: string };
+      commits: { subject: string; body: string }[];
     };
     const reviewText = JSON.stringify(review.document);
     assert.equal(reviewText.includes(SECRET_ADD), false);
     assert.equal(reviewText.includes(SECRET_DEL), false);
     assert.equal(review.coverage.unassignedCount, 0);
+    assert.equal(review.document.why, undefined);
+    assert.equal(review.document.summary, "Every hunk in the range.");
+    assert.equal(review.groups[0]?.why, "Covers every hunk in the range.");
     assert.ok(review.coverage.totalHunks >= 4);
+    assert.ok(review.commits.length >= 1);
+    assert.equal(typeof review.commits[0]?.body, "string");
+    assert.equal(review.commits[0]?.subject, "Split app hunks, rename util, widen Id");
 
     const group = document.groups[0];
     assert.ok(group);
