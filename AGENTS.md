@@ -84,4 +84,6 @@ I love to see simple code solving real, complex problems. I want you to always k
 
 The skill is going to be reviewed and adjusted by me manually, but you should also write the skill with the above principles in mind.
 
+Edit `skills-next/comprehende/` only.
+
 Type safety is one of the most useful things for humans and agents alike. Make good use of it when writing code. Rely on it as much as you can.
