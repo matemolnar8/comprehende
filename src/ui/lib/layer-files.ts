@@ -21,6 +21,8 @@ export function filesFromPayload(
     kind?: FileKind;
     status?: FileStatus;
     patch: string;
+    added?: number;
+    removed?: number;
     hunks: LiveHunk[];
   }[],
 ): LayerFile[] {
@@ -32,16 +34,16 @@ export function filesFromPayload(
       kind: file.kind ?? "text",
       status: file.status ?? "modified",
       patch: file.patch,
-      added: delta.added,
-      removed: delta.removed,
-      hunkCount: file.hunks.length,
+      added: file.added ?? delta.added,
+      removed: file.removed ?? delta.removed,
+      hunkCount: Math.max(file.hunks.length, 1),
       firstIndex,
       hunks: file.hunks,
     };
     if (file.oldPath !== undefined) {
       layer.oldPath = file.oldPath;
     }
-    firstIndex += Math.max(file.hunks.length, 1);
+    firstIndex += layer.hunkCount;
     return layer;
   });
 }

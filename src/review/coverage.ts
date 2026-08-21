@@ -1,5 +1,6 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
 import { hunkKey } from "../schema/identity.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import type { HunkRef, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 
 export type GroupCoverage = {
@@ -37,6 +38,9 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
     const hunks: LiveHunk[] = [];
     const stale: HunkRef[] = [];
     for (const ref of group.hunkRefs) {
+      if (isLockfilePath(ref.path)) {
+        continue;
+      }
       const match = liveByKey.get(hunkKey(ref));
       if (match === undefined) {
         stale.push(ref);
@@ -44,7 +48,7 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
         continue;
       }
       hunks.push(match);
-      assignedKeys.add(hunkKey(ref));
+      assignedKeys.add(hunkKey(match));
     }
     return { group, hunks, stale };
   });

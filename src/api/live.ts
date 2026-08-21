@@ -1,12 +1,13 @@
 import { loadDocument } from "../cli/commands.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
-import { fileLanguage, filePatchFromGit, resolveSource, toHunkRef } from "../git/diff.ts";
+import { fileLanguage, filePatchFromGit, readPathDiff, resolveSource, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
 import { mergeBase } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
 import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
@@ -62,6 +63,7 @@ export async function openReview(cwd: string, dataPath: string): Promise<ReviewC
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
   const { document, resolved, files, coverage, commits } = ctx;
+  const lockfiles = lockfileFiles(files);
   return {
     document,
     resolved,
@@ -90,6 +92,10 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       hunkCount: coverage.unassigned.length,
       files: uniquePaths(coverage.unassigned),
     },
+    lockfiles: {
+      fileCount: lockfiles.length,
+      files: lockfiles.map((file) => file.path),
+    },
     stale: coverage.stale,
     files: files.map((file) => {
       const entry: ApiReview["files"][number] = {
@@ -115,6 +121,9 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
   }
   if (groupId === "unassigned") {
     return serializeLayer(ctx.files, ctx.coverage.unassigned);
+  }
+  if (groupId === "lockfiles") {
+    return serializeLockfiles(ctx.files);
   }
   const group = ctx.coverage.groups.find((item) => item.group.id === groupId);
   if (group === undefined) {
@@ -183,11 +192,17 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
       return { encoding: "json", body: await blamePayload(ctx, resource.path, resource.side) };
     case "image":
       return imagePayload(ctx, resource.path, resource.side);
+    case "patch":
+      return { encoding: "json", body: await patchPayload(ctx, resource.path) };
   }
 }
 
 export function listResources(ctx: ReviewContext): ApiResource[] {
-  const resources: ApiResource[] = [{ kind: "review" }, { kind: "hunks", group: "unassigned" }];
+  const resources: ApiResource[] = [
+    { kind: "review" },
+    { kind: "hunks", group: "unassigned" },
+    { kind: "hunks", group: "lockfiles" },
+  ];
   for (const group of ctx.document.groups) {
     resources.push({ kind: "hunks", group: group.id });
   }
@@ -197,6 +212,9 @@ export function listResources(ctx: ReviewContext): ApiResource[] {
         resources.push({ kind: "image", path: file.path, side });
       }
       continue;
+    }
+    if (isLockfilePath(file.path) && !file.binary) {
+      resources.push({ kind: "patch", path: file.path });
     }
     for (const side of sidesFor(file)) {
       resources.push({ kind: "file", path: file.path, side });
@@ -230,20 +248,51 @@ function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
     }
     groups.push({ file, hunks: [hunk] });
   }
-  const serializedFiles = groups.map(({ file, hunks: fileHunks }) => {
-    const next: ApiLayerFile = {
-      path: file.path,
-      kind: file.image ? "image" : "text",
-      status: file.status,
-      patch: file.image ? file.headerPatch : filePatchFromGit(file, fileHunks),
-      hunks: fileHunks.map(serializeHunk),
-    };
-    if (file.oldPath !== undefined) {
-      next.oldPath = file.oldPath;
-    }
-    return next;
-  });
+  const serializedFiles = groups.map(({ file, hunks: fileHunks }) => serializeLayerFile(file, fileHunks, true));
   return { hunks: hunks.map(serializeHunk), files: serializedFiles };
+}
+
+function serializeLockfiles(files: DiffFile[]): ApiHunks {
+  const serializedFiles = lockfileFiles(files).map((file) => serializeLayerFile(file, [], true));
+  return { hunks: [], files: serializedFiles };
+}
+
+function lockfileFiles(files: DiffFile[]): DiffFile[] {
+  return files.filter((file) => isLockfilePath(file.path) && !file.binary && !file.image);
+}
+
+async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiLayerFile> {
+  const file = findFile(ctx.files, path);
+  if (!isLockfilePath(file.path) || file.binary || file.image) {
+    throw new ApiError(404, "path is not a deferred lockfile");
+  }
+  const live = await readPathDiff(ctx.cwd, ctx.document.source.baseRef, ctx.document.source.headRef, file.path);
+  if (live === undefined) {
+    throw new ApiError(404, `no live diff for ${path}`);
+  }
+  return serializeLayerFile(live, live.hunks, false);
+}
+
+function serializeLayerFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile: boolean): ApiLayerFile {
+  const lockfile = isLockfilePath(file.path) && !file.binary && !file.image;
+  const deferred = deferLockfile && lockfile;
+  const next: ApiLayerFile = {
+    path: file.path,
+    kind: file.image ? "image" : lockfile ? "lockfile" : "text",
+    status: file.status,
+    patch: deferred ? "" : file.image ? file.headerPatch : filePatchFromGit(file, fileHunks),
+    hunks: fileHunks.map(serializeHunk),
+  };
+  if (file.oldPath !== undefined) {
+    next.oldPath = file.oldPath;
+  }
+  if (file.added !== undefined) {
+    next.added = file.added;
+  }
+  if (file.removed !== undefined) {
+    next.removed = file.removed;
+  }
+  return next;
 }
 
 function serializeHunk(hunk: LiveHunk): ApiHunk {

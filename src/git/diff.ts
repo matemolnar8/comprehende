@@ -1,7 +1,9 @@
 import { isImagePath, isLfsPointerText } from "../schema/image.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, ReviewSource } from "../schema/types.ts";
 import { git } from "./exec.ts";
-import { rangeLabel, resolveCommit } from "./repo.ts";
+import { parseNameStatus, parseNumstat, type NameStatusEntry, type NumstatEntry } from "./name-status.ts";
+import { assertSafePath, rangeLabel, resolveCommit } from "./repo.ts";
 
 const HUNK_HEADER = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
 
@@ -22,6 +24,67 @@ export async function resolveSource(
 export async function readDiff(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
   await resolveCommit(cwd, baseRef);
   await resolveCommit(cwd, headRef);
+  const range = `${baseRef}...${headRef}`;
+  const entries = parseNameStatus(
+    await git(cwd, ["diff", "--find-renames", "--find-copies", "--name-status", "-z", "--end-of-options", range]),
+  );
+  const lockEntries = entries.filter((entry) => isLockfilePath(entry.path));
+  const diffArgs = [
+    "diff",
+    "--find-renames",
+    "--find-copies",
+    "-U3",
+    "--no-color",
+    "--no-ext-diff",
+    "--end-of-options",
+    range,
+  ];
+  if (lockEntries.length > 0) {
+    const excludes = [
+      ...new Set(
+        lockEntries.flatMap((entry) => {
+          const paths = [`:(exclude)${entry.path}`];
+          if (entry.oldPath !== undefined) {
+            paths.push(`:(exclude)${entry.oldPath}`);
+          }
+          return paths;
+        }),
+      ),
+    ];
+    diffArgs.push("--", ".", ...excludes);
+  }
+  const files = classifyDiffFiles(parseUnifiedDiff(await git(cwd, diffArgs))).filter(
+    (file) => !isLockfilePath(file.path),
+  );
+  if (lockEntries.length === 0) {
+    return files;
+  }
+  const stats = parseNumstat(
+    await git(cwd, [
+      "diff",
+      "--find-renames",
+      "--find-copies",
+      "--numstat",
+      "-z",
+      "--end-of-options",
+      range,
+      "--",
+      ...lockEntries.map((entry) => entry.path),
+    ]),
+  );
+  const stubs = lockEntries.map((entry) => lockfileDiffFile(entry, stats.get(entry.path)));
+  return mergeDiffFiles(entries, files, stubs);
+}
+
+export async function readPathDiff(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+  path: string,
+): Promise<DiffFile | undefined> {
+  assertSafePath(path);
+  await resolveCommit(cwd, baseRef);
+  await resolveCommit(cwd, headRef);
   const stdout = await git(cwd, [
     "diff",
     "--find-renames",
@@ -31,8 +94,11 @@ export async function readDiff(cwd: string, baseRef: string, headRef: string): P
     "--no-ext-diff",
     "--end-of-options",
     `${baseRef}...${headRef}`,
+    "--",
+    path,
   ]);
-  return classifyDiffFiles(parseUnifiedDiff(stdout));
+  const files = classifyDiffFiles(parseUnifiedDiff(stdout));
+  return files.find((file) => file.path === path || file.oldPath === path);
 }
 
 export async function readHunkIndex(cwd: string, baseRef: string, headRef: string): Promise<HunkIndex> {
@@ -49,6 +115,10 @@ export async function readHunkIndex(cwd: string, baseRef: string, headRef: strin
     }
     if (file.binary) {
       skipped.push({ path: file.path, reason: "binary" });
+      continue;
+    }
+    if (isLockfilePath(file.path)) {
+      skipped.push({ path: file.path, reason: "lockfile" });
       continue;
     }
     for (const hunk of file.hunks) {
@@ -312,6 +382,9 @@ export function flattenHunks(files: DiffFile[]): LiveHunk[] {
     if (file.binary && !file.image) {
       continue;
     }
+    if (isLockfilePath(file.path)) {
+      continue;
+    }
     hunks.push(...file.hunks);
   }
   return hunks;
@@ -350,6 +423,48 @@ export function imageLiveHunk(path: string, oldPath?: string): LiveHunk {
     hunk.oldPath = oldPath;
   }
   return hunk;
+}
+
+function lockfileDiffFile(entry: NameStatusEntry, stat: NumstatEntry | undefined): DiffFile {
+  const binary = stat === undefined || stat.added === null || stat.removed === null;
+  const file: DiffFile = {
+    path: entry.path,
+    status: entry.status,
+    binary,
+    image: false,
+    headerPatch: "",
+    patch: "",
+    hunks: [],
+  };
+  if (entry.oldPath !== undefined) {
+    file.oldPath = entry.oldPath;
+  }
+  if (!binary && stat !== undefined && stat.added !== null && stat.removed !== null) {
+    file.added = stat.added;
+    file.removed = stat.removed;
+  }
+  return file;
+}
+
+function mergeDiffFiles(entries: NameStatusEntry[], files: DiffFile[], stubs: DiffFile[]): DiffFile[] {
+  const filesByPath = new Map(files.map((file) => [file.path, file]));
+  const stubsByPath = new Map(stubs.map((file) => [file.path, file]));
+  const out: DiffFile[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const file = stubsByPath.get(entry.path) ?? filesByPath.get(entry.path);
+    if (file === undefined || seen.has(file.path)) {
+      continue;
+    }
+    seen.add(file.path);
+    out.push(file);
+  }
+  for (const file of files) {
+    if (!seen.has(file.path)) {
+      out.push(file);
+    }
+  }
+  return out;
 }
 
 export function fileLanguage(path: string): string {

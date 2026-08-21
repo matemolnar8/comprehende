@@ -5,7 +5,8 @@ export type ApiResource =
   | { kind: "hunks"; group: string }
   | { kind: "file"; path: string; side: FileSide }
   | { kind: "blame"; path: string; side: FileSide }
-  | { kind: "image"; path: string; side: FileSide };
+  | { kind: "image"; path: string; side: FileSide }
+  | { kind: "patch"; path: string };
 
 export function apiHref(resource: ApiResource): string {
   switch (resource.kind) {
@@ -19,6 +20,8 @@ export function apiHref(resource: ApiResource): string {
       return `api/blame/${resource.side}/${encodeFilePath(resource.path)}.json`;
     case "image":
       return `api/images/${resource.side}/${encodeFilePath(resource.path)}`;
+    case "patch":
+      return `api/patches/${encodeFilePath(resource.path)}.json`;
   }
 }
 
@@ -35,6 +38,8 @@ export function apiFsRel(resource: ApiResource): string {
       return `api/blame/${resource.side}/${resource.path}.json`;
     case "image":
       return `api/images/${resource.side}/${resource.path}`;
+    case "patch":
+      return `api/patches/${resource.path}.json`;
   }
 }
 
@@ -63,6 +68,20 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
       return undefined;
     }
     return { kind: "image", path, side };
+  }
+  if (parts[1] === "patches" && parts.length >= 3) {
+    const rest = parts.slice(2);
+    const last = rest.at(-1);
+    const stem = last === undefined ? undefined : jsonStem(last);
+    if (stem === undefined) {
+      return undefined;
+    }
+    rest[rest.length - 1] = stem;
+    const path = rest.join("/");
+    if (!isRepoPath(path)) {
+      return undefined;
+    }
+    return { kind: "patch", path };
   }
   if ((parts[1] === "files" || parts[1] === "blame") && parts.length >= 4 && parts[2] !== undefined) {
     const side = parts[2];

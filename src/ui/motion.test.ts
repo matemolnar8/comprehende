@@ -24,4 +24,15 @@ describe("selectionStack", () => {
       ["overview", "group"],
     );
   });
+
+  it("includes lockfiles when the live diff has them", () => {
+    assert.deepEqual(
+      selectionStack({
+        groups: [{ id: "a" }],
+        unassigned: { hunkCount: 0 },
+        lockfiles: { fileCount: 2 },
+      }).map((item) => item.kind),
+      ["overview", "group", "lockfiles"],
+    );
+  });
 });
