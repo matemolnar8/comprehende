@@ -31,7 +31,7 @@
     "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Generated why for the whole change. Write it from tickets, issues, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when those sources are silent, or when independent stories have different motives. The UI skips the Why section when this is absent."
+      "description": "Generated why for the whole change. Write it from tickets, issues, a pull-request or merge-request description, and/or a coding-agent transcript. Do not paraphrase the patch. Omit only when those sources are silent. A second part does not cancel it. The UI skips the Why section when this is absent."
     },
     "tickets": {
       "type": "array",
