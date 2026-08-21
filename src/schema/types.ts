@@ -13,7 +13,7 @@ export type ReviewDocument = {
   size: ReviewSize;
   /** Short what of the whole change. Always present. */
   summary: string;
-  /** Generated why for the whole change. From tickets, issues, or a transcript. Omit when those sources are silent or mixed. */
+  /** Generated why for the whole change. From tickets, issues, a request description, or a transcript. Omit only when those sources are silent. */
   why?: string;
   tickets?: Ticket[];
   groups: ReviewGroup[];
