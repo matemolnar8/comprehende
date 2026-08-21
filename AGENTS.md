@@ -78,12 +78,14 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **CLI.** Git, validate, serve. Cwd is the repo. No `--repo`.
 
+## Project rules
+
+Edit `skills-next/comprehende/` only.
+
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. I want you to always keep in mind what the project is about, and make every change, create every design and write every text in spirit of that.
 
 The skill is going to be reviewed and adjusted by me manually, but you should also write the skill with the above principles in mind.
-
-Edit `skills-next/comprehende/` only.
 
 Type safety is one of the most useful things for humans and agents alike. Make good use of it when writing code. Rely on it as much as you can.
