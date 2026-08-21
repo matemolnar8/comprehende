@@ -5,7 +5,7 @@
   "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "source", "size", "summary", "groups"],
+  "required": ["version", "source", "size", "groups"],
   "properties": {
     "version": { "const": 1 },
     "size": {
@@ -23,15 +23,10 @@
         "range": { "type": "string", "minLength": 1 }
       }
     },
-    "summary": {
+    "walkthrough": {
       "type": "string",
       "minLength": 1,
-      "description": "Short what of the whole change. Always write this. Name the stories. Do not invent a motive."
-    },
-    "why": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Generated why for the whole change. Write it from tickets, issues, and/or a coding-agent transcript. Do not paraphrase the patch. Omit when those sources are silent, or when independent stories have different motives. The UI skips the Why section when this is absent."
+      "description": "One or two sentences for the whole change. Commit subjects are fine. Do not paraphrase the patch."
     },
     "tickets": {
       "type": "array",
@@ -42,12 +37,7 @@
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "url": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
-          "part": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Short name of the independent story this ticket belongs to. Same name as the layers in that story. Omit when the ticket is for the whole review."
-          }
+          "title": { "type": "string", "minLength": 1 }
         }
       }
     },
@@ -56,15 +46,10 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "why", "summary", "suggestedOrder", "hunkRefs"],
+        "required": ["id", "title", "summary", "suggestedOrder", "hunkRefs"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "title": { "type": "string", "minLength": 1 },
-          "why": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Generated why this layer exists. Write it from tickets, commit messages, and/or a transcript when they apply. If this layer has no such source, it may exist to enable later layers in the same story. Do not paraphrase the patch."
-          },
           "summary": {
             "type": "string",
             "description": "One sentence: what this layer is."
