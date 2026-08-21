@@ -227,6 +227,7 @@ html[data-motion="scene"] .review-scene {
   width: 3px;
   flex: none;
   border-radius: 1px;
+  background-color: var(--muted-foreground);
 }
 
 .review-brief-copy {
