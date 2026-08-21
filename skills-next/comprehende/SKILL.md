@@ -32,7 +32,7 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base and head SHAs, or the merge-base. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `npx comprehende@0.3.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped non-image binaries. Image files use `oldStart`/`newStart` 0. It contains no line content and no image bytes. Do not write the index into the work tree.
+2. Run `npx comprehende@0.3.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped files. Image files use `oldStart`/`newStart` 0. Lockfiles and non-image binaries are in `skipped`. It contains no line content and no image bytes. Do not write the index into the work tree.
 3. Read the change with git in that cwd (`git diff --stat <base>...<head>`, then the diffs). Group by review concern. Index is not enough to group.
 4. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
 
@@ -68,9 +68,10 @@ Copy tickets (`id`, optional `url` / `title`) from whatever tracker the user men
 - The UI has an Overview of the stack. Optional document `walkthrough` is one or two sentences for the whole change. Commit subjects are fine. Do not paraphrase the patch.
 - Set document `size` to the human review burden, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one layer are `small`. Three files that rewrite a contract the rest of the stack hangs on can be `large`.
 - Every hunk from `index` must appear in at least one group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as Unassigned in the UI.
+- Lockfiles are not hunks. Leave them in `skipped`. Do not add hunk refs for them. The UI has a Lockfiles bucket, closed until the reader opens a file.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 
-Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory. Image files are hunks too — copy those refs into groups. Other binaries stay in `skipped`. Git LFS images are read from `.git/lfs/objects` in the clone. If the object is missing, the image slot is empty. Do not paste image bytes into `review.json`.
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart` / `oldLines` / `newStart` / `newLines` from the index. Do not guess numbers from memory. Image files are hunks too — copy those refs into groups. Lockfiles and other binaries stay in `skipped`. Git LFS images are read from `.git/lfs/objects` in the clone. If the object is missing, the image slot is empty. Do not paste image bytes or lockfile contents into `review.json`.
 
 Schema: [references/review.schema.json](./references/review.schema.json). Example document: [references/example.md](./references/example.md).
 
