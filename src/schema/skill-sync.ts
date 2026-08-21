@@ -1,39 +1,41 @@
 import { execFileSync } from "node:child_process";
-import { readFile, readdir } from "node:fs/promises";
-import { join, relative } from "node:path";
-import { cliPinErrors } from "./cli-pin.ts";
+import { cp, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { dirname, join, relative } from "node:path";
+import { applyCliPin, cliPinErrors, listedCliPins } from "./cli-pin.ts";
 import { skillPaths } from "./skill-paths.ts";
-import { findPackageRoot, readPackageVersion } from "../package-root.ts";
+import { findPackageRoot } from "../package-root.ts";
 
 export type SkillSyncInput = {
   version: string;
   canonicalSchema: string;
-  publishedSchema: string;
-  installedSchema: string;
-  publishedSkillMd: string;
-  publishedFiles: Map<string, string>;
+  nextSchema: string;
+  nextSkillMd: string;
+  nextFiles: Map<string, string>;
   installedFiles: Map<string, string>;
+  publishedSkillMd: string;
 };
 
 export function skillSyncErrors(input: SkillSyncInput): string[] {
   const errors: string[] = [];
-  if (input.publishedSchema !== input.canonicalSchema) {
-    errors.push("skills/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill");
+  if (input.nextSchema !== input.canonicalSchema) {
+    errors.push("skills-next/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill");
   }
-  if (input.installedSchema !== input.canonicalSchema) {
-    errors.push(".agents/skills/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill");
+  errors.push(
+    ...cliPinErrors(input.nextSkillMd, input.version).map((error) => `skills-next/comprehende/${error}`),
+  );
+  if (listedCliPins(input.publishedSkillMd).length === 0) {
+    errors.push("skills/comprehende/SKILL.md must pin npx comprehende@<version>");
   }
-  errors.push(...cliPinErrors(input.publishedSkillMd, input.version));
 
-  const publishedKeys = [...input.publishedFiles.keys()].sort();
+  const nextKeys = [...input.nextFiles.keys()].sort();
   const installedKeys = [...input.installedFiles.keys()].sort();
-  if (publishedKeys.join("\n") !== installedKeys.join("\n")) {
-    errors.push(".agents/skills/comprehende is not a copy of skills/comprehende. Run: pnpm sync:skill");
+  if (nextKeys.join("\n") !== installedKeys.join("\n")) {
+    errors.push(".agents/skills/comprehende is not a copy of skills-next/comprehende. Run: pnpm sync:skill");
     return errors;
   }
-  for (const rel of publishedKeys) {
-    if (input.publishedFiles.get(rel) !== input.installedFiles.get(rel)) {
-      errors.push(`${rel} differs between skills/ and .agents/. Run: pnpm sync:skill`);
+  for (const rel of nextKeys) {
+    if (input.nextFiles.get(rel) !== input.installedFiles.get(rel)) {
+      errors.push(`${rel} differs between skills-next/ and .agents/. Run: pnpm sync:skill`);
     }
   }
   return errors;
@@ -41,32 +43,76 @@ export function skillSyncErrors(input: SkillSyncInput): string[] {
 
 export async function loadWorkingTreeSkillSync(root = findPackageRoot()): Promise<SkillSyncInput> {
   const paths = skillPaths(root);
-  const publishedFiles = await readTree(paths.publishedSkill);
+  const nextFiles = await readTree(paths.nextSkill);
   const installedFiles = await readTree(paths.installedSkill);
   return {
-    version: readPackageVersion(),
+    version: await readVersion(root),
     canonicalSchema: await readFile(paths.canonicalSchema, "utf8"),
-    publishedSchema: await readFile(paths.publishedSchema, "utf8"),
-    installedSchema: await readFile(paths.installedSchema, "utf8"),
-    publishedSkillMd: publishedFiles.get("SKILL.md") ?? "",
-    publishedFiles,
+    nextSchema: nextFiles.get("references/review.schema.json") ?? "",
+    nextSkillMd: nextFiles.get("SKILL.md") ?? "",
+    nextFiles,
     installedFiles,
+    publishedSkillMd: await readFile(join(paths.publishedSkill, "SKILL.md"), "utf8"),
   };
 }
 
 export function loadStagedSkillSync(root = findPackageRoot()): SkillSyncInput {
-  const publishedFiles = gitStagedTree(root, "skills/comprehende");
+  const nextFiles = gitStagedTree(root, "skills-next/comprehende");
   const installedFiles = gitStagedTree(root, ".agents/skills/comprehende");
   const pkg = JSON.parse(gitShowStaged(root, "package.json")) as { version: string };
   return {
     version: pkg.version,
     canonicalSchema: gitShowStaged(root, "src/schema/review.schema.json"),
-    publishedSchema: gitShowStaged(root, "skills/comprehende/references/review.schema.json"),
-    installedSchema: gitShowStaged(root, ".agents/skills/comprehende/references/review.schema.json"),
-    publishedSkillMd: publishedFiles.get("SKILL.md") ?? "",
-    publishedFiles,
+    nextSchema: nextFiles.get("references/review.schema.json") ?? "",
+    nextSkillMd: nextFiles.get("SKILL.md") ?? "",
+    nextFiles,
     installedFiles,
+    publishedSkillMd: gitShowStaged(root, "skills/comprehende/SKILL.md"),
   };
+}
+
+export async function syncNextSkill(options?: { root?: string; release?: boolean }): Promise<string[]> {
+  const root = options?.root ?? findPackageRoot();
+  const release = options?.release === true;
+  const paths = skillPaths(root);
+  const version = await readVersion(root);
+  const skillFile = join(paths.nextSkill, "SKILL.md");
+
+  await mkdir(dirname(paths.nextSchema), { recursive: true });
+  await copyFile(paths.canonicalSchema, paths.nextSchema);
+
+  const original = await readFile(skillFile, "utf8");
+  const pinned = applyCliPin(original, version);
+  const pinProblems = cliPinErrors(pinned, version);
+  if (pinProblems.length > 0) {
+    throw new Error(pinProblems.join("\n"));
+  }
+  if (pinned !== original) {
+    await writeFile(skillFile, pinned);
+  }
+
+  await replaceDir(paths.nextSkill, paths.installedSkill);
+  const logs = [
+    `copied ${paths.canonicalSchema} -> ${paths.nextSchema}`,
+    `pinned npx comprehende@${version} in ${skillFile}`,
+    `copied ${paths.nextSkill} -> ${paths.installedSkill}`,
+  ];
+
+  if (release) {
+    await replaceDir(paths.nextSkill, paths.publishedSkill);
+    logs.push(`copied ${paths.nextSkill} -> ${paths.publishedSkill}`);
+  }
+  return logs;
+}
+
+async function readVersion(root: string): Promise<string> {
+  const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as { version: string };
+  return pkg.version;
+}
+
+async function replaceDir(from: string, to: string): Promise<void> {
+  await rm(to, { recursive: true, force: true });
+  await cp(from, to, { recursive: true });
 }
 
 async function readTree(dir: string): Promise<Map<string, string>> {
