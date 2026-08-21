@@ -59,6 +59,7 @@ export function Sidebar(props: {
                 onClick={() => onSelect({ kind: "lockfiles" })}
                 title="Lockfiles"
                 count={String(meta.lockfiles.fileCount)}
+                muted
               />
             </li>
           ) : null}
@@ -75,16 +76,23 @@ function StackItem(props: {
   count?: string;
   index?: string;
   warn?: boolean;
+  muted?: boolean;
   colorIndex?: number;
 }) {
   const colorIndex = props.colorIndex;
   const showStrand = colorIndex !== undefined || props.active;
+  const strand =
+    colorIndex !== undefined
+      ? partColor(colorIndex)
+      : props.muted
+        ? "var(--muted-foreground)"
+        : undefined;
   return (
     <Button
       type="button"
       variant="ghost"
       onClick={props.onClick}
-      style={colorIndex !== undefined ? ({ "--strand": partColor(colorIndex) } as CSSProperties) : undefined}
+      style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
       className={cn(
         "stack-item relative z-1 mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal hover:bg-transparent",
         props.active && "stack-item-active text-foreground",

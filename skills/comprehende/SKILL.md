@@ -24,7 +24,7 @@ The review document is interpretation only: groups, summaries, hunk pointers. Ne
 Run the published CLI at the pinned version, inside the repository under review.
 
 ```sh
-npx comprehende@0.4.0 <command>
+npx comprehende@0.4.1 <command>
 ```
 
 Do not use a git checkout path, `pnpm dev`, or an unpinned install.
@@ -32,7 +32,7 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
 ## Workflow
 
 1. Resolve the git range. Three-dot (`base...head`) is the merge-request / branch diff. Use the refs the user named. If the change is already on the default branch, use the request's base and head SHAs, or the merge-base. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
-2. Run `npx comprehende@0.4.0 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped files. Image files use `oldStart`/`newStart` 0. Lockfiles and non-image binaries are in `skipped`. It contains no line content and no image bytes. Do not write the index into the work tree.
+2. Run `npx comprehende@0.4.1 index [--base <ref>] [--head <ref>]` and keep the JSON. This lists hunk refs (path plus `@@` ranges), image files, and skipped files. Image files use `oldStart`/`newStart` 0. Lockfiles and non-image binaries are in `skipped`. It contains no line content and no image bytes. Do not write the index into the work tree.
 3. Recover the why and write the what. Copy tickets from the request. If the user named a pull request or merge request, read its description. Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. If you have a coding-agent transcript for this change, read the human's stated reason. Do not copy commit text, the request description, or the transcript into `review.json`. Then read `git diff --stat <base>...<head>` and the diffs. Group by review concern. Write a document `summary` for the whole change. Write a `why` on each layer. Write a document `why` when a ticket, issue, request description, or transcript names why this work exists. A second part does not cancel it. Index is not enough to group. Log is not enough to group.
 4. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` / `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
 
@@ -48,8 +48,8 @@ Do not use a git checkout path, `pnpm dev`, or an unpinned install.
    # write $REVIEW_DIR/review.json
    ```
 
-5. Run `npx comprehende@0.4.0 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Never the diff.
-6. Run `npx comprehende@0.4.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+5. Run `npx comprehende@0.4.1 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Never the diff.
+6. Run `npx comprehende@0.4.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 Default `--head` is `HEAD`. Default `--base` is `origin/HEAD`, falling back to `main` or `master`.
 

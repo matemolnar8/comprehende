@@ -26,12 +26,18 @@ export function Layer(props: {
 }) {
   const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
+  const lockfiles = bucket === "lockfiles";
+  const showStrand = strandColor !== undefined || lockfiles;
 
   return (
     <>
       <div className="review-brief">
-        {strandColor !== undefined ? (
-          <span className="review-brief-strand" style={{ backgroundColor: strandColor }} aria-hidden />
+        {showStrand ? (
+          <span
+            className="review-brief-strand"
+            style={strandColor !== undefined ? { backgroundColor: strandColor } : undefined}
+            aria-hidden
+          />
         ) : null}
         <div className="review-brief-copy">
           {group !== null ? (
@@ -42,7 +48,7 @@ export function Layer(props: {
               partTitle={mixed ? group.part : undefined}
               onOpenLayer={props.onOpenLayer}
             />
-          ) : bucket === "lockfiles" ? (
+          ) : lockfiles ? (
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any layer">
