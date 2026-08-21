@@ -35,6 +35,11 @@ async function run(): Promise<void> {
   for (const required of ["package/dist/cli/main.js", "package/dist/ui/index.html", "package/skills/comprehende/SKILL.md"]) {
     assert.equal(listing.includes(required), true, `tarball missing ${required}`);
   }
+  assert.equal(
+    listing.some((path) => path.includes("skills-next")),
+    false,
+    "tarball must not include skills-next",
+  );
 
   const packedPkg = JSON.parse(execFileSync("tar", ["-xOf", tarball, "package/package.json"], { encoding: "utf8" })) as {
     dependencies?: Record<string, string>;
