@@ -1,7 +1,12 @@
 import { parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { classifyDiffFiles, filePatchFromGit, parseUnifiedDiff } from "./diff.ts";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { after, describe, it } from "node:test";
+import { rmSync } from "node:fs";
+import { classifyDiffFiles, filePatchFromGit, parseUnifiedDiff, readDiff, readHunkIndex, readPathDiff } from "./diff.ts";
+import { APP_SECRET, createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
 index 111..222 100644
@@ -125,5 +130,56 @@ describe("classifyDiffFiles", () => {
     assert.ok(binary);
     assert.equal(binary.image, false);
     assert.equal(binary.hunks.length, 0);
+  });
+});
+
+const roots: string[] = [];
+
+after(() => {
+  for (const root of roots) {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+describe("lockfile diffs", () => {
+  it("stubs lockfiles without patch text and loads them by path", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-lock-"));
+    roots.push(root);
+    const repo = await createLockfileRepo(root);
+    const files = await readDiff(repo.root, repo.base, repo.head);
+    const encoded = JSON.stringify(files);
+    assert.equal(encoded.includes(LOCKFILE_SECRET), false);
+    assert.equal(encoded.includes(APP_SECRET), true);
+
+    const lock = files.find((file) => file.path === "package-lock.json");
+    assert.ok(lock);
+    assert.equal(lock.patch, "");
+    assert.equal(lock.hunks.length, 0);
+    assert.ok((lock.added ?? 0) > 0);
+
+    const yarn = files.find((file) => file.path === "apps/web/yarn.lock");
+    assert.ok(yarn);
+    assert.equal(yarn.patch, "");
+
+    const app = files.find((file) => file.path === "src/app.ts");
+    assert.ok(app);
+    assert.equal(app.patch.includes(APP_SECRET), true);
+
+    const bun = files.find((file) => file.path === "bun.lockb");
+    assert.ok(bun);
+    assert.equal(bun.binary, true);
+    assert.equal(bun.hunks.length, 0);
+
+    const live = await readPathDiff(repo.root, repo.base, repo.head, "package-lock.json");
+    assert.ok(live);
+    assert.equal(live.patch.includes(LOCKFILE_SECRET), true);
+    assert.equal(live.patch.startsWith("diff --git "), true);
+
+    const index = await readHunkIndex(repo.root, repo.base, repo.head);
+    assert.equal(JSON.stringify(index).includes(LOCKFILE_SECRET), false);
+    assert.equal(index.hunks.some((hunk) => hunk.path === "package-lock.json"), false);
+    assert.ok(index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"));
+    assert.ok(index.skipped.some((item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile"));
+    assert.ok(index.skipped.some((item) => item.path === "bun.lockb"));
   });
 });

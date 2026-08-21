@@ -72,6 +72,35 @@ describe("coverage join", () => {
     assert.equal(uncovered.unassigned.length, 1);
     assert.equal(uncovered.unassigned[0]?.path, "a.ts");
   });
+
+  it("ignores lockfile hunk refs; lockfiles are not coverage hunks", () => {
+    const coverage = joinCoverage(
+      {
+        version: 1,
+        source: { baseRef: "a", headRef: "b" },
+        size: "small",
+        summary: "Lockfiles are not coverage hunks.",
+        groups: [
+          {
+            id: "g",
+            title: "G",
+            why: "Lockfiles stay in skipped.",
+            summary: "",
+            suggestedOrder: 0,
+            hunkRefs: [
+              { path: "package-lock.json", oldStart: 12, oldLines: 40, newStart: 12, newLines: 44 },
+              { path: "package-lock.json", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 },
+            ],
+          },
+        ],
+      },
+      [],
+    );
+    assert.equal(coverage.stale.length, 0);
+    assert.equal(coverage.unassigned.length, 0);
+    assert.equal(coverage.assignedHunks, 0);
+    assert.equal(coverage.groups[0]?.hunks.length, 0);
+  });
 });
 
 describe("example repo index/validate", () => {

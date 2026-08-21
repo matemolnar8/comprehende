@@ -63,7 +63,13 @@ export function App() {
   }, [meta, selection]);
 
   const selectedKey =
-    selection?.kind === "group" ? selection.id : selection?.kind === "unassigned" ? "unassigned" : null;
+    selection?.kind === "group"
+      ? selection.id
+      : selection?.kind === "unassigned"
+        ? "unassigned"
+        : selection?.kind === "lockfiles"
+          ? "lockfiles"
+          : null;
 
   useEffect(() => {
     if (selectedKey === null) {
@@ -269,6 +275,13 @@ export function App() {
                   ) : (
                     <Layer
                       group={selectedGroup}
+                      bucket={
+                        selection?.kind === "lockfiles"
+                          ? "lockfiles"
+                          : selection?.kind === "unassigned"
+                            ? "unassigned"
+                            : undefined
+                      }
                       groups={meta.groups}
                       mixed={mixed}
                       strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}

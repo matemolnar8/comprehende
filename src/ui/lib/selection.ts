@@ -1,10 +1,11 @@
 import type { ReviewMeta } from "../api.ts";
 
-export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" };
+export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" } | { kind: "lockfiles" };
 
 export type SelectionStackSource = {
   groups: { id: string }[];
   unassigned: { hunkCount: number };
+  lockfiles?: { fileCount: number };
 };
 
 export function defaultSelection(source: SelectionStackSource): Selection {
@@ -33,6 +34,9 @@ export function parseSelection(raw: string | null): Selection | null {
     if (parsed.kind === "unassigned") {
       return { kind: "unassigned" };
     }
+    if (parsed.kind === "lockfiles") {
+      return { kind: "lockfiles" };
+    }
     if (parsed.kind === "group" && "id" in parsed && typeof parsed.id === "string" && parsed.id !== "") {
       return { kind: "group", id: parsed.id };
     }
@@ -54,6 +58,9 @@ export function restoreSelection(source: SelectionStackSource, stored: Selection
     return defaultSelection(source);
   }
   if (stored.kind === "unassigned" && source.unassigned.hunkCount === 0 && source.groups.length > 0) {
+    return defaultSelection(source);
+  }
+  if (stored.kind === "lockfiles" && (source.lockfiles?.fileCount ?? 0) === 0) {
     return defaultSelection(source);
   }
   return stored;
@@ -88,6 +95,9 @@ export function selectionStack(source: SelectionStackSource): Selection[] {
   if (source.unassigned.hunkCount > 0) {
     ids.push({ kind: "unassigned" });
   }
+  if ((source.lockfiles?.fileCount ?? 0) > 0) {
+    ids.push({ kind: "lockfiles" });
+  }
   return ids;
 }
 
@@ -117,6 +127,9 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
   }
   if (a.kind === "unassigned") {
     return b.kind === "unassigned";
+  }
+  if (a.kind === "lockfiles") {
+    return b.kind === "lockfiles";
   }
   return b.kind === "group" && b.id === a.id;
 }

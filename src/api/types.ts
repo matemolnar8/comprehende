@@ -4,7 +4,7 @@ export type { FileStatus };
 
 export type FileSide = "old" | "new";
 
-export type FileKind = "text" | "image";
+export type FileKind = "text" | "image" | "lockfile";
 
 export type ApiHunk = HunkRef & {
   header: string;
@@ -18,6 +18,8 @@ export type ApiLayerFile = {
   kind: FileKind;
   status: FileStatus;
   patch: string;
+  added?: number;
+  removed?: number;
   hunks: ApiHunk[];
 };
 
@@ -72,6 +74,7 @@ export type ApiReview = {
     files: string[];
   }[];
   unassigned: { hunkCount: number; files: string[] };
+  lockfiles: { fileCount: number; files: string[] };
   stale: { path: string; oldStart: number; newStart: number }[];
   files: {
     path: string;

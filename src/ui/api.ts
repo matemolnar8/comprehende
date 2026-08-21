@@ -34,6 +34,10 @@ export function fetchHunks(group: string): Promise<ApiHunks> {
   return getJson<ApiHunks>({ kind: "hunks", group });
 }
 
+export function fetchPatch(path: string): Promise<ApiLayerFile> {
+  return getJson<ApiLayerFile>({ kind: "patch", path });
+}
+
 export function fetchFile(path: string, side: "old" | "new"): Promise<ApiFile> {
   return getJson<ApiFile>({ kind: "file", path, side });
 }
