@@ -38,7 +38,7 @@ human ── /comprehende ──► agent skill
                                  local UI
 ```
 
-- **Skill** (`skills-next/comprehende/` while it is still changing, `skills/comprehende/` when `npx skills add` should see it): when to run, grouping rules, schema, “never invent diffs,” launch commands. Distributed via `npx skills add`. **Máté reviews and rewrites this by hand** before it is treated as final. See remaining work.
+- **Skill** (`skills-next/comprehende/` to edit, `skills/comprehende/` for `npx skills add`): when to run, grouping rules, schema, “never invent diffs,” launch commands. Distributed via `npx skills add`. **Máté reviews and rewrites this by hand** before it is treated as final. See remaining work.
 - **CLI** (`comprehende` on npm): talks to git in cwd, validates the review document, serves the SPA + git-backed APIs.
 
 Once the package is publishable, the skill should call `npx comprehende@<pinned>` so the UI is not stuffed into the skill folder (size limits, versioning, long-running server). Today the skill still tells agents to use a built binary, `pnpm dev`, or a global link.
