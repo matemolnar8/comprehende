@@ -43,11 +43,7 @@ export function Layer(props: {
               onOpenLayer={props.onOpenLayer}
             />
           ) : bucket === "lockfiles" ? (
-            <Brief kicker="Lockfiles" title="Generated lockfiles">
-              <p className="font-serif text-lg leading-relaxed text-foreground">
-                These stay closed until you open one. Opening one loads the live git diff.
-              </p>
-            </Brief>
+            <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any layer">
               <p className="font-serif text-lg leading-relaxed text-foreground">
