@@ -38,7 +38,7 @@ human ── /comprehende ──► agent skill
                                  local UI
 ```
 
-- **Skill** (`skills/comprehende/`): when to run, grouping rules, schema, “never invent diffs,” launch commands. Distributed via `npx skills add`. **Máté reviews and rewrites this by hand** before it is treated as final. See remaining work.
+- **Skill** (`skills-next/comprehende/` to edit, `skills/comprehende/` for `npx skills add`): when to run, grouping rules, schema, “never invent diffs,” launch commands. Distributed via `npx skills add`. **Máté reviews and rewrites this by hand** before it is treated as final. See remaining work.
 - **CLI** (`comprehende` on npm): talks to git in cwd, validates the review document, serves the SPA + git-backed APIs.
 
 Once the package is publishable, the skill should call `npx comprehende@<pinned>` so the UI is not stuffed into the skill folder (size limits, versioning, long-running server). Today the skill still tells agents to use a built binary, `pnpm dev`, or a global link.
@@ -119,13 +119,14 @@ comprehende/
     schema/                 # TS types + JSON Schema
     server/                 # localhost HTTP, git-backed APIs
     ui/                     # Vite + React SPA
-  skills/comprehende/       # npx skills add
+  skills-next/comprehende/  # edit here; not installed by npx skills
+  skills/comprehende/       # npx skills add (last released copy)
     SKILL.md
     references/
   fixtures/                 # tiny git repos + review.json (refs only)
 ```
 
-One publishable package plus the skill directory. pnpm, strict `tsc`. No extra workspace packages until needed.
+One publishable package plus the published skill and the next skill tree. pnpm, strict `tsc`. No extra workspace packages until needed.
 
 ## CLI surface (v1)
 
@@ -185,9 +186,9 @@ Issue: [#2](https://github.com/matemolnar8/comprehende/issues/2)
 
 ### 5. Skill — review and rewrite by hand (Máté)
 
-Not an agent rewrite. The current `skills/comprehende/` is a working draft so the loop could be dogfooded. **Máté reviews it and rewrites it by hand.**
+Not an agent rewrite. The current `skills-next/comprehende/` is a working draft so the loop could be dogfooded. **Máté reviews it and rewrites it by hand.** `pnpm release:skill` copies it to `skills/comprehende/` for `npx skills add`.
 
-Keep `SKILL.md` under 500 lines; the JSON Schema lives in `skills/comprehende/references/review.schema.json` (copied from `src/schema/review.schema.json` by `pnpm sync:skill`). Example stays in `references/example.md`. Pin `npx comprehende@<version>` once the prerequisite exists.
+Keep `SKILL.md` under 500 lines; the JSON Schema lives in `skills-next/comprehende/references/review.schema.json` (copied from `src/schema/review.schema.json` by `pnpm sync:skill`). Example stays in `references/example.md`. Pin `npx comprehende@<version>` once the prerequisite exists.
 
 #### Differences vs the original plan (and vs this draft)
 
@@ -201,7 +202,7 @@ These are the deltas to resolve in the rewrite — not a request to keep or drop
 
 4. **Reading order.** Plan: prose rule — contracts / foundations, then call sites, then tests, then chores. Draft: same idea encoded as `dependsOn` plus a stack Overview. Confirm that is the grouping model, not directory-first.
 
-5. **Schema extras.** `walkthrough`, `lookFor`, `dependsOn` are in the shipped schema and UI. They were not in the original PLAN types. Keep, rename, or drop in the hand rewrite — the JSON Schema must match whatever you write. Canonical file: `src/schema/review.schema.json`. `pnpm sync:skill` copies it into `skills/comprehende/references/` and mirrors that skill tree into `.agents/skills/comprehende/`. Tests fail on drift. Do not maintain a separate `schema.md`.
+5. **Schema extras.** `walkthrough`, `lookFor`, `dependsOn` are in the shipped schema and UI. They were not in the original PLAN types. Keep, rename, or drop in the hand rewrite — the JSON Schema must match whatever you write. Canonical file: `src/schema/review.schema.json`. `pnpm sync:skill` copies it into `skills-next/comprehende/references/` and mirrors that skill tree into `.agents/skills/comprehende/`. `pnpm release:skill` copies next onto `skills/comprehende/`. Tests fail if next drifts from the CLI contract. Do not maintain a separate `schema.md`.
 
 6. **Host recipe.** Draft had a GitHub `git fetch origin pull/<n>/head` snippet and optional `gh pr view`. The skill is vendor-agnostic (GitHub, Bitbucket, local branches). Three-dot `base...head` is the request diff. Tickets may live on the document; host CLIs are never required.
 
