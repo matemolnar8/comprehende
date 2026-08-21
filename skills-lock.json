@@ -6,6 +6,12 @@
       "sourceType": "local",
       "computedHash": "01d0db901757b26a64fcea292a493c6cab0a2008ada25d443312ff19d612910a"
     },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "4eabc66183767153e404b39d1b839b1c37f2d82d86f0a0d7e880a579d8d62336"
+    },
     "unslop": {
       "source": "cursor/plugins",
       "sourceType": "github",
