@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json",
+  "title": "Comprehende ReviewDocument",
+  "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "source", "size", "groups"],
+  "properties": {
+    "version": { "const": 1 },
+    "size": {
+      "type": "string",
+      "enum": ["trivial", "small", "medium", "large", "very-large"],
+      "description": "Human review burden of this change, not file or hunk count. A 40-file mechanical import rename in one layer is small. A 3-file contract rewrite the rest of the stack hangs on can be large."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseRef", "headRef"],
+      "properties": {
+        "baseRef": { "type": "string", "minLength": 1 },
+        "headRef": { "type": "string", "minLength": 1 },
+        "range": { "type": "string", "minLength": 1 }
+      }
+    },
+    "walkthrough": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One or two sentences for the whole change. Commit subjects are fine. Do not paraphrase the patch."
+    },
+    "tickets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "summary", "suggestedOrder", "hunkRefs"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "summary": {
+            "type": "string",
+            "description": "One sentence: what this layer is."
+          },
+          "lookFor": {
+            "type": "array",
+            "description": "Scannable bullets of what to inspect. Not a paragraph.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "dependsOn": {
+            "type": "array",
+            "description": "Ids of earlier layers this one depends on. Same story only. Omit when this layer does not depend on other layers.",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "part": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Short name of the independent story this layer belongs to. Same name = same story. Different names could have been separate PRs."
+          },
+          "suggestedOrder": { "type": "number" },
+          "hunkRefs": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/hunkRef" }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "hunkRef": {
+      "type": "object",
+      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed. Do not guess numbers.",
+      "additionalProperties": false,
+      "required": ["path", "oldStart", "oldLines", "newStart", "newLines"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "oldPath": { "type": "string", "minLength": 1 },
+        "oldStart": { "type": "integer", "minimum": 0 },
+        "oldLines": { "type": "integer", "minimum": 0 },
+        "newStart": { "type": "integer", "minimum": 0 },
+        "newLines": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

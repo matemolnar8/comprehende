@@ -25,10 +25,13 @@ pnpm typecheck
 pnpm build
 pnpm pack:smoke
 pnpm sync:skill
+pnpm release:skill
 pnpm dev -- --help
 ```
 
 `pnpm build` emits `dist/cli` and `dist/ui`. `prepack` runs that build, so `pnpm pack` / `pnpm publish` always ship the UI.
+
+`pnpm sync:skill` copies the JSON Schema into `skills-next/comprehende/`, pins `npx comprehende@<version>` there, and mirrors that tree into `.agents/skills/comprehende` so agents in this checkout use the next skill. It does not touch `skills/comprehende/`.
 
 `comprehende serve` and `comprehende export` share one UI and one git payload layer. Serve computes those payloads on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review.
 
@@ -36,7 +39,11 @@ pnpm dev -- --help
 
 ## Release
 
-Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and skill pin differ. Do not bump for skill-only edits.
+Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.
+
+Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the next skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and next skill pin differ. Do not bump for skill-only edits.
+
+When that next skill should ship with `npx skills add`, run `pnpm release:skill`. That copies `skills-next/comprehende/` onto `skills/comprehende/`. Run it in the same change that publishes a new CLI. Then `npx skills add` installs instructions that match the package they pin.
 
 Push to `main`. CI packs and tests the tarball on every change. If the version is not on npm yet, CI publishes it. Skill-only commits keep the same version, so they do not publish.
 
