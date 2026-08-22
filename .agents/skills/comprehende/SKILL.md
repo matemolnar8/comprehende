@@ -34,11 +34,11 @@ Do not use an unpinned install.
 1. Use the refs the user named. Three-dot (`base...head`) is the merge request or branch diff. If the change is already on the default branch, use the request's recorded base and head SHAs. If only the head SHA is available, use the merge-base of that head with the named base branch, then that head. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
 2. Run `npx comprehende@0.4.1 index [--base <ref>] [--head <ref>]` and keep the JSON. Default `--head` is `HEAD`. Default `--base` is `origin/HEAD`, falling back to `main` or `master`. The JSON lists hunk refs (path plus `@@` ranges), image files, and skipped files. Image files use `oldStart` and `newStart` 0. Lockfiles and non-image binaries are in `skipped`. It contains no line content and no image bytes. Do not write the index into the work tree.
 3. Recover the why and write the what.
-   - Copy tickets from the request.
+   - Copy tickets from the request. If you have a host CLI or MCP, read the ticket or issue when you need it to write document `why`.
    - If the user named a pull request or merge request, read its description.
    - Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`.
    - If you have a coding-agent transcript for this change, read the human's stated reason.
-   - Do not copy commit text, the request description, or the transcript into `review.json`.
+   - Do not copy commit text, the request description, the issue body, or the transcript into `review.json`.
    - Read `git diff --stat <base>...<head>` and the diffs. The summaries must come from the code, not from the log.
    - Write a document `summary` for the whole change.
    - Write a document `why` when a ticket, issue, request description, or transcript names why this work exists.
@@ -66,7 +66,7 @@ Write document `why` only from a ticket, issue, request description, or human tr
 
 The UI shows document `why` at the top of Overview when it is present. Document `why` is one or two sentences. Do not paraphrase hunks.
 
-Tickets. Copy `id` from the tracker the user named. Copy `url`, `title`, and `part` when you have them. Do not run `gh`, `glab`, or another host CLI to fetch issue bodies. If `url` is present, linking is enough. Omit `part` on a ticket that covers the whole review. A ticket covers the whole review only when the request or ticket title says that it does. Commit count does not determine ticket scope. Put `part` on each ticket that belongs to one story, using the same name as that story's groups.
+Tickets. Copy `id` from the tracker the user named. Copy `url`, `title`, and `part` when you have them. Read the ticket or issue when you need it to write document `why`. Use a host CLI or MCP if you have one. A host CLI is not required to run this skill. Do not copy the issue body into `review.json`. Omit `part` on a ticket that covers the whole review. A ticket covers the whole review only when the request or ticket title says that it does. Commit count does not determine ticket scope. Put `part` on each ticket that belongs to one story, using the same name as that story's groups.
 
 Request description. If the user named a pull request or merge request, read its description. That text is a source. Do not copy it into `review.json`.
 
