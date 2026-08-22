@@ -235,6 +235,24 @@ html[data-motion="scene"] .review-scene {
   flex: 1;
 }
 
+.review-overview code,
+.review-brief-copy code {
+  font-size: 0.86em;
+  font-style: normal;
+  font-weight: 500;
+  padding: 0.12em 0.32em;
+  margin: 0 0.08em;
+  border-radius: 0.22em;
+  background-color: color-mix(in srgb, var(--foreground) 8%, transparent);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.review-overview strong,
+.review-brief-copy strong {
+  font-weight: 600;
+}
+
 ::view-transition-old(review-strand),
 ::view-transition-new(review-strand),
 ::view-transition-old(review-copy),

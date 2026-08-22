@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
+import { InlineMd } from "./InlineMd.tsx";
 
 export function Brief(props: { kicker?: string; title: string; children?: ReactNode; className?: string }) {
   return (
@@ -29,9 +30,13 @@ export function GroupBrief(props: {
       title={group.title}
     >
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
-      <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">{group.why}</p>
+      <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">
+        <InlineMd text={group.why} />
+      </p>
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">What</p>
-      <p className="mb-5 leading-relaxed text-foreground">{group.summary}</p>
+      <p className="mb-5 leading-relaxed text-foreground">
+        <InlineMd text={group.summary} />
+      </p>
       {group.dependsOn.length > 0 ? (
         <p className="mb-5 text-muted-foreground">
           Depends on{" "}
@@ -51,8 +56,10 @@ export function GroupBrief(props: {
       ) : null}
       {group.lookFor.length > 0 ? (
         <ul className="mb-2 list-disc space-y-2 pl-5 leading-relaxed">
-          {group.lookFor.map((item) => (
-            <li key={item}>{item}</li>
+          {group.lookFor.map((item, i) => (
+            <li key={i}>
+              <InlineMd text={item} />
+            </li>
           ))}
         </ul>
       ) : null}
