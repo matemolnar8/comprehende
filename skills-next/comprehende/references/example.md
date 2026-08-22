@@ -46,7 +46,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "git",
       "title": "Live git join",
-      "why": "#12 is the split: serve must join by those refs so the UI never stores a patch.",
+      "why": "#12 is the split. Serve must join by those refs so the UI never stores a patch.",
       "summary": "Serve joins live git by the hunk identity defined in the contract.",
       "part": "Hunk identity",
       "lookFor": [
