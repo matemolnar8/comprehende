@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
-import type { LayerFile } from "../lib/layer-files.ts";
+import type { GroupFile } from "../lib/group-files.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useState, type MouseEvent } from "react";
 
 export function HunkView(props: {
-  file: LayerFile;
+  file: GroupFile;
   active: boolean;
   index: number;
   split: boolean;

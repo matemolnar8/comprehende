@@ -30,7 +30,7 @@ after(async () => {
 });
 
 describe("lockfile payloads", () => {
-  it("omits lockfile patch from the layer until the patch resource is read", async () => {
+  it("omits lockfile patch from the group until the patch resource is read", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-lock-api-"));
     roots.push(root);
     const repo = await createLockfileRepo(join(root, "repo"));

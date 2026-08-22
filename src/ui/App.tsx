@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
-import { fetchHunks, fetchReview, type LayerFile as ApiLayerFile, type ReviewMeta } from "./api.ts";
+import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
+import { Group } from "./components/Group.tsx";
 import { Header } from "./components/Header.tsx";
 import { Inspector, type InspectorState } from "./components/Inspector.tsx";
-import { Layer } from "./components/Layer.tsx";
 import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
-import { fileIndexAtHunk, filesFromPayload } from "./lib/layer-files.ts";
+import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
-import { colorIndexByLayerId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
+import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
@@ -21,7 +21,7 @@ export function App() {
   const [meta, setMeta] = useState<ReviewMeta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
-  const [payloadFiles, setPayloadFiles] = useState<ApiLayerFile[]>([]);
+  const [payloadFiles, setPayloadFiles] = useState<ApiGroupFile[]>([]);
   const [hunksKey, setHunksKey] = useState<string | null>(null);
   const [hunkError, setHunkError] = useState<string | null>(null);
   const [wrap, setWrap] = useState(false);
@@ -106,7 +106,7 @@ export function App() {
       if (sameSelection(next, selection) && inspector === null) {
         return;
       }
-      const kind = inspector !== null ? "scene" : "layer";
+      const kind = inspector !== null ? "scene" : "group";
       runViewTransition(() => {
         setSelection(next);
         setInspector(null);
@@ -209,9 +209,9 @@ export function App() {
     return meta.groups.find((group) => group.id === selection.id) ?? null;
   }, [meta, selection]);
 
-  const layerFiles = useMemo(() => filesFromPayload(payloadFiles), [payloadFiles]);
+  const groupFiles = useMemo(() => filesFromPayload(payloadFiles), [payloadFiles]);
   const parts = useMemo(() => groupParts(meta?.groups ?? []), [meta]);
-  const colorById = useMemo(() => colorIndexByLayerId(parts), [parts]);
+  const colorById = useMemo(() => colorIndexByGroupId(parts), [parts]);
   const mixed = isMixedReview(parts);
   const strandColor =
     mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
@@ -271,9 +271,9 @@ export function App() {
               ) : (
                 <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
-                    <Overview meta={meta} parts={parts} onOpenLayer={(id) => selectWithMotion({ kind: "group", id })} />
+                    <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (
-                    <Layer
+                    <Group
                       group={selectedGroup}
                       bucket={
                         selection?.kind === "lockfiles"
@@ -287,13 +287,13 @@ export function App() {
                       strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
                       loading={hunksLoading}
                       hunkError={hunkError}
-                      files={hunksLoading ? [] : layerFiles}
+                      files={hunksLoading ? [] : groupFiles}
                       activeHunk={activeHunk}
                       split={split}
                       splitRatio={splitRatio}
                       wrap={wrap}
                       viewedPaths={viewedPaths}
-                      onOpenLayer={(id) => selectWithMotion({ kind: "group", id })}
+                      onOpenGroup={(id) => selectWithMotion({ kind: "group", id })}
                       onOpenFile={openInspector}
                       onSplitRatio={setSplitRatio}
                       onViewed={setFileViewed}

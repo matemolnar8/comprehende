@@ -1,9 +1,9 @@
 import type { CSSProperties } from "react";
-import { padLayer, sizeLabel, type ReviewMeta } from "../api.ts";
+import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
-import { colorIndexByLayerId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { colorIndexByGroupId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 
 export function Sidebar(props: {
   meta: ReviewMeta;
@@ -13,7 +13,7 @@ export function Sidebar(props: {
 }) {
   const { meta, selection, parts, onSelect } = props;
   const mixed = isMixedReview(parts);
-  const colors = mixed ? colorIndexByLayerId(parts) : new Map<string, number>();
+  const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   return (
     <nav className="h-full overflow-auto py-6">
       <div className="stack">
@@ -34,7 +34,7 @@ export function Sidebar(props: {
               <StackItem
                 active={selection?.kind === "group" && selection.id === group.id}
                 onClick={() => onSelect({ kind: "group", id: group.id })}
-                index={padLayer(index + 1)}
+                index={padIndex(index + 1)}
                 title={group.title}
                 count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
                 colorIndex={colors.get(group.id)}

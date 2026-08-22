@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { layerIndex, padLayer, type ReviewMeta } from "../api.ts";
+import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 
@@ -15,17 +15,17 @@ export function Brief(props: { kicker?: string; title: string; children?: ReactN
   );
 }
 
-export function LayerBrief(props: {
+export function GroupBrief(props: {
   group: ReviewMeta["groups"][number];
   index: number;
   groups: ReviewMeta["groups"];
   partTitle?: string;
-  onOpenLayer: (id: string) => void;
+  onOpenGroup: (id: string) => void;
 }) {
-  const { group, index, groups, partTitle, onOpenLayer } = props;
+  const { group, index, groups, partTitle, onOpenGroup } = props;
   return (
     <Brief
-      kicker={partTitle !== undefined ? `${partTitle} · ${padLayer(index)}` : padLayer(index)}
+      kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
       title={group.title}
     >
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
@@ -37,11 +37,11 @@ export function LayerBrief(props: {
           Depends on{" "}
           {group.dependsOn.map((id, i) => {
             const dep = groups.find((item) => item.id === id);
-            const label = dep !== undefined ? `${padLayer(layerIndex(groups, id))} ${dep.title}` : id;
+            const label = dep !== undefined ? `${padIndex(groupIndex(groups, id))} ${dep.title}` : id;
             return (
               <span key={id}>
                 {i > 0 ? ", " : ""}
-                <Button type="button" variant="link" className="h-auto p-0" onClick={() => onOpenLayer(id)}>
+                <Button type="button" variant="link" className="h-auto p-0" onClick={() => onOpenGroup(id)}>
                   {label}
                 </Button>
               </span>

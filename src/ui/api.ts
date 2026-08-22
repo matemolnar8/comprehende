@@ -1,7 +1,7 @@
 import { apiHref, type ApiResource } from "../api/paths.ts";
-import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiLayerFile, ApiReview, FileKind, FileStatus } from "../api/types.ts";
+import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileKind, FileStatus } from "../api/types.ts";
 
-export type { ApiHunk as LiveHunk, ApiLayerFile as LayerFile, ApiReview as ReviewMeta, FileKind, FileStatus };
+export type { ApiHunk as LiveHunk, ApiGroupFile, ApiReview as ReviewMeta, FileKind, FileStatus };
 
 export function resourceHref(resource: ApiResource): string {
   return new URL(apiHref(resource), new URL("./", document.baseURI)).href;
@@ -34,8 +34,8 @@ export function fetchHunks(group: string): Promise<ApiHunks> {
   return getJson<ApiHunks>({ kind: "hunks", group });
 }
 
-export function fetchPatch(path: string): Promise<ApiLayerFile> {
-  return getJson<ApiLayerFile>({ kind: "patch", path });
+export function fetchPatch(path: string): Promise<ApiGroupFile> {
+  return getJson<ApiGroupFile>({ kind: "patch", path });
 }
 
 export function fetchFile(path: string, side: "old" | "new"): Promise<ApiFile> {
@@ -50,11 +50,11 @@ export function shortSha(sha: string): string {
   return sha.slice(0, 7);
 }
 
-export function layerIndex(groups: { id: string }[], id: string): number {
+export function groupIndex(groups: { id: string }[], id: string): number {
   return groups.findIndex((group) => group.id === id) + 1;
 }
 
-export function padLayer(index: number): string {
+export function padIndex(index: number): string {
   return String(index).padStart(2, "0");
 }
 

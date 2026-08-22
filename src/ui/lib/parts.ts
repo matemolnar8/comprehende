@@ -1,6 +1,6 @@
 export const PART_PALETTE_SIZE = 6;
 
-export type PartLayer = {
+export type PartGroup = {
   id: string;
   part?: string;
   suggestedOrder: number;
@@ -9,18 +9,18 @@ export type PartLayer = {
 export type Part = {
   colorIndex: number;
   title?: string;
-  layerIds: string[];
+  groupIds: string[];
 };
 
-export function groupParts(layers: readonly PartLayer[]): Part[] {
-  const order = new Map(layers.map((layer) => [layer.id, layer.suggestedOrder]));
-  const named = layers.some((layer) => layer.part !== undefined);
+export function groupParts(groups: readonly PartGroup[]): Part[] {
+  const order = new Map(groups.map((group) => [group.id, group.suggestedOrder]));
+  const named = groups.some((group) => group.part !== undefined);
   if (!named) {
     return [
       {
         colorIndex: 0,
-        layerIds: sortIds(
-          layers.map((layer) => layer.id),
+        groupIds: sortIds(
+          groups.map((group) => group.id),
           order,
         ),
       },
@@ -28,18 +28,18 @@ export function groupParts(layers: readonly PartLayer[]): Part[] {
   }
 
   const buckets = new Map<string, string[]>();
-  for (const layer of layers) {
-    const key = layer.part ?? `\0${layer.id}`;
+  for (const group of groups) {
+    const key = group.part ?? `\0${group.id}`;
     const bucket = buckets.get(key) ?? [];
-    bucket.push(layer.id);
+    bucket.push(group.id);
     buckets.set(key, bucket);
   }
 
-  const parts = [...buckets.entries()].map(([key, layerIds]) => {
-    const ids = sortIds(layerIds, order);
+  const parts = [...buckets.entries()].map(([key, groupIds]) => {
+    const ids = sortIds(groupIds, order);
     return {
       title: key.startsWith("\0") ? undefined : key,
-      layerIds: ids,
+      groupIds: ids,
       minOrder: order.get(ids[0] ?? "") ?? 0,
       sortKey: ids[0] ?? "",
     };
@@ -48,15 +48,15 @@ export function groupParts(layers: readonly PartLayer[]): Part[] {
 
   return parts.map((part, index) => ({
     colorIndex: index % PART_PALETTE_SIZE,
-    layerIds: part.layerIds,
+    groupIds: part.groupIds,
     ...(part.title !== undefined ? { title: part.title } : {}),
   }));
 }
 
-export function colorIndexByLayerId(parts: readonly Part[]): Map<string, number> {
+export function colorIndexByGroupId(parts: readonly Part[]): Map<string, number> {
   const map = new Map<string, number>();
   for (const part of parts) {
-    for (const id of part.layerIds) {
+    for (const id of part.groupIds) {
       map.set(id, part.colorIndex);
     }
   }

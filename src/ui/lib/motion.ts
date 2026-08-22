@@ -1,6 +1,6 @@
 import { flushSync } from "react-dom";
 
-export type MotionKind = "layer" | "scene";
+export type MotionKind = "group" | "scene";
 
 let motionGeneration = 0;
 

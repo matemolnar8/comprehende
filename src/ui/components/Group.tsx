@@ -1,11 +1,11 @@
-import { layerIndex, type ReviewMeta } from "../api.ts";
-import type { LayerFile } from "../lib/layer-files.ts";
+import { groupIndex, type ReviewMeta } from "../api.ts";
+import type { GroupFile } from "../lib/group-files.ts";
 import { waitCopy } from "../lib/wait.ts";
+import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { HunkView } from "./HunkView.tsx";
-import { Brief, LayerBrief } from "./LayerBrief.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
-export function Layer(props: {
+export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
   bucket?: "unassigned" | "lockfiles";
   groups: ReviewMeta["groups"];
@@ -13,13 +13,13 @@ export function Layer(props: {
   strandColor?: string;
   loading: boolean;
   hunkError: string | null;
-  files: LayerFile[];
+  files: GroupFile[];
   activeHunk: number;
   split: boolean;
   splitRatio: number;
   wrap: boolean;
   viewedPaths: ReadonlySet<string>;
-  onOpenLayer: (id: string) => void;
+  onOpenGroup: (id: string) => void;
   onOpenFile: (path: string) => void;
   onSplitRatio: (ratio: number) => void;
   onViewed: (path: string, viewed: boolean) => void;
@@ -41,12 +41,12 @@ export function Layer(props: {
         ) : null}
         <div className="review-brief-copy">
           {group !== null ? (
-            <LayerBrief
+            <GroupBrief
               group={group}
-              index={layerIndex(groups, group.id)}
+              index={groupIndex(groups, group.id)}
               groups={groups}
               partTitle={mixed ? group.part : undefined}
-              onOpenLayer={props.onOpenLayer}
+              onOpenGroup={props.onOpenGroup}
             />
           ) : lockfiles ? (
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
@@ -62,7 +62,7 @@ export function Layer(props: {
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
         <article className="hunk-card mt-8 overflow-hidden rounded-lg border border-border bg-card">
-          <WaitMark label={waitCopy.layer} />
+          <WaitMark label={waitCopy.group} />
         </article>
       ) : null}
       {!loading && files.length === 0 && hunkError === null ? (
