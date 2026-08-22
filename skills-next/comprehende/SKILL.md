@@ -9,8 +9,6 @@ compatibility: Requires Node.js 24+, git, and a git work tree as the current wor
 
 Local review assistant. Always run the CLI inside the repository under review. Cwd is the repo. There is no `--repo` flag.
 
-The schema calls this object a group. The UI displays it as a layer.
-
 ## Purpose
 
 AI agents write a lot of code. That creates comprehension debt, the gap between what is in the repo and what humans actually understand. Unlike technical debt, nobody chooses it. It stays invisible until something breaks.
@@ -19,7 +17,7 @@ Cognitive offloading means handing off the *how* while keeping the *why* and the
 
 This skill is for offloading. Group and summarize so a human can form their own view, then read the live git diff. Do not accept the groups without reading the diff. Do not hide risk behind file lists.
 
-The review document is interpretation only. It holds groups, summaries, and hunk pointers. Never copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins. Fix groups. Never invent a replacement hunk.
+The review document is interpretation only. It holds groups, summaries, and hunk pointers. The UI displays a group as a layer. Never copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins. Fix groups. Never invent a replacement hunk.
 
 ## Resolve the CLI
 
@@ -33,7 +31,7 @@ Do not use an unpinned install.
 
 ## Workflow
 
-1. Use the refs the user named. Three-dot (`base...head`) is the merge request or branch diff. If the change is already on the default branch, use the request's recorded base and head SHAs, or the merge-base. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
+1. Use the refs the user named. Three-dot (`base...head`) is the merge request or branch diff. If the change is already on the default branch, use the request's recorded base and head SHAs. If only the head SHA is available, use the merge-base of that head with the named base branch, then that head. Do not use current default-branch `HEAD`. Fetch if the refs are missing from the local clone.
 2. Run `npx comprehende@0.4.1 index [--base <ref>] [--head <ref>]` and keep the JSON. Default `--head` is `HEAD`. Default `--base` is `origin/HEAD`, falling back to `main` or `master`. The JSON lists hunk refs (path plus `@@` ranges), image files, and skipped files. Image files use `oldStart` and `newStart` 0. Lockfiles and non-image binaries are in `skipped`. It contains no line content and no image bytes. Do not write the index into the work tree.
 3. Recover the why and write the what.
    - Copy tickets from the request.
@@ -41,11 +39,11 @@ Do not use an unpinned install.
    - Read commit subjects and bodies with `git log --format='%s%n%n%b' --end-of-options <base>...<head>`.
    - If you have a coding-agent transcript for this change, read the human's stated reason.
    - Do not copy commit text, the request description, or the transcript into `review.json`.
-   - Read `git diff --stat <base>...<head>` and the diffs.
+   - Read `git diff --stat <base>...<head>` and the diffs. The summaries must come from the code, not from the log.
    - Write a document `summary` for the whole change.
-   - Write a `why` on each group.
    - Write a document `why` when a ticket, issue, request description, or transcript names why this work exists.
-4. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` or `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
+4. Group the hunks by review concern. Follow the Grouping rules. Assign every hunk from the index to at least one group. Write a `why` on each group.
+5. Create a temporary directory outside the repository. Write `review.json` there. Copy hunk objects from the index into groups. Set `size` from review burden, not from `git diff --stat`. Do not reconstruct `oldStart` or `newStart` from memory. Do not paste patch text. Do not write this file into the work tree. Do not add gitignore entries. Pass the absolute path to `--data`.
 
    Create the directory with the OS temp tools:
    - macOS or Linux: `mktemp -d` (or a unique name under `$TMPDIR` or `/tmp`)
@@ -59,24 +57,24 @@ Do not use an unpinned install.
    # write $REVIEW_DIR/review.json
    ```
 
-5. Run `npx comprehende@0.4.1 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Do not change the diff.
-6. Run `npx comprehende@0.4.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+6. Run `npx comprehende@0.4.1 validate --data "$REVIEW_DIR/review.json"`. On failure, fix groups or coverage. Do not change the diff.
+7. Run `npx comprehende@0.4.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 ## The why
 
-Write document `why` only from a ticket, issue, request description, or human transcript. Commits can clarify a group `why`. A dependency can justify only a group `why`. Never derive document `why` from the diff or from group structure.
+Write document `why` only from a ticket, issue, request description, or human transcript. A dependency can justify only a group `why`. Never derive document `why` from the diff or from group structure.
 
 The UI shows document `why` at the top of Overview when it is present. Document `why` is one or two sentences. Do not paraphrase hunks.
 
-Tickets. Copy `id` from the tracker the user named. Copy `url`, `title`, and `part` when you have them. Do not run `gh`, `glab`, or another host CLI to fetch issue bodies. If `url` is present, linking is enough. Omit `part` on a ticket that covers the whole review. If the same ticket is on more than one commit in the range, it covers the review.
+Tickets. Copy `id` from the tracker the user named. Copy `url`, `title`, and `part` when you have them. Do not run `gh`, `glab`, or another host CLI to fetch issue bodies. If `url` is present, linking is enough. Omit `part` on a ticket that covers the whole review. A ticket covers the whole review only when the request or ticket title says that it does. Commit count does not determine ticket scope. Put `part` on each ticket that belongs to one story, using the same name as that story's groups.
 
 Request description. If the user named a pull request or merge request, read its description. That text is a source. Do not copy it into `review.json`.
 
-Commit messages. Read `git log` for `base...head`. Do not copy them into `review.json`. Commits alone are not enough for document `why`. They can support document `why` when a ticket, issue, request description, or transcript is also present.
+Commit messages. Read `git log` for `base...head`. Do not copy them into `review.json`. Commit messages can clarify group `why`. Never use them to add information to document `why`.
 
 Transcripts. If this change was written in a coding-agent session and you have that transcript, use the human's stated reason. Use a transcript you already have: this session, or a log the user named. Do not call a vendor API to fetch one. Do not paste the transcript into `review.json`. Do not copy the agent's plan, tool trace, or a recap of the diff.
 
-Independent documentation or test hygiene in its own part is not a reason to omit document `why`. Write the named motive as document `why`. Give the side work its own group `why`.
+Independent documentation or test-only cleanup in its own part is not a reason to omit document `why`. Write the named motive as document `why`. Give the side work its own group `why`.
 
 Omit document `why` only when those sources are silent. Do not invent a motive from the patch. If the request itself names two unrelated product stories and no source unifies them, omit document `why`. Do not merge them into one motive. That case is rare. Do not write a substitute.
 
@@ -84,7 +82,7 @@ Each group has `why`. Write why this group exists. If a source names this group'
 
 Every group still needs a `why`, including groups that only exist to enable later ones.
 
-The UI shows each group's `why` before the what and the live git diff. Put `part` on each ticket that belongs to one story, using the same name as that story's groups.
+The UI shows each group's `why` before the what and the live git diff.
 
 ## The what
 
@@ -103,7 +101,7 @@ Group `summary` is one sentence that says what this group is. Name how the hunks
 - Move mechanical work into its own group. Mechanical work is import reordering, identifier-only renames, generated code, formatting, and type re-exports. Keep every hunk. Do not replace those diffs with a file list.
 - If the mechanical hunks exist only because of a story, they are the last group of that `part`. No other group depends on them.
 - If the mechanical hunks could have been their own pull request, they are their own `part`. Put that part last in `suggestedOrder`.
-- Use `suggestedOrder` for the walk through the whole review, including independent parts. Mechanical parts and independent documentation or test hygiene go last.
+- Use `suggestedOrder` for the walk through the whole review, including independent parts. Mechanical parts, independent documentation, and test-only cleanup go last.
 - Set document `size` to the human review burden, not file or hunk count: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files that only change an import in one group are `small`. Three files that rewrite a contract used by the rest of the system can be `large`.
 - Every hunk from `index` must appear in at least one group. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show up as Unassigned in the UI.
 - Lockfiles are not hunks. Leave them in `skipped`. Do not add hunk refs for them. The UI has a Lockfiles bucket, closed until the reader opens a file.

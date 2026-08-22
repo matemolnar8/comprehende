@@ -17,7 +17,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
   },
   "size": "small",
   "why": "Ticket #12 requires login sessions that client scripts cannot read.",
-  "summary": "HttpOnly session cookie helper and login route, plus a separate README wording change.",
+  "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it. The README documents this behavior.",
   "tickets": [
     {
       "id": "#12",
@@ -29,8 +29,8 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "cookie",
       "title": "Session cookie helper",
-      "why": "The login route sets the cookie. The helper has to exist first.",
-      "summary": "The cookie options and `setSessionCookie` live in `session.ts`.",
+      "why": "The login route needs one helper to apply the session cookie options.",
+      "summary": "`setSessionCookie` applies the required options to session cookies.",
       "part": "Session cookie",
       "lookFor": [
         "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
@@ -70,7 +70,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "docs",
       "title": "README wording",
-      "why": "The README described the old cookie behavior.",
+      "why": "The README still describes the previous cookie behavior.",
       "summary": "The README section on sessions matches the new cookie behavior.",
       "part": "README",
       "suggestedOrder": 2,
