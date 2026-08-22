@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request. The ticket belongs to "Hunk identity". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `contracts` enables `git`. `git` `summary` names how those hunks meet. `git` `lookFor` is a predicted trace, a claim to check against live git. `docs` has no `lookFor`: the live diff is the whole story.
+`login` depends on `cookie`; both use `part` "Session cookie". `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request. The ticket belongs to "Session cookie". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `cookie` enables `login`. `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace, a claim to check against live git. `docs` has no `lookFor`. The live diff is the whole story.
 
 ```json
 {
@@ -13,29 +13,29 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "size": "small",
-  "why": "The review document must not store a patch. Serve joins live git by hunk identity.",
-  "summary": "Hunk identity contract and live git join, plus a separate README wording change.",
+  "why": "Session cookies must be HttpOnly so client scripts cannot read them.",
+  "summary": "HttpOnly session cookie helper and login route, plus a separate README wording change.",
   "tickets": [
     {
       "id": "#12",
-      "title": "Split the git index from the UI",
-      "part": "Hunk identity"
+      "title": "HttpOnly session cookies",
+      "part": "Session cookie"
     }
   ],
   "groups": [
     {
-      "id": "contracts",
-      "title": "Review document contract",
-      "why": "Later layers join live git by hunk identity. That contract has to exist first.",
-      "summary": "Hunk refs are identity. The document has no patch fields.",
-      "part": "Hunk identity",
+      "id": "cookie",
+      "title": "Session cookie helper",
+      "why": "Later layers set the cookie. The helper has to exist first.",
+      "summary": "Cookie options live in `session.ts`. The login route calls `setSessionCookie`.",
+      "part": "Session cookie",
       "lookFor": [
-        "Unknown fields on the document must fail validation."
+        "Breaking. Cookies without HttpOnly are rejected."
       ],
       "suggestedOrder": 0,
       "hunkRefs": [
         {
-          "path": "src/schema/types.ts",
+          "path": "src/auth/session.ts",
           "oldStart": 1,
           "oldLines": 20,
           "newStart": 1,
@@ -44,19 +44,19 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       ]
     },
     {
-      "id": "git",
-      "title": "Live git join",
-      "why": "#12 is the split. Serve must join by those refs so the UI never stores a patch.",
-      "summary": "Serve joins live git by the hunk identity defined in the contract.",
-      "part": "Hunk identity",
+      "id": "login",
+      "title": "Login route",
+      "why": "#12 is the cookie. The route must use the helper so the session is never readable from script.",
+      "summary": "The login route in `login.ts` sets the session through `setSessionCookie`.",
+      "part": "Session cookie",
       "lookFor": [
-        "Trace a rebase that moves the hunk: oldStart 10 is gone, live git still renders, the pointer is stale."
+        "Trace a login with remember-me off: old path set a readable cookie, new path sets HttpOnly and omits Max-Age."
       ],
-      "dependsOn": ["contracts"],
+      "dependsOn": ["cookie"],
       "suggestedOrder": 1,
       "hunkRefs": [
         {
-          "path": "src/git/diff.ts",
+          "path": "src/api/login.ts",
           "oldStart": 10,
           "oldLines": 8,
           "newStart": 10,
@@ -67,8 +67,8 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "docs",
       "title": "README wording",
-      "why": "Separate story. The contract does not depend on this.",
-      "summary": "Docs only. The contract does not depend on this.",
+      "why": "Separate story. The cookie does not depend on this.",
+      "summary": "Docs only. The cookie does not depend on this.",
       "part": "README",
       "suggestedOrder": 2,
       "hunkRefs": [

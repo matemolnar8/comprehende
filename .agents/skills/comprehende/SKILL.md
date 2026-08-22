@@ -27,7 +27,7 @@ Run the published CLI at the pinned version, inside the repository under review.
 npx comprehende@0.4.1 <command>
 ```
 
-Do not use a git checkout path, `pnpm dev`, or an unpinned install.
+Do not use an unpinned install.
 
 ## Workflow
 
@@ -71,7 +71,7 @@ Tickets. Copy `id` from the tracker the user named. Copy `url`, `title`, and `pa
 
 Request description. If the user named a pull request or merge request, read its description. That text is a source. Do not copy it into `review.json`.
 
-Commit messages. Read `git log` for `base...head`. Serve reads subjects and bodies from live git. Do not copy them into `review.json`.
+Commit messages. Read `git log` for `base...head`. Do not copy them into `review.json`.
 
 Transcripts. If this change was written in a coding-agent session and you have that transcript, use the human's stated reason. Use a transcript you already have: this session, or a log the user named. Do not call a vendor API to fetch one. Do not paste the transcript into `review.json`. Do not copy the agent's plan, tool trace, or a recap of the diff.
 
@@ -95,7 +95,7 @@ Layer `summary` is one sentence that says what this layer is. Name how the hunks
 
 ## Grouping rules
 
-- Group by review concern, not by directory, unless the concern is a layer (schema, CLI, UI).
+- Group by review concern, not by directory, unless that directory is the concern.
 - The same hunk may appear in multiple groups when it matters in more than one story.
 - `dependsOn` is a real dependency. The reader needs the earlier layer to understand this one. Use it only inside the same story. Reading order inside a story: contracts and foundations first, then call sites, then tests, then mechanical work.
 - Do not chain unrelated concerns with `dependsOn` just to force a reading order. Independent work is its own group with no `dependsOn`, and no other group depends on it. A second feature, or a drive-by that could have been its own PR, is independent work.
@@ -112,7 +112,7 @@ Layer `summary` is one sentence that says what this layer is. Name how the hunks
 - Lockfiles are not hunks. Leave them in `skipped`. Do not add hunk refs for them. The UI has a Lockfiles bucket, closed until the reader opens a file.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 
-Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Do not guess numbers from memory. Image files are hunks too. Copy those refs into groups. Lockfiles and other binaries stay in `skipped`. Git LFS images are read from `.git/lfs/objects` in the clone. If the object is missing, the image slot is empty. Do not paste image bytes or lockfile contents into `review.json`.
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Do not guess numbers from memory. Image files are hunks too. Copy those refs into groups. Lockfiles and other binaries stay in `skipped`. If an image is missing, the slot is empty. Do not paste image bytes or lockfile contents into `review.json`.
 
 ## lookFor
 
@@ -141,9 +141,8 @@ Schema: [references/review.schema.json](./references/review.schema.json). Exampl
 
 ## Accuracy
 
-- Do not generate, clean up, or rewrite diffs.
+- Do not generate, clean up, or rewrite diffs. The UI shows live git.
 - Do not invent the why from the patch. Write it from tickets, issues, pull request or merge request descriptions, coding-agent transcripts, or from how the layers depend on each other. If those sources are silent, omit document `why`. A second part does not cancel it. Always write document `summary`.
 - Do not snapshot the repo into `review.json`.
 - Do not write `review.json` or the index dump into the repository under review. Use a temp directory.
-- Opening a review whose `source` refs do not resolve in cwd is a user error. The CLI must refuse.
-- The UI only displays git output. The browser never computes diffs.
+- If `source` refs do not resolve in cwd, stop. Do not invent refs.
