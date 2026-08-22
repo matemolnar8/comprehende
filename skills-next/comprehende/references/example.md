@@ -2,7 +2,7 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `contracts` enables `git`. `docs` is a separate story.
+`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request. The ticket belongs to "Hunk identity". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `contracts` enables `git`. `git` `summary` names how those hunks meet. `git` `lookFor` is a predicted trace, a claim to check against live git. `docs` has no `lookFor`: the live diff is the whole story.
 
 ```json
 {
@@ -27,11 +27,10 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "contracts",
       "title": "Review document contract",
       "why": "Later layers join live git by hunk identity. That contract has to exist first.",
-      "summary": "Hunk refs are identity; no patch fields on the document.",
+      "summary": "Hunk refs are identity. The document has no patch fields.",
       "part": "Hunk identity",
       "lookFor": [
-        "Unknown fields on the document must fail validation.",
-        "Foundation: later layers depend on these shapes."
+        "Unknown fields on the document must fail validation."
       ],
       "suggestedOrder": 0,
       "hunkRefs": [
@@ -48,9 +47,11 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "git",
       "title": "Live git join",
       "why": "#12 is the split: serve must join by those refs so the UI never stores a patch.",
-      "summary": "Serve-time diff is joined by (path, oldStart, newStart).",
+      "summary": "Serve joins live git by the hunk identity defined in the contract.",
       "part": "Hunk identity",
-      "lookFor": ["Stale refs are flagged; git still wins."],
+      "lookFor": [
+        "Trace a rebase that moves the hunk: oldStart 10 is gone, live git still renders, the pointer is stale."
+      ],
       "dependsOn": ["contracts"],
       "suggestedOrder": 1,
       "hunkRefs": [
@@ -67,9 +68,8 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "id": "docs",
       "title": "README wording",
       "why": "Separate story. The contract does not depend on this.",
-      "summary": "Docs only; the contract does not depend on this.",
+      "summary": "Docs only. The contract does not depend on this.",
       "part": "README",
-      "lookFor": ["No code imports this file."],
       "suggestedOrder": 2,
       "hunkRefs": [
         {
