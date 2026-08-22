@@ -2,7 +2,10 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`login` depends on `cookie`; both use `part` "Session cookie". `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request. The ticket belongs to "Session cookie". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `cookie` enables `login`. `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace, a claim to check against live git. `docs` has no `lookFor`. The live diff is the whole story.
+- `login` depends on `cookie`. Both use `part` "Session cookie".
+- `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
+- Ticket #12 names why this work exists, so document `why` is present. Document `summary` names both stories.
+- `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 
 ```json
 {
@@ -13,7 +16,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "size": "small",
-  "why": "Session cookies must be HttpOnly so client scripts cannot read them.",
+  "why": "Ticket #12 requires login sessions that client scripts cannot read.",
   "summary": "HttpOnly session cookie helper and login route, plus a separate README wording change.",
   "tickets": [
     {
@@ -26,11 +29,11 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "cookie",
       "title": "Session cookie helper",
-      "why": "Later layers set the cookie. The helper has to exist first.",
-      "summary": "Cookie options live in `session.ts`. The login route calls `setSessionCookie`.",
+      "why": "The login route sets the cookie. The helper has to exist first.",
+      "summary": "The cookie options and `setSessionCookie` live in `session.ts`.",
       "part": "Session cookie",
       "lookFor": [
-        "Breaking. Cookies without HttpOnly are rejected."
+        "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
       ],
       "suggestedOrder": 0,
       "hunkRefs": [
@@ -46,11 +49,11 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "login",
       "title": "Login route",
-      "why": "#12 is the cookie. The route must use the helper so the session is never readable from script.",
-      "summary": "The login route in `login.ts` sets the session through `setSessionCookie`.",
+      "why": "Ticket #12 requires HttpOnly session cookies. The route must set them through the helper.",
+      "summary": "The login route in `login.ts` uses `setSessionCookie` from `session.ts`.",
       "part": "Session cookie",
       "lookFor": [
-        "Trace a login with remember-me off: old path set a readable cookie, new path sets HttpOnly and omits Max-Age."
+        "For `rememberMe = false`, compare the cookie: old code permits script access; new code sets `HttpOnly` and omits `Max-Age`."
       ],
       "dependsOn": ["cookie"],
       "suggestedOrder": 1,
@@ -67,8 +70,8 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "docs",
       "title": "README wording",
-      "why": "Separate story. The cookie does not depend on this.",
-      "summary": "Docs only. The cookie does not depend on this.",
+      "why": "The README described the old cookie behavior.",
+      "summary": "The README section on sessions matches the new cookie behavior.",
       "part": "README",
       "suggestedOrder": 2,
       "hunkRefs": [
