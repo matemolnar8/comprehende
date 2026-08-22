@@ -112,7 +112,7 @@ Layer `summary` is one sentence that says what this layer is. Name how the hunks
 - Lockfiles are not hunks. Leave them in `skipped`. Do not add hunk refs for them. The UI has a Lockfiles bucket, closed until the reader opens a file.
 - Stale refs (rebase, edited working tree) fail `validate`. `serve` still starts, shows live git, and flags the broken pointer. Do not invent a replacement hunk.
 
-Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Do not guess numbers from memory. Image files are hunks too. Copy those refs into groups. Lockfiles and other binaries stay in `skipped`. If an image is missing, the slot is empty. Do not paste image bytes or lockfile contents into `review.json`.
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Do not guess numbers from memory. Image files are hunks too. Copy those refs into groups. Lockfiles and other binaries stay in `skipped`. Git LFS images are read from `.git/lfs/objects` in the clone. If the object is missing, the image slot is empty. Do not paste image bytes or lockfile contents into `review.json`.
 
 ## lookFor
 
