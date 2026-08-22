@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { padLayer, sizeLabel, type ReviewMeta } from "../api.ts";
+import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
@@ -7,9 +7,9 @@ import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
 export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
-  onOpenLayer: (id: string) => void;
+  onOpenGroup: (id: string) => void;
 }) {
-  const { meta, parts, onOpenLayer } = props;
+  const { meta, parts, onOpenGroup } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const tickets = meta.document.tickets ?? [];
@@ -48,12 +48,12 @@ export function Overview(props: {
         >
           {parts.map((part) => (
             <PartColumn
-              key={part.layerIds.join("\0")}
+              key={part.groupIds.join("\0")}
               part={part}
               mixed={mixed}
               groups={meta.groups}
               byId={byId}
-              onOpenLayer={onOpenLayer}
+              onOpenGroup={onOpenGroup}
             />
           ))}
         </div>
@@ -98,9 +98,9 @@ function PartColumn(props: {
   mixed: boolean;
   groups: ReviewMeta["groups"];
   byId: Map<string, ReviewMeta["groups"][number]>;
-  onOpenLayer: (id: string) => void;
+  onOpenGroup: (id: string) => void;
 }) {
-  const { part, mixed, groups, byId, onOpenLayer } = props;
+  const { part, mixed, groups, byId, onOpenGroup } = props;
   const color = partColor(part.colorIndex);
   return (
     <section
@@ -115,7 +115,7 @@ function PartColumn(props: {
         </p>
       ) : null}
       <ol className="m-0 list-none p-0">
-        {part.layerIds.map((id) => {
+        {part.groupIds.map((id) => {
           const group = byId.get(id);
           if (group === undefined) {
             return null;
@@ -127,10 +127,10 @@ function PartColumn(props: {
                 type="button"
                 variant="ghost"
                 className="h-auto w-full min-w-0 items-start justify-start gap-4 rounded-md px-4 py-4 text-left font-normal whitespace-normal"
-                onClick={() => onOpenLayer(group.id)}
+                onClick={() => onOpenGroup(group.id)}
               >
                 <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
-                  {padLayer(index)}
+                  {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block font-medium text-foreground">{group.title}</strong>

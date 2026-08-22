@@ -1,7 +1,7 @@
 import { lineDelta } from "../../schema/hunk-meta.ts";
 import type { FileKind, FileStatus, LiveHunk } from "../api.ts";
 
-export type LayerFile = {
+export type GroupFile = {
   path: string;
   oldPath?: string;
   kind: FileKind;
@@ -25,11 +25,11 @@ export function filesFromPayload(
     removed?: number;
     hunks: LiveHunk[];
   }[],
-): LayerFile[] {
+): GroupFile[] {
   let firstIndex = 0;
   return files.map((file) => {
     const delta = lineDelta(file.hunks.flatMap((hunk) => hunk.lines));
-    const layer: LayerFile = {
+    const next: GroupFile = {
       path: file.path,
       kind: file.kind ?? "text",
       status: file.status ?? "modified",
@@ -41,13 +41,13 @@ export function filesFromPayload(
       hunks: file.hunks,
     };
     if (file.oldPath !== undefined) {
-      layer.oldPath = file.oldPath;
+      next.oldPath = file.oldPath;
     }
-    firstIndex += layer.hunkCount;
-    return layer;
+    firstIndex += next.hunkCount;
+    return next;
   });
 }
 
-export function fileIndexAtHunk(files: LayerFile[], hunkIndex: number): number {
+export function fileIndexAtHunk(files: GroupFile[], hunkIndex: number): number {
   return files.findIndex((file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount);
 }

@@ -22,7 +22,7 @@ describe("waitVisible", () => {
 describe("waitCopy", () => {
   it("names the live git read, not the HTTP call", () => {
     assert.equal(waitCopy.review, "Reading the review.");
-    assert.equal(waitCopy.layer, "Reading git.");
+    assert.equal(waitCopy.group, "Reading git.");
     assert.equal(waitCopy.file, "Reading this file.");
     assert.equal(waitCopy.blame, "Reading blame.");
     assert.equal(waitCopy.lockfile, "Reading the lockfile.");

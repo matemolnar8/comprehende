@@ -13,12 +13,12 @@ const source: SelectionStackSource = {
   unassigned: { hunkCount: 2 },
 };
 
-describe("layer selection storage", () => {
+describe("group selection storage", () => {
   it("keys storage by the resolved review range", () => {
-    assert.equal(selectionStorageKey("aaa", "bbb"), "comprehende.layer.aaa.bbb");
+    assert.equal(selectionStorageKey("aaa", "bbb"), "comprehende.group.aaa.bbb");
   });
 
-  it("round-trips overview, unassigned, and a layer", () => {
+  it("round-trips overview, unassigned, and a group", () => {
     const overview = { kind: "overview" } as const;
     const unassigned = { kind: "unassigned" } as const;
     const lockfiles = { kind: "lockfiles" } as const;
@@ -37,11 +37,11 @@ describe("layer selection storage", () => {
     assert.equal(parseSelection("{\"kind\":\"other\"}"), null);
   });
 
-  it("restores a stored layer when it still exists", () => {
+  it("restores a stored group when it still exists", () => {
     assert.deepEqual(restoreSelection(source, { kind: "group", id: "ui" }), { kind: "group", id: "ui" });
   });
 
-  it("falls back when the stored layer is gone", () => {
+  it("falls back when the stored group is gone", () => {
     assert.deepEqual(restoreSelection(source, { kind: "group", id: "gone" }), { kind: "overview" });
   });
 

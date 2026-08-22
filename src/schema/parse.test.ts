@@ -109,7 +109,7 @@ describe("parseReviewDocument", () => {
     const group = {
       id: "g1",
       title: "A",
-      why: "Enables later layers.",
+      why: "Enables later groups.",
       summary: "",
       suggestedOrder: 0,
       hunkRefs: [],

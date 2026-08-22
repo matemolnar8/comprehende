@@ -12,7 +12,7 @@ export type ApiHunk = HunkRef & {
   lines: DiffLine[];
 };
 
-export type ApiLayerFile = {
+export type ApiGroupFile = {
   path: string;
   oldPath?: string;
   kind: FileKind;
@@ -25,7 +25,7 @@ export type ApiLayerFile = {
 
 export type ApiHunks = {
   hunks: ApiHunk[];
-  files: ApiLayerFile[];
+  files: ApiGroupFile[];
 };
 
 export type ApiCommit = {

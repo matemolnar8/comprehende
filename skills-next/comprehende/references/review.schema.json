@@ -11,7 +11,7 @@
     "size": {
       "type": "string",
       "enum": ["trivial", "small", "medium", "large", "very-large"],
-      "description": "Human review burden of this change, not file or hunk count. A 40-file mechanical import rename in one layer is small. A 3-file contract rewrite the rest of the stack hangs on can be large."
+      "description": "Human review burden of this change, not file or hunk count. A 40-file mechanical import rename in one group is small. A 3-file contract rewrite the rest of the stack hangs on can be large."
     },
     "source": {
       "type": "object",
@@ -31,7 +31,7 @@
     "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Generated why for the whole change. Write it from tickets, issues, a pull-request or merge-request description, and/or a coding-agent transcript. Do not paraphrase the patch. Omit only when those sources are silent. A second part does not cancel it. The UI skips the Why section when this is absent."
+      "description": "Generated why for the whole change. Write it from tickets, issues, a pull-request or merge-request description, and/or a coding-agent transcript. Do not paraphrase the patch. Omit only when those sources are silent. An independent part in the same review is not a reason to omit it. The UI skips the Why section when this is absent."
     },
     "tickets": {
       "type": "array",
@@ -46,7 +46,7 @@
           "part": {
             "type": "string",
             "minLength": 1,
-            "description": "Short name of the independent story this ticket belongs to. Same name as the layers in that story. Omit when the ticket is for the whole review."
+            "description": "Short name of the independent story this ticket belongs to. Same name as the groups in that story. Omit when the ticket is for the whole review."
           }
         }
       }
@@ -63,11 +63,11 @@
           "why": {
             "type": "string",
             "minLength": 1,
-            "description": "Generated why this layer exists. Write it from tickets, commit messages, and/or a transcript when they apply. If this layer has no such source, it may exist to enable later layers in the same story. Do not paraphrase the patch."
+            "description": "Generated why this group exists. Write it from tickets, commit messages, and/or a transcript when they apply. If this group has no such source, it may exist to enable later groups in the same story. Do not paraphrase the patch."
           },
           "summary": {
             "type": "string",
-            "description": "One sentence: what this layer is."
+            "description": "One sentence: what this group is."
           },
           "lookFor": {
             "type": "array",
@@ -76,13 +76,13 @@
           },
           "dependsOn": {
             "type": "array",
-            "description": "Ids of earlier layers this one depends on. Same story only. Omit when this layer does not depend on other layers.",
+            "description": "Ids of earlier groups this one depends on. Same story only. Omit when this group does not depend on other groups.",
             "items": { "type": "string", "minLength": 1 }
           },
           "part": {
             "type": "string",
             "minLength": 1,
-            "description": "Short name of the independent story this layer belongs to. Same name = same story. Different names could have been separate PRs."
+            "description": "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs."
           },
           "suggestedOrder": { "type": "number" },
           "hunkRefs": {

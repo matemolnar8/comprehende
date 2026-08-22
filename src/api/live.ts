@@ -11,7 +11,7 @@ import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
-import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiLayerFile, ApiReview, FileSide } from "./types.ts";
+import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
 
 export type JsonSnapshot = {
   encoding: "json";
@@ -121,7 +121,7 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
     throw new ApiError(400, "missing group");
   }
   if (groupId === "unassigned") {
-    return serializeLayer(ctx.files, ctx.coverage.unassigned);
+    return serializeGroup(ctx.files, ctx.coverage.unassigned);
   }
   if (groupId === "lockfiles") {
     return serializeLockfiles(ctx.files);
@@ -130,7 +130,7 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
   if (group === undefined) {
     throw new ApiError(404, `unknown group "${groupId}"`);
   }
-  return serializeLayer(ctx.files, group.hunks);
+  return serializeGroup(ctx.files, group.hunks);
 }
 
 export async function filePayload(ctx: ReviewContext, path: string, side: FileSide): Promise<ApiFile> {
@@ -235,10 +235,10 @@ function sidesFor(file: DiffFile): FileSide[] {
   return ["old", "new"];
 }
 
-function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
-  const groups: { file: DiffFile; hunks: LiveHunk[] }[] = [];
+function serializeGroup(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
+  const filesByPath: { file: DiffFile; hunks: LiveHunk[] }[] = [];
   for (const hunk of hunks) {
-    const existing = groups.find((group) => group.file.path === hunk.path);
+    const existing = filesByPath.find((entry) => entry.file.path === hunk.path);
     if (existing !== undefined) {
       existing.hunks.push(hunk);
       continue;
@@ -247,14 +247,14 @@ function serializeLayer(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
     if (file === undefined) {
       continue;
     }
-    groups.push({ file, hunks: [hunk] });
+    filesByPath.push({ file, hunks: [hunk] });
   }
-  const serializedFiles = groups.map(({ file, hunks: fileHunks }) => serializeLayerFile(file, fileHunks, true));
+  const serializedFiles = filesByPath.map(({ file, hunks: fileHunks }) => serializeGroupFile(file, fileHunks, true));
   return { hunks: hunks.map(serializeHunk), files: serializedFiles };
 }
 
 function serializeLockfiles(files: DiffFile[]): ApiHunks {
-  const serializedFiles = lockfileFiles(files).map((file) => serializeLayerFile(file, [], true));
+  const serializedFiles = lockfileFiles(files).map((file) => serializeGroupFile(file, [], true));
   return { hunks: [], files: serializedFiles };
 }
 
@@ -262,7 +262,7 @@ function lockfileFiles(files: DiffFile[]): DiffFile[] {
   return files.filter((file) => isLockfilePath(file.path) && !file.binary && !file.image);
 }
 
-async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiLayerFile> {
+async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiGroupFile> {
   const file = findFile(ctx.files, path);
   if (!isLockfilePath(file.path) || file.binary || file.image) {
     throw new ApiError(404, "path is not a deferred lockfile");
@@ -271,13 +271,13 @@ async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiLayerF
   if (live === undefined) {
     throw new ApiError(404, `no live diff for ${path}`);
   }
-  return serializeLayerFile(live, live.hunks, false);
+  return serializeGroupFile(live, live.hunks, false);
 }
 
-function serializeLayerFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile: boolean): ApiLayerFile {
+function serializeGroupFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile: boolean): ApiGroupFile {
   const lockfile = isLockfilePath(file.path) && !file.binary && !file.image;
   const deferred = deferLockfile && lockfile;
-  const next: ApiLayerFile = {
+  const next: ApiGroupFile = {
     path: file.path,
     kind: file.image ? "image" : lockfile ? "lockfile" : "text",
     status: file.status,

@@ -16,7 +16,7 @@ export function defaultSelection(source: SelectionStackSource): Selection {
 }
 
 export function selectionStorageKey(baseSha: string, headSha: string): string {
-  return `comprehende.layer.${baseSha}.${headSha}`;
+  return `comprehende.group.${baseSha}.${headSha}`;
 }
 
 export function parseSelection(raw: string | null): Selection | null {

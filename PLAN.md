@@ -18,7 +18,7 @@ Unchanged.
 - **UI stack:** Vite + React + TypeScript.
 - **Hunk ownership:** a hunk may appear in multiple groups. Coverage still requires every git hunk to appear in at least one group.
 - **Diff source of truth:** git, live, at serve time. The review document must not contain patch text or file contents.
-- **CLI cwd:** the CLI is run inside the repository under review. Repo path defaults to the current working directory. Do not snapshot the repo into the data layer.
+- **CLI cwd:** the CLI is run inside the repository under review. Repo path defaults to the current working directory. Do not snapshot the repo into the review document.
 
 npm publish is how the CLI is distributed (`npx comprehende`). That is not a hosted app. The review UI still runs only on localhost against git in cwd.
 
@@ -53,7 +53,7 @@ The UI is a projector. If review JSON carried hunk lines, that copy could drift 
 
 Patches shown in the UI are **slices of live `git diff` stdout** (file header + selected hunk bytes). The CLI does not reconstruct unified patches from parsed fields.
 
-## Data layer
+## Review document
 
 JSON is pointers and prose. No unified diff, no file bodies, no blame.
 
@@ -78,7 +78,7 @@ type ReviewGroup = {
   title: string
   summary: string
   lookFor?: string[] // extra: scannable inspect list
-  dependsOn?: string[] // extra: earlier layer ids
+  dependsOn?: string[] // extra: earlier group ids
   suggestedOrder: number
   hunkRefs: HunkRef[]
 }
@@ -146,7 +146,7 @@ comprehende serve --data <review.json> [--port] [--open]
 
 Fixed chrome, data-driven. Group-first, not file-alphabet-first.
 
-- Left: review **stack** — Overview, then groups in `suggestedOrder`, then Unassigned. Layers show `lookFor` and `dependsOn`.
+- Left: review **stack** — Overview, then groups in `suggestedOrder`, then Unassigned. Groups show `lookFor` and `dependsOn`.
 - Center: live hunks for the selected group (from git, joined by `hunkRefs`). Unified and split (50/50, resizable). Wrap toggle. Hunk headers from git ranges, not invented `@@` prose.
 - Secondary: file tree derived from the live diff; full file / blame as drill-down inspectors.
 - Visible **unassigned** hunks so coverage failures cannot hide.
@@ -198,7 +198,7 @@ These are the deltas to resolve in the rewrite — not a request to keep or drop
 
 2. **Who writes `review.json`.** Locked: the agent writes groups from `index` output after reading the live git diffs. `comprehende generate` is removed. Path-heuristic drafts are not a substitute for concern-based grouping.
 
-3. **Summary contract.** Plan: “Summaries say what changed and why it matters. Do not paraphrase the patch.” Draft: `summary` is **one sentence** (intent of the layer); `lookFor` is bullets of what to inspect; optional document `walkthrough` is one or two sentences for Overview. The UI is built around that split. The rewrite should either adopt it as the contract or change the product.
+3. **Summary contract.** Plan: “Summaries say what changed and why it matters. Do not paraphrase the patch.” Draft: `summary` is **one sentence** (intent of the group); `lookFor` is bullets of what to inspect; optional document `walkthrough` is one or two sentences for Overview. The UI is built around that split. The rewrite should either adopt it as the contract or change the product.
 
 4. **Reading order.** Plan: prose rule — contracts / foundations, then call sites, then tests, then chores. Draft: same idea encoded as `dependsOn` plus a stack Overview. Confirm that is the grouping model, not directory-first.
 

@@ -18,7 +18,7 @@ describe("shouldViewTransition", () => {
 });
 
 describe("selectionStack", () => {
-  it("includes unassigned only when hunks sit outside layers", () => {
+  it("includes unassigned only when hunks sit outside groups", () => {
     assert.deepEqual(
       selectionStack({ groups: [{ id: "a" }], unassigned: { hunkCount: 0 } }).map((item) => item.kind),
       ["overview", "group"],

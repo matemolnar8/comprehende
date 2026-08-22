@@ -200,15 +200,15 @@
   }
 }
 
-html[data-motion="layer"] .review-brief-strand {
+html[data-motion="group"] .review-brief-strand {
   view-transition-name: review-strand;
 }
 
-html[data-motion="layer"] .review-brief-copy {
+html[data-motion="group"] .review-brief-copy {
   view-transition-name: review-copy;
 }
 
-html[data-motion="layer"] .review-overview {
+html[data-motion="group"] .review-overview {
   view-transition-name: review-overview;
 }
 
