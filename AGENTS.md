@@ -54,7 +54,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Review document.** Interpretation only. Groups, summaries, optional generated why, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
-**Group.** Schema `groups` item. The UI displays a group as a layer.
+**Group.** Schema `groups` item. The UI uses the same word.
 
 **Review concern.** Why these hunks are read together. Not a directory, unless that directory is the concern.
 

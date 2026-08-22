@@ -51,9 +51,9 @@ export function Layer(props: {
           ) : lockfiles ? (
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
-            <Brief kicker="Unassigned" title="Not in any layer">
+            <Brief kicker="Unassigned" title="Not in any group">
               <p className="font-serif text-lg leading-relaxed text-foreground">
-                These hunks are in git and in no layer. Fix the review document — never the diff.
+                These hunks are in git and in no group. Fix the review document. Never the diff.
               </p>
             </Brief>
           )}
@@ -66,7 +66,7 @@ export function Layer(props: {
         </article>
       ) : null}
       {!loading && files.length === 0 && hunkError === null ? (
-        <p className="mt-8 text-muted-foreground">No hunks in this layer.</p>
+        <p className="mt-8 text-muted-foreground">No hunks in this group.</p>
       ) : null}
       {!loading && files.length > 0 ? (
         <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">

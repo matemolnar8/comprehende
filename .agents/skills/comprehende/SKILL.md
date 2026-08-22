@@ -17,7 +17,7 @@ Cognitive offloading means handing off the *how* while keeping the *why* and the
 
 This skill is for offloading. Group and summarize so a human can form their own view, then read the live git diff. Do not accept the groups without reading the diff. Do not hide risk behind file lists.
 
-The review document is interpretation only. It holds groups, summaries, and hunk pointers. The UI displays a group as a layer. Never copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins. Fix groups. Never invent a replacement hunk.
+The review document is interpretation only. It holds groups, summaries, and hunk pointers. Never copy patch text, file bodies, or blame into `review.json`. Diffs are live `git` output at serve time. If git and the document disagree, git wins. Fix groups. Never invent a replacement hunk.
 
 ## Resolve the CLI
 
@@ -96,7 +96,7 @@ Group `summary` is one sentence that says what this group is. Name how the hunks
 - The same hunk may appear in multiple groups when it matters in more than one story.
 - `dependsOn` is a real dependency. The reader needs the earlier group to understand this one. Use it only inside the same story. Reading order inside a story: contracts and foundations first, then call sites, then tests, then mechanical work.
 - Do not chain unrelated concerns with `dependsOn` just to force a reading order. Independent work is its own group with no `dependsOn`, and no other group depends on it. A second feature, or independent documentation that could have been its own PR, is independent work.
-- Give each independent story a short `part` name. A few words, not a sentence. Put the same `part` on every group in that story. Independent work gets its own `part`. The UI colors layers that share a `part` together.
+- Give each independent story a short `part` name. A few words, not a sentence. Put the same `part` on every group in that story. Independent work gets its own `part`. The UI colors groups that share a `part` together.
 - If you are not sure two concerns depend on each other, leave `dependsOn` empty and give them different `part` names. A false split is easy to see. A false chain hides a mixed PR.
 - Move mechanical work into its own group. Mechanical work is import reordering, identifier-only renames, generated code, formatting, and type re-exports. Keep every hunk. Do not replace those diffs with a file list.
 - If the mechanical hunks exist only because of a story, they are the last group of that `part`. No other group depends on them.

@@ -29,22 +29,22 @@ export type Ticket = {
   id: string;
   url?: string;
   title?: string;
-  /** Independent story this ticket belongs to. Same name as that story's layers. */
+  /** Independent story this ticket belongs to. Same name as that story's groups. */
   part?: string;
 };
 
 export type ReviewGroup = {
   id: string;
   title: string;
-  /** Generated why this layer exists. From sources, or because later layers need it. */
+  /** Generated why this group exists. From sources, or because later groups need it. */
   why: string;
-  /** One sentence: what this layer is. */
+  /** One sentence: what this group is. */
   summary: string;
   /** Scannable bullets of what to look at. Not a paragraph. */
   lookFor?: string[];
-  /** Earlier layer ids this one depends on. Same story only. Omit when independent. */
+  /** Earlier group ids this one depends on. Same story only. Omit when independent. */
   dependsOn?: string[];
-  /** Short name of the independent story this layer belongs to. Same name = same story. */
+  /** Short name of the independent story this group belongs to. Same name = same story. */
   part?: string;
   suggestedOrder: number;
   hunkRefs: HunkRef[];
