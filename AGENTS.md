@@ -44,9 +44,9 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Comprehension debt.** The gap between the code in the system and the understanding the humans who develop, maintain, or operate it have. Unlike technical debt, nobody chooses it. It stays invisible until something breaks.
 
-**The why.** Why this work exists. The skill writes it from tickets, issues, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every layer. A layer with no source of its own may exist to enable later layers. Do not invent a motive from the patch.
+**The why.** Why this work exists. The skill writes it from tickets, issues, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
 
-**The what.** What this change is. Always written. Document `summary` is the whole change. Layer `summary` is that layer. Named so a human has a view before they read the diff.
+**The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
 
 **The how.** How the change is implemented. The live git diff is the how. The agent may group and summarize it. The agent must not replace it.
 
@@ -54,7 +54,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Review document.** Interpretation only. Groups, summaries, optional generated why, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
-**Group / layer.** Same object. Schema says group. UI says layer.
+**Group.** Schema `groups` item. The UI displays a group as a layer.
 
 **Review concern.** Why these hunks are read together. Not a directory, unless that directory is the concern.
 
