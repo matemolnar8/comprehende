@@ -40,8 +40,9 @@ describe("gap style", () => {
     const fold = gapStyleCSS("fold");
     const bar = gapStyleCSS("bar");
     assert.equal(edges.includes("[data-expand-down]::before"), true);
-    assert.equal(fold.includes("[data-expand-all-button]"), true);
+    assert.equal(fold.includes("grid-column: 3"), true);
     assert.equal(bar.includes("dashed"), true);
+    assert.equal(bar.includes("border-radius: 999px"), true);
     assert.equal(edges === fold, false);
     assert.equal(fold === bar, false);
   });

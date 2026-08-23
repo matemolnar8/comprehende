@@ -168,31 +168,49 @@ ${SHARED_CSS}
 }
 `;
 
-/** Rounded fold chip in the gutter. */
+/** Rounded fold chip in the gutter. Pierre stacks the arrows in column 1; keep Expand all out of that column. */
 const FOLD_CSS = `
 ${SHARED_CSS}
-[data-expand-all-button] {
+[data-separator="line-info"][data-expand-index] [data-separator-wrapper],
+[data-separator="line-info"][data-expand-index] [data-separator-wrapper][data-separator-multi-button] {
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+}
+
+[data-separator="line-info"] [data-separator-content] {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+[data-separator="line-info"] [data-expand-button][data-expand-all-button] {
   display: flex;
-  padding-inline: 0.7ch;
+  grid-column: 3;
+  grid-row: 1 / -1;
+  min-width: unset;
+  border-right: none;
+  white-space: nowrap;
+  padding-inline: 0.9ch;
+  font-size: 0.75rem;
   text-transform: lowercase;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 
-[data-expand-all-button]:hover {
-  color: var(--diffs-fg);
-  text-decoration: underline;
-}
-
+[data-separator="line-info"] [data-expand-all-button]:hover,
 [data-separator="line-info"] [data-separator-content]:hover {
   color: var(--diffs-fg);
 }
-`;
 
-/** The count on the bar is the control. */
+[data-separator="line-info"] [data-expand-all-button]:hover {
+  text-decoration: underline;
+}
+`
+
+/** The count on the dashed cut is the control. Arrows stay quiet until hover. */
 const BAR_CSS = `
 ${SHARED_CSS}
 [data-separator="line-info-basic"] {
-  height: 22px;
-  background: var(--diffs-bg);
+  height: 20px;
+  background: var(--diffs-bg) !important;
   position: relative;
 }
 
@@ -202,7 +220,7 @@ ${SHARED_CSS}
   left: 0;
   right: 0;
   top: 50%;
-  border-top: 1px dashed var(--diffs-bg-separator);
+  border-top: 1px dashed color-mix(in srgb, var(--diffs-fg-number) 45%, transparent);
   pointer-events: none;
 }
 
@@ -214,13 +232,13 @@ ${SHARED_CSS}
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 0.35rem;
+    gap: 0.3rem;
     width: max-content;
     max-width: 70cqi;
     background: transparent;
     color: var(--diffs-fg-number);
     font-size: 0.75rem;
-    margin-left: 0.8ch;
+    margin-left: 1.2ch;
   }
 
   [data-expand-button],
@@ -238,8 +256,11 @@ ${SHARED_CSS}
   }
 
   [data-separator-content] {
-    padding-inline: 0.55ch;
+    padding: 0.05rem 0.7ch;
     cursor: pointer;
+    border: 1px solid color-mix(in srgb, var(--diffs-fg-number) 32%, transparent);
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
   }
 
   [data-expand-button]:not([data-expand-all-button]) {
@@ -262,15 +283,17 @@ ${SHARED_CSS}
     }
   }
 
-  [data-separator]:hover [data-expand-button]:not([data-expand-all-button]),
-  [data-expand-button]:focus-visible {
-    opacity: 1;
-  }
-
   [data-expand-all-button] {
     display: flex;
     padding-inline: 0.45ch;
     text-transform: lowercase;
+    opacity: 0;
+  }
+
+  [data-separator]:hover [data-expand-button]:not([data-expand-all-button]),
+  [data-separator]:hover [data-expand-all-button],
+  [data-expand-button]:focus-visible {
+    opacity: 1;
   }
 
   [data-separator-content]:hover,
