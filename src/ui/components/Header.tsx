@@ -107,36 +107,34 @@ function Range(props: { resolved: ReviewMeta["resolved"] }) {
 
 function CopyRef(props: { display: string; copy: string; tooltip: string }) {
   const [copied, setCopied] = useState(false);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!copied) {
       return;
     }
-    const id = window.setTimeout(() => setCopied(false), 1200);
+    const id = window.setTimeout(() => setCopied(false), 1600);
     return () => window.clearTimeout(id);
   }, [copied]);
 
   return (
-    <Tooltip open={copied || open} onOpenChange={setOpen}>
+    <Tooltip>
       <TooltipTrigger asChild>
         <button
           type="button"
           className="max-w-[10rem] cursor-pointer truncate rounded-sm px-0.5 font-mono text-primary hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
           aria-label={`Copy ${props.copy}`}
+          aria-live="polite"
           onClick={() => {
-            void navigator.clipboard.writeText(props.copy).then(
-              () => setCopied(true),
-              () => undefined,
-            );
+            setCopied(true);
+            void navigator.clipboard.writeText(props.copy).catch(() => {
+              setCopied(false);
+            });
           }}
         >
-          {props.display}
+          {copied ? "Copied" : props.display}
         </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">
-        {copied ? "Copied" : props.tooltip}
-      </TooltipContent>
+      <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">{props.tooltip}</TooltipContent>
     </Tooltip>
   );
 }
