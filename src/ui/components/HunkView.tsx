@@ -158,6 +158,7 @@ export function HunkView(props: {
           <WaitMark label={waitCopy.lockfile} />
         ) : (
           <PierreFileDiff
+            path={file.path}
             patch={patch}
             split={split}
             wrap={wrap}

@@ -115,6 +115,13 @@ describe("example repo index/validate", () => {
     assert.ok(index.hunks.length >= 4);
     assert.ok(index.skipped.some((item) => item.path === "assets/dot.bin"));
     assert.equal(index.hunks.filter((hunk) => hunk.path === "src/app.ts").length, 2);
+    const appHunks = index.hunks.filter((hunk) => hunk.path === "src/app.ts");
+    const appFirst = appHunks[0];
+    const appSecond = appHunks[1];
+    assert.ok(appFirst);
+    assert.ok(appSecond);
+    const gap = appSecond.newStart - (appFirst.newStart + appFirst.newLines);
+    assert.ok(gap > 10, `expected a collapsed gap over 10 lines, got ${gap}`);
     assert.ok(index.hunks.some((hunk) => hunk.path === "src/helpers.ts" && hunk.oldPath === "src/util.ts"));
 
     const dataPath = join(root, "review.json");

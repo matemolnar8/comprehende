@@ -1,15 +1,33 @@
-import { parsePatchFiles, type FileDiffMetadata, type LineAnnotation } from "@pierre/diffs";
+import {
+  hydratePartialDiff,
+  parsePatchFiles,
+  type FileDiffLoadedFiles,
+  type FileDiffMetadata,
+  type LineAnnotation,
+} from "@pierre/diffs";
 import { File, FileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
 import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
 import {
   memo,
+  useEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { fetchFile } from "./api.ts";
+import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
+import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
+import {
+  gapSeparator,
+  isPlainDownClick,
+  reviewScroller,
+  watchGapPin,
+  type GapPin,
+} from "@/lib/pin-gap-expand.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -102,16 +120,20 @@ export function PierreDiffPool(props: { children: ReactNode }) {
   );
 }
 
-function parseGitPatch(patch: string): FileDiffMetadata | undefined {
+function parseGitPatch(patch: string, path: string): FileDiffMetadata | undefined {
   if (patch.trim() === "") {
     return undefined;
   }
   try {
-    const parsed = parsePatchFiles(patch, `comprehende:${patch.length}`);
+    const parsed = parsePatchFiles(patch, `comprehende:${path}`);
     return parsed[0]?.files[0];
   } catch {
     return undefined;
   }
+}
+
+function loadDiffFiles(fileDiff: FileDiffMetadata): Promise<FileDiffLoadedFiles> {
+  return loadDiffFilesWith(fileDiff, fetchFile);
 }
 
 const StableFileDiff = memo(function StableFileDiff(props: {
@@ -119,7 +141,10 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
+  onPostRender?: (node: HTMLElement) => void;
 }) {
+  const onPostRenderRef = useRef(props.onPostRender);
+  onPostRenderRef.current = props.onPostRender;
   const options = useMemo(
     () => ({
       theme: DIFF_THEMES,
@@ -129,7 +154,15 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       disableFileHeader: true,
       stickyHeader: false,
       lineDiffType: "none" as const,
-      unsafeCSS: PIERRE_UNSAFE_CSS,
+      // Pierre's expandUnchanged paints every gap open. Leave it off.
+      expansionLineCount: EXPANSION_LINE_COUNT,
+      hunkSeparators: GAP_SEPARATOR,
+      loadDiffFiles,
+      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
+      onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
+        if (phase === "unmount") return;
+        onPostRenderRef.current?.(node);
+      },
     }),
     [props.split, props.themeType, props.wrap],
   );
@@ -217,15 +250,76 @@ export function PierreFile(props: {
 }
 
 export function PierreFileDiff(props: {
+  path: string;
   patch: string;
   split: boolean;
   wrap: boolean;
   splitRatio: number;
   onSplitRatio: (ratio: number) => void;
 }) {
-  const { patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
   const { resolved } = useTheme();
-  const fileDiff = useMemo(() => parseGitPatch(patch), [patch]);
+  const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
+  const [fileDiff, setFileDiff] = useState(parsed);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<GapPin | null>(null);
+  const pinGen = useRef(0);
+
+  useEffect(() => {
+    setFileDiff(parsed);
+  }, [parsed]);
+
+  useEffect(() => {
+    if (parsed === undefined || !canHydrateDiff(parsed)) {
+      return;
+    }
+    let cancelled = false;
+    void loadDiffFiles(parsed).then((files) => {
+      if (cancelled || !parsed.isPartial) {
+        return;
+      }
+      setFileDiff(hydratePartialDiff("clone", parsed, files));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed]);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (wrapper === null) return;
+    const onClick = (event: MouseEvent) => {
+      const path = event.composedPath();
+      if (isPlainDownClick(path, event.shiftKey)) return;
+      const sep = gapSeparator(path);
+      const index = sep?.getAttribute("data-expand-index");
+      const scroller = reviewScroller(wrapper);
+      if (sep === undefined || index == null || scroller === undefined) return;
+      pinGen.current += 1;
+      pinRef.current = {
+        scroller,
+        top: sep.getBoundingClientRect().top,
+        index,
+        scrollHeight: scroller.scrollHeight,
+        createdAt: Date.now(),
+      };
+    };
+    wrapper.addEventListener("click", onClick, true);
+    return () => wrapper.removeEventListener("click", onClick, true);
+  }, [fileDiff !== undefined]);
+
+  const onPostRender = (node: HTMLElement) => {
+    const pin = pinRef.current;
+    if (pin === null) return;
+    const gen = pinGen.current;
+    pinRef.current = null;
+    watchGapPin(
+      pin,
+      node,
+      () => pinGen.current === gen,
+      () => undefined,
+    );
+  };
 
   if (fileDiff === undefined) {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
@@ -233,6 +327,7 @@ export function PierreFileDiff(props: {
 
   return (
     <div
+      ref={wrapperRef}
       className="relative min-w-0"
       style={
         {
@@ -241,7 +336,13 @@ export function PierreFileDiff(props: {
         } as CSSProperties
       }
     >
-      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
+      <StableFileDiff
+        fileDiff={fileDiff}
+        split={split}
+        wrap={wrap}
+        themeType={resolved}
+        onPostRender={onPostRender}
+      />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );
