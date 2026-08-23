@@ -150,6 +150,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
+  loadFiles: boolean;
   onPostRender?: (node: HTMLElement) => void;
 }) {
   const onPostRenderRef = useRef(props.onPostRender);
@@ -166,14 +167,14 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
       hunkSeparators: GAP_SEPARATOR,
-      loadDiffFiles,
+      ...(props.loadFiles ? { loadDiffFiles } : {}),
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
       onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
         if (phase === "unmount") return;
         onPostRenderRef.current?.(node);
       },
     }),
-    [props.split, props.themeType, props.wrap],
+    [props.loadFiles, props.split, props.themeType, props.wrap],
   );
   return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
 });
@@ -358,6 +359,7 @@ export function PierreFileDiff(props: {
         split={split}
         wrap={wrap}
         themeType={resolved}
+        loadFiles={hydrate}
         onPostRender={onPostRender}
       />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
