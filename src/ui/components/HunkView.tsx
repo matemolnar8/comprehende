@@ -11,6 +11,7 @@ import type { GroupFile } from "../lib/group-files.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useState, type MouseEvent } from "react";
+import styles from "./HunkView.module.css";
 
 export function HunkView(props: {
   file: GroupFile;
@@ -70,7 +71,7 @@ export function HunkView(props: {
 
   return (
     <article
-      className={cn("hunk-card overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
+      className={cn(styles.card, "overflow-hidden rounded-lg border bg-card", active ? "border-primary" : "border-border")}
       data-hunk={index}
     >
       <header
@@ -90,14 +91,14 @@ export function HunkView(props: {
           aria-label={collapsed ? "Expand file" : "Collapse file"}
           onClick={() => setCollapsed((value) => !value)}
         >
-          <ChevronDownIcon className={cn("hunk-chevron size-4", collapsed && "-rotate-90")} />
+          <ChevronDownIcon className={cn(styles.chevron, "size-4", collapsed && "-rotate-90")} />
         </Button>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               type="button"
               variant="link"
-              className={cn("file-path h-auto p-0 font-mono text-sm", viewed && "text-muted-foreground")}
+              className={cn(styles.path, "h-auto p-0 font-mono text-sm", viewed && "text-muted-foreground")}
               onClick={() => onOpen(file.path)}
             >
               {label}

@@ -1,7 +1,7 @@
 import { WAIT_REVEAL_MS } from "../lib/wait.ts";
 import { useDelayedFlag } from "../lib/use-delayed-flag.ts";
 import { cn } from "@/lib/utils.ts";
-import "./WaitMark.css";
+import styles from "./WaitMark.module.css";
 
 export function WaitMark(props: {
   label: string;
@@ -52,7 +52,8 @@ function Rail(props: { kind: "add" | "del"; inline: boolean }) {
     >
       <span
         className={cn(
-          "wait-gutter-walker absolute inset-x-0 top-[28%] h-[44%] rounded-[inherit]",
+          "absolute inset-x-0 top-[28%] h-[44%] rounded-[inherit]",
+          styles.walker,
           props.kind === "del" ? "bg-del" : "bg-add",
         )}
       />

@@ -1,0 +1,3 @@
+:global(html[data-motion="scene"]) .scene {
+  view-transition-name: review-scene;
+}

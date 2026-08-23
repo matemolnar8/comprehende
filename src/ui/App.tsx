@@ -16,6 +16,7 @@ import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
+import styles from "./App.module.css";
 
 export function App() {
   const [meta, setMeta] = useState<ReviewMeta | null>(null);
@@ -260,7 +261,7 @@ export function App() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-            <div className="review-scene h-full min-h-0">
+            <div className={cn(styles.scene, "h-full min-h-0")}>
               {inspector !== null ? (
                 <Inspector
                   inspector={inspector}
@@ -269,7 +270,7 @@ export function App() {
                   onClose={closeInspector}
                 />
               ) : (
-                <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
+                <main ref={mainRef} className="h-full overflow-auto scroll-smooth px-10 py-8" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
                     <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (

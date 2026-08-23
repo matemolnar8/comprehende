@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { FileStatus } from "../api.ts";
+import styles from "./ImageDiff.module.css";
 
 export type ImageMode = "side-by-side" | "slider" | "diff";
 
@@ -172,7 +173,7 @@ function StageFrame(props: {
   return (
     <div
       ref={props.ref}
-      className={cn("image-stage relative shrink-0 overflow-hidden", props.className)}
+      className={cn(styles.stage, "relative shrink-0 overflow-hidden", props.className)}
       style={{ width: props.width, height: props.height }}
       onPointerDown={props.onPointerDown}
       onPointerMove={props.onPointerMove}

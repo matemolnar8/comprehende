@@ -1,0 +1,26 @@
+.brief {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.strand {
+  width: 3px;
+  flex: none;
+  border-radius: 1px;
+  background-color: var(--muted-foreground);
+}
+
+.copy {
+  min-width: 0;
+  flex: 1;
+}
+
+:global(html[data-motion="group"]) .strand {
+  view-transition-name: review-strand;
+}
+
+:global(html[data-motion="group"]) .copy {
+  view-transition-name: review-copy;
+}

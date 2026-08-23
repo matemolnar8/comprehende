@@ -6,7 +6,7 @@ import { InlineMd } from "./components/InlineMd.tsx";
 import { flattenInline } from "./lib/inline-md.ts";
 
 function html(text: string): string {
-  return renderToStaticMarkup(createElement(InlineMd, { text }));
+  return renderToStaticMarkup(createElement(InlineMd, { text })).replace(/ class="[^"]*"/g, "");
 }
 
 describe("flattenInline", () => {
@@ -22,6 +22,14 @@ describe("flattenInline", () => {
 describe("InlineMd", () => {
   it("turns backtick symbols into code spans", () => {
     assert.equal(html("The cache is `WorkerOutputCache`."), "The cache is <code>WorkerOutputCache</code>.");
+  });
+
+  it("puts the chip and strong look on the markdown tags", () => {
+    const markup = renderToStaticMarkup(createElement(InlineMd, { text: "A `chip` and **bold**." }));
+    assert.match(markup, /<code class="[^"]+">chip<\/code>/);
+    assert.match(markup, /<strong class="[^"]+">bold<\/strong>/);
+    assert.match(markup, /font-semibold/);
+    assert.match(markup, /box-decoration-clone/);
   });
 
   it("keeps nested backticks inside a longer run", () => {

@@ -4,6 +4,7 @@ import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { WaitMark } from "./WaitMark.tsx";
+import styles from "./Group.module.css";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -31,15 +32,15 @@ export function Group(props: {
 
   return (
     <>
-      <div className="review-brief">
+      <div className={styles.brief}>
         {showStrand ? (
           <span
-            className="review-brief-strand"
+            className={styles.strand}
             style={strandColor !== undefined ? { backgroundColor: strandColor } : undefined}
             aria-hidden
           />
         ) : null}
-        <div className="review-brief-copy">
+        <div className={styles.copy}>
           {group !== null ? (
             <GroupBrief
               group={group}
@@ -61,7 +62,7 @@ export function Group(props: {
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
-        <article className="hunk-card mt-8 overflow-hidden rounded-lg border border-border bg-card">
+        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
           <WaitMark label={waitCopy.group} />
         </article>
       ) : null}
