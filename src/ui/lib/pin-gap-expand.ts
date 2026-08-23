@@ -22,15 +22,100 @@ export type PendingPin = {
   createdAt: number
 }
 
+export type RestoreResult = "aligned" | "adjusted" | "gone" | "pending"
+
 export const COUNT_SELECTOR = "[data-unmodified-lines], [data-separator-content]"
 export const PIN_STALE_MS = 2000
 export const PIN_MOVED_PX = 2
+export const PIN_ALIGNED_FRAMES = 2
 
 export function shouldPinExpand(kind: ExpandKind): boolean {
   return kind === "up" || kind === "both"
 }
 
-export function parseExpandClick(path: readonly EventTarget[]): ExpandClick | undefined {
+export function parseExpandClick(
+  path: readonly EventTarget[],
+  point?: { x: number; y: number },
+): ExpandClick | undefined {
+  const fromPath = parseExpandFromPath(path)
+  if (fromPath !== undefined) return fromPath
+  if (point === undefined) return
+  for (const node of path) {
+    if (!hasClosest(node) || node.localName !== "diffs-container") continue
+    const inner = node.shadowRoot?.elementFromPoint(point.x, point.y)
+    if (inner) return parseExpandFromPath([inner])
+  }
+}
+
+export function overflowAncestor(start: Element): HTMLElement | undefined {
+  for (let node: Element | null = start; node; node = node.parentElement) {
+    if (!(node instanceof HTMLElement)) continue
+    const style = getComputedStyle(node)
+    if (/(auto|scroll)/.test(`${style.overflow}${style.overflowY}`)) return node
+  }
+  const doc = start.ownerDocument.scrollingElement
+  return doc instanceof HTMLElement ? doc : undefined
+}
+
+export function pinScrollAfterExpand(scroller: HTMLElement, beforeTop: number, afterTop: number): void {
+  const delta = afterTop - beforeTop
+  if (delta === 0) return
+  const style = scroller.style
+  const prev = style?.scrollBehavior
+  if (style !== undefined) style.scrollBehavior = "auto"
+  scroller.scrollTop += delta
+  if (style !== undefined) style.scrollBehavior = prev ?? ""
+}
+
+export function restorePinnedExpand(pin: PendingPin, fileContainer: HTMLElement): RestoreResult {
+  if (Date.now() - pin.createdAt > PIN_STALE_MS) return "gone"
+  const root = fileContainer.shadowRoot
+  if (root == null) return "pending"
+  const el = findPinnedControl(root, pin)
+  if (el === undefined) return "gone"
+  const afterTop = el.getBoundingClientRect().top
+  if (Math.abs(afterTop - pin.top) < PIN_MOVED_PX) return "aligned"
+  pinScrollAfterExpand(pin.scroller, pin.top, afterTop)
+  return "adjusted"
+}
+
+export function watchPinnedExpand(
+  pin: PendingPin,
+  getContainer: () => HTMLElement | undefined,
+  onDone: () => void,
+  schedule: (tick: () => void) => void = requestAnimationFrame,
+): void {
+  let aligned = 0
+  const tick = () => {
+    const container = getContainer()
+    if (container === undefined) {
+      if (Date.now() - pin.createdAt > PIN_STALE_MS) {
+        onDone()
+        return
+      }
+      schedule(tick)
+      return
+    }
+    const result = restorePinnedExpand(pin, container)
+    if (result === "gone") {
+      onDone()
+      return
+    }
+    aligned = result === "aligned" ? aligned + 1 : 0
+    if (aligned >= PIN_ALIGNED_FRAMES) {
+      onDone()
+      return
+    }
+    if (Date.now() - pin.createdAt > PIN_STALE_MS) {
+      onDone()
+      return
+    }
+    schedule(tick)
+  }
+  schedule(tick)
+}
+
+function parseExpandFromPath(path: readonly EventTarget[]): ExpandClick | undefined {
   const target = path.find(hasClosest)
   if (target === undefined) return
   const index = target.closest("[data-expand-index]")?.getAttribute("data-expand-index")
@@ -49,33 +134,13 @@ export function parseExpandClick(path: readonly EventTarget[]): ExpandClick | un
   if (count) return { kind: "both", index, selector: COUNT_SELECTOR, anchor: count }
 }
 
-export function overflowAncestor(start: Element): HTMLElement | undefined {
-  for (let node: Element | null = start.parentElement; node; node = node.parentElement) {
-    if (!(node instanceof HTMLElement)) continue
-    const { overflow, overflowY } = getComputedStyle(node)
-    if (/(auto|scroll)/.test(`${overflow}${overflowY}`)) return node
+function findPinnedControl(root: ShadowRoot, pin: PendingPin): HTMLElement | undefined {
+  const seps = root.querySelectorAll(`[data-expand-index="${cssEscape(pin.index)}"]`)
+  for (const sep of seps) {
+    const match = sep.querySelector(pin.selector)
+    if (hasRect(match)) return match
+    if (hasRect(sep)) return sep
   }
-}
-
-export function pinScrollAfterExpand(scroller: HTMLElement, beforeTop: number, afterTop: number): void {
-  const delta = afterTop - beforeTop
-  if (delta === 0) return
-  scroller.scrollTop += delta
-}
-
-export function restorePinnedExpand(pin: PendingPin, fileContainer: HTMLElement): "restored" | "gone" | "pending" {
-  if (Date.now() - pin.createdAt > PIN_STALE_MS) return "gone"
-  const root = fileContainer.shadowRoot
-  if (root == null) return "pending"
-  const sep = root.querySelector(`[data-expand-index="${cssEscape(pin.index)}"]`)
-  if (sep == null) return "gone"
-  const match = sep.querySelector(pin.selector)
-  const el = hasRect(match) ? match : hasRect(sep) ? sep : undefined
-  if (el === undefined) return "gone"
-  const afterTop = el.getBoundingClientRect().top
-  if (Math.abs(afterTop - pin.top) < PIN_MOVED_PX) return "pending"
-  pinScrollAfterExpand(pin.scroller, pin.top, afterTop)
-  return "restored"
 }
 
 function hasClosest(node: EventTarget): node is Element {

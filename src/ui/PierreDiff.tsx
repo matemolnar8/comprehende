@@ -10,13 +10,11 @@ import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
 import {
   memo,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -26,8 +24,8 @@ import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
 import {
   overflowAncestor,
   parseExpandClick,
-  restorePinnedExpand,
   shouldPinExpand,
+  watchPinnedExpand,
   type PendingPin,
 } from "@/lib/pin-gap-expand.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
@@ -143,10 +141,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
-  onPostRender?: (node: HTMLElement) => void;
 }) {
-  const onPostRenderRef = useRef(props.onPostRender);
-  onPostRenderRef.current = props.onPostRender;
   const options = useMemo(
     () => ({
       theme: DIFF_THEMES,
@@ -161,10 +156,6 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       hunkSeparators: GAP_SEPARATOR,
       loadDiffFiles,
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
-      onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
-        if (phase === "unmount") return;
-        onPostRenderRef.current?.(node);
-      },
     }),
     [props.split, props.themeType, props.wrap],
   );
@@ -263,6 +254,7 @@ export function PierreFileDiff(props: {
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<PendingPin | null>(null);
 
   useEffect(() => {
@@ -285,33 +277,35 @@ export function PierreFileDiff(props: {
     };
   }, [parsed]);
 
-  const onExpandClickCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
-    const parsedClick = parseExpandClick(event.nativeEvent.composedPath());
-    if (parsedClick === undefined || !shouldPinExpand(parsedClick.kind)) return;
-    const scroller = overflowAncestor(event.currentTarget);
-    if (scroller === undefined) return;
-    pinRef.current = {
-      scroller,
-      top: parsedClick.anchor.getBoundingClientRect().top,
-      index: parsedClick.index,
-      selector: parsedClick.selector,
-      createdAt: Date.now(),
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (wrapper === null) return;
+    const onClick = (event: MouseEvent) => {
+      const parsedClick = parseExpandClick(event.composedPath(), { x: event.clientX, y: event.clientY });
+      if (parsedClick === undefined || !shouldPinExpand(parsedClick.kind)) return;
+      const scroller = overflowAncestor(wrapper);
+      if (scroller === undefined) return;
+      const pinned: PendingPin = {
+        scroller,
+        top: parsedClick.anchor.getBoundingClientRect().top,
+        index: parsedClick.index,
+        selector: parsedClick.selector,
+        createdAt: Date.now(),
+      };
+      pinRef.current = pinned;
+      watchPinnedExpand(
+        pinned,
+        () => {
+          const host = wrapper.querySelector("diffs-container");
+          return host instanceof HTMLElement ? host : undefined;
+        },
+        () => {
+          if (pinRef.current === pinned) pinRef.current = null;
+        },
+      );
     };
-  };
-
-  const onPostRender = useCallback((node: HTMLElement) => {
-    const pinned = pinRef.current;
-    if (pinned === null) return;
-    const finish = () => {
-      if (pinRef.current !== pinned) return;
-      const result = restorePinnedExpand(pinned, node);
-      if (result !== "pending") pinRef.current = null;
-    };
-    if (restorePinnedExpand(pinned, node) !== "pending") {
-      pinRef.current = null;
-      return;
-    }
-    requestAnimationFrame(finish);
+    wrapper.addEventListener("click", onClick, true);
+    return () => wrapper.removeEventListener("click", onClick, true);
   }, []);
 
   if (fileDiff === undefined) {
@@ -320,6 +314,7 @@ export function PierreFileDiff(props: {
 
   return (
     <div
+      ref={wrapperRef}
       className="relative min-w-0"
       style={
         {
@@ -327,15 +322,8 @@ export function PierreFileDiff(props: {
           "--comprehende-split-right": `${1 - splitRatio}fr`,
         } as CSSProperties
       }
-      onClickCapture={onExpandClickCapture}
     >
-      <StableFileDiff
-        fileDiff={fileDiff}
-        split={split}
-        wrap={wrap}
-        themeType={resolved}
-        onPostRender={onPostRender}
-      />
+      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );
