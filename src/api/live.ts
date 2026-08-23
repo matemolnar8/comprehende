@@ -1,10 +1,10 @@
 import { loadDocument } from "../cli/commands.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
-import { fileLanguage, filePatchFromGit, readPathDiff, resolveSource, toHunkRef } from "../git/diff.ts";
+import { fileLanguage, filePatchFromGit, readPathDiff, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
-import { mergeBase } from "../git/repo.ts";
+import { pinRange, type PinnedRange } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
 import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
@@ -12,6 +12,8 @@ import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
+
+export type { PinnedRange } from "../git/repo.ts";
 
 export type JsonSnapshot = {
   encoding: "json";
@@ -36,14 +38,16 @@ export type ReviewContext = {
   commits: ApiReview["commits"];
 };
 
-export async function openReview(cwd: string, dataPath: string): Promise<ReviewContext> {
+export async function pinReviewSource(cwd: string, dataPath: string): Promise<PinnedRange> {
   const document = await loadDocument(dataPath);
-  const resolvedRefs = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
-  const { files, coverage } = await coverReview(cwd, document);
-  const [mergeBaseSha, commits] = await Promise.all([
-    mergeBase(cwd, document.source.baseRef, document.source.headRef),
-    listCommits(cwd, document.source.baseRef, document.source.headRef),
-  ]);
+  return pinRange(cwd, document.source.baseRef, document.source.headRef);
+}
+
+export async function openReview(cwd: string, dataPath: string, pin?: PinnedRange): Promise<ReviewContext> {
+  const document = await loadDocument(dataPath);
+  const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
+  const { files, coverage } = await coverReview(cwd, document, range);
+  const commits = await listCommits(cwd, range.baseSha, range.headSha);
   return {
     cwd,
     document,
@@ -51,12 +55,12 @@ export async function openReview(cwd: string, dataPath: string): Promise<ReviewC
       baseRef: document.source.baseRef,
       headRef: document.source.headRef,
       range: document.source.range ?? `${document.source.baseRef}...${document.source.headRef}`,
-      baseSha: resolvedRefs.baseSha,
-      headSha: resolvedRefs.headSha,
+      baseSha: range.baseSha,
+      headSha: range.headSha,
     },
     files,
     coverage,
-    mergeBaseSha,
+    mergeBaseSha: range.mergeBaseSha,
     commits,
   };
 }
@@ -137,7 +141,7 @@ export async function filePayload(ctx: ReviewContext, path: string, side: FileSi
   const file = findFile(ctx.files, path);
   const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
   assertSideExists(file, side);
-  const ref = side === "old" ? ctx.mergeBaseSha : ctx.document.source.headRef;
+  const ref = side === "old" ? ctx.mergeBaseSha : ctx.resolved.headSha;
   try {
     const content = await showFile(ctx.cwd, ref, lookup);
     return { path: lookup, ref, side, content, language: fileLanguage(lookup) };
@@ -150,7 +154,7 @@ export async function blamePayload(ctx: ReviewContext, path: string, side: FileS
   const file = findFile(ctx.files, path);
   const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
   assertSideExists(file, side);
-  const ref = side === "old" ? ctx.mergeBaseSha : ctx.document.source.headRef;
+  const ref = side === "old" ? ctx.mergeBaseSha : ctx.resolved.headSha;
   try {
     const lines = await blameFile(ctx.cwd, ref, lookup);
     return { path: lookup, ref, side, lines };
@@ -166,7 +170,7 @@ export async function imagePayload(ctx: ReviewContext, path: string, side: FileS
   }
   const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
   assertSideExists(file, side);
-  const ref = side === "old" ? ctx.mergeBaseSha : ctx.document.source.headRef;
+  const ref = side === "old" ? ctx.mergeBaseSha : ctx.resolved.headSha;
   try {
     const blob = await readImageBlob(ctx.cwd, ref, lookup);
     if (!blob.ok) {
@@ -267,7 +271,7 @@ async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiGroupF
   if (!isLockfilePath(file.path) || file.binary || file.image) {
     throw new ApiError(404, "path is not a deferred lockfile");
   }
-  const live = await readPathDiff(ctx.cwd, ctx.document.source.baseRef, ctx.document.source.headRef, file.path);
+  const live = await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, file.path);
   if (live === undefined) {
     throw new ApiError(404, `no live diff for ${path}`);
   }

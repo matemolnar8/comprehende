@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
@@ -9,6 +9,8 @@ import { writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
 import { apiHref } from "../api/paths.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
+import { git } from "../git/exec.ts";
+import { showFile } from "../git/show.ts";
 
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
@@ -97,5 +99,46 @@ describe("serve API", () => {
     assert.equal(blameRes.status, 200);
     const blame = (await blameRes.json()) as { lines: unknown[] };
     assert.ok(blame.lines.length > 0);
+  });
+
+  it("keeps file contents at the SHAs captured when serve started", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-serve-pin-"));
+    roots.push(root);
+    const repo = await createExampleRepo(root);
+    const dataPath = join(root, "review.json");
+    const index = await cmdIndex(repo.root, repo.base, repo.head);
+    const document = await writeCoveringDocument(dataPath, index);
+    document.source = { baseRef: repo.base, headRef: "HEAD", range: `${repo.base}...HEAD` };
+    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+
+    const original = await showFile(repo.root, repo.head, "src/app.ts");
+    const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
+    servers.push(running.server);
+
+    await writeFile(join(repo.root, "src/app.ts"), "export const hijacked = true;\n");
+    await git(repo.root, ["add", "src/app.ts"]);
+    await git(repo.root, ["commit", "-m", "hijack app after serve"]);
+
+    const reviewRes = await fetch(new URL(apiHref({ kind: "review" }), `${running.url}/`));
+    assert.equal(reviewRes.status, 200);
+    const review = (await reviewRes.json()) as { resolved: { headSha: string; headRef: string } };
+    assert.equal(review.resolved.headRef, "HEAD");
+    assert.equal(review.resolved.headSha, repo.head);
+
+    const fileRes = await fetch(new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`));
+    assert.equal(fileRes.status, 200);
+    const file = (await fileRes.json()) as { content: string; ref: string };
+    assert.equal(file.content, original);
+    assert.equal(file.ref, repo.head);
+    assert.equal(file.content.includes("hijacked"), false);
+    assert.equal(file.content.includes(SECRET_ADD), true);
+
+    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: document.groups[0]!.id }), `${running.url}/`));
+    assert.equal(hunksRes.status, 200);
+    const payload = (await hunksRes.json()) as { files: { path: string; patch: string }[] };
+    const appPatch = payload.files.find((item) => item.path === "src/app.ts")?.patch;
+    assert.ok(appPatch);
+    assert.equal(appPatch.includes("hijacked"), false);
+    assert.equal(appPatch.includes(SECRET_ADD), true);
   });
 });

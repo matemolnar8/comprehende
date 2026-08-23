@@ -12,20 +12,20 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Cwd is the repo; there is no `--repo` flag. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.4.1 <command>
+npx comprehende@0.4.2 <command>
 ```
 
-One invariant governs everything you write: the review document is **interpretation only**. It holds groups, summaries, and hunk pointers. The diff stays in git, and `serve` reads it live, so when git and the document disagree, git wins. Fix the groups; a hunk written from memory is an invented one.
+Serve resolves `source` refs to commit SHAs when it starts, then reads those objects on each request. A dirty work tree, a later commit, or a branch switch does not change a running review. Restart serve to pick up a new HEAD. A second git worktree is not required.
 
 ## Workflow
 
 1. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-2. Run `npx comprehende@0.4.1 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
+2. Run `npx comprehende@0.4.2 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
 3. Recover the why and write the what. Read the sources listed under The why, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `summary` (always) and document `why` (only when a source names the motive). Summaries come from the code, not the log.
 4. Group the hunks by review concern, following the Grouping rules. Done when every hunk ref from the index appears in at least one group and every group has its `why`.
 5. Write `review.json` in a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Copy hunk objects verbatim from the index. Set document `size` from review burden, not `git diff --stat`.
-6. Run `npx comprehende@0.4.1 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
-7. Run `npx comprehende@0.4.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+6. Run `npx comprehende@0.4.2 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
+7. Run `npx comprehende@0.4.2 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 ## The why
 
@@ -57,7 +57,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`; three files rewriting a contract the rest of the system hangs on can be `large`.
 - Coverage: every hunk from the index sits in at least one group; duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI.
 - Lockfiles stay in `skipped`; the UI gives them their own closed bucket. Hunk refs exist only for hunks the index lists.
-- Stale refs (rebase, edited work tree) fail `validate`; `serve` still starts, shows live git, and flags the broken pointer. Re-run `index` and copy fresh refs.
+- Stale refs (rebase of the pinned commits) fail `validate`; `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `index` and copy fresh refs. A dirty work tree does not make refs stale.
 
 Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Image files are hunks; copy their refs into groups. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
 

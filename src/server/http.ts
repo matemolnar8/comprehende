@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
 import { ApiError } from "../api/error.ts";
-import { openReview, renderResource, snapshotJson, type Snapshot } from "../api/live.ts";
+import { openReview, pinReviewSource, renderResource, snapshotJson, type PinnedRange, type Snapshot } from "../api/live.ts";
 import { parseApiPath } from "../api/paths.ts";
 import { GitError } from "../git/exec.ts";
 import { findPackageRoot } from "../package-root.ts";
@@ -12,6 +12,7 @@ export type ServeOptions = {
   dataPath: string;
   port: number;
   uiRoot?: string;
+  pin?: PinnedRange;
 };
 
 const MIME: Record<string, string> = {
@@ -40,8 +41,10 @@ export type RunningServer = {
 
 export async function startServer(opts: ServeOptions): Promise<RunningServer> {
   const uiRoot = opts.uiRoot ?? join(findPackageRoot(), "dist/ui");
+  const pin = opts.pin ?? (await pinReviewSource(opts.cwd, opts.dataPath));
+  const bound: ServeOptions = { ...opts, pin };
   const server = createServer((req, res) => {
-    void handle(req, res, opts, uiRoot);
+    void handle(req, res, bound, uiRoot);
   });
 
   await new Promise<void>((resolveListen, reject) => {
@@ -76,7 +79,7 @@ async function handle(
     }
     const resource = parseApiPath(url.pathname);
     if (resource !== undefined) {
-      const ctx = await openReview(opts.cwd, opts.dataPath);
+      const ctx = await openReview(opts.cwd, opts.dataPath, opts.pin);
       sendSnapshot(res, 200, await renderResource(ctx, resource));
       return;
     }

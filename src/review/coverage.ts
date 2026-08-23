@@ -1,4 +1,5 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
+import { pinRange, type PinnedRange } from "../git/repo.ts";
 import { hunkKey } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { HunkRef, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
@@ -20,8 +21,10 @@ export type ReviewCoverage = {
 export async function coverReview(
   cwd: string,
   document: ReviewDocument,
+  pin?: PinnedRange,
 ): Promise<{ files: Awaited<ReturnType<typeof readDiff>>; coverage: ReviewCoverage }> {
-  const files = await readDiff(cwd, document.source.baseRef, document.source.headRef);
+  const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
+  const files = await readDiff(cwd, range.baseSha, range.headSha);
   const live = flattenHunks(files);
   return { files, coverage: joinCoverage(document, live) };
 }

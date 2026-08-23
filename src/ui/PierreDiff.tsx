@@ -125,11 +125,20 @@ function parseGitPatch(patch: string, path: string): FileDiffMetadata | undefine
     return undefined;
   }
   try {
-    const parsed = parsePatchFiles(patch, `comprehende:${path}`);
+    const parsed = parsePatchFiles(patch, `comprehende:${path}:${patchKey(patch)}`);
     return parsed[0]?.files[0];
   } catch {
     return undefined;
   }
+}
+
+function patchKey(patch: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < patch.length; i++) {
+    hash ^= patch.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `${patch.length.toString(16)}:${(hash >>> 0).toString(16)}`;
 }
 
 function loadDiffFiles(fileDiff: FileDiffMetadata): Promise<FileDiffLoadedFiles> {
