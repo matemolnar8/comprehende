@@ -1,4 +1,5 @@
 import {
+  hydratePartialDiff,
   parsePatchFiles,
   type FileDiffLoadedFiles,
   type FileDiffMetadata,
@@ -9,8 +10,10 @@ import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
 import {
   memo,
+  useEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
@@ -18,7 +21,7 @@ import {
 import { fetchFile } from "./api.ts";
 import { EXPANSION_LINE_COUNT, gapSeparator, gapStyleCSS, type GapStyle } from "@/lib/gap-style.ts";
 import { useGapStyle } from "@/lib/GapStyleProvider.tsx";
-import { loadDiffFilesWith } from "@/lib/load-diff-files.ts";
+import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -252,7 +255,28 @@ export function PierreFileDiff(props: {
   const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
   const { resolved } = useTheme();
   const { gapStyle } = useGapStyle();
-  const fileDiff = useMemo(() => parseGitPatch(patch, path), [patch, path]);
+  const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
+  const [fileDiff, setFileDiff] = useState(parsed);
+
+  useEffect(() => {
+    setFileDiff(parsed);
+  }, [parsed]);
+
+  useEffect(() => {
+    if (parsed === undefined || !canHydrateDiff(parsed)) {
+      return;
+    }
+    let cancelled = false;
+    void loadDiffFiles(parsed).then((files) => {
+      if (cancelled || !parsed.isPartial) {
+        return;
+      }
+      setFileDiff(hydratePartialDiff("clone", parsed, files));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed]);
 
   if (fileDiff === undefined) {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;

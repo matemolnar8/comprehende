@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ApiFile } from "../api/types.ts";
-import { loadDiffFilesWith, toPierreFile } from "./lib/load-diff-files.ts";
+import { canHydrateDiff, loadDiffFilesWith, toPierreFile } from "./lib/load-diff-files.ts";
 
 function apiFile(side: "old" | "new", path: string, content: string): ApiFile {
   return { path, ref: `${side}-sha`, side, content, language: "typescript" };
@@ -24,6 +24,14 @@ describe("load diff files", () => {
     assert.deepEqual(calls.sort(), ["new:src/app.ts", "old:src/app.ts"]);
     assert.equal(loaded.oldFile?.contents, "old body");
     assert.equal(loaded.newFile.contents, "new body");
+  });
+
+  it("hydrates partial change and rename diffs, not added files", () => {
+    assert.equal(canHydrateDiff({ isPartial: true, type: "change" }), true);
+    assert.equal(canHydrateDiff({ isPartial: true, type: "rename-changed" }), true);
+    assert.equal(canHydrateDiff({ isPartial: true, type: "rename-pure" }), true);
+    assert.equal(canHydrateDiff({ isPartial: false, type: "change" }), false);
+    assert.equal(canHydrateDiff({ isPartial: true, type: "new" }), false);
   });
 
   it("loads only the new side for a pure rename", async () => {
