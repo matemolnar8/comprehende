@@ -22,13 +22,13 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3">
+    <header className="flex flex-col gap-2 border-b border-border px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
       <div className="flex min-w-0 items-center gap-4">
         <span className="shrink-0 font-serif text-lg leading-none text-foreground">Comprehende</span>
         <Range resolved={meta.resolved} />
         <Coverage meta={meta} />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
