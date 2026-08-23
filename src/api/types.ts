@@ -20,6 +20,8 @@ export type ApiGroupFile = {
   patch: string;
   added?: number;
   removed?: number;
+  /** False when this group holds only some of the file's live hunks. Pierre cannot hydrate those against the full blobs. */
+  complete: boolean;
   hunks: ApiHunk[];
 };
 

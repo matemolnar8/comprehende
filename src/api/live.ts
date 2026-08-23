@@ -286,6 +286,7 @@ function serializeGroupFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile
     kind: file.image ? "image" : lockfile ? "lockfile" : "text",
     status: file.status,
     patch: deferred ? "" : file.image ? file.headerPatch : filePatchFromGit(file, fileHunks),
+    complete: file.hunks.length === fileHunks.length,
     hunks: fileHunks.map(serializeHunk),
   };
   if (file.oldPath !== undefined) {

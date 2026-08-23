@@ -69,10 +69,11 @@ describe("serve API", () => {
     assert.equal(hunksRes.status, 200);
     const payload = (await hunksRes.json()) as {
       hunks: { path: string; lines: { text: string }[] }[];
-      files: { path: string; patch: string }[];
+      files: { path: string; patch: string; complete: boolean }[];
     };
     assert.ok(payload.hunks.length > 0);
     assert.ok(payload.files.length > 0);
+    assert.equal(payload.files.every((file) => file.complete), true);
     assert.equal(payload.files[0]?.patch.startsWith("diff --git "), true);
     assert.equal(payload.files.some((file) => file.patch.includes("\nindex ")), true);
 
@@ -140,5 +141,50 @@ describe("serve API", () => {
     assert.ok(appPatch);
     assert.equal(appPatch.includes("hijacked"), false);
     assert.equal(appPatch.includes(SECRET_ADD), true);
+  });
+
+  it("marks a file incomplete when a group holds only some of its hunks", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-serve-subset-"));
+    roots.push(root);
+    const repo = await createExampleRepo(root);
+    const dataPath = join(root, "review.json");
+    const index = await cmdIndex(repo.root, repo.base, repo.head);
+    const document = await writeCoveringDocument(dataPath, index);
+    const appHunks = index.hunks.filter((hunk) => hunk.path === "src/app.ts");
+    assert.ok(appHunks.length >= 2);
+    const first = appHunks[0];
+    assert.ok(first);
+    document.groups = [
+      {
+        id: "app-first",
+        title: "First app hunk",
+        why: "Only the first hunk of app.ts.",
+        summary: "A subset of app.ts.",
+        suggestedOrder: 0,
+        hunkRefs: [first],
+      },
+      {
+        id: "app-rest",
+        title: "Remaining app hunks",
+        why: "The rest of app.ts.",
+        summary: "The other app.ts hunks.",
+        suggestedOrder: 1,
+        hunkRefs: appHunks.slice(1),
+      },
+    ];
+    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+
+    const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
+    servers.push(running.server);
+
+    const firstRes = await fetch(new URL(apiHref({ kind: "hunks", group: "app-first" }), `${running.url}/`));
+    assert.equal(firstRes.status, 200);
+    const firstPayload = (await firstRes.json()) as { files: { path: string; complete: boolean }[] };
+    assert.equal(firstPayload.files.find((file) => file.path === "src/app.ts")?.complete, false);
+
+    const restRes = await fetch(new URL(apiHref({ kind: "hunks", group: "app-rest" }), `${running.url}/`));
+    assert.equal(restRes.status, 200);
+    const restPayload = (await restRes.json()) as { files: { path: string; complete: boolean }[] };
+    assert.equal(restPayload.files.find((file) => file.path === "src/app.ts")?.complete, false);
   });
 });

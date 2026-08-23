@@ -265,8 +265,10 @@ export function PierreFileDiff(props: {
   wrap: boolean;
   splitRatio: number;
   onSplitRatio: (ratio: number) => void;
+  /** False for grouped subset patches. Full-file blobs do not match those patches. */
+  hydrate?: boolean;
 }) {
-  const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true } = props;
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
@@ -279,20 +281,26 @@ export function PierreFileDiff(props: {
   }, [parsed]);
 
   useEffect(() => {
-    if (parsed === undefined || !canHydrateDiff(parsed)) {
+    if (parsed === undefined || !hydrate || !canHydrateDiff(parsed)) {
       return;
     }
     let cancelled = false;
-    void loadDiffFiles(parsed).then((files) => {
-      if (cancelled || !parsed.isPartial) {
-        return;
-      }
-      setFileDiff(hydratePartialDiff("clone", parsed, files));
-    });
+    void loadDiffFiles(parsed)
+      .then((files) => {
+        if (cancelled || !parsed.isPartial) {
+          return;
+        }
+        try {
+          setFileDiff(hydratePartialDiff("clone", parsed, files));
+        } catch {
+          // Keep the parsed subset patch. Full blobs only match when this group has every hunk.
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [parsed]);
+  }, [parsed, hydrate]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
