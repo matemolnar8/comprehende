@@ -3,6 +3,7 @@ import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { InlineMd } from "./InlineMd.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -23,7 +24,9 @@ export function Overview(props: {
           <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
             Why
           </p>
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">{why}</h1>
+          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+            <InlineMd text={why} />
+          </h1>
           {ticketList}
         </section>
       ) : ticketList !== null ? (
@@ -35,10 +38,12 @@ export function Overview(props: {
           What · {sizeLabel(meta.document.size)} · {meta.files.length} files
         </p>
         {why !== undefined ? (
-          <p className="mb-8 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">{meta.document.summary}</p>
+          <p className="mb-8 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">
+            <InlineMd text={meta.document.summary} />
+          </p>
         ) : (
           <h1 className="mb-8 max-w-[68ch] font-serif text-[1.75rem] leading-snug text-foreground">
-            {meta.document.summary}
+            <InlineMd text={meta.document.summary} />
           </h1>
         )}
         <div
@@ -134,7 +139,9 @@ function PartColumn(props: {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block font-medium text-foreground">{group.title}</strong>
-                  <span className="mt-1 block leading-relaxed text-muted-foreground">{group.summary}</span>
+                  <span className="mt-1 block leading-relaxed text-muted-foreground">
+                    <InlineMd text={group.summary} />
+                  </span>
                 </span>
               </Button>
             </li>
