@@ -22,11 +22,11 @@ import { fetchFile } from "./api.ts";
 import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
 import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
 import {
-  overflowAncestor,
-  parseExpandClick,
-  shouldPinExpand,
-  watchPinnedExpand,
-  type PendingPin,
+  gapSeparator,
+  isPlainDownClick,
+  reviewScroller,
+  watchGapPin,
+  type GapPin,
 } from "@/lib/pin-gap-expand.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
@@ -141,7 +141,10 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
+  onPostRender?: (node: HTMLElement) => void;
 }) {
+  const onPostRenderRef = useRef(props.onPostRender);
+  onPostRenderRef.current = props.onPostRender;
   const options = useMemo(
     () => ({
       theme: DIFF_THEMES,
@@ -156,6 +159,10 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       hunkSeparators: GAP_SEPARATOR,
       loadDiffFiles,
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
+      onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
+        if (phase === "unmount") return;
+        onPostRenderRef.current?.(node);
+      },
     }),
     [props.split, props.themeType, props.wrap],
   );
@@ -255,7 +262,8 @@ export function PierreFileDiff(props: {
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const pinRef = useRef<PendingPin | null>(null);
+  const pinRef = useRef<GapPin | null>(null);
+  const pinGen = useRef(0);
 
   useEffect(() => {
     setFileDiff(parsed);
@@ -281,32 +289,37 @@ export function PierreFileDiff(props: {
     const wrapper = wrapperRef.current;
     if (wrapper === null) return;
     const onClick = (event: MouseEvent) => {
-      const parsedClick = parseExpandClick(event.composedPath(), { x: event.clientX, y: event.clientY });
-      if (parsedClick === undefined || !shouldPinExpand(parsedClick.kind)) return;
-      const scroller = overflowAncestor(wrapper);
-      if (scroller === undefined) return;
-      const pinned: PendingPin = {
+      const path = event.composedPath();
+      if (isPlainDownClick(path, event.shiftKey)) return;
+      const sep = gapSeparator(path);
+      const index = sep?.getAttribute("data-expand-index");
+      const scroller = reviewScroller(wrapper);
+      if (sep === undefined || index == null || scroller === undefined) return;
+      pinGen.current += 1;
+      pinRef.current = {
         scroller,
-        top: parsedClick.anchor.getBoundingClientRect().top,
-        index: parsedClick.index,
-        selector: parsedClick.selector,
+        top: sep.getBoundingClientRect().top,
+        index,
+        scrollHeight: scroller.scrollHeight,
         createdAt: Date.now(),
       };
-      pinRef.current = pinned;
-      watchPinnedExpand(
-        pinned,
-        () => {
-          const host = wrapper.querySelector("diffs-container");
-          return host instanceof HTMLElement ? host : undefined;
-        },
-        () => {
-          if (pinRef.current === pinned) pinRef.current = null;
-        },
-      );
     };
     wrapper.addEventListener("click", onClick, true);
     return () => wrapper.removeEventListener("click", onClick, true);
-  }, []);
+  }, [fileDiff !== undefined]);
+
+  const onPostRender = (node: HTMLElement) => {
+    const pin = pinRef.current;
+    if (pin === null) return;
+    const gen = pinGen.current;
+    pinRef.current = null;
+    watchGapPin(
+      pin,
+      node,
+      () => pinGen.current === gen,
+      () => undefined,
+    );
+  };
 
   if (fileDiff === undefined) {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
@@ -323,7 +336,13 @@ export function PierreFileDiff(props: {
         } as CSSProperties
       }
     >
-      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
+      <StableFileDiff
+        fileDiff={fileDiff}
+        split={split}
+        wrap={wrap}
+        themeType={resolved}
+        onPostRender={onPostRender}
+      />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );

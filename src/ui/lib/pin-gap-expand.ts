@@ -1,156 +1,109 @@
-/** Pierre inserts `up` / `both` lines above the remaining bar. That moves the bar
- *  down in document flow. `down` inserts below, so the control stays put. After
- *  `up` or `both`, shift the scrollport so the same control stays under the cursor.
- *
- *  Pierre's click map (InteractionManager): `data-expand-up` → up, `data-expand-down`
- *  → down, count / missing direction / `data-expand-all-button` → both. */
+/** Keep a hunk-gap separator under the cursor after Pierre inserts lines above it. */
 
-export type ExpandKind = "up" | "down" | "both"
+const STALE_MS = 2000
+const ALIGN_PX = 2
+const ALIGNED_FRAMES = 2
 
-export type ExpandClick = {
-  kind: ExpandKind
-  index: string
-  selector: string
-  anchor: Element
-}
-
-export type PendingPin = {
+export type GapPin = {
   scroller: HTMLElement
   top: number
   index: string
-  selector: string
+  scrollHeight: number
   createdAt: number
 }
 
-export type RestoreResult = "aligned" | "adjusted" | "gone" | "pending"
-
-export const COUNT_SELECTOR = "[data-unmodified-lines], [data-separator-content]"
-export const PIN_STALE_MS = 2000
-export const PIN_MOVED_PX = 2
-export const PIN_ALIGNED_FRAMES = 2
-
-export function shouldPinExpand(kind: ExpandKind): boolean {
-  return kind === "up" || kind === "both"
-}
-
-export function parseExpandClick(
-  path: readonly EventTarget[],
-  point?: { x: number; y: number },
-): ExpandClick | undefined {
-  const fromPath = parseExpandFromPath(path)
-  if (fromPath !== undefined) return fromPath
-  if (point === undefined) return
+export function gapSeparator(path: readonly EventTarget[]): HTMLElement | undefined {
   for (const node of path) {
-    if (!hasClosest(node) || node.localName !== "diffs-container") continue
-    const inner = node.shadowRoot?.elementFromPoint(point.x, point.y)
-    if (inner) return parseExpandFromPath([inner])
+    if (!hasClosest(node)) continue
+    const sep = node.closest("[data-expand-index]")
+    if (isBox(sep)) return sep
   }
 }
 
-export function overflowAncestor(start: Element): HTMLElement | undefined {
-  for (let node: Element | null = start; node; node = node.parentElement) {
-    if (!(node instanceof HTMLElement)) continue
-    const style = getComputedStyle(node)
-    if (/(auto|scroll)/.test(`${style.overflow}${style.overflowY}`)) return node
+/** Pierre Shift+click and the count / expand-all control insert above. A plain ↓ does not. */
+export function isPlainDownClick(path: readonly EventTarget[], shiftKey: boolean): boolean {
+  if (shiftKey) return false
+  for (const node of path) {
+    if (!hasClosest(node)) continue
+    if (node.closest("[data-expand-all-button]")) return false
+    if (node.closest("[data-expand-down]")) return true
   }
-  const doc = start.ownerDocument.scrollingElement
-  return doc instanceof HTMLElement ? doc : undefined
+  return false
 }
 
-export function pinScrollAfterExpand(scroller: HTMLElement, beforeTop: number, afterTop: number): void {
-  const delta = afterTop - beforeTop
+export function reviewScroller(from: Element): HTMLElement | undefined {
+  const main = from.closest("main")
+  return main instanceof HTMLElement ? main : undefined
+}
+
+export function adjustScroll(scroller: HTMLElement, delta: number): void {
   if (delta === 0) return
-  const style = scroller.style
-  const prev = style?.scrollBehavior
-  if (style !== undefined) style.scrollBehavior = "auto"
+  const { style } = scroller
+  const prev = style.scrollBehavior
+  style.scrollBehavior = "auto"
   scroller.scrollTop += delta
-  if (style !== undefined) style.scrollBehavior = prev ?? ""
+  style.scrollBehavior = prev
 }
 
-export function restorePinnedExpand(pin: PendingPin, fileContainer: HTMLElement): RestoreResult {
-  if (Date.now() - pin.createdAt > PIN_STALE_MS) return "gone"
-  const root = fileContainer.shadowRoot
-  if (root == null) return "pending"
-  const el = findPinnedControl(root, pin)
-  if (el === undefined) return "gone"
-  const afterTop = el.getBoundingClientRect().top
-  if (Math.abs(afterTop - pin.top) < PIN_MOVED_PX) return "aligned"
-  pinScrollAfterExpand(pin.scroller, pin.top, afterTop)
-  return "adjusted"
+export function settleGapPin(pin: GapPin, host: HTMLElement): "wait" | "ok" | "done" {
+  if (Date.now() - pin.createdAt > STALE_MS) return "done"
+  const root = host.shadowRoot
+  if (root == null) return "wait"
+  const sep = findSeparator(root, pin.index)
+  if (sep === undefined) {
+    adjustScroll(pin.scroller, pin.scroller.scrollHeight - pin.scrollHeight)
+    return "done"
+  }
+  const delta = sep.getBoundingClientRect().top - pin.top
+  if (Math.abs(delta) < ALIGN_PX) return "ok"
+  adjustScroll(pin.scroller, delta)
+  return "wait"
 }
 
-export function watchPinnedExpand(
-  pin: PendingPin,
-  getContainer: () => HTMLElement | undefined,
+export function watchGapPin(
+  pin: GapPin,
+  host: HTMLElement,
+  live: () => boolean,
   onDone: () => void,
   schedule: (tick: () => void) => void = requestAnimationFrame,
 ): void {
   let aligned = 0
+  let moved = false
   const tick = () => {
-    const container = getContainer()
-    if (container === undefined) {
-      if (Date.now() - pin.createdAt > PIN_STALE_MS) {
+    if (!live() || Date.now() - pin.createdAt > STALE_MS) {
+      onDone()
+      return
+    }
+    const result = settleGapPin(pin, host)
+    if (result === "done") {
+      onDone()
+      return
+    }
+    if (result === "wait") {
+      moved = true
+      aligned = 0
+    } else {
+      aligned += 1
+      if (moved && aligned >= ALIGNED_FRAMES) {
         onDone()
         return
       }
-      schedule(tick)
-      return
-    }
-    const result = restorePinnedExpand(pin, container)
-    if (result === "gone") {
-      onDone()
-      return
-    }
-    aligned = result === "aligned" ? aligned + 1 : 0
-    if (aligned >= PIN_ALIGNED_FRAMES) {
-      onDone()
-      return
-    }
-    if (Date.now() - pin.createdAt > PIN_STALE_MS) {
-      onDone()
-      return
     }
     schedule(tick)
   }
   schedule(tick)
 }
 
-function parseExpandFromPath(path: readonly EventTarget[]): ExpandClick | undefined {
-  const target = path.find(hasClosest)
-  if (target === undefined) return
-  const index = target.closest("[data-expand-index]")?.getAttribute("data-expand-index")
-  if (index == null) return
-
-  const all = target.closest("[data-expand-all-button]")
-  if (all) return { kind: "both", index, selector: "[data-expand-all-button]", anchor: all }
-
-  const up = target.closest("[data-expand-up]")
-  if (up) return { kind: "up", index, selector: "[data-expand-up]", anchor: up }
-
-  const down = target.closest("[data-expand-down]")
-  if (down) return { kind: "down", index, selector: "[data-expand-down]", anchor: down }
-
-  const count = target.closest(COUNT_SELECTOR)
-  if (count) return { kind: "both", index, selector: COUNT_SELECTOR, anchor: count }
-}
-
-function findPinnedControl(root: ShadowRoot, pin: PendingPin): HTMLElement | undefined {
-  const seps = root.querySelectorAll(`[data-expand-index="${cssEscape(pin.index)}"]`)
-  for (const sep of seps) {
-    const match = sep.querySelector(pin.selector)
-    if (hasRect(match)) return match
-    if (hasRect(sep)) return sep
-  }
+function findSeparator(root: ShadowRoot, index: string): HTMLElement | undefined {
+  if (!/^\d+$/.test(index)) return
+  const sep = root.querySelector(`[data-expand-index="${index}"]`)
+  return isBox(sep) ? sep : undefined
 }
 
 function hasClosest(node: EventTarget): node is Element {
   return typeof (node as Element).closest === "function"
 }
 
-function hasRect(node: Element | null): node is HTMLElement {
+function isBox(node: Element | null): node is HTMLElement {
   return node != null && typeof (node as HTMLElement).getBoundingClientRect === "function"
-}
-
-function cssEscape(value: string): string {
-  return typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(value) : value
 }
