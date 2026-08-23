@@ -1,23 +1,17 @@
-import type { ReactNode } from "react";
-import { parseInline, type InlineNode } from "../lib/inline-md.ts";
+import { createElement, type ReactNode } from "react";
+import Markdown from "react-markdown";
+import { flattenInline, INLINE_MD_ELEMENTS, remarkNoUnderscoreEmphasis } from "../lib/inline-md.ts";
 
 export function InlineMd(props: { text: string }): ReactNode {
-  return renderInline(parseInline(props.text));
-}
-
-function renderInline(nodes: InlineNode[]): ReactNode {
-  return nodes.map((node, index) => renderNode(node, index));
-}
-
-function renderNode(node: InlineNode, key: number): ReactNode {
-  switch (node.type) {
-    case "text":
-      return node.value;
-    case "code":
-      return <code key={key}>{node.value}</code>;
-    case "em":
-      return <em key={key}>{renderInline(node.children)}</em>;
-    case "strong":
-      return <strong key={key}>{renderInline(node.children)}</strong>;
+  const text = flattenInline(props.text);
+  if (text === "") {
+    return null;
   }
+  return createElement(Markdown, {
+    skipHtml: true,
+    unwrapDisallowed: true,
+    allowedElements: INLINE_MD_ELEMENTS,
+    remarkPlugins: [remarkNoUnderscoreEmphasis],
+    children: text,
+  });
 }
