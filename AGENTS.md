@@ -82,6 +82,8 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 Edit `skills-next/comprehende/` only.
 
+Component look lives on the component. Tailwind first. If a bit of CSS is required, colocate it with that component using a CSS module. A component must not import a global stylesheet. Do not add descendant selectors in `styles.css` to style markup a component already owns. `styles.css` holds globals such as variables and themes.
+
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. I want you to always keep in mind what the project is about, and make every change, create every design and write every text in spirit of that.

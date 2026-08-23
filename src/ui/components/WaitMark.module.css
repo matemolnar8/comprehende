@@ -8,7 +8,7 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .wait-gutter-walker {
+  .walker {
     animation: wait-walk 1.7s var(--motion-ease) infinite;
   }
 }
