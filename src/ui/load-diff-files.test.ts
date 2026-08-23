@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ApiFile } from "../api/types.ts";
-import { canHydrateDiff, loadDiffFilesWith, toPierreFile } from "./lib/load-diff-files.ts";
+import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides, toPierreFile } from "./lib/load-diff-files.ts";
 
 function apiFile(side: "old" | "new", path: string, content: string): ApiFile {
   return { path, ref: `${side}-sha`, side, content, language: "typescript" };
@@ -32,6 +32,14 @@ describe("load diff files", () => {
     assert.equal(canHydrateDiff({ isPartial: true, type: "rename-pure" }), true);
     assert.equal(canHydrateDiff({ isPartial: false, type: "change" }), false);
     assert.equal(canHydrateDiff({ isPartial: true, type: "new" }), false);
+  });
+
+  it("treats added and deleted files as one split pane", () => {
+    assert.equal(splitHasTwoSides("change"), true);
+    assert.equal(splitHasTwoSides("rename-changed"), true);
+    assert.equal(splitHasTwoSides("rename-pure"), true);
+    assert.equal(splitHasTwoSides("new"), false);
+    assert.equal(splitHasTwoSides("deleted"), false);
   });
 
   it("loads only the new side for a pure rename", async () => {
