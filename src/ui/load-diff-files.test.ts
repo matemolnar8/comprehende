@@ -1,0 +1,39 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import type { ApiFile } from "../api/types.ts";
+import { loadDiffFilesWith, toPierreFile } from "./lib/load-diff-files.ts";
+
+function apiFile(side: "old" | "new", path: string, content: string): ApiFile {
+  return { path, ref: `${side}-sha`, side, content, language: "typescript" };
+}
+
+describe("load diff files", () => {
+  it("keys Pierre file cache by side, ref, and path", () => {
+    const file = toPierreFile(apiFile("new", "src/app.ts", "export const n = 1;\n"));
+    assert.equal(file.name, "src/app.ts");
+    assert.equal(file.contents, "export const n = 1;\n");
+    assert.equal(file.cacheKey, "new:new-sha:src/app.ts");
+  });
+
+  it("loads both sides for a changed file", async () => {
+    const calls: string[] = [];
+    const loaded = await loadDiffFilesWith({ name: "src/app.ts", type: "change" }, async (path, side) => {
+      calls.push(`${side}:${path}`);
+      return apiFile(side, path, `${side} body`);
+    });
+    assert.deepEqual(calls.sort(), ["new:src/app.ts", "old:src/app.ts"]);
+    assert.equal(loaded.oldFile?.contents, "old body");
+    assert.equal(loaded.newFile.contents, "new body");
+  });
+
+  it("loads only the new side for a pure rename", async () => {
+    const calls: string[] = [];
+    const loaded = await loadDiffFilesWith({ name: "src/helpers.ts", type: "rename-pure" }, async (path, side) => {
+      calls.push(`${side}:${path}`);
+      return apiFile(side, path, "renamed");
+    });
+    assert.deepEqual(calls, ["new:src/helpers.ts"]);
+    assert.equal(loaded.oldFile, null);
+    assert.equal(loaded.newFile.contents, "renamed");
+  });
+});

@@ -1,4 +1,9 @@
-import { parsePatchFiles, type FileDiffMetadata, type LineAnnotation } from "@pierre/diffs";
+import {
+  parsePatchFiles,
+  type FileDiffLoadedFiles,
+  type FileDiffMetadata,
+  type LineAnnotation,
+} from "@pierre/diffs";
 import { File, FileDiff, WorkerPoolContextProvider } from "@pierre/diffs/react";
 import DiffsWorker from "@pierre/diffs/worker/worker.js?worker";
 import { GripVerticalIcon } from "lucide-react";
@@ -10,6 +15,10 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { fetchFile } from "./api.ts";
+import { EXPANSION_LINE_COUNT, gapSeparator, gapStyleCSS, type GapStyle } from "@/lib/gap-style.ts";
+import { useGapStyle } from "@/lib/GapStyleProvider.tsx";
+import { loadDiffFilesWith } from "@/lib/load-diff-files.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -102,16 +111,20 @@ export function PierreDiffPool(props: { children: ReactNode }) {
   );
 }
 
-function parseGitPatch(patch: string): FileDiffMetadata | undefined {
+function parseGitPatch(patch: string, path: string): FileDiffMetadata | undefined {
   if (patch.trim() === "") {
     return undefined;
   }
   try {
-    const parsed = parsePatchFiles(patch, `comprehende:${patch.length}`);
+    const parsed = parsePatchFiles(patch, `comprehende:${path}`);
     return parsed[0]?.files[0];
   } catch {
     return undefined;
   }
+}
+
+function loadDiffFiles(fileDiff: FileDiffMetadata): Promise<FileDiffLoadedFiles> {
+  return loadDiffFilesWith(fileDiff, fetchFile);
 }
 
 const StableFileDiff = memo(function StableFileDiff(props: {
@@ -119,6 +132,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
+  gapStyle: GapStyle;
 }) {
   const options = useMemo(
     () => ({
@@ -129,11 +143,22 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       disableFileHeader: true,
       stickyHeader: false,
       lineDiffType: "none" as const,
-      unsafeCSS: PIERRE_UNSAFE_CSS,
+      expandUnchanged: true,
+      expansionLineCount: EXPANSION_LINE_COUNT,
+      hunkSeparators: gapSeparator(props.gapStyle),
+      loadDiffFiles,
+      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${gapStyleCSS(props.gapStyle)}`,
     }),
-    [props.split, props.themeType, props.wrap],
+    [props.gapStyle, props.split, props.themeType, props.wrap],
   );
-  return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
+  return (
+    <FileDiff
+      key={props.gapStyle}
+      className="block w-full"
+      fileDiff={props.fileDiff}
+      options={options}
+    />
+  );
 });
 
 const StablePierreFile = memo(function StablePierreFile(props: {
@@ -217,15 +242,17 @@ export function PierreFile(props: {
 }
 
 export function PierreFileDiff(props: {
+  path: string;
   patch: string;
   split: boolean;
   wrap: boolean;
   splitRatio: number;
   onSplitRatio: (ratio: number) => void;
 }) {
-  const { patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
   const { resolved } = useTheme();
-  const fileDiff = useMemo(() => parseGitPatch(patch), [patch]);
+  const { gapStyle } = useGapStyle();
+  const fileDiff = useMemo(() => parseGitPatch(patch, path), [patch, path]);
 
   if (fileDiff === undefined) {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
@@ -234,6 +261,7 @@ export function PierreFileDiff(props: {
   return (
     <div
       className="relative min-w-0"
+      data-gap-style={gapStyle}
       style={
         {
           "--comprehende-split-left": `${splitRatio}fr`,
@@ -241,7 +269,13 @@ export function PierreFileDiff(props: {
         } as CSSProperties
       }
     >
-      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
+      <StableFileDiff
+        fileDiff={fileDiff}
+        split={split}
+        wrap={wrap}
+        themeType={resolved}
+        gapStyle={gapStyle}
+      />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );

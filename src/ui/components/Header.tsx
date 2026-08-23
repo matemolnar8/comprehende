@@ -3,6 +3,8 @@ import { shortSha, type ReviewMeta } from "../api.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+import { GAP_STYLE_HINT, GAP_STYLE_LABEL, GAP_STYLES } from "@/lib/gap-style.ts";
+import { useGapStyle } from "@/lib/GapStyleProvider.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Kbd } from "./Kbd.tsx";
@@ -20,7 +22,7 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex items-center gap-6 border-b border-border px-5 py-3">
+    <header className="flex flex-wrap items-center gap-6 border-b border-border px-5 py-3">
       <span className="font-serif text-lg leading-none text-foreground">Comprehende</span>
       <div
         className="flex min-w-0 flex-1 items-baseline gap-2 text-sm"
@@ -83,6 +85,7 @@ export function Header(props: {
           </div>
           <Kbd>s</Kbd>
         </div>
+        <GapStyleToggle />
         <ThemeToggle />
         {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
         <Tooltip>
@@ -116,6 +119,30 @@ function ThemeToggle() {
       </TooltipTrigger>
       <TooltipContent>Use {next} theme</TooltipContent>
     </Tooltip>
+  );
+}
+
+function GapStyleToggle() {
+  const { gapStyle, setGapStyle } = useGapStyle();
+  return (
+    <div className="flex overflow-hidden rounded-md border border-input" role="group" aria-label="Collapsed gap style">
+      {GAP_STYLES.map((style) => (
+        <Tooltip key={style}>
+          <TooltipTrigger asChild>
+            <Button
+              size="sm"
+              variant={gapStyle === style ? "secondary" : "ghost"}
+              className="rounded-none border-0"
+              aria-pressed={gapStyle === style}
+              onClick={() => setGapStyle(style)}
+            >
+              {GAP_STYLE_LABEL[style]}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{GAP_STYLE_HINT[style]}</TooltipContent>
+        </Tooltip>
+      ))}
+    </div>
   );
 }
 
