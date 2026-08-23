@@ -260,7 +260,7 @@ export function App() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-            <div className="review-scene h-full min-h-0">
+            <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
               {inspector !== null ? (
                 <Inspector
                   inspector={inspector}
@@ -269,7 +269,7 @@ export function App() {
                   onClose={closeInspector}
                 />
               ) : (
-                <main ref={mainRef} className="review-main h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
+                <main ref={mainRef} className="h-full overflow-auto scroll-smooth px-10 py-8" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
                     <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (

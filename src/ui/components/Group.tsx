@@ -31,15 +31,15 @@ export function Group(props: {
 
   return (
     <>
-      <div className="review-brief">
+      <div className="mb-8 flex items-stretch gap-4">
         {showStrand ? (
           <span
-            className="review-brief-strand"
+            className="w-[3px] flex-none rounded-px bg-muted-foreground [[data-motion=group]_&]:[view-transition-name:review-strand]"
             style={strandColor !== undefined ? { backgroundColor: strandColor } : undefined}
             aria-hidden
           />
         ) : null}
-        <div className="review-brief-copy">
+        <div className="min-w-0 flex-1 [[data-motion=group]_&]:[view-transition-name:review-copy]">
           {group !== null ? (
             <GroupBrief
               group={group}
@@ -61,7 +61,7 @@ export function Group(props: {
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
-        <article className="hunk-card mt-8 overflow-hidden rounded-lg border border-border bg-card">
+        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
           <WaitMark label={waitCopy.group} />
         </article>
       ) : null}

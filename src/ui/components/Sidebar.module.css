@@ -1,0 +1,36 @@
+.itemActive {
+  background-color: var(--accent);
+}
+
+.selection {
+  display: none;
+}
+
+@supports (anchor-name: --stack-active) {
+  .itemActive {
+    background-color: transparent;
+    anchor-name: --stack-active;
+  }
+
+  .selection {
+    display: block;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+    position-anchor: --stack-active;
+    top: anchor(top);
+    left: anchor(left);
+    width: anchor-size(width);
+    height: anchor-size(height);
+    border-radius: var(--radius);
+    background-color: var(--accent);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .selection {
+    transition-property: top, left, width, height;
+    transition-duration: var(--motion);
+    transition-timing-function: var(--motion-ease);
+  }
+}

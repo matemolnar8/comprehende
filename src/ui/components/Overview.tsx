@@ -18,7 +18,7 @@ export function Overview(props: {
   const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
 
   return (
-    <div className="review-overview mb-8">
+    <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       {why !== undefined ? (
         <section className="mb-12 max-w-[68ch]" aria-labelledby="review-why">
           <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
