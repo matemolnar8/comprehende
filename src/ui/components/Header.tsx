@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { MoonIcon, SunIcon } from "lucide-react";
-import { shortSha, type ReviewMeta } from "../api.ts";
+import type { ReviewMeta } from "../api.ts";
+import { reviewRef } from "../lib/review-ref.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
@@ -20,21 +22,13 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex flex-wrap items-center gap-6 border-b border-border px-5 py-3">
-      <span className="font-serif text-lg leading-none text-foreground">Comprehende</span>
-      <div
-        className="flex min-w-0 flex-1 items-baseline gap-2 text-sm"
-        title={`${meta.resolved.baseSha} ... ${meta.resolved.headSha}`}
-      >
-        <code className="text-primary">{meta.resolved.baseRef}</code>
-        <span className="text-muted-foreground">...</span>
-        <code className="text-primary">{meta.resolved.headRef}</code>
-        <span className="font-mono text-[11px] text-muted-foreground">
-          {shortSha(meta.resolved.baseSha)} → {shortSha(meta.resolved.headSha)}
-        </span>
+    <header className="flex flex-col gap-2 border-b border-border px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
+      <div className="flex min-w-0 items-center gap-4">
+        <span className="shrink-0 font-serif text-lg leading-none text-foreground">Comprehende</span>
+        <Range resolved={meta.resolved} />
+        <Coverage meta={meta} />
       </div>
-      <Coverage meta={meta} />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -45,7 +39,7 @@ export function Header(props: {
               onClick={onWrap}
             >
               Wrap
-              <Kbd>w</Kbd>
+              <Kbd className="max-sm:hidden">w</Kbd>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Wrap long lines</TooltipContent>
@@ -81,7 +75,7 @@ export function Header(props: {
               <TooltipContent>Side-by-side diff</TooltipContent>
             </Tooltip>
           </div>
-          <Kbd>s</Kbd>
+          <Kbd className="max-sm:hidden">s</Kbd>
         </div>
         <ThemeToggle />
         {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
@@ -89,13 +83,59 @@ export function Header(props: {
           <TooltipTrigger asChild>
             <Button size="sm" variant="outline" onClick={onRefresh} aria-busy={busy}>
               Refresh
-              <Kbd>r</Kbd>
+              <Kbd className="max-sm:hidden">r</Kbd>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{busy ? waitCopy.review : "Reload review"}</TooltipContent>
         </Tooltip>
       </div>
     </header>
+  );
+}
+
+function Range(props: { resolved: ReviewMeta["resolved"] }) {
+  const base = reviewRef(props.resolved.baseRef, props.resolved.baseSha);
+  const head = reviewRef(props.resolved.headRef, props.resolved.headSha);
+  return (
+    <div className="flex min-w-0 items-baseline gap-1.5 text-sm">
+      <CopyRef {...base} />
+      <span className="shrink-0 text-muted-foreground">...</span>
+      <CopyRef {...head} />
+    </div>
+  );
+}
+
+function CopyRef(props: { display: string; copy: string; tooltip: string }) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const id = window.setTimeout(() => setCopied(false), 1600);
+    return () => window.clearTimeout(id);
+  }, [copied]);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className="max-w-[10rem] cursor-pointer truncate rounded-sm px-0.5 font-mono text-primary hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+          aria-label={`Copy ${props.copy}`}
+          aria-live="polite"
+          onClick={() => {
+            setCopied(true);
+            void navigator.clipboard.writeText(props.copy).catch(() => {
+              setCopied(false);
+            });
+          }}
+        >
+          {copied ? "Copied" : props.display}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">{props.tooltip}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -132,7 +172,7 @@ function Coverage(props: { meta: ReviewMeta }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={cn("font-mono text-xs tabular-nums", incomplete ? "text-warn" : "text-muted-foreground")}>
+        <span className={cn("shrink-0 font-mono text-xs tabular-nums", incomplete ? "text-warn" : "text-muted-foreground")}>
           {meta.coverage.assignedHunks}/{meta.coverage.totalHunks}
         </span>
       </TooltipTrigger>
