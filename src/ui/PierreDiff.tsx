@@ -143,7 +143,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       disableFileHeader: true,
       stickyHeader: false,
       lineDiffType: "none" as const,
-      expandUnchanged: true,
+      // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
       hunkSeparators: gapSeparator(props.gapStyle),
       loadDiffFiles,
