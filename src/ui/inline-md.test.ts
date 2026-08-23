@@ -32,11 +32,8 @@ describe("InlineMd", () => {
     assert.equal(html("open `WorkerOutputCache"), "open `WorkerOutputCache");
   });
 
-  it("does not treat underscores in identifiers as emphasis", () => {
-    assert.equal(
-      html("Keyed by entry_reference_ids and __VITE_WORKER_ASSET__."),
-      "Keyed by entry_reference_ids and __VITE_WORKER_ASSET__.",
-    );
+  it("leaves dunder names unchanged inside inline code", () => {
+    assert.equal(html("Emit `__VITE_WORKER_ASSET__`."), "Emit <code>__VITE_WORKER_ASSET__</code>.");
   });
 
   it("renders *em* and **strong**", () => {

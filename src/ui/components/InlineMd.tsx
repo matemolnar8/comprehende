@@ -1,6 +1,6 @@
 import { createElement, type ReactNode } from "react";
 import Markdown from "react-markdown";
-import { flattenInline, INLINE_MD_ELEMENTS, remarkNoUnderscoreEmphasis } from "../lib/inline-md.ts";
+import { flattenInline, INLINE_MD_ELEMENTS } from "../lib/inline-md.ts";
 
 export function InlineMd(props: { text: string }): ReactNode {
   const text = flattenInline(props.text);
@@ -11,7 +11,6 @@ export function InlineMd(props: { text: string }): ReactNode {
     skipHtml: true,
     unwrapDisallowed: true,
     allowedElements: INLINE_MD_ELEMENTS,
-    remarkPlugins: [remarkNoUnderscoreEmphasis],
     children: text,
   });
 }
