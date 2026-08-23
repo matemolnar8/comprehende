@@ -9,7 +9,6 @@ import "@fontsource/source-serif-4/400.css";
 import "@fontsource/source-serif-4/600.css";
 import { App } from "./App.tsx";
 import { PierreDiffPool } from "./PierreDiff.tsx";
-import { GapStyleProvider } from "./lib/GapStyleProvider.tsx";
 import { ThemeProvider } from "./lib/ThemeProvider.tsx";
 import "./styles.css";
 
@@ -20,11 +19,9 @@ if (root === null) {
 createRoot(root).render(
   <StrictMode>
     <ThemeProvider>
-      <GapStyleProvider>
-        <PierreDiffPool>
-          <App />
-        </PierreDiffPool>
-      </GapStyleProvider>
+      <PierreDiffPool>
+        <App />
+      </PierreDiffPool>
     </ThemeProvider>
   </StrictMode>,
 );

@@ -19,8 +19,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchFile } from "./api.ts";
-import { EXPANSION_LINE_COUNT, gapSeparator, gapStyleCSS, type GapStyle } from "@/lib/gap-style.ts";
-import { useGapStyle } from "@/lib/GapStyleProvider.tsx";
+import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
 import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
@@ -135,7 +134,6 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
-  gapStyle: GapStyle;
 }) {
   const options = useMemo(
     () => ({
@@ -148,20 +146,13 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       lineDiffType: "none" as const,
       // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
-      hunkSeparators: gapSeparator(props.gapStyle),
+      hunkSeparators: GAP_SEPARATOR,
       loadDiffFiles,
-      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${gapStyleCSS(props.gapStyle)}`,
+      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
     }),
-    [props.gapStyle, props.split, props.themeType, props.wrap],
+    [props.split, props.themeType, props.wrap],
   );
-  return (
-    <FileDiff
-      key={props.gapStyle}
-      className="block w-full"
-      fileDiff={props.fileDiff}
-      options={options}
-    />
-  );
+  return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
 });
 
 const StablePierreFile = memo(function StablePierreFile(props: {
@@ -254,7 +245,6 @@ export function PierreFileDiff(props: {
 }) {
   const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
   const { resolved } = useTheme();
-  const { gapStyle } = useGapStyle();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
 
@@ -285,7 +275,6 @@ export function PierreFileDiff(props: {
   return (
     <div
       className="relative min-w-0"
-      data-gap-style={gapStyle}
       style={
         {
           "--comprehende-split-left": `${splitRatio}fr`,
@@ -293,13 +282,7 @@ export function PierreFileDiff(props: {
         } as CSSProperties
       }
     >
-      <StableFileDiff
-        fileDiff={fileDiff}
-        split={split}
-        wrap={wrap}
-        themeType={resolved}
-        gapStyle={gapStyle}
-      />
+      <StableFileDiff fileDiff={fileDiff} split={split} wrap={wrap} themeType={resolved} />
       {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );
