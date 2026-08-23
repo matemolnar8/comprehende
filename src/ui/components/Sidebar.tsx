@@ -17,7 +17,7 @@ export function Sidebar(props: {
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   return (
     <nav className="h-full overflow-auto py-6">
-      <div className={styles.stack}>
+      <div className="relative">
         <span className={styles.selection} aria-hidden />
         <ul className="mb-6 list-none p-0">
           <li>
@@ -95,14 +95,20 @@ function StackItem(props: {
       onClick={props.onClick}
       style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
       className={cn(
-        styles.item,
         "relative z-1 mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal hover:bg-transparent",
+        !props.active && "hover:bg-accent",
         props.active && cn(styles.itemActive, "text-foreground"),
         props.warn && "text-warn hover:text-warn",
       )}
     >
       {showStrand ? (
-        <span className={cn(styles.strand, colorIndex !== undefined && !props.active && "opacity-45")} aria-hidden />
+        <span
+          className={cn(
+            "pointer-events-none absolute inset-y-1.5 left-0 z-1 w-0.5 rounded-full bg-[var(--strand,var(--primary))] transition-opacity duration-[var(--motion)] ease-[var(--motion-ease)]",
+            colorIndex !== undefined && !props.active && "opacity-45",
+          )}
+          aria-hidden
+        />
       ) : null}
       {props.index !== undefined ? (
         <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>

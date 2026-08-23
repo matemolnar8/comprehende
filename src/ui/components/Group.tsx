@@ -4,7 +4,6 @@ import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { WaitMark } from "./WaitMark.tsx";
-import styles from "./Group.module.css";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -32,15 +31,15 @@ export function Group(props: {
 
   return (
     <>
-      <div className={styles.brief}>
+      <div className="mb-8 flex items-stretch gap-4">
         {showStrand ? (
           <span
-            className={styles.strand}
+            className="w-[3px] flex-none rounded-px bg-muted-foreground [[data-motion=group]_&]:[view-transition-name:review-strand]"
             style={strandColor !== undefined ? { backgroundColor: strandColor } : undefined}
             aria-hidden
           />
         ) : null}
-        <div className={styles.copy}>
+        <div className="min-w-0 flex-1 [[data-motion=group]_&]:[view-transition-name:review-copy]">
           {group !== null ? (
             <GroupBrief
               group={group}

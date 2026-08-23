@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { InlineMd } from "./InlineMd.tsx";
-import styles from "./Overview.module.css";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -19,7 +18,7 @@ export function Overview(props: {
   const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
 
   return (
-    <div className={cn(styles.root, "mb-8")}>
+    <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       {why !== undefined ? (
         <section className="mb-12 max-w-[68ch]" aria-labelledby="review-why">
           <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">

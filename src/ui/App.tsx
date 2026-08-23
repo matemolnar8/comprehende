@@ -16,7 +16,6 @@ import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
-import styles from "./App.module.css";
 
 export function App() {
   const [meta, setMeta] = useState<ReviewMeta | null>(null);
@@ -261,7 +260,7 @@ export function App() {
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-            <div className={cn(styles.scene, "h-full min-h-0")}>
+            <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
               {inspector !== null ? (
                 <Inspector
                   inspector={inspector}
