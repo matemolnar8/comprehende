@@ -20,7 +20,7 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex items-center gap-6 border-b border-border px-5 py-3">
+    <header className="flex flex-wrap items-center gap-6 border-b border-border px-5 py-3">
       <span className="font-serif text-lg leading-none text-foreground">Comprehende</span>
       <div
         className="flex min-w-0 flex-1 items-baseline gap-2 text-sm"

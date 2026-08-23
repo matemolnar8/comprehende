@@ -95,6 +95,7 @@ function appFile(name: string, marker: string): string {
     "export function midH(): number { return 8; }",
     "export function midI(): number { return 9; }",
     "export function midJ(): number { return 10; }",
+    ...Array.from({ length: 80 }, (_, i) => `export const pad${String(i).padStart(2, "0")} = ${i};`),
     "export function end(): string {",
     `  return "${name}-end";`,
     "}",
