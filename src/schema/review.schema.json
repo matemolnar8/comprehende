@@ -2,51 +2,88 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json",
   "title": "Comprehende ReviewDocument",
-  "description": "Interpretation only: groups, summaries, and hunk pointers. No patch text, file bodies, or blame.",
+  "description": "Interpretation only: groups, summaries, and hunk pointers.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "source", "size", "summary", "groups"],
+  "required": [
+    "version",
+    "source",
+    "size",
+    "summary",
+    "groups"
+  ],
   "properties": {
-    "version": { "const": 1 },
+    "version": {
+      "const": 1
+    },
     "size": {
       "type": "string",
-      "enum": ["trivial", "small", "medium", "large", "very-large"],
-      "description": "Human review burden of this change, not file or hunk count. A 40-file mechanical import rename in one group is small. A 3-file contract rewrite the rest of the stack hangs on can be large."
+      "enum": [
+        "trivial",
+        "small",
+        "medium",
+        "large",
+        "very-large"
+      ],
+      "description": "Human review burden of this change."
     },
     "source": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["baseRef", "headRef"],
+      "required": [
+        "baseRef",
+        "headRef"
+      ],
       "properties": {
-        "baseRef": { "type": "string", "minLength": 1 },
-        "headRef": { "type": "string", "minLength": 1 },
-        "range": { "type": "string", "minLength": 1 }
+        "baseRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "headRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "range": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "summary": {
       "type": "string",
       "minLength": 1,
-      "description": "Short what of the whole change. Always write this. Name the stories. Do not invent a motive."
+      "description": "Short what of the whole change. Name the stories."
     },
     "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Generated why for the whole change. Write it from tickets, issues, a pull-request or merge-request description, and/or a coding-agent transcript. Do not paraphrase the patch. Omit only when those sources are silent. An independent part in the same review is not a reason to omit it. The UI skips the Why section when this is absent."
+      "description": "Generated why for the whole change, from tickets, issues, a request description, or a transcript."
     },
     "tickets": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "url": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
           "part": {
             "type": "string",
             "minLength": 1,
-            "description": "Short name of the independent story this ticket belongs to. Same name as the groups in that story. Omit when the ticket is for the whole review."
+            "description": "Short name of the independent story this ticket belongs to. Same name as the groups in that story."
           }
         }
       }
@@ -56,14 +93,27 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "why", "summary", "suggestedOrder", "hunkRefs"],
+        "required": [
+          "id",
+          "title",
+          "why",
+          "summary",
+          "suggestedOrder",
+          "hunkRefs"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
           "why": {
             "type": "string",
             "minLength": 1,
-            "description": "Generated why this group exists. Write it from tickets, commit messages, and/or a transcript when they apply. If this group has no such source, it may exist to enable later groups in the same story. Do not paraphrase the patch."
+            "description": "Generated why this group exists. From a source when one applies, or that it enables later groups in the same story."
           },
           "summary": {
             "type": "string",
@@ -71,23 +121,33 @@
           },
           "lookFor": {
             "type": "array",
-            "description": "Scannable bullets of what to inspect. Not a paragraph.",
-            "items": { "type": "string", "minLength": 1 }
+            "description": "Scannable bullets of what to inspect.",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           },
           "dependsOn": {
             "type": "array",
-            "description": "Ids of earlier groups this one depends on. Same story only. Omit when this group does not depend on other groups.",
-            "items": { "type": "string", "minLength": 1 }
+            "description": "Ids of earlier groups this one depends on. Same story only.",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           },
           "part": {
             "type": "string",
             "minLength": 1,
             "description": "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs."
           },
-          "suggestedOrder": { "type": "number" },
+          "suggestedOrder": {
+            "type": "number"
+          },
           "hunkRefs": {
             "type": "array",
-            "items": { "$ref": "#/$defs/hunkRef" }
+            "items": {
+              "$ref": "#/$defs/hunkRef"
+            }
           }
         }
       }
@@ -96,16 +156,40 @@
   "$defs": {
     "hunkRef": {
       "type": "object",
-      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed. Do not guess numbers.",
+      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed.",
       "additionalProperties": false,
-      "required": ["path", "oldStart", "oldLines", "newStart", "newLines"],
+      "required": [
+        "path",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines"
+      ],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "oldPath": { "type": "string", "minLength": 1 },
-        "oldStart": { "type": "integer", "minimum": 0 },
-        "oldLines": { "type": "integer", "minimum": 0 },
-        "newStart": { "type": "integer", "minimum": 0 },
-        "newLines": { "type": "integer", "minimum": 0 }
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oldPath": {
+          "type": "string",
+          "minLength": 1
+        },
+        "oldStart": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "oldLines": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "newStart": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "newLines": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     }
   }
