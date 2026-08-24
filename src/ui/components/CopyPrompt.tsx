@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { ClipboardPasteIcon, SparkleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import { copyText } from "../lib/copy-text.ts";
-import { CTA_VARIANTS, stripCopy, type CtaSlot } from "../lib/cta.ts";
+import { CTA_VARIANTS, stripCopy, type CtaIcon, type CtaSlot } from "../lib/cta.ts";
 import { useCta } from "../lib/cta-context.tsx";
 
 const COPIED_MS = 1600;
@@ -20,15 +21,6 @@ export function CopyPrompt(props: {
   }
 
   const label = `${variant.hint}. ${props.scope === "group" ? "This group." : "This review."}`;
-  const control = (
-    <CopyControl
-      prompt={props.prompt}
-      cta={cta}
-      label={label}
-      idle={variant.label}
-      copied={variant.copied}
-    />
-  );
 
   if (cta === "explain") {
     return (
@@ -38,7 +30,8 @@ export function CopyPrompt(props: {
         label={label}
         idle={variant.label}
         copied={variant.copied}
-        className="h-auto px-0 font-mono text-[11px] tracking-wide"
+        icon={variant.icon}
+        className="h-auto gap-1 px-0 font-mono text-[11px] tracking-wide"
         appearance="link"
       />
     );
@@ -64,8 +57,17 @@ export function CopyPrompt(props: {
         data-cta={cta}
         data-cta-slot={props.slot}
       >
-        <p className="font-serif text-base italic text-muted-foreground">{stripCopy(props.scope)}</p>
-        {control}
+        <p className="flex items-center gap-2 font-serif text-base italic text-muted-foreground">
+          <CtaMark icon={variant.icon} className="size-3.5 text-foreground" />
+          {stripCopy(props.scope)}
+        </p>
+        <CopyControl
+          prompt={props.prompt}
+          cta={cta}
+          label={label}
+          idle={variant.label}
+          copied={variant.copied}
+        />
       </div>
     );
   }
@@ -78,12 +80,32 @@ export function CopyPrompt(props: {
         label={label}
         idle={variant.label}
         copied={variant.copied}
+        icon={variant.icon}
         className={props.scope === "overview" ? "mb-8" : "mt-4"}
       />
     );
   }
 
-  return control;
+  return (
+    <CopyControl
+      prompt={props.prompt}
+      cta={cta}
+      label={label}
+      idle={variant.label}
+      copied={variant.copied}
+      icon={variant.icon}
+    />
+  );
+}
+
+function CtaMark(props: { icon: CtaIcon | null | undefined; className?: string }) {
+  if (props.icon === "sparkle") {
+    return <SparkleIcon aria-hidden className={cn("size-3.5", props.className)} />;
+  }
+  if (props.icon === "clipboard") {
+    return <ClipboardPasteIcon aria-hidden className={cn("size-3.5", props.className)} />;
+  }
+  return null;
 }
 
 function CopyControl(props: {
@@ -92,6 +114,7 @@ function CopyControl(props: {
   label: string;
   idle: string;
   copied: string;
+  icon?: CtaIcon | null;
   className?: string;
   appearance?: "button" | "link" | "chip";
 }) {
@@ -111,6 +134,7 @@ function CopyControl(props: {
 
   const text = copied ? props.copied : props.idle;
   const appearance = props.appearance ?? "button";
+  const mark = <CtaMark icon={props.icon} />;
 
   const onCopy = (): void => {
     setCopied(true);
@@ -146,6 +170,7 @@ function CopyControl(props: {
         data-cta={props.cta}
         onClick={onCopy}
       >
+        {mark}
         {text}
       </Button>
     );
@@ -161,6 +186,7 @@ function CopyControl(props: {
         data-cta={props.cta}
         onClick={onCopy}
       >
+        {mark}
         {text}
       </Button>
     );

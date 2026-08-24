@@ -4,6 +4,8 @@ export type CtaId = (typeof CTA_IDS)[number];
 
 export type CtaSlot = "kicker" | "title" | "strip" | "after";
 
+export type CtaIcon = "sparkle" | "clipboard";
+
 export type CtaVariant = {
   id: CtaId;
   slot: CtaSlot;
@@ -12,6 +14,7 @@ export type CtaVariant = {
   copied: string;
   hint: string;
   pickerLabel: string;
+  icon: CtaIcon | null;
 };
 
 export const DEFAULT_CTA: CtaId = "ask";
@@ -28,6 +31,7 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
     copied: "Copied",
     hint: "Copy a prompt for your coding agent",
     pickerLabel: "1 · Ask with AI",
+    icon: "sparkle",
   },
   explain: {
     id: "explain",
@@ -36,6 +40,7 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
     copied: "Copied",
     hint: "Copy a prompt that explains this from live git",
     pickerLabel: "2 · Explain with AI",
+    icon: "sparkle",
   },
   prompt: {
     id: "prompt",
@@ -44,6 +49,7 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
     copied: "Copied",
     hint: "Copy the agent prompt",
     pickerLabel: "3 · Copy prompt",
+    icon: null,
   },
   agent: {
     id: "agent",
@@ -52,6 +58,7 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
     copied: "Copied",
     hint: "Copy a prompt for your coding agent",
     pickerLabel: "4 · Ask an agent",
+    icon: "sparkle",
   },
   paste: {
     id: "paste",
@@ -60,6 +67,7 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
     copied: "Copied",
     hint: "Copy a prompt to paste into Cursor, Claude Code, or Codex",
     pickerLabel: "5 · Paste into your agent",
+    icon: "clipboard",
   },
 };
 

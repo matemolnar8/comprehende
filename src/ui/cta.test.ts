@@ -36,6 +36,14 @@ describe("CTA_VARIANTS", () => {
     assert.equal(CTA_VARIANTS.agent.slot, "strip");
     assert.equal(CTA_VARIANTS.paste.slot, "after");
   });
+
+  it("puts a mark on the AI-voiced treatments, not the chip", () => {
+    assert.equal(CTA_VARIANTS.ask.icon, "sparkle");
+    assert.equal(CTA_VARIANTS.explain.icon, "sparkle");
+    assert.equal(CTA_VARIANTS.agent.icon, "sparkle");
+    assert.equal(CTA_VARIANTS.paste.icon, "clipboard");
+    assert.equal(CTA_VARIANTS.prompt.icon, null);
+  });
 });
 
 describe("stripCopy", () => {
