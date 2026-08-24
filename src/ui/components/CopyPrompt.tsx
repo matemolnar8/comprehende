@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
+import { copyText } from "../lib/copy-text.ts";
 import { CTA_VARIANTS, stripCopy, type CtaSlot } from "../lib/cta.ts";
 import { useCta } from "../lib/cta-context.tsx";
 
@@ -112,10 +113,8 @@ function CopyControl(props: {
   const appearance = props.appearance ?? "button";
 
   const onCopy = (): void => {
-    void navigator.clipboard.writeText(props.prompt).then(
-      () => setCopied(true),
-      () => setCopied(false),
-    );
+    setCopied(true);
+    void copyText(props.prompt).catch(() => setCopied(false));
   };
 
   let trigger: ReactNode;
