@@ -1,4 +1,4 @@
-import { isImagePath, isLfsPointerText } from "../schema/image.ts";
+import { isImagePath } from "../schema/image.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, ReviewSource } from "../schema/types.ts";
 import { git } from "./exec.ts";
@@ -398,10 +398,7 @@ function classifyDiffFile(file: DiffFile): DiffFile {
   if (!isImagePath(file.path) && (file.oldPath === undefined || !isImagePath(file.oldPath))) {
     return file;
   }
-  if (file.binary || isLfsPointerText(file.patch)) {
-    return asImageFile(file);
-  }
-  return file;
+  return asImageFile(file);
 }
 
 function asImageFile(file: DiffFile): DiffFile {
