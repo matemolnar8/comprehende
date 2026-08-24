@@ -1,0 +1,195 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import type { ReviewMeta } from "./api.ts";
+import { agentPrompt, formatHunkRef, isImageSlot } from "./lib/agent-prompt.ts";
+
+const baseSha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const headSha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+
+describe("formatHunkRef", () => {
+  it("formats a git hunk header with the path", () => {
+    assert.equal(
+      formatHunkRef({ path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 }),
+      "src/auth/session.ts @@ -1,20 +1,40 @@",
+    );
+  });
+
+  it("prefixes a rename", () => {
+    assert.equal(
+      formatHunkRef({
+        path: "src/helpers.ts",
+        oldPath: "src/util.ts",
+        oldStart: 4,
+        oldLines: 8,
+        newStart: 4,
+        newLines: 12,
+      }),
+      "src/util.ts -> src/helpers.ts @@ -4,8 +4,12 @@",
+    );
+  });
+});
+
+describe("isImageSlot", () => {
+  it("detects a zero range", () => {
+    assert.equal(isImageSlot({ path: "assets/dot.png", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 }), true);
+    assert.equal(isImageSlot({ path: "src/app.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 }), false);
+  });
+});
+
+describe("agentPrompt", () => {
+  it("pins both SHAs and every hunk ref on the overview", () => {
+    const prompt = agentPrompt(sampleMeta(), { kind: "overview" });
+    assert.ok(prompt !== null);
+    assert.match(prompt, new RegExp(`git diff --find-renames ${baseSha} ${headSha}`));
+    assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
+    assert.match(prompt, /src\/util\.ts -> src\/helpers\.ts @@ -4,8 \+4,12 @@/);
+    assert.match(prompt, /src\/api\/login\.ts @@ -10,8 \+10,24 @@/);
+    assert.match(prompt, /Review concerns/);
+    assert.match(prompt, /Session cookie helper \(`cookie`\)/);
+    assert.match(prompt, /#24 Explain with coding agent button/);
+    assert.match(prompt, /Unassigned live hunks: 2/);
+    assert.match(prompt, /Done when both objects exist/);
+    assert.match(prompt, /Live git wins when they disagree/);
+    assert.equal(prompt.includes("+++"), false);
+  });
+
+  it("scopes a group prompt to that concern's hunks", () => {
+    const prompt = agentPrompt(sampleMeta(), { kind: "group", id: "cookie" });
+    assert.ok(prompt !== null);
+    assert.match(prompt, /Review concern 01 of 02: Session cookie helper \(`cookie`\)/);
+    assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
+    assert.match(prompt, /src\/util\.ts -> src\/helpers\.ts @@ -4,8 \+4,12 @@/);
+    assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
+    assert.match(prompt, /explain this review concern/);
+    assert.match(prompt, /Hunk refs with @@ -0,0 \+0,0 @@ are image or binary slots/);
+  });
+
+  it("returns null for an unknown group", () => {
+    assert.equal(agentPrompt(sampleMeta(), { kind: "group", id: "missing" }), null);
+  });
+
+  it("omits silent why, tickets, and coverage", () => {
+    const meta = sampleMeta();
+    delete meta.document.why;
+    delete meta.document.tickets;
+    meta.coverage.unassignedCount = 0;
+    meta.coverage.staleCount = 0;
+    meta.commits = [];
+    const prompt = agentPrompt(meta, { kind: "overview" });
+    assert.ok(prompt !== null);
+    assert.doesNotMatch(prompt, /Ticket #24 needs a prompt a coding agent can paste/);
+    assert.doesNotMatch(prompt, /Tickets:/);
+    assert.doesNotMatch(prompt, /Unassigned live hunks/);
+    assert.doesNotMatch(prompt, /^Commits:/m);
+    assert.match(prompt, /The what \(medium\):/);
+  });
+});
+
+function sampleMeta(): ReviewMeta {
+  return {
+    document: {
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD", range: "main...HEAD" },
+      size: "medium",
+      why: "Ticket #24 needs a prompt a coding agent can paste.",
+      summary: "Adds a copy-prompt control to overview and group.",
+      tickets: [
+        {
+          id: "#24",
+          title: "Explain with coding agent button",
+          url: "https://github.com/matemolnar8/comprehende/issues/24",
+        },
+      ],
+      groups: [
+        {
+          id: "cookie",
+          title: "Session cookie helper",
+          why: "The login route needs one helper.",
+          summary: "setSessionCookie applies the required options.",
+          lookFor: ["Breaking. Throws when httpOnly is false."],
+          part: "Session cookie",
+          suggestedOrder: 0,
+          hunkRefs: [
+            { path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 },
+            { path: "assets/dot.png", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 },
+            {
+              path: "src/helpers.ts",
+              oldPath: "src/util.ts",
+              oldStart: 4,
+              oldLines: 8,
+              newStart: 4,
+              newLines: 12,
+            },
+          ],
+        },
+        {
+          id: "login",
+          title: "Login route",
+          why: "The route must set cookies through the helper.",
+          summary: "The login route uses setSessionCookie.",
+          dependsOn: ["cookie"],
+          suggestedOrder: 1,
+          hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, oldLines: 8, newStart: 10, newLines: 24 }],
+        },
+      ],
+    },
+    resolved: {
+      baseRef: "main",
+      headRef: "HEAD",
+      range: "main...HEAD",
+      baseSha,
+      headSha,
+    },
+    coverage: {
+      totalHunks: 5,
+      assignedHunks: 3,
+      unassignedCount: 2,
+      staleCount: 0,
+    },
+    groups: [
+      {
+        id: "cookie",
+        title: "Session cookie helper",
+        why: "The login route needs one helper.",
+        summary: "setSessionCookie applies the required options.",
+        lookFor: ["Breaking. Throws when httpOnly is false."],
+        dependsOn: [],
+        part: "Session cookie",
+        suggestedOrder: 0,
+        hunkCount: 3,
+        staleCount: 0,
+        files: ["src/auth/session.ts", "assets/dot.png", "src/helpers.ts"],
+      },
+      {
+        id: "login",
+        title: "Login route",
+        why: "The route must set cookies through the helper.",
+        summary: "The login route uses setSessionCookie.",
+        lookFor: [],
+        dependsOn: ["cookie"],
+        suggestedOrder: 1,
+        hunkCount: 1,
+        staleCount: 0,
+        files: ["src/api/login.ts"],
+      },
+    ],
+    unassigned: { hunkCount: 2, files: ["README.md"] },
+    lockfiles: { fileCount: 0, files: [] },
+    stale: [],
+    files: [
+      { path: "src/auth/session.ts", status: "modified", binary: false, image: false, hunkCount: 1 },
+      { path: "src/api/login.ts", status: "modified", binary: false, image: false, hunkCount: 1 },
+    ],
+    skipped: [],
+    commits: [
+      {
+        sha: headSha,
+        shortSha: headSha.slice(0, 7),
+        subject: "Split session cookie helper",
+        body: "",
+        author: "Comprehende Fixture",
+        date: "2026-08-24",
+      },
+    ],
+  };
+}

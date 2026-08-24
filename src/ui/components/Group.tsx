@@ -19,6 +19,7 @@ export function Group(props: {
   splitRatio: number;
   wrap: boolean;
   viewedPaths: ReadonlySet<string>;
+  prompt: string | null;
   onOpenGroup: (id: string) => void;
   onOpenFile: (path: string) => void;
   onSplitRatio: (ratio: number) => void;
@@ -46,6 +47,7 @@ export function Group(props: {
               index={groupIndex(groups, group.id)}
               groups={groups}
               partTitle={mixed ? group.part : undefined}
+              prompt={props.prompt}
               onOpenGroup={props.onOpenGroup}
             />
           ) : lockfiles ? (

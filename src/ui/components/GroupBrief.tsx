@@ -2,15 +2,39 @@ import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
+import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 
-export function Brief(props: { kicker?: string; title: string; children?: ReactNode; className?: string }) {
+export function Brief(props: {
+  kicker?: string;
+  title: string;
+  children?: ReactNode;
+  className?: string;
+  kickerExtra?: ReactNode;
+  titleExtra?: ReactNode;
+  strip?: ReactNode;
+}) {
   return (
     <div className={cn("max-w-[68ch]", props.className)}>
       {props.kicker !== undefined ? (
-        <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+        props.kickerExtra !== undefined ? (
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+            {props.kickerExtra}
+          </div>
+        ) : (
+          <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+        )
       ) : null}
-      <h1 className="mb-3 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
+      {props.titleExtra !== undefined ? (
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h1 className="min-w-0 flex-1 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
+          {props.titleExtra}
+        </div>
+      ) : (
+        <h1 className="mb-3 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
+      )}
+      {props.strip}
       {props.children}
     </div>
   );
@@ -21,13 +45,23 @@ export function GroupBrief(props: {
   index: number;
   groups: ReviewMeta["groups"];
   partTitle?: string;
+  prompt: string | null;
   onOpenGroup: (id: string) => void;
 }) {
-  const { group, index, groups, partTitle, onOpenGroup } = props;
+  const { group, index, groups, partTitle, prompt, onOpenGroup } = props;
+  const copy =
+    prompt === null
+      ? {}
+      : {
+          kickerExtra: <CopyPrompt prompt={prompt} slot="kicker" scope="group" />,
+          titleExtra: <CopyPrompt prompt={prompt} slot="title" scope="group" />,
+          strip: <CopyPrompt prompt={prompt} slot="strip" scope="group" />,
+        };
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
       title={group.title}
+      {...copy}
     >
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
       <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">
@@ -63,6 +97,7 @@ export function GroupBrief(props: {
           ))}
         </ul>
       ) : null}
+      {prompt !== null ? <CopyPrompt prompt={prompt} slot="after" scope="group" /> : null}
       {group.staleCount > 0 ? (
         <p className="mt-4 text-warn">
           {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the pointer

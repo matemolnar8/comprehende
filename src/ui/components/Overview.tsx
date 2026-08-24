@@ -2,7 +2,9 @@ import type { CSSProperties } from "react";
 import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
+import { agentPrompt } from "../lib/agent-prompt.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 
 export function Overview(props: {
@@ -16,6 +18,7 @@ export function Overview(props: {
   const tickets = meta.document.tickets ?? [];
   const why = meta.document.why;
   const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
+  const prompt = agentPrompt(meta, { kind: "overview" }) ?? "";
 
   return (
     <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
@@ -24,9 +27,13 @@ export function Overview(props: {
           <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
             Why
           </p>
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
-            <InlineMd text={why} />
-          </h1>
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <h1 className="min-w-0 flex-1 font-serif text-[1.75rem] leading-snug text-foreground">
+              <InlineMd text={why} />
+            </h1>
+            <CopyPrompt prompt={prompt} slot="title" scope="overview" />
+          </div>
+          <CopyPrompt prompt={prompt} slot="strip" scope="overview" />
           {ticketList}
         </section>
       ) : ticketList !== null ? (
@@ -34,18 +41,28 @@ export function Overview(props: {
       ) : null}
 
       <section aria-labelledby="review-what">
-        <p id="review-what" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
-          What · {sizeLabel(meta.document.size)} · {meta.files.length} files
-        </p>
+        <div className="mb-2 flex max-w-[68ch] items-center justify-between gap-3">
+          <p id="review-what" className="font-mono text-[11px] tracking-wide text-muted-foreground">
+            What · {sizeLabel(meta.document.size)} · {meta.files.length} files
+          </p>
+          <CopyPrompt prompt={prompt} slot="kicker" scope="overview" />
+        </div>
         {why !== undefined ? (
-          <p className="mb-8 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">
+          <p className="mb-4 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-8 max-w-[68ch] font-serif text-[1.75rem] leading-snug text-foreground">
-            <InlineMd text={meta.document.summary} />
-          </h1>
+          <>
+            <div className="mb-4 flex max-w-[68ch] items-start justify-between gap-3">
+              <h1 className="min-w-0 flex-1 font-serif text-[1.75rem] leading-snug text-foreground">
+                <InlineMd text={meta.document.summary} />
+              </h1>
+              <CopyPrompt prompt={prompt} slot="title" scope="overview" />
+            </div>
+            <CopyPrompt prompt={prompt} slot="strip" scope="overview" />
+          </>
         )}
+        <CopyPrompt prompt={prompt} slot="after" scope="overview" />
         <div
           className={
             mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : undefined
