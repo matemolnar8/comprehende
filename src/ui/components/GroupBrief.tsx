@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { cn } from "@/lib/utils.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 
@@ -15,7 +14,7 @@ export function Brief(props: {
   strip?: ReactNode;
 }) {
   return (
-    <div className={cn("max-w-[68ch]", props.className)}>
+    <div className={props.className}>
       {props.kicker !== undefined ? (
         props.kickerExtra !== undefined ? (
           <div className="mb-2 flex items-center justify-between gap-3">

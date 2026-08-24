@@ -23,7 +23,7 @@ export function Overview(props: {
   return (
     <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       {why !== undefined ? (
-        <section className="mb-12 max-w-[68ch]" aria-labelledby="review-why">
+        <section className="mb-12" aria-labelledby="review-why">
           <p id="review-why" className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">
             Why
           </p>
@@ -37,23 +37,23 @@ export function Overview(props: {
           {ticketList}
         </section>
       ) : ticketList !== null ? (
-        <div className="mb-8 max-w-[68ch]">{ticketList}</div>
+        <div className="mb-8">{ticketList}</div>
       ) : null}
 
       <section aria-labelledby="review-what">
-        <div className="mb-2 flex max-w-[68ch] items-center justify-between gap-3">
+        <div className="mb-2 flex items-center justify-between gap-3">
           <p id="review-what" className="font-mono text-[11px] tracking-wide text-muted-foreground">
             What · {sizeLabel(meta.document.size)} · {meta.files.length} files
           </p>
           <CopyPrompt prompt={prompt} slot="kicker" scope="overview" />
         </div>
         {why !== undefined ? (
-          <p className="mb-4 max-w-[68ch] font-serif text-lg leading-relaxed text-foreground">
+          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
           <>
-            <div className="mb-4 flex max-w-[68ch] items-start justify-between gap-3">
+            <div className="mb-4 flex items-start justify-between gap-3">
               <h1 className="min-w-0 flex-1 font-serif text-[1.75rem] leading-snug text-foreground">
                 <InlineMd text={meta.document.summary} />
               </h1>
