@@ -27,10 +27,10 @@ export const CTA_VARIANTS: Record<CtaId, CtaVariant> = {
   ask: {
     id: "ask",
     slot: "kicker",
-    label: "Ask with AI",
+    label: "Ask AI about this",
     copied: "Copied",
     hint: "Copy a prompt for your coding agent",
-    pickerLabel: "1 · Ask with AI",
+    pickerLabel: "1 · Ask AI about this",
     icon: "sparkle",
   },
   explain: {

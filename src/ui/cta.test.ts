@@ -30,6 +30,7 @@ describe("CTA_VARIANTS", () => {
   it("gives each prototype a slot and a distinct idle label", () => {
     const labels = CTA_IDS.map((id) => CTA_VARIANTS[id].label);
     assert.equal(new Set(labels).size, labels.length);
+    assert.equal(CTA_VARIANTS.ask.label, "Ask AI about this");
     assert.equal(CTA_VARIANTS.ask.slot, "kicker");
     assert.equal(CTA_VARIANTS.explain.slot, "kicker");
     assert.equal(CTA_VARIANTS.prompt.slot, "title");
