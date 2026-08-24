@@ -8,6 +8,10 @@ export function canHydrateDiff(fileDiff: Pick<FileDiffMetadata, "isPartial" | "t
   );
 }
 
+export function splitHasTwoSides(type: FileDiffMetadata["type"]): boolean {
+  return type !== "new" && type !== "deleted";
+}
+
 export function toPierreFile(file: ApiFile): FileContents {
   return {
     name: file.path,

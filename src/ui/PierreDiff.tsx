@@ -20,7 +20,7 @@ import {
 } from "react";
 import { fetchFile } from "./api.ts";
 import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
-import { canHydrateDiff, loadDiffFilesWith } from "@/lib/load-diff-files.ts";
+import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides } from "@/lib/load-diff-files.ts";
 import {
   gapSeparator,
   isPlainDownClick,
@@ -343,6 +343,8 @@ export function PierreFileDiff(props: {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
   }
 
+  const splitPanes = split && splitHasTwoSides(fileDiff.type);
+
   return (
     <div
       ref={wrapperRef}
@@ -356,13 +358,13 @@ export function PierreFileDiff(props: {
     >
       <StableFileDiff
         fileDiff={fileDiff}
-        split={split}
+        split={splitPanes}
         wrap={wrap}
         themeType={resolved}
         loadFiles={hydrate}
         onPostRender={onPostRender}
       />
-      {split ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
+      {splitPanes ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}
     </div>
   );
 }
