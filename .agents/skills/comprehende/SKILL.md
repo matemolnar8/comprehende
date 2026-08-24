@@ -15,7 +15,7 @@ Run every command inside the repository under review. Cwd is the repo; there is 
 npx comprehende@0.4.1 <command>
 ```
 
-One invariant governs everything you write: the review document is **interpretation only**. It holds groups, summaries, and hunk pointers. The diff stays in git, and `serve` reads it live, so when git and the document disagree, git wins. Fix the groups; a hunk written from memory is an invented one.
+The review document is interpretation only. It holds groups, summaries, and hunk pointers. Do not copy patch text into it. `serve` reads the diff from git.
 
 ## Workflow
 
@@ -57,7 +57,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`; three files rewriting a contract the rest of the system hangs on can be `large`.
 - Coverage: every hunk from the index sits in at least one group; duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI.
 - Lockfiles stay in `skipped`; the UI gives them their own closed bucket. Hunk refs exist only for hunks the index lists.
-- Stale refs (rebase, edited work tree) fail `validate`; `serve` still starts, shows live git, and flags the broken pointer. Re-run `index` and copy fresh refs.
+- Stale refs (rebase of the pinned commits) fail `validate`; `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `index` and copy fresh refs. A dirty work tree does not make refs stale.
 
 Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Image files are hunks; copy their refs into groups. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
 
