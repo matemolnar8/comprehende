@@ -52,6 +52,8 @@ describe("export static site", () => {
 
     assert.equal(existsSync(join(outDir, ".git")), false);
     assert.equal(existsSync(join(outDir, "index.html")), true);
+    assert.equal(existsSync(join(outDir, "api/agent/overview.md")), true);
+    assert.equal(existsSync(join(outDir, "api/agent/groups/all.md")), true);
 
     const frozen = await startStaticSite(outDir, 0);
     servers.push(frozen.server);
@@ -73,6 +75,10 @@ describe("export static site", () => {
           Buffer.from(await liveRes.arrayBuffer()),
           apiHref(resource),
         );
+        continue;
+      }
+      if (resource.kind === "agent-md") {
+        assert.equal(await frozenRes.text(), await liveRes.text(), apiHref(resource));
         continue;
       }
       assert.deepEqual(await frozenRes.json(), await liveRes.json(), apiHref(resource));

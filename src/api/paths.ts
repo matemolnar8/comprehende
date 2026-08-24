@@ -2,6 +2,8 @@ import type { FileSide } from "./types.ts";
 
 export type ApiResource =
   | { kind: "review" }
+  | { kind: "agent-md"; target: "overview" }
+  | { kind: "agent-md"; target: "group"; group: string }
   | { kind: "hunks"; group: string }
   | { kind: "file"; path: string; side: FileSide }
   | { kind: "blame"; path: string; side: FileSide }
@@ -12,6 +14,8 @@ export function apiHref(resource: ApiResource): string {
   switch (resource.kind) {
     case "review":
       return "api/review.json";
+    case "agent-md":
+      return agentMdRel(resource);
     case "hunks":
       return `api/hunks/${encodeURIComponent(resource.group)}.json`;
     case "file":
@@ -30,6 +34,8 @@ export function apiFsRel(resource: ApiResource): string {
   switch (resource.kind) {
     case "review":
       return "api/review.json";
+    case "agent-md":
+      return agentMdRel(resource);
     case "hunks":
       return `api/hunks/${encodeURIComponent(resource.group)}.json`;
     case "file":
@@ -50,6 +56,19 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
   }
   if (parts[1] === "review.json" && parts.length === 2) {
     return { kind: "review" };
+  }
+  if (parts[1] === "agent") {
+    if (parts.length === 3 && parts[2] === "overview.md") {
+      return { kind: "agent-md", target: "overview" };
+    }
+    if (parts.length === 4 && parts[2] === "groups" && parts[3] !== undefined) {
+      const group = mdStem(parts[3]);
+      if (group === undefined) {
+        return undefined;
+      }
+      return { kind: "agent-md", target: "group", group };
+    }
+    return undefined;
   }
   if (parts[1] === "hunks" && parts.length === 3 && parts[2] !== undefined) {
     const group = jsonStem(parts[2]);
@@ -116,11 +135,26 @@ function decodeSegment(segment: string): string {
   }
 }
 
+function agentMdRel(resource: Extract<ApiResource, { kind: "agent-md" }>): string {
+  if (resource.target === "overview") {
+    return "api/agent/overview.md";
+  }
+  return `api/agent/groups/${encodeURIComponent(resource.group)}.md`;
+}
+
 function jsonStem(file: string): string | undefined {
   if (!file.endsWith(".json")) {
     return undefined;
   }
   const stem = file.slice(0, -".json".length);
+  return stem === "" ? undefined : stem;
+}
+
+function mdStem(file: string): string | undefined {
+  if (!file.endsWith(".md")) {
+    return undefined;
+  }
+  const stem = file.slice(0, -".md".length);
   return stem === "" ? undefined : stem;
 }
 

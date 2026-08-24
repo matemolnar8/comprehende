@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
-import { agentPrompt } from "../lib/agent-prompt.ts";
+import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
@@ -18,7 +18,7 @@ export function Overview(props: {
   const tickets = meta.document.tickets ?? [];
   const why = meta.document.why;
   const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
-  const prompt = agentPrompt(meta, { kind: "overview" }) ?? "";
+  const prompt = askAgentPrompt("overview");
   const ask = <CopyPrompt prompt={prompt} scope="overview" />;
 
   return (

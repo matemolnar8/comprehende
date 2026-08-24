@@ -9,6 +9,7 @@ import { showFile } from "../git/show.ts";
 import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
+import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
@@ -193,6 +194,14 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
   switch (resource.kind) {
     case "review":
       return { encoding: "json", body: reviewPayload(ctx) };
+    case "agent-md": {
+      const body = agentMd(reviewPayload(ctx), resource);
+      if (body === null) {
+        const id = resource.target === "group" ? resource.group : "overview";
+        throw new ApiError(404, `unknown group "${id}"`);
+      }
+      return { encoding: "bytes", mediaType: AGENT_MD_MEDIA_TYPE, body: Buffer.from(body, "utf8") };
+    }
     case "hunks":
       return { encoding: "json", body: hunksPayload(ctx, resource.group) };
     case "file":
@@ -209,11 +218,13 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
 export function listResources(ctx: ReviewContext): ApiResource[] {
   const resources: ApiResource[] = [
     { kind: "review" },
+    { kind: "agent-md", target: "overview" },
     { kind: "hunks", group: "unassigned" },
     { kind: "hunks", group: "lockfiles" },
   ];
   for (const group of ctx.document.groups) {
     resources.push({ kind: "hunks", group: group.id });
+    resources.push({ kind: "agent-md", target: "group", group: group.id });
   }
   for (const file of ctx.files) {
     if (file.image) {

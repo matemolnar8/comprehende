@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
+import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 
@@ -34,15 +35,14 @@ export function GroupBrief(props: {
   index: number;
   groups: ReviewMeta["groups"];
   partTitle?: string;
-  prompt: string | null;
   onOpenGroup: (id: string) => void;
 }) {
-  const { group, index, groups, partTitle, prompt, onOpenGroup } = props;
+  const { group, index, groups, partTitle, onOpenGroup } = props;
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
       title={group.title}
-      kickerExtra={prompt === null ? undefined : <CopyPrompt prompt={prompt} scope="group" />}
+      kickerExtra={<CopyPrompt prompt={askAgentPrompt({ group: group.id })} scope="group" />}
     >
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
       <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">

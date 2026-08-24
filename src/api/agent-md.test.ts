@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { ReviewMeta } from "./api.ts";
-import { agentPrompt, formatHunkRef, isImageSlot } from "./lib/agent-prompt.ts";
+import { agentClipboardPrompt, agentMd, formatHunkRef, isImageSlot } from "./agent-md.ts";
+import type { ApiReview } from "./types.ts";
 
 const baseSha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const headSha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -36,9 +36,19 @@ describe("isImageSlot", () => {
   });
 });
 
-describe("agentPrompt", () => {
+describe("agentClipboardPrompt", () => {
+  it("points at the markdown URL and stays short", () => {
+    const url = "http://127.0.0.1:4567/api/agent/overview.md";
+    const prompt = agentClipboardPrompt(url);
+    assert.equal(prompt, `Answer the following questions by using ${url}`);
+    assert.equal(prompt.includes("git diff"), false);
+    assert.ok(prompt.length < 120);
+  });
+});
+
+describe("agentMd", () => {
   it("pins both SHAs and every hunk ref on the overview", () => {
-    const prompt = agentPrompt(sampleMeta(), { kind: "overview" });
+    const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
     assert.match(prompt, new RegExp(`git diff --find-renames ${baseSha} ${headSha}`));
     assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
@@ -56,7 +66,7 @@ describe("agentPrompt", () => {
   });
 
   it("scopes a group prompt to that concern's hunks", () => {
-    const prompt = agentPrompt(sampleMeta(), { kind: "group", id: "cookie" });
+    const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "cookie" });
     assert.ok(prompt !== null);
     assert.match(prompt, /Review concern 01 of 02: Session cookie helper \(`cookie`\)/);
     assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
@@ -67,17 +77,17 @@ describe("agentPrompt", () => {
   });
 
   it("returns null for an unknown group", () => {
-    assert.equal(agentPrompt(sampleMeta(), { kind: "group", id: "missing" }), null);
+    assert.equal(agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "missing" }), null);
   });
 
   it("omits silent why, tickets, and coverage", () => {
-    const meta = sampleMeta();
-    delete meta.document.why;
-    delete meta.document.tickets;
-    meta.coverage.unassignedCount = 0;
-    meta.coverage.staleCount = 0;
-    meta.commits = [];
-    const prompt = agentPrompt(meta, { kind: "overview" });
+    const review = sampleReview();
+    delete review.document.why;
+    delete review.document.tickets;
+    review.coverage.unassignedCount = 0;
+    review.coverage.staleCount = 0;
+    review.commits = [];
+    const prompt = agentMd(review, { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
     assert.doesNotMatch(prompt, /Ticket #24 needs a prompt a coding agent can paste/);
     assert.doesNotMatch(prompt, /Tickets:/);
@@ -87,9 +97,9 @@ describe("agentPrompt", () => {
   });
 
   it("omits origin when the repo has no remote", () => {
-    const meta = sampleMeta();
-    meta.repo = { name: "example", origin: null };
-    const prompt = agentPrompt(meta, { kind: "overview" });
+    const review = sampleReview();
+    review.repo = { name: "example", origin: null };
+    const prompt = agentMd(review, { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
     assert.match(prompt, /Repository: example/);
     assert.doesNotMatch(prompt, /^Origin:/m);
@@ -97,7 +107,7 @@ describe("agentPrompt", () => {
   });
 });
 
-function sampleMeta(): ReviewMeta {
+function sampleReview(): ApiReview {
   return {
     document: {
       version: 1,
