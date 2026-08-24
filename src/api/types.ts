@@ -49,6 +49,10 @@ export type ApiBlameLine = {
 
 export type ApiReview = {
   document: ReviewDocument;
+  repo: {
+    name: string;
+    origin: string | null;
+  };
   resolved: {
     baseRef: string;
     headRef: string;

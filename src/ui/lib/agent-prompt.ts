@@ -72,11 +72,16 @@ function groupPrompt(meta: ReviewMeta, id: string): string | null {
 function identityBlock(meta: ReviewMeta): string {
   const { baseSha, headSha, baseRef, headRef } = meta.resolved;
   const named = `Named refs at pin: ${baseRef} ... ${headRef}`;
+  const repo =
+    meta.repo.origin !== null
+      ? `Repository: ${meta.repo.name}\nOrigin: ${meta.repo.origin}`
+      : `Repository: ${meta.repo.name}`;
   const commits =
     meta.commits.length === 0
       ? null
       : ["Commits:", ...meta.commits.map((commit) => `- ${commit.shortSha} ${commit.subject}`)].join("\n");
   return joinBlocks([
+    repo,
     "## Pinned SHAs",
     `base (merge-base)  ${baseSha}`,
     `head               ${headSha}`,
@@ -177,6 +182,8 @@ function stepsBlock(meta: ReviewMeta, fallbackTask: string): string {
     "## Steps",
     "",
     "1. Resolve the pinned SHAs.",
+    `   This repository is ${meta.repo.name}.`,
+    meta.repo.origin !== null ? `   Origin: ${meta.repo.origin}.` : undefined,
     `   Run \`git rev-parse --verify ${baseSha}\` and \`git rev-parse --verify ${headSha}\` in this repository.`,
     "   Done when both objects exist.",
     "",
@@ -189,7 +196,9 @@ function stepsBlock(meta: ReviewMeta, fallbackTask: string): string {
     "   Live git wins when they disagree.",
     `   If this paste has no question after it, ${fallbackTask}.`,
     "   Done when the answer cites the matching hunk refs.",
-  ].join("\n");
+  ]
+    .filter((line): line is string => line !== undefined)
+    .join("\n");
 }
 
 function joinBlocks(parts: Array<string | null | undefined>): string {

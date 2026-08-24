@@ -50,6 +50,8 @@ describe("agentPrompt", () => {
     assert.match(prompt, /Unassigned live hunks: 2/);
     assert.match(prompt, /Done when both objects exist/);
     assert.match(prompt, /Live git wins when they disagree/);
+    assert.match(prompt, /Repository: comprehende/);
+    assert.match(prompt, /Origin: git@github\.com:matemolnar8\/comprehende\.git/);
     assert.equal(prompt.includes("+++"), false);
   });
 
@@ -82,6 +84,16 @@ describe("agentPrompt", () => {
     assert.doesNotMatch(prompt, /Unassigned live hunks/);
     assert.doesNotMatch(prompt, /^Commits:/m);
     assert.match(prompt, /The what \(medium\):/);
+  });
+
+  it("omits origin when the repo has no remote", () => {
+    const meta = sampleMeta();
+    meta.repo = { name: "example", origin: null };
+    const prompt = agentPrompt(meta, { kind: "overview" });
+    assert.ok(prompt !== null);
+    assert.match(prompt, /Repository: example/);
+    assert.doesNotMatch(prompt, /^Origin:/m);
+    assert.doesNotMatch(prompt, / {3}Origin:/);
   });
 });
 
@@ -191,5 +203,9 @@ function sampleMeta(): ReviewMeta {
         date: "2026-08-24",
       },
     ],
+    repo: {
+      name: "comprehende",
+      origin: "git@github.com:matemolnar8/comprehende.git",
+    },
   };
 }

@@ -1,3 +1,4 @@
+import { basename } from "node:path";
 import { git, gitOk } from "./exec.ts";
 
 export async function assertWorkTree(cwd: string): Promise<void> {
@@ -25,6 +26,54 @@ export type PinnedRange = {
   headSha: string;
   mergeBaseSha: string;
 };
+
+export type RepoIdentity = {
+  name: string;
+  origin: string | null;
+};
+
+/** Last path segment of a git remote URL, without .git. */
+export function nameFromRemoteUrl(url: string): string | null {
+  let value = url.trim();
+  if (value === "") {
+    return null;
+  }
+  value = value.replace(/\.git$/i, "").replace(/\/+$/, "");
+  const pathPart = value.includes("://")
+    ? value.replace(/^[^:]+:\/\/[^/]+\//, "")
+    : value.includes(":")
+      ? value.slice(value.lastIndexOf(":") + 1)
+      : value;
+  const last = pathPart.split("/").filter(Boolean).at(-1);
+  return last === undefined || last === "" ? null : last;
+}
+
+export async function readRepoIdentity(cwd: string): Promise<RepoIdentity> {
+  const originText = (await git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true })).trim();
+  const origin = originText === "" ? null : stripRemoteCredentials(originText);
+  const top = (await git(cwd, ["rev-parse", "--show-toplevel"])).trim();
+  const fromOrigin = origin !== null ? nameFromRemoteUrl(origin) : null;
+  return { name: fromOrigin ?? basename(top), origin };
+}
+
+/** Drop userinfo from an http(s) remote so a copied prompt never carries a token. */
+export function stripRemoteCredentials(url: string): string {
+  const trimmed = url.trim();
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.username === "" && parsed.password === "") {
+      return trimmed;
+    }
+    parsed.username = "";
+    parsed.password = "";
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return trimmed;
+  }
+}
 
 /** Resolve refs to commits once. Later checkout or branch motion does not move these SHAs. */
 export async function pinRange(cwd: string, baseRef: string, headRef: string): Promise<PinnedRange> {

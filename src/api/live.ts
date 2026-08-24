@@ -4,7 +4,7 @@ import { readImageBlob } from "../git/blob.ts";
 import { fileLanguage, filePatchFromGit, readPathDiff, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
-import { pinRange, type PinnedRange } from "../git/repo.ts";
+import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
 import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
@@ -31,6 +31,7 @@ export type Snapshot = JsonSnapshot | BytesSnapshot;
 export type ReviewContext = {
   cwd: string;
   document: ReviewDocument;
+  repo: RepoIdentity;
   resolved: ApiReview["resolved"];
   files: DiffFile[];
   coverage: ReviewCoverage;
@@ -48,9 +49,11 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   const { files, coverage } = await coverReview(cwd, document, range);
   const commits = await listCommits(cwd, range.baseSha, range.headSha);
+  const repo = await readRepoIdentity(cwd);
   return {
     cwd,
     document,
+    repo,
     resolved: {
       baseRef: document.source.baseRef,
       headRef: document.source.headRef,
@@ -66,10 +69,11 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
 }
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
-  const { document, resolved, files, coverage, commits } = ctx;
+  const { document, repo, resolved, files, coverage, commits } = ctx;
   const lockfiles = lockfileFiles(files);
   return {
     document,
+    repo,
     resolved,
     coverage: {
       totalHunks: coverage.totalHunks,
