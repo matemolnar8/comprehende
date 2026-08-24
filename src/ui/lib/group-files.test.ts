@@ -18,6 +18,19 @@ describe("filesFromPayload", () => {
     assert.equal(files[0]?.added, 12);
     assert.equal(files[0]?.removed, 4);
     assert.equal(files[0]?.hunkCount, 1);
+    assert.equal(files[0]?.complete, true);
     assert.equal(fileIndexAtHunk(files, 0), 0);
+  });
+
+  it("keeps complete false when the payload says the group is a subset", () => {
+    const files = filesFromPayload([
+      {
+        path: "src/app.ts",
+        patch: "diff --git a/src/app.ts b/src/app.ts\n",
+        complete: false,
+        hunks: [],
+      },
+    ]);
+    assert.equal(files[0]?.complete, false);
   });
 });

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
 import { cmdIndex, cmdValidate, resolveDataPath, resolveOutPath } from "./commands.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
-import { openReview } from "../api/live.ts";
+import { openReview, pinReviewSource } from "../api/live.ts";
 import { coverageErrors } from "../review/coverage.ts";
 import { assertWorkTree } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
@@ -45,9 +45,10 @@ export async function run(argv: string[]): Promise<number> {
       }
       case "serve": {
         const dataPath = resolveDataPath(request.data, request.cwd);
-        const ctx = await openReview(request.cwd, dataPath);
+        const pin = await pinReviewSource(request.cwd, dataPath);
+        const ctx = await openReview(request.cwd, dataPath, pin);
         warnCoverage(ctx.coverage, "serve continues; git wins, unassigned/stale are visible");
-        const running = await startServer({ cwd: request.cwd, dataPath, port: request.port });
+        const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
         console.error(`serving ${dataPath}  cwd=${request.cwd}  localhost only`);
         if (request.open) {

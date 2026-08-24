@@ -18,6 +18,22 @@ export async function mergeBase(cwd: string, baseRef: string, headRef: string): 
   return sha.trim();
 }
 
+export type PinnedRange = {
+  baseRef: string;
+  headRef: string;
+  baseSha: string;
+  headSha: string;
+  mergeBaseSha: string;
+};
+
+/** Resolve refs to commits once. Later checkout or branch motion does not move these SHAs. */
+export async function pinRange(cwd: string, baseRef: string, headRef: string): Promise<PinnedRange> {
+  const baseSha = await resolveCommit(cwd, baseRef);
+  const headSha = await resolveCommit(cwd, headRef);
+  const mergeBaseSha = await mergeBase(cwd, baseSha, headSha);
+  return { baseRef, headRef, baseSha, headSha, mergeBaseSha };
+}
+
 export async function defaultBaseRef(cwd: string): Promise<string> {
   const remoteHead = await git(cwd, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], { allowFail: true });
   const trimmed = remoteHead.trim();

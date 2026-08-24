@@ -125,11 +125,20 @@ function parseGitPatch(patch: string, path: string): FileDiffMetadata | undefine
     return undefined;
   }
   try {
-    const parsed = parsePatchFiles(patch, `comprehende:${path}`);
+    const parsed = parsePatchFiles(patch, `comprehende:${path}:${patchKey(patch)}`);
     return parsed[0]?.files[0];
   } catch {
     return undefined;
   }
+}
+
+function patchKey(patch: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < patch.length; i++) {
+    hash ^= patch.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `${patch.length.toString(16)}:${(hash >>> 0).toString(16)}`;
 }
 
 function loadDiffFiles(fileDiff: FileDiffMetadata): Promise<FileDiffLoadedFiles> {
@@ -141,6 +150,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   split: boolean;
   wrap: boolean;
   themeType: "light" | "dark";
+  loadFiles: boolean;
   onPostRender?: (node: HTMLElement) => void;
 }) {
   const onPostRenderRef = useRef(props.onPostRender);
@@ -157,14 +167,14 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
       hunkSeparators: GAP_SEPARATOR,
-      loadDiffFiles,
+      ...(props.loadFiles ? { loadDiffFiles } : {}),
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
       onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
         if (phase === "unmount") return;
         onPostRenderRef.current?.(node);
       },
     }),
-    [props.split, props.themeType, props.wrap],
+    [props.loadFiles, props.split, props.themeType, props.wrap],
   );
   return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
 });
@@ -256,8 +266,10 @@ export function PierreFileDiff(props: {
   wrap: boolean;
   splitRatio: number;
   onSplitRatio: (ratio: number) => void;
+  /** False for grouped subset patches. Full-file blobs do not match those patches. */
+  hydrate?: boolean;
 }) {
-  const { path, patch, split, wrap, splitRatio, onSplitRatio } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true } = props;
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
@@ -270,20 +282,26 @@ export function PierreFileDiff(props: {
   }, [parsed]);
 
   useEffect(() => {
-    if (parsed === undefined || !canHydrateDiff(parsed)) {
+    if (parsed === undefined || !hydrate || !canHydrateDiff(parsed)) {
       return;
     }
     let cancelled = false;
-    void loadDiffFiles(parsed).then((files) => {
-      if (cancelled || !parsed.isPartial) {
-        return;
-      }
-      setFileDiff(hydratePartialDiff("clone", parsed, files));
-    });
+    void loadDiffFiles(parsed)
+      .then((files) => {
+        if (cancelled || !parsed.isPartial) {
+          return;
+        }
+        try {
+          setFileDiff(hydratePartialDiff("clone", parsed, files));
+        } catch {
+          // Keep the parsed subset patch. Full blobs only match when this group has every hunk.
+        }
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [parsed]);
+  }, [parsed, hydrate]);
 
   useEffect(() => {
     const wrapper = wrapperRef.current;
@@ -343,6 +361,7 @@ export function PierreFileDiff(props: {
         split={splitPanes}
         wrap={wrap}
         themeType={resolved}
+        loadFiles={hydrate}
         onPostRender={onPostRender}
       />
       {splitPanes ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}

@@ -11,6 +11,7 @@ export type GroupFile = {
   removed: number;
   hunkCount: number;
   firstIndex: number;
+  complete: boolean;
   hunks: LiveHunk[];
 };
 
@@ -23,6 +24,7 @@ export function filesFromPayload(
     patch: string;
     added?: number;
     removed?: number;
+    complete?: boolean;
     hunks: LiveHunk[];
   }[],
 ): GroupFile[] {
@@ -38,6 +40,7 @@ export function filesFromPayload(
       removed: file.removed ?? delta.removed,
       hunkCount: Math.max(file.hunks.length, 1),
       firstIndex,
+      complete: file.complete !== false,
       hunks: file.hunks,
     };
     if (file.oldPath !== undefined) {

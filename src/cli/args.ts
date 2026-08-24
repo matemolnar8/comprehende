@@ -30,7 +30,7 @@ Commands:
             Check schema, ref resolution, and hunk coverage
 
   serve     --data <review.json> [--port <n>] [--open]
-            Serve the local UI on 127.0.0.1 (re-reads git on each request)
+            Serve the local UI on 127.0.0.1 (pins commit SHAs at start)
 
   export    --data <review.json> --out <dir>
             Write a static site (same UI + frozen git payloads). No server after that.
@@ -45,8 +45,8 @@ Options:
   -h, --help       Show this help
   -v, --version    Show version
 
-Diffs always come from git in cwd. The review document is interpretation only.
-Export is a point-in-time copy. Rebase or new commits need a new export.
+Diffs come from git objects at the pinned SHAs. The review document is interpretation only.
+Serve resolves refs when it starts. A later checkout does not change that review.
 `;
 
 export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {

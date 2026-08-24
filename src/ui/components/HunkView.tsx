@@ -164,6 +164,7 @@ export function HunkView(props: {
             wrap={wrap}
             splitRatio={splitRatio}
             onSplitRatio={onSplitRatio}
+            hydrate={file.complete}
           />
         )}
       </div>
