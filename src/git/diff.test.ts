@@ -103,6 +103,20 @@ index 111..222 100644
  size 12
 `;
 
+const TEXT_PNG_SAMPLE = `diff --git a/shots/welcome.png b/shots/welcome.png
+index 111..222 100644
+--- a/shots/welcome.png
++++ b/shots/welcome.png
+@@ -88,3 +88,3 @@
+ context
+-old
++new
+@@ -156,2 +156,2 @@
+ more
+-before
++after
+`;
+
 describe("classifyDiffFiles", () => {
   it("turns binary and LFS pointer image files into one image hunk", () => {
     const files = classifyDiffFiles(parseUnifiedDiff(IMAGE_SAMPLE));
@@ -122,6 +136,19 @@ describe("classifyDiffFiles", () => {
     assert.equal(lfs.image, true);
     assert.equal(lfs.hunks.length, 1);
     assert.equal(lfs.hunks[0]?.path, "shots/home.png");
+  });
+
+  it("turns a text-diffed image path into one image hunk", () => {
+    const files = classifyDiffFiles(parseUnifiedDiff(TEXT_PNG_SAMPLE));
+    assert.equal(files.length, 1);
+    const png = files[0];
+    assert.ok(png);
+    assert.equal(png.binary, false);
+    assert.equal(png.image, true);
+    assert.equal(png.hunks.length, 1);
+    assert.equal(png.hunks[0]?.oldStart, 0);
+    assert.equal(png.hunks[0]?.newStart, 0);
+    assert.equal(png.hunks[0]?.header, "image");
   });
 
   it("leaves non-image binaries without hunks", () => {
