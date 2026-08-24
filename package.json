@@ -1,6 +1,6 @@
 {
   "name": "comprehende",
-  "version": "0.4.2",
+  "version": "0.4.1",
   "description": "Local review assistant that groups git diffs so humans can comprehend AI code changes.",
   "type": "module",
   "bin": {
