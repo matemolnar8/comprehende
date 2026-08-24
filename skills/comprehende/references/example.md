@@ -2,7 +2,10 @@
 
 Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
-`git` depends on `contracts`; both use `part` "Hunk identity". `docs` is a separate part. The ticket belongs to "Hunk identity". Ticket #12 names why this work exists, so document `why` is present. The README part does not cancel it. Document `summary` still names both stories. Each layer has its own `why`. `contracts` enables `git`. `docs` is a separate story.
+- `login` depends on `cookie`. Both use `part` "Session cookie".
+- `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
+- Ticket #12 names why this work exists, so document `why` is present. Document `summary` names both stories.
+- `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 
 ```json
 {
@@ -13,30 +16,29 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "size": "small",
-  "why": "The review document must not store a patch. Serve joins live git by hunk identity.",
-  "summary": "Hunk identity contract and live git join, plus a separate README wording change.",
+  "why": "Ticket #12 requires login sessions that client scripts cannot read.",
+  "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it. The README documents this behavior.",
   "tickets": [
     {
       "id": "#12",
-      "title": "Split the git index from the UI",
-      "part": "Hunk identity"
+      "title": "HttpOnly session cookies",
+      "part": "Session cookie"
     }
   ],
   "groups": [
     {
-      "id": "contracts",
-      "title": "Review document contract",
-      "why": "Later layers join live git by hunk identity. That contract has to exist first.",
-      "summary": "Hunk refs are identity; no patch fields on the document.",
-      "part": "Hunk identity",
+      "id": "cookie",
+      "title": "Session cookie helper",
+      "why": "The login route needs one helper to apply the session cookie options.",
+      "summary": "`setSessionCookie` applies the required options to session cookies.",
+      "part": "Session cookie",
       "lookFor": [
-        "Unknown fields on the document must fail validation.",
-        "Foundation: later layers depend on these shapes."
+        "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
       ],
       "suggestedOrder": 0,
       "hunkRefs": [
         {
-          "path": "src/schema/types.ts",
+          "path": "src/auth/session.ts",
           "oldStart": 1,
           "oldLines": 20,
           "newStart": 1,
@@ -45,17 +47,19 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       ]
     },
     {
-      "id": "git",
-      "title": "Live git join",
-      "why": "#12 is the split: serve must join by those refs so the UI never stores a patch.",
-      "summary": "Serve-time diff is joined by (path, oldStart, newStart).",
-      "part": "Hunk identity",
-      "lookFor": ["Stale refs are flagged; git still wins."],
-      "dependsOn": ["contracts"],
+      "id": "login",
+      "title": "Login route",
+      "why": "Ticket #12 requires HttpOnly session cookies. The route must set them through the helper.",
+      "summary": "The login route in `login.ts` uses `setSessionCookie` from `session.ts`.",
+      "part": "Session cookie",
+      "lookFor": [
+        "For `rememberMe = false`, compare the cookie: old code permits script access; new code sets `HttpOnly` and omits `Max-Age`."
+      ],
+      "dependsOn": ["cookie"],
       "suggestedOrder": 1,
       "hunkRefs": [
         {
-          "path": "src/git/diff.ts",
+          "path": "src/api/login.ts",
           "oldStart": 10,
           "oldLines": 8,
           "newStart": 10,
@@ -66,10 +70,9 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "docs",
       "title": "README wording",
-      "why": "Separate story. The contract does not depend on this.",
-      "summary": "Docs only; the contract does not depend on this.",
+      "why": "The README still describes the previous cookie behavior.",
+      "summary": "The README section on sessions matches the new cookie behavior.",
       "part": "README",
-      "lookFor": ["No code imports this file."],
       "suggestedOrder": 2,
       "hunkRefs": [
         {
