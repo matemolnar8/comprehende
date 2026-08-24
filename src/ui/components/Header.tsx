@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
-import { CtaPicker } from "./CtaPicker.tsx";
 import { Kbd } from "./Kbd.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
@@ -78,7 +77,6 @@ export function Header(props: {
           </div>
           <Kbd className="max-sm:hidden">s</Kbd>
         </div>
-        <CtaPicker />
         <ThemeToggle />
         {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
         <Tooltip>

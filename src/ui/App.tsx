@@ -14,7 +14,6 @@ import { initialSelection, persistSelection, sameSelection, shiftSelection, type
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { agentPrompt } from "./lib/agent-prompt.ts";
-import { CtaProvider } from "./lib/cta-context.tsx";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -235,8 +234,7 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <CtaProvider>
-        <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
+      <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
         <Header
           meta={meta}
           wrap={wrap}
@@ -309,7 +307,6 @@ export function App() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
-      </CtaProvider>
     </TooltipProvider>
   );
 }
