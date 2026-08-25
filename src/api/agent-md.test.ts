@@ -47,19 +47,22 @@ describe("agentClipboardPrompt", () => {
 });
 
 describe("agentMd", () => {
-  it("pins both SHAs and points at each concern's markdown on the overview", () => {
+  it("puts steps first, pins SHAs, and thins concerns on the overview", () => {
     const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
+    assert.match(prompt, /^Answer questions about this git change\./);
+    assert.match(prompt, /## Steps/);
+    assert.match(prompt, /When no question follows this paste, explain this change\./);
     assert.match(prompt, new RegExp(`git diff --find-renames ${baseSha} ${headSha}`));
-    assert.match(prompt, /Review concerns/);
+    assert.match(prompt, /## Pin/);
+    assert.match(prompt, /## Review concerns/);
     assert.match(prompt, /Session cookie helper \(`cookie`\)/);
+    assert.match(prompt, /setSessionCookie applies the required options\./);
     assert.match(prompt, /\[groups\/cookie\.md\]\(groups\/cookie\.md\)/);
     assert.match(prompt, /\[groups\/login\.md\]\(groups\/login\.md\)/);
-    assert.match(prompt, /Each review concern has its own markdown file/);
-    assert.match(prompt, /Read a file when that concern is relevant to the question/);
-    assert.match(prompt, /Do not fetch every file before you know which concerns you need/);
+    assert.match(prompt, /Read Review concerns\. Fetch a concern file only when that concern is relevant/);
+    assert.match(prompt, /Done when every concern the question touches has its markdown loaded/);
     assert.match(prompt, /When you show code, quote the live git lines/);
-    assert.match(prompt, /Humans cannot read hunk refs/);
     assert.match(prompt, /Done when the answer quotes the live code/);
     assert.match(prompt, /#24 Explain with coding agent button/);
     assert.match(prompt, /Unassigned live hunks: 2/);
@@ -67,6 +70,14 @@ describe("agentMd", () => {
     assert.match(prompt, /Live git wins when they disagree/);
     assert.match(prompt, /Repository: comprehende/);
     assert.match(prompt, /Origin: git@github\.com:matemolnar8\/comprehende\.git/);
+    assert.match(prompt, /Commits:/);
+    assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
+    assert.ok(prompt.indexOf("## Pin") < prompt.indexOf("## Review concerns"));
+    assert.doesNotMatch(prompt, /The login route needs one helper/);
+    assert.doesNotMatch(prompt, /Identify it in live git first/);
+    assert.doesNotMatch(prompt, /Do not fetch every file/);
+    assert.doesNotMatch(prompt, /Do not show hunk refs/);
+    assert.doesNotMatch(prompt, /Humans cannot read hunk refs/);
     assert.doesNotMatch(prompt, /src\/auth\/session\.ts @@/);
     assert.doesNotMatch(prompt, /src\/api\/login\.ts @@/);
     assert.doesNotMatch(prompt, /Hunk refs:/);
@@ -75,19 +86,27 @@ describe("agentMd", () => {
     assert.equal(prompt.includes("+++"), false);
   });
 
-  it("scopes a group prompt to that concern's hunks", () => {
+  it("scopes a group prompt to that concern's hunks without overview-only reference", () => {
     const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "cookie" });
     assert.ok(prompt !== null);
+    assert.match(prompt, /^Answer questions about this review concern\./);
+    assert.match(prompt, /When no question follows this paste, explain this review concern\./);
     assert.match(prompt, /Review concern 01 of 02: Session cookie helper \(`cookie`\)/);
     assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
     assert.match(prompt, /src\/util\.ts -> src\/helpers\.ts @@ -4,8 \+4,12 @@/);
-    assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
-    assert.match(prompt, /explain this review concern/);
+    assert.match(prompt, /A hunk ref is a pointer into the live git diff at the pinned SHAs/);
     assert.match(prompt, /Hunk refs with @@ -0,0 \+0,0 @@ are image or binary slots/);
     assert.match(prompt, /When you show code, quote the live git lines/);
     assert.match(prompt, /Done when the answer quotes the live code/);
+    assert.match(prompt, /## Pin/);
+    assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
+    assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
+    assert.doesNotMatch(prompt, /Tickets:/);
+    assert.doesNotMatch(prompt, /Commits:/);
     assert.doesNotMatch(prompt, /cites the matching hunk refs/);
     assert.doesNotMatch(prompt, /groups\/login\.md/);
+    assert.doesNotMatch(prompt, /Identify it in live git first/);
+    assert.doesNotMatch(prompt, /Do not show hunk refs/);
   });
 
   it("returns null for an unknown group", () => {
