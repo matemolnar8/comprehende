@@ -1,4 +1,4 @@
-export type ThemePreference = "light" | "dark" | "system";
+export type ThemePreference = "light" | "dark" | "auto";
 export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "comprehende.theme";
@@ -9,14 +9,17 @@ export const DIFF_THEMES = {
 } as const;
 
 export function parseThemePreference(raw: string | null): ThemePreference {
-  if (raw === "light" || raw === "dark" || raw === "system") {
+  if (raw === "light" || raw === "dark" || raw === "auto") {
     return raw;
   }
-  return "system";
+  if (raw === "system") {
+    return "auto";
+  }
+  return "auto";
 }
 
 export function resolveTheme(preference: ThemePreference, prefersDark: boolean): ResolvedTheme {
-  if (preference === "system") {
+  if (preference === "auto") {
     return prefersDark ? "dark" : "light";
   }
   return preference;
@@ -31,7 +34,7 @@ export function readStoredPreference(): ThemePreference {
   try {
     return parseThemePreference(localStorage.getItem(THEME_STORAGE_KEY));
   } catch {
-    return "system";
+    return "auto";
   }
 }
 

@@ -3,21 +3,25 @@ import { describe, it } from "node:test";
 import { parseThemePreference, resolveTheme } from "./lib/theme.ts";
 
 describe("theme preference", () => {
-  it("treats missing or unknown values as system", () => {
-    assert.equal(parseThemePreference(null), "system");
-    assert.equal(parseThemePreference(""), "system");
-    assert.equal(parseThemePreference("dim"), "system");
+  it("treats missing or unknown values as auto", () => {
+    assert.equal(parseThemePreference(null), "auto");
+    assert.equal(parseThemePreference(""), "auto");
+    assert.equal(parseThemePreference("dim"), "auto");
   });
 
-  it("accepts stored light, dark, and system", () => {
+  it("accepts stored light, dark, and auto", () => {
     assert.equal(parseThemePreference("light"), "light");
     assert.equal(parseThemePreference("dark"), "dark");
-    assert.equal(parseThemePreference("system"), "system");
+    assert.equal(parseThemePreference("auto"), "auto");
   });
 
-  it("follows the OS when preference is system", () => {
-    assert.equal(resolveTheme("system", true), "dark");
-    assert.equal(resolveTheme("system", false), "light");
+  it("migrates legacy system value to auto", () => {
+    assert.equal(parseThemePreference("system"), "auto");
+  });
+
+  it("follows the OS when preference is auto", () => {
+    assert.equal(resolveTheme("auto", true), "dark");
+    assert.equal(resolveTheme("auto", false), "light");
   });
 
   it("keeps an explicit preference over the OS", () => {

@@ -29,8 +29,9 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setPreference(resolved === "dark" ? "light" : "dark");
-  }, [resolved, setPreference]);
+    const next: ThemePreference = preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
+    setPreference(next);
+  }, [preference, setPreference]);
 
   useEffect(() => {
     applyResolvedTheme(resolved);
