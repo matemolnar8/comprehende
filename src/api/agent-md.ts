@@ -19,6 +19,10 @@ export function agentClipboardPrompt(url: string): string {
   return `Answer the following questions by using ${url}`;
 }
 
+function groupAgentMdHref(id: string): string {
+  return `groups/${encodeURIComponent(id)}.md`;
+}
+
 export function agentMd(review: ApiReview, resource: AgentMdResource): string | null {
   if (resource.target === "overview") {
     return overviewAgentMd(review);
@@ -27,18 +31,16 @@ export function agentMd(review: ApiReview, resource: AgentMdResource): string | 
 }
 
 function overviewAgentMd(review: ApiReview): string {
-  const hunks = review.document.groups.flatMap((group) => group.hunkRefs);
   const blocks = [
     "Answer questions about this git change. Identify it in live git first. Then answer.",
     identityBlock(review),
-    interpretationLine(),
+    overviewInterpretation(),
     ticketsBlock(review),
     coverageBlock(review),
     review.document.why !== undefined ? joinBlocks(["The why:", review.document.why]) : null,
     joinBlocks([`The what (${sizeLabel(review.document.size)}):`, review.document.summary]),
     reviewConcernsBlock(review),
-    imageNote(hunks),
-    stepsBlock(review, "explain this change"),
+    overviewSteps(review),
   ];
   return joinBlocks(blocks);
 }
@@ -56,7 +58,7 @@ function groupAgentMd(review: ApiReview, id: string): string | null {
   const blocks = [
     "Answer questions about this review concern. Identify it in live git first. Then answer.",
     identityBlock(review),
-    interpretationLine(),
+    groupInterpretation(),
     ticketsBlock(review),
     heading,
     listed.part !== undefined ? `Part: ${listed.part}` : null,
@@ -71,7 +73,7 @@ function groupAgentMd(review: ApiReview, id: string): string | null {
     listed.staleCount > 0
       ? `Stale hunk refs in this concern: ${listed.staleCount}. Live git wins. The pointer is flagged, not replaced.`
       : null,
-    stepsBlock(review, "explain this review concern"),
+    groupSteps(review),
   ];
   return joinBlocks(blocks);
 }
@@ -99,8 +101,23 @@ function identityBlock(review: ApiReview): string {
   ]);
 }
 
-function interpretationLine(): string {
-  return "Live git is the diff at the pinned SHAs. A hunk ref is a pointer into that diff. The why and the what are interpretation.";
+function overviewInterpretation(): string {
+  return joinBlocks([
+    "Live git is the diff at the pinned SHAs. The why and the what are interpretation.",
+    "Each review concern has its own markdown file. Read a file when that concern is relevant to the question. Do not fetch every file before you know which concerns you need.",
+    showCodeRule(),
+  ]);
+}
+
+function groupInterpretation(): string {
+  return joinBlocks([
+    "Live git is the diff at the pinned SHAs. A hunk ref is a pointer into that diff. The why and the what are interpretation.",
+    showCodeRule(),
+  ]);
+}
+
+function showCodeRule(): string {
+  return "When you show code, quote the live git lines. Do not show hunk refs. Humans cannot read hunk refs.";
 }
 
 function ticketsBlock(review: ApiReview): string | null {
@@ -131,8 +148,7 @@ function coverageBlock(review: ApiReview): string | null {
 
 function reviewConcernsBlock(review: ApiReview): string {
   const sections = review.groups.map((group, i) => {
-    const documentGroup = review.document.groups.find((item) => item.id === group.id);
-    const hunks = documentGroup?.hunkRefs ?? [];
+    const href = groupAgentMdHref(group.id);
     return joinBlocks([
       `### ${padIndex(i + 1)} ${group.title} (\`${group.id}\`)`,
       group.part !== undefined ? `Part: ${group.part}` : null,
@@ -140,8 +156,8 @@ function reviewConcernsBlock(review: ApiReview): string {
       group.why,
       "The what:",
       group.summary,
-      lookForBlock(group.lookFor),
-      hunkList("Hunk refs:", hunks),
+      dependsOnBlock(review, group.dependsOn),
+      `[${href}](${href})`,
     ]);
   });
   return ["## Review concerns", ...sections].join("\n\n");
@@ -183,16 +199,32 @@ function imageNote(hunks: HunkRef[]): string | null {
   return "Hunk refs with @@ -0,0 +0,0 @@ are image or binary slots. Identify those by path.";
 }
 
-function stepsBlock(review: ApiReview, fallbackTask: string): string {
+function overviewSteps(review: ApiReview): string {
+  return [
+    "## Steps",
+    "",
+    ...resolveShaSteps(review),
+    "",
+    "2. Choose the relevant review concerns.",
+    "   Read the list below. Fetch a concern's markdown file when that concern is relevant to the question.",
+    "   Do not fetch every file before you know which concerns you need.",
+    "   Done when you have the markdown for the concerns you need.",
+    "",
+    "3. Answer from live git.",
+    "   Follow those files. Use the why and the what as interpretation.",
+    "   Live git wins when they disagree.",
+    `   ${showCodeRule()}`,
+    "   If this paste has no question after it, explain this change.",
+    "   Done when the answer quotes the live code.",
+  ].join("\n");
+}
+
+function groupSteps(review: ApiReview): string {
   const { baseSha, headSha } = review.resolved;
   return [
     "## Steps",
     "",
-    "1. Resolve the pinned SHAs.",
-    `   This repository is ${review.repo.name}.`,
-    review.repo.origin !== null ? `   Origin: ${review.repo.origin}.` : undefined,
-    `   Run \`git rev-parse --verify ${baseSha}\` and \`git rev-parse --verify ${headSha}\` in this repository.`,
-    "   Done when both objects exist.",
+    ...resolveShaSteps(review),
     "",
     "2. Load the hunks.",
     `   For each hunk ref, run \`git diff --find-renames ${baseSha} ${headSha} -- <path>\` and keep the hunk whose header matches the @@ range.`,
@@ -201,11 +233,21 @@ function stepsBlock(review: ApiReview, fallbackTask: string): string {
     "3. Answer from live git.",
     "   Read those hunks. Use the why and the what as interpretation.",
     "   Live git wins when they disagree.",
-    `   If this paste has no question after it, ${fallbackTask}.`,
-    "   Done when the answer cites the matching hunk refs.",
-  ]
-    .filter((line): line is string => line !== undefined)
-    .join("\n");
+    `   ${showCodeRule()}`,
+    "   If this paste has no question after it, explain this review concern.",
+    "   Done when the answer quotes the live code.",
+  ].join("\n");
+}
+
+function resolveShaSteps(review: ApiReview): string[] {
+  const { baseSha, headSha } = review.resolved;
+  return [
+    "1. Resolve the pinned SHAs.",
+    `   This repository is ${review.repo.name}.`,
+    review.repo.origin !== null ? `   Origin: ${review.repo.origin}.` : undefined,
+    `   Run \`git rev-parse --verify ${baseSha}\` and \`git rev-parse --verify ${headSha}\` in this repository.`,
+    "   Done when both objects exist.",
+  ].filter((line): line is string => line !== undefined);
 }
 
 function padIndex(index: number): string {

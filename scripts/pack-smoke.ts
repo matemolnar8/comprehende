@@ -109,6 +109,8 @@ async function run(): Promise<void> {
   assert.equal(existsSync(join(outDir, "api/agent/groups/all.md")), true, "export must write group agent markdown");
   const overviewMd = await readFile(join(outDir, "api/agent/overview.md"), "utf8");
   assert.match(overviewMd, /git diff --find-renames/);
+  assert.match(overviewMd, /\[groups\/all\.md\]\(groups\/all\.md\)/);
+  assert.doesNotMatch(overviewMd, /@@ -/);
   assert.equal(overviewMd.includes("+++"), false, "agent markdown must not include patch text");
   assert.equal(existsSync(join(outDir, ".git")), false, "export must not copy git");
   assert.match(exportOut, /\/site/);

@@ -47,21 +47,31 @@ describe("agentClipboardPrompt", () => {
 });
 
 describe("agentMd", () => {
-  it("pins both SHAs and every hunk ref on the overview", () => {
+  it("pins both SHAs and points at each concern's markdown on the overview", () => {
     const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
     assert.match(prompt, new RegExp(`git diff --find-renames ${baseSha} ${headSha}`));
-    assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
-    assert.match(prompt, /src\/util\.ts -> src\/helpers\.ts @@ -4,8 \+4,12 @@/);
-    assert.match(prompt, /src\/api\/login\.ts @@ -10,8 \+10,24 @@/);
     assert.match(prompt, /Review concerns/);
     assert.match(prompt, /Session cookie helper \(`cookie`\)/);
+    assert.match(prompt, /\[groups\/cookie\.md\]\(groups\/cookie\.md\)/);
+    assert.match(prompt, /\[groups\/login\.md\]\(groups\/login\.md\)/);
+    assert.match(prompt, /Each review concern has its own markdown file/);
+    assert.match(prompt, /Read a file when that concern is relevant to the question/);
+    assert.match(prompt, /Do not fetch every file before you know which concerns you need/);
+    assert.match(prompt, /When you show code, quote the live git lines/);
+    assert.match(prompt, /Humans cannot read hunk refs/);
+    assert.match(prompt, /Done when the answer quotes the live code/);
     assert.match(prompt, /#24 Explain with coding agent button/);
     assert.match(prompt, /Unassigned live hunks: 2/);
     assert.match(prompt, /Done when both objects exist/);
     assert.match(prompt, /Live git wins when they disagree/);
     assert.match(prompt, /Repository: comprehende/);
     assert.match(prompt, /Origin: git@github\.com:matemolnar8\/comprehende\.git/);
+    assert.doesNotMatch(prompt, /src\/auth\/session\.ts @@/);
+    assert.doesNotMatch(prompt, /src\/api\/login\.ts @@/);
+    assert.doesNotMatch(prompt, /Hunk refs:/);
+    assert.doesNotMatch(prompt, /Look for:/);
+    assert.doesNotMatch(prompt, /Breaking\. Throws when httpOnly is false/);
     assert.equal(prompt.includes("+++"), false);
   });
 
@@ -74,6 +84,10 @@ describe("agentMd", () => {
     assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
     assert.match(prompt, /explain this review concern/);
     assert.match(prompt, /Hunk refs with @@ -0,0 \+0,0 @@ are image or binary slots/);
+    assert.match(prompt, /When you show code, quote the live git lines/);
+    assert.match(prompt, /Done when the answer quotes the live code/);
+    assert.doesNotMatch(prompt, /cites the matching hunk refs/);
+    assert.doesNotMatch(prompt, /groups\/login\.md/);
   });
 
   it("returns null for an unknown group", () => {
