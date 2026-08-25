@@ -2,6 +2,7 @@ import { groupIndex, type ReviewMeta } from "../api.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
+import { FileRail } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
@@ -19,6 +20,7 @@ export function Group(props: {
   splitRatio: number;
   wrap: boolean;
   viewedPaths: ReadonlySet<string>;
+  onScrollToHunk: (index: number) => void;
   onOpenGroup: (id: string) => void;
   onOpenFile: (path: string) => void;
   onSplitRatio: (ratio: number) => void;
@@ -28,6 +30,24 @@ export function Group(props: {
     props;
   const lockfiles = bucket === "lockfiles";
   const showStrand = strandColor !== undefined || lockfiles;
+
+  const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
+
+  const renderFile = (file: GroupFile, _idx: number, active: boolean) => (
+    <HunkView
+      key={file.path}
+      file={file}
+      active={active}
+      index={file.firstIndex}
+      split={split}
+      splitRatio={splitRatio}
+      wrap={wrap}
+      viewed={viewedPaths.has(file.path)}
+      onSplitRatio={props.onSplitRatio}
+      onOpen={props.onOpenFile}
+      onViewed={props.onViewed}
+    />
+  );
 
   return (
     <>
@@ -68,29 +88,18 @@ export function Group(props: {
       {!loading && files.length === 0 && hunkError === null ? (
         <p className="mt-8 text-muted-foreground">No hunks in this group.</p>
       ) : null}
+
       {!loading && files.length > 0 ? (
         <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
-          {files.filter((file) => viewedPaths.has(file.path)).length} of {files.length} files viewed
+          {viewedCount} of {files.length} files viewed
+          <span className="hidden sm:inline"> · j/k to move, v to toggle</span>
         </p>
       ) : null}
+
       {!loading && files.length > 0 ? (
-        <div className="mt-4 space-y-8">
-          {files.map((file) => (
-            <HunkView
-              key={file.path}
-              file={file}
-              active={activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
-              index={file.firstIndex}
-              split={split}
-              splitRatio={splitRatio}
-              wrap={wrap}
-              viewed={viewedPaths.has(file.path)}
-              onSplitRatio={props.onSplitRatio}
-              onOpen={props.onOpenFile}
-              onViewed={props.onViewed}
-            />
-          ))}
-        </div>
+        <FileRail files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk} onViewed={props.onViewed}>
+          {files.map((file) => renderFile(file, file.firstIndex, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
+        </FileRail>
       ) : null}
     </>
   );

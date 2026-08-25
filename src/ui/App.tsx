@@ -133,7 +133,19 @@ export function App() {
   const scrollToHunk = useCallback((index: number) => {
     setActiveHunk(index);
     requestAnimationFrame(() => {
-      document.querySelector(`[data-hunk="${index}"]`)?.scrollIntoView({ block: "nearest" });
+      requestAnimationFrame(() => {
+        const main = mainRef.current;
+        const target = (main ?? document).querySelector(`[data-hunk="${index}"]`) as HTMLElement | null;
+        if (target === null || main === null) {
+          target?.scrollIntoView({ block: "start", behavior: "instant" });
+          return;
+        }
+        // scroll the file header to the top of the main viewport (below its padding)
+        const mainRect = main.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const top = targetRect.top - mainRect.top + main.scrollTop - 8;
+        main.scrollTo({ top, behavior: "instant" });
+      });
     });
   }, []);
 
@@ -269,7 +281,7 @@ export function App() {
                   onClose={closeInspector}
                 />
               ) : (
-                <main ref={mainRef} className="h-full overflow-auto scroll-smooth px-10 py-8" aria-busy={hunksLoading}>
+                <main ref={mainRef} className="h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
                     <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (
@@ -293,6 +305,7 @@ export function App() {
                       splitRatio={splitRatio}
                       wrap={wrap}
                       viewedPaths={viewedPaths}
+                      onScrollToHunk={scrollToHunk}
                       onOpenGroup={(id) => selectWithMotion({ kind: "group", id })}
                       onOpenFile={openInspector}
                       onSplitRatio={setSplitRatio}
