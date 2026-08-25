@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MoonIcon, SunIcon } from "lucide-react";
+import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { reviewRef } from "../lib/review-ref.ts";
 import { waitCopy } from "../lib/wait.ts";
@@ -140,21 +140,23 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
 }
 
 function ThemeToggle() {
-  const { resolved, toggleTheme } = useTheme();
-  const next = resolved === "dark" ? "light" : "dark";
+  const { preference, toggleTheme } = useTheme();
+  const next = preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
+  const label = next === "auto" ? "Use auto theme" : `Use ${next} theme`;
+  const tooltip = next === "auto" ? "Follow system" : `Use ${next} theme`;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
           size="icon-sm"
           variant="outline"
-          aria-label={`Use ${next} theme`}
+          aria-label={label}
           onClick={toggleTheme}
         >
-          {resolved === "dark" ? <SunIcon /> : <MoonIcon />}
+          {preference === "light" ? <SunIcon /> : preference === "dark" ? <MoonIcon /> : <MonitorIcon />}
         </Button>
       </TooltipTrigger>
-      <TooltipContent>Use {next} theme</TooltipContent>
+      <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
   );
 }
