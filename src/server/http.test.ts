@@ -100,6 +100,25 @@ describe("serve API", () => {
     assert.equal(blameRes.status, 200);
     const blame = (await blameRes.json()) as { lines: unknown[] };
     assert.ok(blame.lines.length > 0);
+
+    const overviewMd = await fetch(new URL(apiHref({ kind: "agent-md", target: "overview" }), `${running.url}/`));
+    assert.equal(overviewMd.status, 200);
+    assert.match(overviewMd.headers.get("content-type") ?? "", /text\/markdown/);
+    const overviewText = await overviewMd.text();
+    assert.match(overviewText, /git diff --find-renames/);
+    assert.match(overviewText, /All changes \(`all`\)/);
+    assert.equal(overviewText.includes("+++"), false);
+
+    const groupMd = await fetch(
+      new URL(apiHref({ kind: "agent-md", target: "group", group: group.id }), `${running.url}/`),
+    );
+    assert.equal(groupMd.status, 200);
+    assert.match(await groupMd.text(), /Review concern 01 of 01: All changes \(`all`\)/);
+
+    const missingMd = await fetch(
+      new URL(apiHref({ kind: "agent-md", target: "group", group: "nope" }), `${running.url}/`),
+    );
+    assert.equal(missingMd.status, 404);
   });
 
   it("keeps file contents at the SHAs captured when serve started", async () => {

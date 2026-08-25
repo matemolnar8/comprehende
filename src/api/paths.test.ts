@@ -6,6 +6,9 @@ describe("api paths", () => {
   it("round-trips review, hunks, and nested file paths", () => {
     const resources: ApiResource[] = [
       { kind: "review" },
+      { kind: "agent-md", target: "overview" },
+      { kind: "agent-md", target: "group", group: "all" },
+      { kind: "agent-md", target: "group", group: "weird name" },
       { kind: "hunks", group: "unassigned" },
       { kind: "hunks", group: "lockfiles" },
       { kind: "hunks", group: "all" },
@@ -43,5 +46,21 @@ describe("api paths", () => {
 
   it("rejects path traversal", () => {
     assert.equal(parseApiPath("/api/files/new/../secret.json"), undefined);
+  });
+
+  it("writes agent markdown under api/agent", () => {
+    const overview = { kind: "agent-md", target: "overview" } as const;
+    assert.equal(apiHref(overview), "api/agent/overview.md");
+    assert.equal(apiFsRel(overview), "api/agent/overview.md");
+    assert.deepEqual(parseApiPath("/api/agent/overview.md"), overview);
+
+    const group = { kind: "agent-md", target: "group", group: "cookie" } as const;
+    assert.equal(apiHref(group), "api/agent/groups/cookie.md");
+    assert.deepEqual(parseApiPath("/api/agent/groups/cookie.md"), group);
+
+    const spaced = { kind: "agent-md", target: "group", group: "weird name" } as const;
+    assert.equal(apiHref(spaced), "api/agent/groups/weird%20name.md");
+    assert.equal(apiFsRel(spaced), "api/agent/groups/weird%20name.md");
+    assert.deepEqual(parseApiPath("/api/agent/groups/weird%20name.md"), spaced);
   });
 });

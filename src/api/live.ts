@@ -4,11 +4,12 @@ import { readImageBlob } from "../git/blob.ts";
 import { fileLanguage, filePatchFromGit, readPathDiff, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
-import { pinRange, type PinnedRange } from "../git/repo.ts";
+import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
 import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
+import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
@@ -31,6 +32,7 @@ export type Snapshot = JsonSnapshot | BytesSnapshot;
 export type ReviewContext = {
   cwd: string;
   document: ReviewDocument;
+  repo: RepoIdentity;
   resolved: ApiReview["resolved"];
   files: DiffFile[];
   coverage: ReviewCoverage;
@@ -48,9 +50,11 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   const { files, coverage } = await coverReview(cwd, document, range);
   const commits = await listCommits(cwd, range.baseSha, range.headSha);
+  const repo = await readRepoIdentity(cwd);
   return {
     cwd,
     document,
+    repo,
     resolved: {
       baseRef: document.source.baseRef,
       headRef: document.source.headRef,
@@ -66,10 +70,11 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
 }
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
-  const { document, resolved, files, coverage, commits } = ctx;
+  const { document, repo, resolved, files, coverage, commits } = ctx;
   const lockfiles = lockfileFiles(files);
   return {
     document,
+    repo,
     resolved,
     coverage: {
       totalHunks: coverage.totalHunks,
@@ -189,6 +194,14 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
   switch (resource.kind) {
     case "review":
       return { encoding: "json", body: reviewPayload(ctx) };
+    case "agent-md": {
+      const body = agentMd(reviewPayload(ctx), resource);
+      if (body === null) {
+        const id = resource.target === "group" ? resource.group : "overview";
+        throw new ApiError(404, `unknown group "${id}"`);
+      }
+      return { encoding: "bytes", mediaType: AGENT_MD_MEDIA_TYPE, body: Buffer.from(body, "utf8") };
+    }
     case "hunks":
       return { encoding: "json", body: hunksPayload(ctx, resource.group) };
     case "file":
@@ -205,11 +218,13 @@ export async function renderResource(ctx: ReviewContext, resource: ApiResource):
 export function listResources(ctx: ReviewContext): ApiResource[] {
   const resources: ApiResource[] = [
     { kind: "review" },
+    { kind: "agent-md", target: "overview" },
     { kind: "hunks", group: "unassigned" },
     { kind: "hunks", group: "lockfiles" },
   ];
   for (const group of ctx.document.groups) {
     resources.push({ kind: "hunks", group: group.id });
+    resources.push({ kind: "agent-md", target: "group", group: group.id });
   }
   for (const file of ctx.files) {
     if (file.image) {

@@ -1,14 +1,28 @@
 import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { cn } from "@/lib/utils.ts";
+import { askAgentPrompt } from "../lib/agent-prompt.ts";
+import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 
-export function Brief(props: { kicker?: string; title: string; children?: ReactNode; className?: string }) {
+export function Brief(props: {
+  kicker?: string;
+  title: string;
+  children?: ReactNode;
+  className?: string;
+  kickerExtra?: ReactNode;
+}) {
   return (
-    <div className={cn("max-w-[68ch]", props.className)}>
+    <div className={props.className}>
       {props.kicker !== undefined ? (
-        <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+        props.kickerExtra !== undefined ? (
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+            {props.kickerExtra}
+          </div>
+        ) : (
+          <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+        )
       ) : null}
       <h1 className="mb-3 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
       {props.children}
@@ -28,6 +42,7 @@ export function GroupBrief(props: {
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
       title={group.title}
+      kickerExtra={<CopyPrompt prompt={askAgentPrompt({ group: group.id })} scope="group" />}
     >
       <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
       <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">
