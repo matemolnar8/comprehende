@@ -3,6 +3,7 @@ import { useDefaultLayout } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
 import { Group } from "./components/Group.tsx";
 import { Header } from "./components/Header.tsx";
+import { Logo } from "./components/Logo.tsx";
 import { Inspector, type InspectorState } from "./components/Inspector.tsx";
 import { Overview } from "./components/Overview.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
@@ -231,7 +232,9 @@ export function App() {
   if (loading && meta === null) {
     return (
       <Boot>
-        <p className="mb-5 font-serif text-lg leading-none text-foreground">Comprehende</p>
+        <p className="mb-5">
+          <Logo />
+        </p>
         <WaitMark layout="page" label={waitCopy.review} />
       </Boot>
     );

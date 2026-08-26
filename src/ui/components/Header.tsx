@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { Kbd } from "./Kbd.tsx";
+import { Logo } from "./Logo.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
 export function Header(props: {
@@ -24,7 +25,7 @@ export function Header(props: {
   return (
     <header className="flex flex-col gap-2 border-b border-border px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
       <div className="flex min-w-0 items-center gap-4">
-        <span className="shrink-0 font-serif text-lg leading-none text-foreground">Comprehende</span>
+        <Logo />
         <Range resolved={meta.resolved} />
         <Coverage meta={meta} />
       </div>
