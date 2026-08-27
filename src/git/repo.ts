@@ -1,4 +1,4 @@
-import { basename } from "node:path";
+import { basename, dirname, isAbsolute, resolve } from "node:path";
 import { git, gitOk } from "./exec.ts";
 
 export async function assertWorkTree(cwd: string): Promise<void> {
@@ -48,12 +48,19 @@ export function nameFromRemoteUrl(url: string): string | null {
   return last === undefined || last === "" ? null : last;
 }
 
+export async function gitCommonDir(cwd: string): Promise<string> {
+  const raw = (await git(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])).trim();
+  return isAbsolute(raw) ? raw : resolve(cwd, raw);
+}
+
 export async function readRepoIdentity(cwd: string): Promise<RepoIdentity> {
   const originText = (await git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true })).trim();
   const origin = originText === "" ? null : stripRemoteCredentials(originText);
-  const top = (await git(cwd, ["rev-parse", "--show-toplevel"])).trim();
   const fromOrigin = origin !== null ? nameFromRemoteUrl(origin) : null;
-  return { name: fromOrigin ?? basename(top), origin };
+  if (fromOrigin !== null) {
+    return { name: fromOrigin, origin };
+  }
+  return { name: basename(dirname(await gitCommonDir(cwd))), origin };
 }
 
 /** Drop userinfo from an http(s) remote so a copied prompt never carries a token. */

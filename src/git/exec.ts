@@ -3,6 +3,28 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+const GIT_DIR_VARS = new Set([
+  "GIT_DIR",
+  "GIT_WORK_TREE",
+  "GIT_INDEX_FILE",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+  "GIT_COMMON_DIR",
+  "GIT_PREFIX",
+]);
+
+/** Drop inherited git dir vars so `cwd` is the repository, including linked worktrees. */
+export function gitEnv(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(base)) {
+    if (value === undefined || GIT_DIR_VARS.has(key.toUpperCase())) {
+      continue;
+    }
+    env[key] = value;
+  }
+  return env;
+}
+
 export class GitError extends Error {
   readonly args: string[];
   readonly stderr: string;
@@ -21,6 +43,7 @@ export async function git(cwd: string, args: string[], opts?: { allowFail?: bool
   try {
     const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
       cwd,
+      env: gitEnv(),
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
     });
@@ -38,6 +61,7 @@ export async function gitBuffer(cwd: string, args: string[], opts?: { input?: Ui
   try {
     const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
       cwd,
+      env: gitEnv(),
       encoding: "buffer",
       maxBuffer: 64 * 1024 * 1024,
       ...(opts?.input !== undefined ? { input: Buffer.from(opts.input) } : {}),
