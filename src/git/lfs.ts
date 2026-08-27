@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { isAbsolute, join, resolve } from "node:path";
+import { join } from "node:path";
 import { LFS_POINTER_VERSION } from "../schema/image.ts";
-import { git } from "./exec.ts";
+import { gitCommonDir } from "./repo.ts";
 
 export type LfsPointer = {
   oid: string;
@@ -32,11 +32,6 @@ export function parseLfsPointer(bytes: Uint8Array): LfsPointer | undefined {
 
 export function lfsObjectPath(gitCommonDir: string, oid: string): string {
   return join(gitCommonDir, "lfs", "objects", oid.slice(0, 2), oid.slice(2, 4), oid);
-}
-
-export async function gitCommonDir(cwd: string): Promise<string> {
-  const raw = (await git(cwd, ["rev-parse", "--git-common-dir"])).trim();
-  return isAbsolute(raw) ? raw : resolve(cwd, raw);
 }
 
 export async function readLfsObject(cwd: string, pointer: LfsPointer): Promise<Buffer | undefined> {

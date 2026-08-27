@@ -54,7 +54,7 @@ describe("readRepoIdentity", () => {
     assert.doesNotMatch(identity.origin ?? "", /x-access-token|secret@/);
   });
 
-  it("falls back to the work tree name when origin is missing", async () => {
+  it("falls back to the repository directory name when origin is missing", async () => {
     const root = await mkdtemp(join(tmpdir(), "local-project-"));
     roots.push(root);
     const repo = await createExampleRepo(root);

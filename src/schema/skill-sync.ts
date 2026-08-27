@@ -4,6 +4,7 @@ import { dirname, join, relative } from "node:path";
 import { applyCliPin, cliPinErrors, listedCliPins } from "./cli-pin.ts";
 import { skillPaths } from "./skill-paths.ts";
 import { findPackageRoot } from "../package-root.ts";
+import { gitEnv } from "../git/exec.ts";
 
 export type SkillSyncInput = {
   version: string;
@@ -135,6 +136,7 @@ function gitStagedTree(root: string, prefix: string): Map<string, string> {
   const listing = execFileSync("git", ["ls-files", "-z", "--", prefix], {
     cwd: root,
     encoding: "utf8",
+    env: gitEnv(),
   });
   const out = new Map<string, string>();
   for (const full of listing.split("\0").filter(Boolean)) {
@@ -145,7 +147,7 @@ function gitStagedTree(root: string, prefix: string): Map<string, string> {
 
 function gitShowStaged(root: string, path: string): string {
   try {
-    return execFileSync("git", ["show", `:${path}`], { cwd: root, encoding: "utf8" });
+    return execFileSync("git", ["show", `:${path}`], { cwd: root, encoding: "utf8", env: gitEnv() });
   } catch {
     throw new Error(`staged file missing: ${path}`);
   }
