@@ -29,7 +29,9 @@ export function Group(props: {
   const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
   const lockfiles = bucket === "lockfiles";
-  const showStrand = strandColor !== undefined || lockfiles;
+  const strand =
+    strandColor ??
+    (lockfiles ? "var(--muted-foreground)" : bucket === "unassigned" ? "var(--warn)" : "var(--primary)");
 
   const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
 
@@ -52,13 +54,11 @@ export function Group(props: {
   return (
     <>
       <div className="mb-8 flex items-stretch gap-4">
-        {showStrand ? (
-          <span
-            className="w-[3px] flex-none rounded-px bg-muted-foreground [[data-motion=group]_&]:[view-transition-name:review-strand]"
-            style={strandColor !== undefined ? { backgroundColor: strandColor } : undefined}
-            aria-hidden
-          />
-        ) : null}
+        <span
+          className="w-[3px] flex-none rounded-px [[data-motion=group]_&]:[view-transition-name:review-strand]"
+          style={{ backgroundColor: strand }}
+          aria-hidden
+        />
         <div className="min-w-0 flex-1 [[data-motion=group]_&]:[view-transition-name:review-copy]">
           {group !== null ? (
             <GroupBrief
@@ -72,7 +72,7 @@ export function Group(props: {
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any group">
-              <p className="font-serif text-lg leading-relaxed text-foreground">
+              <p className="font-serif text-xl leading-relaxed text-foreground">
                 These hunks are in git and in no group. Fix the review document. Never the diff.
               </p>
             </Brief>

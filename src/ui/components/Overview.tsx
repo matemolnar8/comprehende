@@ -30,7 +30,7 @@ export function Overview(props: {
             <Kicker id="review-why">Why</Kicker>
             {ask}
           </div>
-          <h1 className="mb-4 max-w-[46rem] font-serif text-[2rem] leading-snug tracking-[-0.015em] text-balance text-foreground">
+          <h1 className="mb-4 font-serif text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={why} />
           </h1>
           {ticketList}
@@ -45,19 +45,17 @@ export function Overview(props: {
           {why === undefined ? ask : null}
         </div>
         {why !== undefined ? (
-          <p className="mb-4 max-w-[46rem] font-serif text-lg leading-relaxed text-pretty text-foreground">
+          <p className="mb-4 font-serif text-xl leading-relaxed text-pretty text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-4 max-w-[46rem] font-serif text-[2rem] leading-snug tracking-[-0.015em] text-balance text-foreground">
+          <h1 className="mb-4 font-serif text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={meta.document.summary} />
           </h1>
         )}
         <div
           className={
-            mixed
-              ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1"
-              : "max-w-[46rem]"
+            mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-6"
           }
         >
           {parts.map((part) => (
@@ -128,7 +126,7 @@ function PartColumn(props: {
           {part.title}
         </Kicker>
       ) : null}
-      <ol className="m-0 list-none p-0">
+      <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
         {part.groupIds.map((id) => {
           const group = byId.get(id);
           if (group === undefined) {
@@ -136,18 +134,33 @@ function PartColumn(props: {
           }
           const index = groups.findIndex((item) => item.id === id) + 1;
           return (
-            <li key={group.id} className="mb-2 last:mb-0">
+            <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-auto w-full min-w-0 items-start justify-start gap-4 rounded-md px-4 py-4 text-left font-normal whitespace-normal"
+                className={cn(
+                  "h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal",
+                  mixed ? "gap-4 py-4" : "gap-6 rounded-none py-5",
+                )}
                 onClick={() => onOpenGroup(group.id)}
               >
-                <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+                <span
+                  className={cn(
+                    "shrink-0 tabular-nums text-muted-foreground",
+                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-serif text-2xl leading-none opacity-60",
+                  )}
+                >
                   {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong className="block font-medium text-foreground">{group.title}</strong>
+                  <strong
+                    className={cn(
+                      "block text-foreground",
+                      mixed ? "font-medium" : "font-serif text-xl leading-snug font-normal",
+                    )}
+                  >
+                    {group.title}
+                  </strong>
                   <span className="mt-1 block leading-relaxed text-muted-foreground">
                     <InlineMd text={group.summary} />
                   </span>

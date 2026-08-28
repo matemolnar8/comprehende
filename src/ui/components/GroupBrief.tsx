@@ -25,7 +25,7 @@ export function Brief(props: {
           <Kicker className="mb-2">{props.kicker}</Kicker>
         )
       ) : null}
-      <h1 className="mb-3 max-w-[46rem] font-serif text-[2rem] leading-snug tracking-[-0.015em] text-balance text-foreground">
+      <h1 className="mb-3 font-serif text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
         {props.title}
       </h1>
       {props.children}
@@ -47,9 +47,9 @@ export function GroupBrief(props: {
       title={group.title}
       kickerExtra={<CopyPrompt prompt={askAgentPrompt({ group: group.id })} scope="group" />}
     >
-      <div className="max-w-[46rem]">
+      <div>
         <Kicker className="mb-2">Why</Kicker>
-        <p className="mb-6 font-serif text-lg leading-relaxed text-pretty text-foreground">
+        <p className="mb-6 font-serif text-xl leading-relaxed text-pretty text-foreground">
           <InlineMd text={group.why} />
         </p>
         <Kicker className="mb-2">What</Kicker>
