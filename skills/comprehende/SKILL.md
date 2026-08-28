@@ -12,28 +12,20 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Cwd is the repo; there is no `--repo` flag. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.5.5 <command>
+npx comprehende@0.5.4 <command>
 ```
 
-The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. Do not copy patch text into it. `serve` reads the diff from git.
+The review document is interpretation only. It holds groups, summaries, and hunk pointers. Do not copy patch text into it. `serve` reads the diff from git.
 
 ## Workflow
 
 1. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-2. Run `npx comprehende@0.5.5 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
-3. Recover the why, write the title, and write the what. Read the sources listed under The why and The title, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `title` (always), document `summary` (always), and document `why` (only when a source names the motive). Summaries come from the code, not the log.
+2. Run `npx comprehende@0.5.4 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
+3. Recover the why and write the what. Read the sources listed under The why, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `summary` (always) and document `why` (only when a source names the motive). Summaries come from the code, not the log.
 4. Group the hunks by review concern, following the Grouping rules. Done when every hunk ref from the index appears in at least one group and every group has its `why`.
 5. Write `review.json` in a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Copy hunk objects verbatim from the index. Set document `size` from review burden, not `git diff --stat`.
-6. Run `npx comprehende@0.5.5 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
-7. Run `npx comprehende@0.5.5 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
-
-## The title
-
-Document `title` is a short name for the whole change. Always write one.
-
-Prefer a title the human already wrote when it names this change: the pull request title, a ticket title, or the name they used in a transcript. Keep that wording when it is descriptive and represents the reviewed change.
-
-Invent a title when those sources are missing, vague, or name something else. A branch slug, "WIP", or "fix" is not a title. Sources are a reference. Do not paste a title that does not fit.
+6. Run `npx comprehende@0.5.4 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
+7. Run `npx comprehende@0.5.4 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 ## The why
 
@@ -77,7 +69,7 @@ Each bullet is one inspectable claim: optionally a short risk tag (Subtle, Break
 
 ## Write the prose
 
-Document `title`, document `why`, group `why`, `summary`, and `lookFor` are for a tired engineer on the first read.
+Document `why`, group `why`, `summary`, and `lookFor` are for a tired engineer on the first read.
 
 - One thought per sentence; split past about 25 words.
 - Present tense. Name who does what.
