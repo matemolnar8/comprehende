@@ -30,7 +30,7 @@ export function Overview(props: {
             <Kicker id="review-why">Why</Kicker>
             {ask}
           </div>
-          <h1 className="mb-4 font-serif text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
+          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={why} />
           </h1>
           {ticketList}
@@ -45,11 +45,11 @@ export function Overview(props: {
           {why === undefined ? ask : null}
         </div>
         {why !== undefined ? (
-          <p className="mb-4 font-serif text-xl leading-relaxed text-pretty text-foreground">
+          <p className="mb-4 font-display text-xl leading-relaxed text-pretty text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-4 font-serif text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
+          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={meta.document.summary} />
           </h1>
         )}
@@ -147,7 +147,7 @@ function PartColumn(props: {
                 <span
                   className={cn(
                     "shrink-0 tabular-nums text-muted-foreground",
-                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-serif text-2xl leading-none opacity-60",
+                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-display text-2xl leading-none opacity-60",
                   )}
                 >
                   {padIndex(index)}
@@ -156,7 +156,7 @@ function PartColumn(props: {
                   <strong
                     className={cn(
                       "block text-foreground",
-                      mixed ? "font-medium" : "font-serif text-xl leading-snug font-normal",
+                      mixed ? "font-medium" : "font-display text-xl leading-snug font-normal",
                     )}
                   >
                     {group.title}
