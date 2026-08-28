@@ -23,7 +23,7 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex flex-col gap-2 border-b border-border px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
+    <header className="flex flex-col gap-2 border-b border-border bg-card px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
       <div className="flex min-w-0 items-center gap-4">
         <Logo />
         <Range resolved={meta.resolved} />

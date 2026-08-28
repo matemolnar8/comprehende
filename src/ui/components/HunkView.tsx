@@ -73,7 +73,7 @@ export function HunkView(props: {
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-lg border bg-card transition-[border-color]",
+        "overflow-hidden rounded-lg border bg-card shadow-card transition-[border-color]",
         motion,
         active ? "border-primary" : "border-border",
       )}

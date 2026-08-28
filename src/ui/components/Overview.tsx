@@ -6,6 +6,7 @@ import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
+import { Kicker } from "./Kicker.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -26,12 +27,10 @@ export function Overview(props: {
       {why !== undefined ? (
         <section className="mb-12" aria-labelledby="review-why">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p id="review-why" className="font-mono text-[11px] tracking-wide text-muted-foreground">
-              Why
-            </p>
+            <Kicker id="review-why">Why</Kicker>
             {ask}
           </div>
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 max-w-[46rem] font-serif text-[2rem] leading-snug tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={why} />
           </h1>
           {ticketList}
@@ -42,23 +41,23 @@ export function Overview(props: {
 
       <section aria-labelledby="review-what">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <p id="review-what" className="font-mono text-[11px] tracking-wide text-muted-foreground">
-            What · {sizeLabel(meta.document.size)} · {meta.files.length} files
-          </p>
+          <Kicker id="review-what">What · {sizeLabel(meta.document.size)} · {meta.files.length} files</Kicker>
           {why === undefined ? ask : null}
         </div>
         {why !== undefined ? (
-          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
+          <p className="mb-4 max-w-[46rem] font-serif text-lg leading-relaxed text-pretty text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 max-w-[46rem] font-serif text-[2rem] leading-snug tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={meta.document.summary} />
           </h1>
         )}
         <div
           className={
-            mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : undefined
+            mixed
+              ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1"
+              : "max-w-[46rem]"
           }
         >
           {parts.map((part) => (
@@ -124,10 +123,10 @@ function PartColumn(props: {
       aria-label={part.title}
     >
       {mixed && part.title !== undefined ? (
-        <p className="mb-1 flex items-center gap-2 px-4 pt-2 font-mono text-[11px] tracking-wide text-muted-foreground">
+        <Kicker className="mb-1 flex items-center gap-2 px-4 pt-2">
           <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           {part.title}
-        </p>
+        </Kicker>
       ) : null}
       <ol className="m-0 list-none p-0">
         {part.groupIds.map((id) => {

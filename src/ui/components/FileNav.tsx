@@ -73,7 +73,7 @@ export function FileRail(props: {
       <nav
         ref={railRef}
         aria-label="Files in group"
-        className="flex h-[calc(100vh-7rem)] w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card sticky top-4 self-start max-lg:w-[240px] max-sm:w-full max-sm:h-auto max-sm:max-h-[40vh]"
+        className="flex h-[calc(100vh-7rem)] w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-card sticky top-4 self-start max-lg:w-[240px] max-sm:w-full max-sm:h-auto max-sm:max-h-[40vh]"
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <p className="flex-1 font-mono text-[11px] tabular-nums text-muted-foreground">
