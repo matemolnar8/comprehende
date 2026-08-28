@@ -16,7 +16,7 @@ export function Sidebar(props: {
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   return (
-    <nav className="h-full overflow-auto py-6">
+    <nav className="h-full overflow-auto py-4">
       <div className="relative">
         <span className={styles.selection} aria-hidden />
         <ul className="mb-6 list-none p-0">
@@ -95,7 +95,7 @@ function StackItem(props: {
       onClick={props.onClick}
       style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
       className={cn(
-        "relative z-1 mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal hover:bg-transparent",
+        "relative z-1 mx-3 mb-0.5 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-1.5 text-left font-normal whitespace-normal hover:bg-transparent active:scale-100",
         !props.active && "hover:bg-accent",
         props.active && cn(styles.itemActive, "text-foreground"),
         props.warn && "text-warn hover:text-warn",

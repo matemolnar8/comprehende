@@ -72,7 +72,7 @@ export function Group(props: {
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any group">
-              <p className="font-serif text-lg leading-relaxed text-foreground">
+              <p className="max-w-[42rem] font-serif text-lg leading-relaxed text-foreground">
                 These hunks are in git and in no group. Fix the review document. Never the diff.
               </p>
             </Brief>
@@ -81,7 +81,7 @@ export function Group(props: {
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
-        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
+        <article className="mt-8 overflow-hidden rounded-md border border-border bg-card">
           <WaitMark label={waitCopy.group} />
         </article>
       ) : null}

@@ -95,7 +95,7 @@ export function Inspector(props: {
 
   return (
     <div className="review-inspector flex h-full min-h-0 flex-col" aria-busy={loading}>
-      <div className="flex flex-wrap items-center gap-3 px-8 pt-6 pb-4">
+      <div className="flex flex-wrap items-center gap-3 px-4 pt-5 pb-4 sm:px-8">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>
@@ -144,16 +144,16 @@ export function Inspector(props: {
           </Button>
         </div>
       </div>
-      {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
+      {error !== null ? <p className="px-4 text-warn sm:px-8">{error}</p> : null}
       {loading && error === null && !image ? (
-        <div className="px-8 pt-2">
+        <div className="px-4 pt-2 sm:px-8">
           <WaitMark
             label={inspector.mode === "file" ? waitCopy.file : waitCopy.blame}
           />
         </div>
       ) : null}
       {image ? (
-        <div className="min-h-0 flex-1 overflow-auto px-8 pb-8">
+        <div className="min-h-0 flex-1 overflow-auto px-4 pb-8 sm:px-8">
           <img
             src={resourceHref({ kind: "image", path: inspector.path, side: inspector.side })}
             alt={`${inspector.side} ${inspector.path}`}

@@ -73,9 +73,9 @@ export function HunkView(props: {
   return (
     <article
       className={cn(
-        "overflow-hidden rounded-lg border bg-card transition-[border-color]",
-        motion,
-        active ? "border-primary" : "border-border",
+        "relative overflow-hidden rounded-md border border-border bg-card",
+        active &&
+          "before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:z-20 before:w-[3px] before:bg-primary",
       )}
       data-hunk={index}
     >

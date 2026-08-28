@@ -284,7 +284,7 @@ export function App() {
                   onClose={closeInspector}
                 />
               ) : (
-                <main ref={mainRef} className="h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
+                <main ref={mainRef} className="h-full overflow-auto px-4 py-6 sm:px-8 sm:py-7" aria-busy={hunksLoading}>
                   {selection?.kind === "overview" ? (
                     <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
                   ) : (
@@ -326,5 +326,5 @@ export function App() {
 }
 
 function Boot(props: { children: ReactNode; className?: string }) {
-  return <div className={cn("px-10 py-8 text-muted-foreground", props.className)}>{props.children}</div>;
+  return <div className={cn("px-4 py-6 text-muted-foreground sm:px-8 sm:py-7", props.className)}>{props.children}</div>;
 }

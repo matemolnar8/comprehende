@@ -23,13 +23,13 @@ export function Header(props: {
 }) {
   const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
   return (
-    <header className="flex flex-col gap-2 border-b border-border px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
+    <header className="flex flex-col gap-2 border-b border-border px-4 py-2.5 lg:h-14 lg:flex-row lg:flex-nowrap lg:items-center lg:justify-between lg:gap-4 lg:py-0">
       <div className="flex min-w-0 items-center gap-4">
         <Logo />
         <Range resolved={meta.resolved} />
         <Coverage meta={meta} />
       </div>
-      <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
+      <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

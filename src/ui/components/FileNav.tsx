@@ -57,7 +57,7 @@ export function FileRail(props: {
     return (
       <div className="mt-4 flex min-h-0 gap-0 max-sm:flex-col">
         <div className="min-w-0 flex-1 space-y-8">{props.children}</div>
-        <div className="sticky top-4 flex h-[calc(100vh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3" style={{ width: "44px" }}>
+        <div className="sticky top-4 flex h-[calc(100dvh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3" style={{ width: "44px" }}>
           <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Expand file list" onClick={toggle}>
             <ChevronRightIcon className="size-4 rotate-180" />
           </Button>
@@ -73,7 +73,7 @@ export function FileRail(props: {
       <nav
         ref={railRef}
         aria-label="Files in group"
-        className="flex h-[calc(100vh-7rem)] w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card sticky top-4 self-start max-lg:w-[240px] max-sm:w-full max-sm:h-auto max-sm:max-h-[40vh]"
+        className="sticky top-4 flex h-[calc(100dvh-7rem)] w-[300px] shrink-0 flex-col self-start overflow-hidden rounded-md border border-border bg-card max-lg:w-[240px] max-sm:h-auto max-sm:max-h-[40vh] max-sm:w-full"
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <p className="flex-1 font-mono text-[11px] tabular-nums text-muted-foreground">

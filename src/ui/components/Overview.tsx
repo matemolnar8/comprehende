@@ -25,13 +25,13 @@ export function Overview(props: {
     <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       {why !== undefined ? (
         <section className="mb-12" aria-labelledby="review-why">
-          <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="mb-2 flex max-w-[42rem] items-center justify-between gap-3">
             <p id="review-why" className="font-mono text-[11px] tracking-wide text-muted-foreground">
               Why
             </p>
             {ask}
           </div>
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 max-w-[42rem] font-serif text-[1.85rem] font-semibold leading-[1.25] tracking-[-0.012em] text-foreground">
             <InlineMd text={why} />
           </h1>
           {ticketList}
@@ -41,18 +41,18 @@ export function Overview(props: {
       ) : null}
 
       <section aria-labelledby="review-what">
-        <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="mb-2 flex max-w-[42rem] items-center justify-between gap-3">
           <p id="review-what" className="font-mono text-[11px] tracking-wide text-muted-foreground">
             What · {sizeLabel(meta.document.size)} · {meta.files.length} files
           </p>
           {why === undefined ? ask : null}
         </div>
         {why !== undefined ? (
-          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
+          <p className="mb-4 max-w-[42rem] font-serif text-lg leading-relaxed text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 max-w-[42rem] font-serif text-[1.85rem] font-semibold leading-[1.25] tracking-[-0.012em] text-foreground">
             <InlineMd text={meta.document.summary} />
           </h1>
         )}

@@ -16,15 +16,17 @@ export function Brief(props: {
     <div className={props.className}>
       {props.kicker !== undefined ? (
         props.kickerExtra !== undefined ? (
-          <div className="mb-2 flex items-center justify-between gap-3">
+          <div className="mb-2 flex max-w-[42rem] items-center justify-between gap-3">
             <p className="font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
             {props.kickerExtra}
           </div>
         ) : (
-          <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
+          <p className="mb-2 max-w-[42rem] font-mono text-[11px] tracking-wide text-muted-foreground">{props.kicker}</p>
         )
       ) : null}
-      <h1 className="mb-3 font-serif text-[1.75rem] leading-snug text-foreground">{props.title}</h1>
+      <h1 className="mb-3 max-w-[42rem] font-serif text-[1.85rem] font-semibold leading-[1.25] tracking-[-0.012em] text-foreground">
+        {props.title}
+      </h1>
       {props.children}
     </div>
   );
@@ -44,12 +46,12 @@ export function GroupBrief(props: {
       title={group.title}
       kickerExtra={<CopyPrompt prompt={askAgentPrompt({ group: group.id })} scope="group" />}
     >
-      <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
-      <p className="mb-6 font-serif text-lg leading-relaxed text-foreground">
+      <p className="mb-2 max-w-[42rem] font-mono text-[11px] tracking-wide text-muted-foreground">Why</p>
+      <p className="mb-6 max-w-[42rem] font-serif text-lg leading-relaxed text-foreground">
         <InlineMd text={group.why} />
       </p>
-      <p className="mb-2 font-mono text-[11px] tracking-wide text-muted-foreground">What</p>
-      <p className="mb-5 leading-relaxed text-foreground">
+      <p className="mb-2 max-w-[42rem] font-mono text-[11px] tracking-wide text-muted-foreground">What</p>
+      <p className="mb-5 max-w-[42rem] leading-relaxed text-foreground">
         <InlineMd text={group.summary} />
       </p>
       {group.dependsOn.length > 0 ? (
