@@ -16,7 +16,7 @@ export function Sidebar(props: {
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   return (
-    <nav className="h-full overflow-auto py-6">
+    <nav className="h-full overflow-auto bg-card py-6">
       <div className="relative">
         <span className={styles.selection} aria-hidden />
         <ul className="mb-6 list-none p-0">

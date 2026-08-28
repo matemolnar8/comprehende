@@ -6,6 +6,7 @@ import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
+import { Kicker } from "./Kicker.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -26,12 +27,10 @@ export function Overview(props: {
       {why !== undefined ? (
         <section className="mb-12" aria-labelledby="review-why">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p id="review-why" className="font-mono text-[11px] tracking-wide text-muted-foreground">
-              Why
-            </p>
+            <Kicker id="review-why">Why</Kicker>
             {ask}
           </div>
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={why} />
           </h1>
           {ticketList}
@@ -42,23 +41,21 @@ export function Overview(props: {
 
       <section aria-labelledby="review-what">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <p id="review-what" className="font-mono text-[11px] tracking-wide text-muted-foreground">
-            What · {sizeLabel(meta.document.size)} · {meta.files.length} files
-          </p>
+          <Kicker id="review-what">What · {sizeLabel(meta.document.size)} · {meta.files.length} files</Kicker>
           {why === undefined ? ask : null}
         </div>
         {why !== undefined ? (
-          <p className="mb-4 font-serif text-lg leading-relaxed text-foreground">
+          <p className="mb-4 font-display text-xl leading-relaxed text-pretty text-foreground">
             <InlineMd text={meta.document.summary} />
           </p>
         ) : (
-          <h1 className="mb-4 font-serif text-[1.75rem] leading-snug text-foreground">
+          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
             <InlineMd text={meta.document.summary} />
           </h1>
         )}
         <div
           className={
-            mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : undefined
+            mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-6"
           }
         >
           {parts.map((part) => (
@@ -124,12 +121,12 @@ function PartColumn(props: {
       aria-label={part.title}
     >
       {mixed && part.title !== undefined ? (
-        <p className="mb-1 flex items-center gap-2 px-4 pt-2 font-mono text-[11px] tracking-wide text-muted-foreground">
+        <Kicker className="mb-1 flex items-center gap-2 px-4 pt-2">
           <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           {part.title}
-        </p>
+        </Kicker>
       ) : null}
-      <ol className="m-0 list-none p-0">
+      <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
         {part.groupIds.map((id) => {
           const group = byId.get(id);
           if (group === undefined) {
@@ -137,18 +134,33 @@ function PartColumn(props: {
           }
           const index = groups.findIndex((item) => item.id === id) + 1;
           return (
-            <li key={group.id} className="mb-2 last:mb-0">
+            <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
               <Button
                 type="button"
                 variant="ghost"
-                className="h-auto w-full min-w-0 items-start justify-start gap-4 rounded-md px-4 py-4 text-left font-normal whitespace-normal"
+                className={cn(
+                  "h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal",
+                  mixed ? "gap-4 py-4" : "gap-6 rounded-none py-5",
+                )}
                 onClick={() => onOpenGroup(group.id)}
               >
-                <span className="mt-0.5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+                <span
+                  className={cn(
+                    "shrink-0 tabular-nums text-muted-foreground",
+                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-display text-2xl leading-none opacity-60",
+                  )}
+                >
                   {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong className="block font-medium text-foreground">{group.title}</strong>
+                  <strong
+                    className={cn(
+                      "block text-foreground",
+                      mixed ? "font-medium" : "font-display text-xl leading-snug font-normal",
+                    )}
+                  >
+                    {group.title}
+                  </strong>
                   <span className="mt-1 block leading-relaxed text-muted-foreground">
                     <InlineMd text={group.summary} />
                   </span>
