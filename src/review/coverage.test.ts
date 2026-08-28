@@ -38,6 +38,7 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
+        title: "Coverage join",
         summary: "Joins live hunks to refs.",
         groups: [
           {
@@ -64,6 +65,7 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
+        title: "Coverage join",
         summary: "Joins live hunks to refs.",
         groups: [{ id: "g", title: "G", why: "Joins live hunks to refs.", summary: "", suggestedOrder: 0, hunkRefs: [] }],
       },
@@ -79,6 +81,7 @@ describe("coverage join", () => {
         version: 1,
         source: { baseRef: "a", headRef: "b" },
         size: "small",
+        title: "Lockfiles skipped",
         summary: "Lockfiles are not coverage hunks.",
         groups: [
           {

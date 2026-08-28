@@ -30,6 +30,8 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Comprehension debt.** The gap between the code in the system and the understanding the humans who develop, maintain, or operate it have. Unlike technical debt, nobody chooses it. It stays invisible until something breaks.
 
+**The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
+
 **The why.** Why this work exists. The skill writes it from tickets, issues, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
 
 **The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
@@ -38,7 +40,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 ### Code
 
-**Review document.** Interpretation only. Groups, summaries, optional generated why, hunk pointers. Never patch text. Source refs must resolve in cwd.
+**Review document.** Interpretation only. Title, groups, summaries, optional generated why, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
 **Group.** Schema `groups` item. The UI uses the same word.
 

@@ -6,6 +6,7 @@
     "range": "f81182a...4cd4832"
   },
   "size": "large",
+  "title": "Ask AI about this review",
   "summary": "Add Ask AI about this \u2014 copies a prompt so an agent can answer about the review from live git.",
   "why": "Fixes #24. Reviewers need a quick way to ask an agent about a review without guessing SHAs or hunk refs.",
   "tickets": [

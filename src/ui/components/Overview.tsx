@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
@@ -19,57 +20,48 @@ export function Overview(props: {
   const tickets = meta.document.tickets ?? [];
   const why = meta.document.why;
   const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
-  const prompt = askAgentPrompt("overview");
-  const ask = <CopyPrompt prompt={prompt} scope="overview" />;
 
   return (
     <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
-      {why !== undefined ? (
-        <section className="mb-12" aria-labelledby="review-why">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <Kicker id="review-why">Why</Kicker>
-            {ask}
-          </div>
-          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
-            <InlineMd text={why} />
-          </h1>
-          {ticketList}
-        </section>
-      ) : ticketList !== null ? (
-        <div className="mb-8">{ticketList}</div>
-      ) : null}
-
-      <section aria-labelledby="review-what">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <Kicker id="review-what">What · {sizeLabel(meta.document.size)} · {meta.files.length} files</Kicker>
-          {why === undefined ? ask : null}
-        </div>
+      <Brief
+        kicker={`${sizeLabel(meta.document.size)} · ${meta.files.length} files`}
+        title={meta.document.title}
+        kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
+      >
         {why !== undefined ? (
-          <p className="mb-4 font-display text-xl leading-relaxed text-pretty text-foreground">
-            <InlineMd text={meta.document.summary} />
-          </p>
-        ) : (
-          <h1 className="mb-4 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
-            <InlineMd text={meta.document.summary} />
-          </h1>
-        )}
-        <div
-          className={
-            mixed ? "grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-6"
-          }
-        >
-          {parts.map((part) => (
-            <PartColumn
-              key={part.groupIds.join("\0")}
-              part={part}
-              mixed={mixed}
-              groups={meta.groups}
-              byId={byId}
-              onOpenGroup={onOpenGroup}
-            />
-          ))}
-        </div>
-      </section>
+          <>
+            <Kicker id="review-why" className="mb-2">
+              Why
+            </Kicker>
+            <p className="mb-6 font-display text-xl leading-relaxed text-pretty text-foreground">
+              <InlineMd text={why} />
+            </p>
+          </>
+        ) : null}
+        {ticketList}
+        <Kicker id="review-what" className="mb-2">
+          What
+        </Kicker>
+        <p className="mb-5 leading-relaxed text-pretty text-foreground">
+          <InlineMd text={meta.document.summary} />
+        </p>
+      </Brief>
+      <div
+        className={
+          mixed ? "mt-6 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-6"
+        }
+      >
+        {parts.map((part) => (
+          <PartColumn
+            key={part.groupIds.join("\0")}
+            part={part}
+            mixed={mixed}
+            groups={meta.groups}
+            byId={byId}
+            onOpenGroup={onOpenGroup}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -77,7 +69,7 @@ export function Overview(props: {
 function TicketList(props: { tickets: NonNullable<ReviewMeta["document"]["tickets"]>; mixed: boolean; parts: Part[] }) {
   const { tickets, mixed, parts } = props;
   return (
-    <ul className="space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
+    <ul className="mb-6 space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
       {tickets.map((ticket) => {
         const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
         return (
