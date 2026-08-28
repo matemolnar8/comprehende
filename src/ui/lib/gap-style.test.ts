@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "./lib/gap-style.ts";
+import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "./gap-style.ts";
 
 describe("hunk gap", () => {
   it("uses the compact bar separator", () => {

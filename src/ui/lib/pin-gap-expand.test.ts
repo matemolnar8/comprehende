@@ -6,7 +6,7 @@ import {
   settleGapPin,
   watchGapPin,
   type GapPin,
-} from "./lib/pin-gap-expand.ts";
+} from "./pin-gap-expand.ts";
 
 function scroller(scrollTop = 80, scrollHeight = 1000) {
   return { scrollTop, scrollHeight, style: { scrollBehavior: "" } };

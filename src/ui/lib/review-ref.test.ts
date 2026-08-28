@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { looksLikeSha, reviewRef } from "./lib/review-ref.ts";
+import { looksLikeSha, reviewRef } from "./review-ref.ts";
 
 const sha = "4657d0f3dcab95c1ac79d1a93c13397c6e646758";
 

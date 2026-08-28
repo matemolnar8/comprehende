@@ -6,7 +6,7 @@ import {
   selectionStorageKey,
   serializeSelection,
   type SelectionStackSource,
-} from "./lib/selection.ts";
+} from "./selection.ts";
 
 const source: SelectionStackSource = {
   groups: [{ id: "auth" }, { id: "ui" }],

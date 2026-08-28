@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { shouldViewTransition } from "./lib/motion.ts";
-import { selectionStack } from "./lib/selection.ts";
+import { shouldViewTransition } from "./motion.ts";
+import { selectionStack } from "./selection.ts";
 
 describe("shouldViewTransition", () => {
   it("is off when the user prefers reduced motion", () => {

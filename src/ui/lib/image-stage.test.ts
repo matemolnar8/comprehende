@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "./lib/image-stage.ts";
+import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "./image-stage.ts";
 
 describe("fitImageStage", () => {
   it("keeps native pixels when the image fits", () => {

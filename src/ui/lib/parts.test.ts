@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { colorIndexByGroupId, groupParts, isMixedReview, PART_PALETTE_SIZE, partColor } from "./lib/parts.ts";
+import { colorIndexByGroupId, groupParts, isMixedReview, PART_PALETTE_SIZE, partColor } from "./parts.ts";
 
 describe("groupParts", () => {
   it("keeps one unlabeled stack when no group has a part name", () => {

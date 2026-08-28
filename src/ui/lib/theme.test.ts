@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseThemePreference, resolveTheme } from "./lib/theme.ts";
+import { parseThemePreference, resolveTheme } from "./theme.ts";
 
 describe("theme preference", () => {
   it("treats missing or unknown values as auto", () => {

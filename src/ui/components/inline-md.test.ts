@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { InlineMd } from "./components/InlineMd.tsx";
-import { flattenInline } from "./lib/inline-md.ts";
+import { InlineMd } from "./InlineMd.tsx";
+import { flattenInline } from "../lib/inline-md.ts";
 
 function html(text: string): string {
   return renderToStaticMarkup(createElement(InlineMd, { text })).replace(/ class="[^"]*"/g, "");

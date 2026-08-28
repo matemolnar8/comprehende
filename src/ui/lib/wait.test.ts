@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { WAIT_REVEAL_MS, waitCopy, waitVisible } from "./lib/wait.ts";
+import { WAIT_REVEAL_MS, waitCopy, waitVisible } from "./wait.ts";
 
 describe("waitVisible", () => {
   it("hides until the delay has passed", () => {

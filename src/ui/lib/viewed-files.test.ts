@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseViewed, serializeViewed, setPathViewed, viewedStorageKey } from "./lib/viewed-files.ts";
+import { parseViewed, serializeViewed, setPathViewed, viewedStorageKey } from "./viewed-files.ts";
 
 describe("viewed files", () => {
   it("keys storage by the resolved review range", () => {

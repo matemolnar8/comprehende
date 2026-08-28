@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { ApiFile } from "../api/types.ts";
-import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides, toPierreFile } from "./lib/load-diff-files.ts";
+import type { ApiFile } from "../../api/types.ts";
+import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides, toPierreFile } from "./load-diff-files.ts";
 
 function apiFile(side: "old" | "new", path: string, content: string): ApiFile {
   return { path, ref: `${side}-sha`, side, content, language: "typescript" };
