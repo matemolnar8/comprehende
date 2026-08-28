@@ -64,6 +64,7 @@ describe("agentMd", () => {
     assert.match(prompt, /Done when every concern the question touches has its markdown loaded/);
     assert.match(prompt, /When you show code, quote the live git lines/);
     assert.match(prompt, /Done when the answer quotes the live code/);
+    assert.match(prompt, /The title:\n\nAsk AI about this review/);
     assert.match(prompt, /#24 Explain with coding agent button/);
     assert.match(prompt, /Unassigned live hunks: 2/);
     assert.match(prompt, /Done when both objects exist/);
@@ -146,6 +147,7 @@ function sampleReview(): ApiReview {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD", range: "main...HEAD" },
       size: "medium",
+      title: "Ask AI about this review",
       why: "Ticket #24 needs a prompt a coding agent can paste.",
       summary: "Adds a copy-prompt control to overview and group.",
       tickets: [

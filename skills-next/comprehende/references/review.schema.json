@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json",
   "title": "Comprehende ReviewDocument",
-  "description": "Interpretation only: groups, summaries, and hunk pointers.",
+  "description": "Interpretation only: title, groups, summaries, and hunk pointers.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "version",
     "source",
     "size",
+    "title",
     "summary",
     "groups"
   ],
@@ -48,6 +49,11 @@
           "minLength": 1
         }
       }
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short name of the whole change. Prefer a user-created title when it names this change."
     },
     "summary": {
       "type": "string",

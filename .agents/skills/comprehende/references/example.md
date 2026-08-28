@@ -4,7 +4,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
-- Ticket #12 names why this work exists, so document `why` is present. Document `summary` names both stories.
+- Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 
 ```json
@@ -16,6 +16,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     "range": "origin/main...HEAD"
   },
   "size": "small",
+  "title": "HttpOnly session cookies",
   "why": "Ticket #12 requires login sessions that client scripts cannot read.",
   "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it. The README documents this behavior.",
   "tickets": [

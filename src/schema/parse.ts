@@ -12,7 +12,7 @@ export type ParseSuccess = {
 
 export type ParseResult = ParseSuccess | ParseFailure;
 
-const DOCUMENT_KEYS = new Set(["version", "source", "size", "summary", "why", "tickets", "groups"]);
+const DOCUMENT_KEYS = new Set(["version", "source", "size", "title", "summary", "why", "tickets", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
 const TICKET_KEYS = new Set(["id", "url", "title", "part"]);
 const GROUP_KEYS = new Set(["id", "title", "why", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
@@ -32,12 +32,13 @@ export function parseReviewDocument(input: unknown): ParseResult {
 
   const source = parseSource(input.source, errors);
   const size = parseSize(input.size, errors);
+  const title = requiredString(input.title, "title", errors);
   const summary = requiredString(input.summary, "summary", errors);
   const tickets = parseTickets(input.tickets, errors);
   const groups = parseGroups(input.groups, errors);
   const why = input.why === undefined ? undefined : requiredString(input.why, "why", errors);
 
-  if (errors.length > 0 || source === undefined || size === undefined || summary === undefined) {
+  if (errors.length > 0 || source === undefined || size === undefined || title === undefined || summary === undefined) {
     return { ok: false, errors };
   }
 
@@ -45,6 +46,7 @@ export function parseReviewDocument(input: unknown): ParseResult {
     version: 1,
     source,
     size,
+    title,
     summary,
     groups,
   };

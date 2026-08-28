@@ -9,6 +9,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       why: "Split the review document from live git.",
       groups: [
@@ -27,6 +28,7 @@ describe("parseReviewDocument", () => {
     });
     assert.equal(result.ok, true);
     if (result.ok) {
+      assert.equal(result.document.title, "Review command");
       assert.equal(result.document.why, "Split the review document from live git.");
       assert.equal(result.document.summary, "Adds a review command.");
       assert.equal(result.document.groups[0]?.why, "The command is how an agent starts a review.");
@@ -38,6 +40,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [
         {
@@ -62,6 +65,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       tickets: [{ id: "#12", title: "Split the git index from the UI", part: "Hunk identity" }],
       groups: [
@@ -86,6 +90,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [
         {
@@ -118,6 +123,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [group, { ...group, title: "B" }],
     });
@@ -127,6 +133,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [{ ...group, dependsOn: ["nope"] }],
     });
@@ -161,6 +168,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [
         {
@@ -178,11 +186,35 @@ describe("parseReviewDocument", () => {
     }
   });
 
+  it("requires a title on the document", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      summary: "Adds a review command.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /title must be a string/);
+    }
+  });
+
   it("requires a summary on the document", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       groups: [
         {
           id: "g1",
@@ -205,6 +237,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       groups: [
         {
@@ -228,6 +261,7 @@ describe("parseReviewDocument", () => {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
+      title: "Review command",
       summary: "Adds a review command.",
       walkthrough: "Stop per-song lookups from flooding the API.",
       groups: [

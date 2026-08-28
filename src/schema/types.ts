@@ -11,6 +11,8 @@ export type ReviewDocument = {
   source: ReviewSource;
   /** Human review burden of this change, not file or hunk count. */
   size: ReviewSize;
+  /** Short name of the whole change. Always present. */
+  title: string;
   /** Short what of the whole change. Always present. */
   summary: string;
   /** Generated why for the whole change. From tickets, issues, a request description, or a transcript. Omit only when those sources are silent. */
