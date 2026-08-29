@@ -14,7 +14,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 - 100% accuracy: live git wins. The review document is interpretation only.
 - Easy on the eyes, easy to read
-- Allow drilling down to full files instead of the diff, git blames, commit messages, branches, ticket/issue references
+- Allow drilling down to full files instead of the diff, git blames, commit messages, branches, ticket/issue references, PR comments
 - Useful summaries of the issues/tickets.
 - UI is always the same, not generated on the fly. Only the data changes.
 - Works locally, no need for hosted services, deployed packages
@@ -32,7 +32,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
 
-**The why.** Why this work exists. The skill writes it from tickets, issues, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
+**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any existing human or agent generated that's related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
 
 **The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
 
@@ -79,3 +79,5 @@ Type safety helps humans and agents alike. Parse at the boundary, where the sche
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. Make every change, design, and text in that spirit. The skill is reviewed and adjusted by me manually, but write it with these principles in mind too.
+
+I don't want this project to get overly complicated. In practice this means I want to keep the code focusing on the universal Git part, not specifics of any Git forge or issue tracker - those must be handled at the skill level.
