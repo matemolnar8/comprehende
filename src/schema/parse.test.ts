@@ -60,7 +60,7 @@ describe("parseReviewDocument", () => {
     }
   });
 
-  it("accepts a part name on a ticket", () => {
+  it("accepts a part name on a legacy ticket and stores it as a source", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
@@ -81,7 +81,154 @@ describe("parseReviewDocument", () => {
     });
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.equal(result.document.tickets?.[0]?.part, "Hunk identity");
+      assert.equal(result.document.sources?.[0]?.kind, "ticket");
+      assert.equal(result.document.sources?.[0]?.id, "#12");
+      assert.equal(result.document.sources?.[0]?.label, "#12");
+      assert.equal(result.document.sources?.[0]?.part, "Hunk identity");
+    }
+  });
+
+  it("accepts sources and group source ids", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      why: "Reviewers asked for [a cap on retries](source:s2), and [#24](source:s1) tracks the feature.",
+      sources: [
+        {
+          id: "s1",
+          kind: "ticket",
+          label: "#24",
+          url: "https://example.test/24",
+          gist: "Tracks the copy-prompt work.",
+        },
+        {
+          id: "s2",
+          kind: "pr-comment",
+          label: "alice on PR #32",
+          author: "alice",
+          body: "Please cap retries.",
+          path: "src/cli/main.ts",
+          side: "new",
+          line: 12,
+        },
+      ],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          sources: ["s1"],
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.sources?.length, 2);
+      assert.equal(result.document.groups[0]?.sources?.[0], "s1");
+      assert.equal(result.document.sources?.[1]?.body, "Please cap retries.");
+    }
+  });
+
+  it("rejects unknown group source ids and mixed tickets plus sources", () => {
+    const missing = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          sources: ["nope"],
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(missing.ok, false);
+    if (!missing.ok) {
+      assert.match(missing.errors.join("\n"), /sources unknown id "nope"/);
+    }
+
+    const mixed = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      tickets: [{ id: "#12" }],
+      sources: [{ id: "s1", kind: "ticket", label: "#12" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(mixed.ok, false);
+    if (!mixed.ok) {
+      assert.match(mixed.errors.join("\n"), /both sources and tickets/);
+    }
+  });
+
+  it("rejects a transcript url and comment fields on a ticket", () => {
+    const transcript = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      sources: [{ id: "t1", kind: "transcript", label: "Cursor session", url: "https://example.test" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(transcript.ok, false);
+    if (!transcript.ok) {
+      assert.match(transcript.errors.join("\n"), /url must be omitted for transcripts/);
+    }
+
+    const extra = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      sources: [{ id: "s1", kind: "ticket", label: "#1", author: "alice" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(extra.ok, false);
+    if (!extra.ok) {
+      assert.match(extra.errors.join("\n"), /author is only valid on pr-comment sources/);
     }
   });
 

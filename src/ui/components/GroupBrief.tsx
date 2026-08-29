@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
+import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import { SourceList } from "./SourceList.tsx";
 
 export function Brief(props: {
   kicker?: string;
@@ -37,10 +39,13 @@ export function GroupBrief(props: {
   group: ReviewMeta["groups"][number];
   index: number;
   groups: ReviewMeta["groups"];
+  document: ReviewMeta["document"];
   partTitle?: string;
   onOpenGroup: (id: string) => void;
 }) {
-  const { group, index, groups, partTitle, onOpenGroup } = props;
+  const { group, index, groups, document, partTitle, onOpenGroup } = props;
+  const listed = document.groups.find((item) => item.id === group.id);
+  const sourceIds = listed !== undefined ? groupSourceIds(listed) : group.sources;
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
@@ -56,6 +61,7 @@ export function GroupBrief(props: {
         <p className="mb-5 leading-relaxed text-pretty text-foreground">
           <InlineMd text={group.summary} />
         </p>
+        <SourceList ids={sourceIds} sources={document.sources ?? []} />
         {group.dependsOn.length > 0 ? (
           <p className="mb-5 text-muted-foreground">
             Depends on{" "}

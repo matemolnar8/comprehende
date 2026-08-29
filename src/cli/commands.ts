@@ -3,7 +3,9 @@ import { isAbsolute, resolve } from "node:path";
 import { readHunkIndex, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
+import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
 import { parseReviewJson } from "../schema/parse.ts";
+import { sourceCitationErrors } from "../schema/source.ts";
 import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
 
 export async function resolveRange(
@@ -47,9 +49,10 @@ export function resolveOutPath(out: string | undefined, cwd: string): string {
 
 export async function cmdValidate(cwd: string, dataPath: string): Promise<{ document: ReviewDocument; warnings: string[] }> {
   const document = await loadDocument(dataPath);
-  await resolveSource(cwd, document.source.baseRef, document.source.headRef);
+  const resolved = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
   const { coverage } = await coverReview(cwd, document);
-  const errors = coverageErrors(coverage);
+  const pins = await staleCommentPins(cwd, document, resolved);
+  const errors = [...coverageErrors(coverage), ...sourceCitationErrors(document), ...commentPinErrors(pins)];
   if (errors.length > 0) {
     throw new Error(errors.join("\n\n"));
   }

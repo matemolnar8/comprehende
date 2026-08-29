@@ -20,8 +20,10 @@ export function Header(props: {
   onSplit: () => void;
   onRefresh: () => void;
   busy?: boolean;
+  comments?: boolean;
+  onComments?: () => void;
 }) {
-  const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false } = props;
+  const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false, comments, onComments } = props;
   return (
     <header className="flex flex-col gap-2 border-b border-border bg-card px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
       <div className="flex min-w-0 items-center gap-4">
@@ -45,6 +47,23 @@ export function Header(props: {
           </TooltipTrigger>
           <TooltipContent>Wrap long lines</TooltipContent>
         </Tooltip>
+        {onComments !== undefined ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant={comments === true ? "secondary" : "outline"}
+                aria-pressed={comments === true}
+                aria-label="Show comments"
+                onClick={onComments}
+              >
+                Comments
+                <Kbd className="max-sm:hidden">c</Kbd>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Show comments on the diffs</TooltipContent>
+          </Tooltip>
+        ) : null}
         <div className="flex items-center gap-1.5">
           <div className="flex overflow-hidden rounded-md border border-input">
             <Tooltip>
@@ -164,11 +183,13 @@ function ThemeToggle() {
 
 function Coverage(props: { meta: ReviewMeta }) {
   const { meta } = props;
-  const incomplete = meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0;
+  const incomplete =
+    meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0 || meta.coverage.staleSourceCount > 0;
   const detail = [
     `${meta.coverage.assignedHunks} of ${meta.coverage.totalHunks} hunks grouped`,
     meta.coverage.unassignedCount > 0 ? `${meta.coverage.unassignedCount} unassigned` : null,
     meta.coverage.staleCount > 0 ? `${meta.coverage.staleCount} stale` : null,
+    meta.coverage.staleSourceCount > 0 ? `${meta.coverage.staleSourceCount} stale comment pins` : null,
   ]
     .filter((part) => part !== null)
     .join(" · ");

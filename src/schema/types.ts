@@ -17,7 +17,7 @@ export type ReviewDocument = {
   summary: string;
   /** Generated why for the whole change. From tickets, issues, a request description, or a transcript. Omit only when those sources are silent. */
   why?: string;
-  tickets?: Ticket[];
+  sources?: Source[];
   groups: ReviewGroup[];
 };
 
@@ -27,12 +27,49 @@ export type ReviewSource = {
   range?: string;
 };
 
-export type Ticket = {
+export const SOURCE_KINDS = ["ticket", "pr", "pr-comment", "commit", "transcript"] as const;
+
+export type SourceKind = (typeof SOURCE_KINDS)[number];
+
+export function isSourceKind(value: unknown): value is SourceKind {
+  return typeof value === "string" && (SOURCE_KINDS as readonly string[]).includes(value);
+}
+
+export const SOURCE_SIDES = ["old", "new"] as const;
+
+export type SourceSide = (typeof SOURCE_SIDES)[number];
+
+export function isSourceSide(value: unknown): value is SourceSide {
+  return value === "old" || value === "new";
+}
+
+export type Source = {
   id: string;
+  kind: SourceKind;
+  label: string;
   url?: string;
   title?: string;
-  /** Independent story this ticket belongs to. Same name as that story's groups. */
+  /** One or two sentences: why this source matters. Written by the skill. */
+  gist?: string;
+  /** Independent story this source belongs to. Same name as that story's groups. */
   part?: string;
+  /** pr-comment only. Copied at skill time. */
+  author?: string;
+  /** pr-comment only. The comment, faithful. */
+  body?: string;
+  /** pr-comment only. Git path at skill time. */
+  path?: string;
+  /** pr-comment only. Git-shaped, not GitHub-shaped. */
+  side?: SourceSide;
+  /** pr-comment only. 1-based line on that side. */
+  line?: number;
+};
+
+export type LinePinnedSource = Source & {
+  kind: "pr-comment";
+  path: string;
+  side: SourceSide;
+  line: number;
 };
 
 export type ReviewGroup = {
@@ -48,6 +85,8 @@ export type ReviewGroup = {
   dependsOn?: string[];
   /** Short name of the independent story this group belongs to. Same name = same story. */
   part?: string;
+  /** Source ids this group names. Omit when none apply. */
+  sources?: string[];
   suggestedOrder: number;
   hunkRefs: HunkRef[];
 };

@@ -1,4 +1,17 @@
-import { isReviewSize, REVIEW_SIZES, type HunkRef, type ReviewDocument, type ReviewGroup, type ReviewSize, type ReviewSource, type Ticket } from "./types.ts";
+import {
+  isReviewSize,
+  isSourceKind,
+  isSourceSide,
+  REVIEW_SIZES,
+  SOURCE_KINDS,
+  type HunkRef,
+  type ReviewDocument,
+  type ReviewGroup,
+  type ReviewSize,
+  type ReviewSource,
+  type Source,
+  type SourceKind,
+} from "./types.ts";
 
 export type ParseFailure = {
   ok: false;
@@ -12,10 +25,36 @@ export type ParseSuccess = {
 
 export type ParseResult = ParseSuccess | ParseFailure;
 
-const DOCUMENT_KEYS = new Set(["version", "source", "size", "title", "summary", "why", "tickets", "groups"]);
+const DOCUMENT_KEYS = new Set(["version", "source", "size", "title", "summary", "why", "tickets", "sources", "groups"]);
 const SOURCE_KEYS = new Set(["baseRef", "headRef", "range"]);
 const TICKET_KEYS = new Set(["id", "url", "title", "part"]);
-const GROUP_KEYS = new Set(["id", "title", "why", "summary", "lookFor", "dependsOn", "part", "suggestedOrder", "hunkRefs"]);
+const REVIEW_SOURCE_KEYS = new Set([
+  "id",
+  "kind",
+  "label",
+  "url",
+  "title",
+  "gist",
+  "part",
+  "author",
+  "body",
+  "path",
+  "side",
+  "line",
+]);
+const COMMENT_ONLY_KEYS = ["author", "body", "path", "side", "line"] as const;
+const GROUP_KEYS = new Set([
+  "id",
+  "title",
+  "why",
+  "summary",
+  "lookFor",
+  "dependsOn",
+  "part",
+  "sources",
+  "suggestedOrder",
+  "hunkRefs",
+]);
 const HUNK_KEYS = new Set(["path", "oldPath", "oldStart", "oldLines", "newStart", "newLines"]);
 
 export function parseReviewDocument(input: unknown): ParseResult {
@@ -34,8 +73,8 @@ export function parseReviewDocument(input: unknown): ParseResult {
   const size = parseSize(input.size, errors);
   const title = requiredString(input.title, "title", errors);
   const summary = requiredString(input.summary, "summary", errors);
-  const tickets = parseTickets(input.tickets, errors);
-  const groups = parseGroups(input.groups, errors);
+  const sources = parseDocumentSources(input.sources, input.tickets, errors);
+  const groups = parseGroups(input.groups, sources, errors);
   const why = input.why === undefined ? undefined : requiredString(input.why, "why", errors);
 
   if (errors.length > 0 || source === undefined || size === undefined || title === undefined || summary === undefined) {
@@ -53,8 +92,8 @@ export function parseReviewDocument(input: unknown): ParseResult {
   if (why !== undefined) {
     document.why = why;
   }
-  if (tickets !== undefined) {
-    document.tickets = tickets;
+  if (sources !== undefined) {
+    document.sources = sources;
   }
   return { ok: true, document };
 }
@@ -99,15 +138,163 @@ function parseSource(value: unknown, errors: string[]): ReviewSource | undefined
   return source;
 }
 
-function parseTickets(value: unknown, errors: string[]): Ticket[] | undefined {
-  if (value === undefined) {
+function parseDocumentSources(sourcesValue: unknown, ticketsValue: unknown, errors: string[]): Source[] | undefined {
+  if (sourcesValue !== undefined && ticketsValue !== undefined) {
+    errors.push("document has both sources and tickets; use sources");
+  }
+  if (sourcesValue !== undefined) {
+    return parseSources(sourcesValue, errors);
+  }
+  if (ticketsValue !== undefined) {
+    return parseLegacyTickets(ticketsValue, errors);
+  }
+  return undefined;
+}
+
+function parseSources(value: unknown, errors: string[]): Source[] | undefined {
+  if (!Array.isArray(value)) {
+    errors.push("sources must be an array");
     return undefined;
   }
+  const sources: Source[] = [];
+  const ids = new Set<string>();
+  value.forEach((item, i) => {
+    const source = parseSourceItem(item, `sources[${i}]`, errors);
+    if (source === undefined) {
+      return;
+    }
+    if (ids.has(source.id)) {
+      errors.push(`duplicate source id "${source.id}"`);
+    }
+    ids.add(source.id);
+    sources.push(source);
+  });
+  return sources;
+}
+
+function parseSourceItem(value: unknown, label: string, errors: string[]): Source | undefined {
+  if (!isRecord(value)) {
+    errors.push(`${label} must be an object`);
+    return undefined;
+  }
+  extraKeys(value, REVIEW_SOURCE_KEYS, label, errors);
+  const id = requiredString(value.id, `${label}.id`, errors);
+  const kind = parseKind(value.kind, `${label}.kind`, errors);
+  const sourceLabel = requiredString(value.label, `${label}.label`, errors);
+  if (id === undefined || kind === undefined || sourceLabel === undefined) {
+    return undefined;
+  }
+  const source: Source = { id, kind, label: sourceLabel };
+  if (value.url !== undefined) {
+    const url = requiredString(value.url, `${label}.url`, errors);
+    if (url !== undefined) {
+      source.url = url;
+    }
+  }
+  if (value.title !== undefined) {
+    const title = requiredString(value.title, `${label}.title`, errors);
+    if (title !== undefined) {
+      source.title = title;
+    }
+  }
+  if (value.gist !== undefined) {
+    const gist = requiredString(value.gist, `${label}.gist`, errors);
+    if (gist !== undefined) {
+      source.gist = gist;
+    }
+  }
+  if (value.part !== undefined) {
+    const part = requiredString(value.part, `${label}.part`, errors);
+    if (part !== undefined) {
+      source.part = part;
+    }
+  }
+  if (kind === "transcript" && source.url !== undefined) {
+    errors.push(`${label}.url must be omitted for transcripts`);
+  }
+  assignCommentFields(value, source, kind, label, errors);
+  return source;
+}
+
+function assignCommentFields(
+  value: Record<string, unknown>,
+  source: Source,
+  kind: SourceKind,
+  label: string,
+  errors: string[],
+): void {
+  const present = COMMENT_ONLY_KEYS.filter((key) => value[key] !== undefined);
+  if (kind !== "pr-comment") {
+    for (const key of present) {
+      errors.push(`${label}.${key} is only valid on pr-comment sources`);
+    }
+    return;
+  }
+  if (value.author !== undefined) {
+    const author = requiredString(value.author, `${label}.author`, errors);
+    if (author !== undefined) {
+      source.author = author;
+    }
+  }
+  if (value.body !== undefined) {
+    const body = requiredString(value.body, `${label}.body`, errors, { allowEmpty: true });
+    if (body !== undefined) {
+      source.body = body;
+    }
+  }
+  if (source.author === undefined) {
+    errors.push(`${label}.author is required on pr-comment sources`);
+  }
+  if (source.body === undefined) {
+    errors.push(`${label}.body is required on pr-comment sources`);
+  }
+  const pinCount = [value.path, value.side, value.line].filter((item) => item !== undefined).length;
+  if (pinCount === 0) {
+    return;
+  }
+  if (pinCount !== 3) {
+    errors.push(`${label} line pin needs path, side, and line together`);
+  }
+  if (value.path !== undefined) {
+    const path = requiredString(value.path, `${label}.path`, errors);
+    if (path !== undefined) {
+      source.path = path;
+    }
+  }
+  if (value.side !== undefined) {
+    if (!isSourceSide(value.side)) {
+      errors.push(`${label}.side must be old or new`);
+    } else {
+      source.side = value.side;
+    }
+  }
+  if (value.line !== undefined) {
+    const line = requiredInt(value.line, `${label}.line`, errors);
+    if (line !== undefined) {
+      if (line < 1) {
+        errors.push(`${label}.line must be a positive integer`);
+      } else {
+        source.line = line;
+      }
+    }
+  }
+}
+
+function parseKind(value: unknown, label: string, errors: string[]): SourceKind | undefined {
+  if (isSourceKind(value)) {
+    return value;
+  }
+  errors.push(`${label} must be one of ${SOURCE_KINDS.join(", ")}`);
+  return undefined;
+}
+
+function parseLegacyTickets(value: unknown, errors: string[]): Source[] | undefined {
   if (!Array.isArray(value)) {
     errors.push("tickets must be an array");
     return undefined;
   }
-  const tickets: Ticket[] = [];
+  const sources: Source[] = [];
+  const ids = new Set<string>();
   value.forEach((item, i) => {
     if (!isRecord(item)) {
       errors.push(`tickets[${i}] must be an object`);
@@ -118,31 +305,35 @@ function parseTickets(value: unknown, errors: string[]): Ticket[] | undefined {
     if (id === undefined) {
       return;
     }
-    const ticket: Ticket = { id };
+    if (ids.has(id)) {
+      errors.push(`duplicate source id "${id}"`);
+    }
+    ids.add(id);
+    const source: Source = { id, kind: "ticket", label: id };
     if (item.url !== undefined) {
       const url = requiredString(item.url, `tickets[${i}].url`, errors);
       if (url !== undefined) {
-        ticket.url = url;
+        source.url = url;
       }
     }
     if (item.title !== undefined) {
       const title = requiredString(item.title, `tickets[${i}].title`, errors);
       if (title !== undefined) {
-        ticket.title = title;
+        source.title = title;
       }
     }
     if (item.part !== undefined) {
       const part = requiredString(item.part, `tickets[${i}].part`, errors);
       if (part !== undefined) {
-        ticket.part = part;
+        source.part = part;
       }
     }
-    tickets.push(ticket);
+    sources.push(source);
   });
-  return tickets;
+  return sources;
 }
 
-function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
+function parseGroups(value: unknown, sources: Source[] | undefined, errors: string[]): ReviewGroup[] {
   if (!Array.isArray(value)) {
     errors.push("groups must be an array");
     return [];
@@ -163,6 +354,7 @@ function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
     const hunkRefs = parseHunkRefs(item.hunkRefs, `groups[${i}].hunkRefs`, errors);
     const lookFor = parseStringList(item.lookFor, `groups[${i}].lookFor`, errors);
     const dependsOn = parseStringList(item.dependsOn, `groups[${i}].dependsOn`, errors);
+    const groupSources = parseStringList(item.sources, `groups[${i}].sources`, errors);
     const part = item.part === undefined ? undefined : requiredString(item.part, `groups[${i}].part`, errors);
     if (id === undefined || title === undefined || why === undefined || summary === undefined || suggestedOrder === undefined) {
       return;
@@ -181,15 +373,29 @@ function parseGroups(value: unknown, errors: string[]): ReviewGroup[] {
     if (part !== undefined) {
       group.part = part;
     }
+    if (groupSources !== undefined) {
+      group.sources = groupSources;
+    }
     groups.push(group);
   });
-  const known = new Set(groups.map((group) => group.id));
+  const knownGroups = new Set(groups.map((group) => group.id));
+  const knownSources = new Set((sources ?? []).map((source) => source.id));
   for (const group of groups) {
     for (const dep of group.dependsOn ?? []) {
       if (dep === group.id) {
         errors.push(`groups id "${group.id}" depends on itself`);
-      } else if (!known.has(dep)) {
+      } else if (!knownGroups.has(dep)) {
         errors.push(`groups id "${group.id}" dependsOn unknown group "${dep}"`);
+      }
+    }
+    const seen = new Set<string>();
+    for (const sourceId of group.sources ?? []) {
+      if (seen.has(sourceId)) {
+        errors.push(`groups id "${group.id}" lists source "${sourceId}" twice`);
+      }
+      seen.add(sourceId);
+      if (!knownSources.has(sourceId)) {
+        errors.push(`groups id "${group.id}" sources unknown id "${sourceId}"`);
       }
     }
   }

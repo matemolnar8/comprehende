@@ -6,8 +6,10 @@ import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
 import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
-import { coverReview, type ReviewCoverage } from "../review/coverage.ts";
+import { coverReview, coverageErrors, type ReviewCoverage } from "../review/coverage.ts";
+import { commentPinErrors, staleCommentPins, type StaleCommentPin } from "../review/pins.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
+import { sourceCitationErrors } from "../schema/source.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { ApiError } from "./error.ts";
@@ -36,6 +38,7 @@ export type ReviewContext = {
   resolved: ApiReview["resolved"];
   files: DiffFile[];
   coverage: ReviewCoverage;
+  staleCommentPins: StaleCommentPin[];
   mergeBaseSha: string;
   commits: ApiReview["commits"];
 };
@@ -49,6 +52,7 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
   const document = await loadDocument(dataPath);
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   const { files, coverage } = await coverReview(cwd, document, range);
+  const pins = await staleCommentPins(cwd, document, range);
   const commits = await listCommits(cwd, range.baseSha, range.headSha);
   const repo = await readRepoIdentity(cwd);
   return {
@@ -64,13 +68,14 @@ export async function openReview(cwd: string, dataPath: string, pin?: PinnedRang
     },
     files,
     coverage,
+    staleCommentPins: pins,
     mergeBaseSha: range.mergeBaseSha,
     commits,
   };
 }
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
-  const { document, repo, resolved, files, coverage, commits } = ctx;
+  const { document, repo, resolved, files, coverage, staleCommentPins, commits } = ctx;
   const lockfiles = lockfileFiles(files);
   return {
     document,
@@ -81,6 +86,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       assignedHunks: coverage.assignedHunks,
       unassignedCount: coverage.unassigned.length,
       staleCount: coverage.stale.length,
+      staleSourceCount: staleCommentPins.length,
     },
     groups: coverage.groups
       .slice()
@@ -93,6 +99,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
         lookFor: group.group.lookFor ?? [],
         dependsOn: group.group.dependsOn ?? [],
         part: group.group.part,
+        sources: group.group.sources ?? [],
         suggestedOrder: group.group.suggestedOrder,
         hunkCount: group.hunks.length,
         staleCount: group.stale.length,
@@ -107,6 +114,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       files: lockfiles.map((file) => file.path),
     },
     stale: coverage.stale,
+    staleSources: staleCommentPins,
     files: files.map((file) => {
       const entry: ApiReview["files"][number] = {
         path: file.path,
@@ -123,6 +131,14 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
     skipped: files.filter((file) => file.binary && !file.image).map((file) => ({ path: file.path, reason: "binary" })),
     commits,
   };
+}
+
+export function reviewProblems(ctx: ReviewContext): string[] {
+  return [
+    ...coverageErrors(ctx.coverage),
+    ...sourceCitationErrors(ctx.document),
+    ...commentPinErrors(ctx.staleCommentPins),
+  ];
 }
 
 export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {

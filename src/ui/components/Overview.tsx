@@ -8,6 +8,7 @@ import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -17,9 +18,8 @@ export function Overview(props: {
   const { meta, parts, onOpenGroup } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
-  const tickets = meta.document.tickets ?? [];
   const why = meta.document.why;
-  const ticketList = tickets.length > 0 ? <TicketList tickets={tickets} mixed={mixed} parts={parts} /> : null;
+  const sources = meta.document.sources ?? [];
 
   return (
     <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
@@ -38,13 +38,13 @@ export function Overview(props: {
             </p>
           </>
         ) : null}
-        {ticketList}
         <Kicker id="review-what" className="mb-2">
           What
         </Kicker>
         <p className="mb-5 leading-relaxed text-pretty text-foreground">
           <InlineMd text={meta.document.summary} />
         </p>
+        <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
       </Brief>
       <div
         className={
@@ -63,37 +63,6 @@ export function Overview(props: {
         ))}
       </div>
     </div>
-  );
-}
-
-function TicketList(props: { tickets: NonNullable<ReviewMeta["document"]["tickets"]>; mixed: boolean; parts: Part[] }) {
-  const { tickets, mixed, parts } = props;
-  return (
-    <ul className="mb-6 space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
-      {tickets.map((ticket) => {
-        const strand = mixed ? parts.find((part) => part.title === ticket.part) : undefined;
-        return (
-          <li key={ticket.id} className="flex items-center gap-2">
-            {strand !== undefined ? (
-              <span
-                aria-hidden
-                className="size-2 shrink-0 rounded-full"
-                style={{ backgroundColor: partColor(strand.colorIndex) }}
-              />
-            ) : null}
-            {ticket.url !== undefined ? (
-              <a className="text-primary hover:underline" href={ticket.url} target="_blank" rel="noreferrer">
-                {ticket.id}
-              </a>
-            ) : (
-              <span>{ticket.id}</span>
-            )}
-            {ticket.title !== undefined ? <span>{ticket.title}</span> : null}
-            {ticket.part !== undefined ? <span>· {ticket.part}</span> : null}
-          </li>
-        );
-      })}
-    </ul>
   );
 }
 

@@ -4,7 +4,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
-- Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories.
+- Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 
 ```json
@@ -17,12 +17,15 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
   },
   "size": "small",
   "title": "HttpOnly session cookies",
-  "why": "Ticket #12 requires login sessions that client scripts cannot read.",
+  "why": "[#12](source:s1) requires login sessions that client scripts cannot read.",
   "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it. The README documents this behavior.",
-  "tickets": [
+  "sources": [
     {
-      "id": "#12",
+      "id": "s1",
+      "kind": "ticket",
+      "label": "#12",
       "title": "HttpOnly session cookies",
+      "gist": "Requires login sessions that client scripts cannot read.",
       "part": "Session cookie"
     }
   ],
@@ -50,9 +53,10 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
     {
       "id": "login",
       "title": "Login route",
-      "why": "Ticket #12 requires HttpOnly session cookies. The route must set them through the helper.",
+      "why": "[#12](source:s1) requires HttpOnly session cookies. The route must set them through the helper.",
       "summary": "The login route in `login.ts` uses `setSessionCookie` from `session.ts`.",
       "part": "Session cookie",
+      "sources": ["s1"],
       "lookFor": [
         "For `rememberMe = false`, compare the cookie: old code permits script access; new code sets `HttpOnly` and omits `Max-Age`."
       ],

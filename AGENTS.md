@@ -14,8 +14,8 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 - 100% accuracy: live git wins. The review document is interpretation only.
 - Easy on the eyes, easy to read
-- Allow drilling down to full files instead of the diff, git blames, commit messages, branches, ticket/issue references
-- Useful summaries of the issues/tickets.
+- Allow drilling down to full files instead of the diff, git blames, commit messages, branches, and the sources the skill read
+- Useful summaries of the issues and other sources.
 - UI is always the same, not generated on the fly. Only the data changes.
 - Works locally, no need for hosted services, deployed packages
 - Simple easy-to-understand wording throughout the UI and in the generated answers, using ASD-STE100 Simplified Technical English
@@ -32,15 +32,19 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
 
-**The why.** Why this work exists. The skill writes it from tickets, issues, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
+**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, and coding-agent transcripts. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
 
 **The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
 
 **The how.** How the change is implemented. The live git diff is the how. The agent may group and summarize it. The agent must not replace it.
 
+**Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. Transcripts have no URL.
+
+**Citation.** A markdown link `[text](source:id)` in the why or the what. The UI turns it into a mark. `validate` fails on an unknown id.
+
 ### Code
 
-**Review document.** Interpretation only. Title, groups, summaries, optional generated why, hunk pointers. Never patch text. Source refs must resolve in cwd.
+**Review document.** Interpretation only. Title, groups, summaries, optional generated why, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
 **Group.** Schema `groups` item. The UI uses the same word.
 
