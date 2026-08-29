@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { colorIndexByGroupId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { FilePeek } from "./FilePeek.tsx";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar(props: {
@@ -37,6 +38,7 @@ export function Sidebar(props: {
                 onClick={() => onSelect({ kind: "group", id: group.id })}
                 index={padIndex(index + 1)}
                 title={group.title}
+                files={group.files}
                 count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
                 colorIndex={colors.get(group.id)}
               />
@@ -48,6 +50,7 @@ export function Sidebar(props: {
                 active={selection?.kind === "unassigned"}
                 onClick={() => onSelect({ kind: "unassigned" })}
                 title="Unassigned"
+                files={meta.unassigned.files}
                 count={String(meta.unassigned.hunkCount)}
                 warn
               />
@@ -59,6 +62,7 @@ export function Sidebar(props: {
                 active={selection?.kind === "lockfiles"}
                 onClick={() => onSelect({ kind: "lockfiles" })}
                 title="Lockfiles"
+                files={meta.lockfiles.files}
                 count={String(meta.lockfiles.fileCount)}
                 muted
               />
@@ -74,6 +78,7 @@ function StackItem(props: {
   active: boolean;
   onClick: () => void;
   title: string;
+  files?: readonly string[];
   count?: string;
   index?: string;
   warn?: boolean;
@@ -81,6 +86,7 @@ function StackItem(props: {
   colorIndex?: number;
 }) {
   const colorIndex = props.colorIndex;
+  const files = props.files ?? [];
   const showStrand = colorIndex !== undefined || props.active;
   const strand =
     colorIndex !== undefined
@@ -88,11 +94,16 @@ function StackItem(props: {
       : props.muted
         ? "var(--muted-foreground)"
         : undefined;
+  const label =
+    files.length > 0
+      ? `${props.title}, ${files.length} files${props.count !== undefined ? `, ${props.count}` : ""}`
+      : undefined;
   return (
     <Button
       type="button"
       variant="ghost"
       onClick={props.onClick}
+      aria-label={label}
       style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
       className={cn(
         "relative z-1 mx-3 mb-1 h-auto w-[calc(100%-24px)] min-w-0 items-start justify-start gap-2.5 rounded-md px-3 py-2 text-left font-normal whitespace-normal hover:bg-transparent",
@@ -113,12 +124,17 @@ function StackItem(props: {
       {props.index !== undefined ? (
         <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
       ) : null}
-      <span className="min-w-0 flex-1 text-left leading-snug">{props.title}</span>
-      {props.count !== undefined ? (
-        <span className={cn("shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
-          {props.count}
+      <span className="min-w-0 flex-1 text-left leading-snug">
+        <span className="flex min-w-0 items-start gap-2.5">
+          <span className="min-w-0 flex-1">{props.title}</span>
+          {props.count !== undefined ? (
+            <span className={cn("mt-px shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
+              {props.count}
+            </span>
+          ) : null}
         </span>
-      ) : null}
+        <FilePeek paths={files} />
+      </span>
     </Button>
   );
 }
