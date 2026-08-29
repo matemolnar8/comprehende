@@ -13,6 +13,13 @@ describe("skill schema sync", () => {
     assert.deepEqual(skillSyncErrors(await loadWorkingTreeSkillSync()), []);
   });
 
+  it("tells the agent to check npm and leave skills update to the user", async () => {
+    const { nextSkillMd } = await loadWorkingTreeSkillSync();
+    assert.match(nextSkillMd, /npm view comprehende version/);
+    assert.match(nextSkillMd, /npx skills update/);
+    assert.match(nextSkillMd, /Do not run that command/);
+  });
+
   it("keeps the next skill outside the published skills/ tree", () => {
     const root = findPackageRoot();
     const paths = skillPaths(root);
