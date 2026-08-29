@@ -1,12 +1,10 @@
-import { useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { colorIndexByGroupId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
-import { PEEK_LABELS, PEEK_STYLES, readPeekStyle, writePeekStyle, type PeekStyle } from "../lib/peek-files.ts";
 import { FilePeek } from "./FilePeek.tsx";
-import { Kicker } from "./Kicker.tsx";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar(props: {
@@ -18,14 +16,9 @@ export function Sidebar(props: {
   const { meta, selection, parts, onSelect } = props;
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
-  const [peek, setPeek] = useState(readPeekStyle);
-  const choosePeek = (style: PeekStyle) => {
-    setPeek(style);
-    writePeekStyle(style);
-  };
   return (
-    <nav className="flex h-full min-h-0 flex-col bg-card">
-      <div className="relative min-h-0 flex-1 overflow-auto py-6">
+    <nav className="h-full overflow-auto bg-card py-6">
+      <div className="relative">
         <span className={styles.selection} aria-hidden />
         <ul className="mb-6 list-none p-0">
           <li>
@@ -34,7 +27,6 @@ export function Sidebar(props: {
               onClick={() => onSelect({ kind: "overview" })}
               title="Overview"
               count={sizeLabel(meta.document.size)}
-              peek={peek}
             />
           </li>
         </ul>
@@ -49,7 +41,6 @@ export function Sidebar(props: {
                 files={group.files}
                 count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
                 colorIndex={colors.get(group.id)}
-                peek={peek}
               />
             </li>
           ))}
@@ -62,7 +53,6 @@ export function Sidebar(props: {
                 files={meta.unassigned.files}
                 count={String(meta.unassigned.hunkCount)}
                 warn
-                peek={peek}
               />
             </li>
           ) : null}
@@ -75,13 +65,11 @@ export function Sidebar(props: {
                 files={meta.lockfiles.files}
                 count={String(meta.lockfiles.fileCount)}
                 muted
-                peek={peek}
               />
             </li>
           ) : null}
         </ul>
       </div>
-      <PeekChooser value={peek} onChange={choosePeek} />
     </nav>
   );
 }
@@ -96,7 +84,6 @@ function StackItem(props: {
   warn?: boolean;
   muted?: boolean;
   colorIndex?: number;
-  peek: PeekStyle;
 }) {
   const colorIndex = props.colorIndex;
   const files = props.files ?? [];
@@ -146,31 +133,8 @@ function StackItem(props: {
             </span>
           ) : null}
         </span>
-        <FilePeek paths={files} style={props.peek} />
+        <FilePeek paths={files} />
       </span>
     </Button>
-  );
-}
-
-function PeekChooser(props: { value: PeekStyle; onChange: (style: PeekStyle) => void }) {
-  return (
-    <div className="shrink-0 border-t border-border px-4 py-3">
-      <Kicker className="mb-2">File peek</Kicker>
-      <div className="flex overflow-hidden rounded-md border border-input" role="group" aria-label="File peek">
-        {PEEK_STYLES.map((style) => (
-          <Button
-            key={style}
-            type="button"
-            size="sm"
-            variant={props.value === style ? "secondary" : "ghost"}
-            className="h-8 flex-1 rounded-none border-0"
-            aria-pressed={props.value === style}
-            onClick={() => props.onChange(style)}
-          >
-            {PEEK_LABELS[style]}
-          </Button>
-        ))}
-      </div>
-    </div>
   );
 }
