@@ -65,6 +65,7 @@ export type ApiReview = {
     assignedHunks: number;
     unassignedCount: number;
     staleCount: number;
+    staleSourceCount: number;
   };
   groups: {
     id: string;
@@ -74,6 +75,7 @@ export type ApiReview = {
     lookFor: string[];
     dependsOn: string[];
     part?: string;
+    sources: string[];
     suggestedOrder: number;
     hunkCount: number;
     staleCount: number;
@@ -82,6 +84,7 @@ export type ApiReview = {
   unassigned: { hunkCount: number; files: string[] };
   lockfiles: { fileCount: number; files: string[] };
   stale: { path: string; oldStart: number; newStart: number }[];
+  staleSources: { id: string; path: string; side: "old" | "new"; line: number }[];
   files: {
     path: string;
     oldPath?: string;

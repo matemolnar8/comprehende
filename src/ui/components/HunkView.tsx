@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { GroupFile } from "../lib/group-files.ts";
+import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { ChevronDownIcon } from "lucide-react";
-import { useEffect, useId, useState, type MouseEvent } from "react";
+import { useEffect, useId, useMemo, useState, type MouseEvent } from "react";
 
 const motion = "duration-[var(--motion)] ease-[var(--motion-ease)]";
 
@@ -25,8 +26,11 @@ export function HunkView(props: {
   onSplitRatio: (ratio: number) => void;
   onOpen: (path: string) => void;
   onViewed: (path: string, viewed: boolean) => void;
+  comments?: FileComment[];
+  focusCommentId?: string;
 }) {
-  const { file, active, index, split, splitRatio, wrap, viewed, onSplitRatio, onOpen, onViewed } = props;
+  const { file, active, index, split, splitRatio, wrap, viewed, onSplitRatio, onOpen, onViewed, comments, focusCommentId } =
+    props;
   const deferred = file.kind === "lockfile";
   const [collapsed, setCollapsed] = useState(viewed || deferred);
   const [patch, setPatch] = useState(file.patch);
@@ -38,9 +42,21 @@ export function HunkView(props: {
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
   const bodyId = useId();
 
+  const fileComments = useMemo(
+    () => (comments ?? []).filter((comment) => comment.path === file.path || comment.path === file.oldPath),
+    [comments, file.oldPath, file.path],
+  );
+  const focused = focusCommentId !== undefined && fileComments.some((comment) => comment.id === focusCommentId);
+
   useEffect(() => {
     setCollapsed(viewed || deferred);
   }, [deferred, viewed]);
+
+  useEffect(() => {
+    if (focused) {
+      setCollapsed(false);
+    }
+  }, [focused]);
 
   useEffect(() => {
     if (collapsed || !deferred || patch !== "" || patchError !== null) {
@@ -165,6 +181,8 @@ export function HunkView(props: {
             splitRatio={splitRatio}
             onSplitRatio={onSplitRatio}
             hydrate={file.complete}
+            comments={fileComments}
+            focusCommentId={focusCommentId}
           />
         )}
       </div>

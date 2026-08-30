@@ -13,7 +13,10 @@ import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
+import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
+import { groupIdForPinnedSource, isLinePinned, linePinnedSources } from "../schema/source.ts";
+import type { Source } from "../schema/types.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -28,6 +31,8 @@ export function App() {
   const [wrap, setWrap] = useState(false);
   const [split, setSplit] = useState(false);
   const [splitRatio, setSplitRatio] = useState(0.5);
+  const [showComments, setShowComments] = useState(true);
+  const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<InspectorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -164,6 +169,11 @@ export function App() {
       }
       if (event.key === "w") {
         setWrap((value) => !value);
+      } else if (event.key === "c") {
+        const pinned = linePinnedSources(meta?.document.sources);
+        if (pinned.length > 0) {
+          setShowComments((value) => !value);
+        }
       } else if (event.key === "s") {
         setSplit((value) => {
           if (!value) {
@@ -228,6 +238,33 @@ export function App() {
   const mixed = isMixedReview(parts);
   const strandColor =
     mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
+  const staleSourceIds = useMemo(
+    () => new Set((meta?.staleSources ?? []).map((pin) => pin.id)),
+    [meta],
+  );
+  const pinnedComments = useMemo(() => linePinnedSources(meta?.document.sources), [meta]);
+  const visibleComments = useMemo(() => {
+    const shown = showComments ? pinnedComments : pinnedComments.filter((source) => source.id === focusCommentId);
+    return shown.map((source) => ({ ...source, stale: staleSourceIds.has(source.id) }));
+  }, [focusCommentId, pinnedComments, showComments, staleSourceIds]);
+  const sourcesHandle = useMemo(() => {
+    const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
+    return {
+      byId,
+      staleIds: staleSourceIds,
+      onCite: (source: Source) => {
+        if (meta === null || !isLinePinned(source)) {
+          return;
+        }
+        const groupId = groupIdForPinnedSource(meta.document, source);
+        if (groupId === undefined) {
+          return;
+        }
+        setFocusCommentId(source.id);
+        selectWithMotion({ kind: "group", id: groupId });
+      },
+    };
+  }, [meta, selectWithMotion, staleSourceIds]);
 
   if (loading && meta === null) {
     return (
@@ -248,6 +285,7 @@ export function App() {
 
   return (
     <TooltipProvider>
+      <SourcesProvider value={sourcesHandle}>
       <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
         <Header
           meta={meta}
@@ -263,6 +301,8 @@ export function App() {
           }}
           onRefresh={() => void load()}
           busy={loading}
+          comments={showComments}
+          onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
         />
 
         <ResizablePanelGroup
@@ -313,6 +353,9 @@ export function App() {
                       onOpenFile={openInspector}
                       onSplitRatio={setSplitRatio}
                       onViewed={setFileViewed}
+                      document={meta.document}
+                      comments={visibleComments}
+                      focusCommentId={focusCommentId ?? undefined}
                     />
                   )}
                 </main>
@@ -321,6 +364,7 @@ export function App() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+      </SourcesProvider>
     </TooltipProvider>
   );
 }

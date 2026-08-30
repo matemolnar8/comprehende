@@ -7,8 +7,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
 import { cmdIndex, cmdValidate, resolveDataPath, resolveOutPath } from "./commands.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
-import { openReview, pinReviewSource } from "../api/live.ts";
-import { coverageErrors } from "../review/coverage.ts";
+import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
 import { assertWorkTree } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
 import { startServer } from "../server/http.ts";
@@ -47,7 +46,7 @@ export async function run(argv: string[]): Promise<number> {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const pin = await pinReviewSource(request.cwd, dataPath);
         const ctx = await openReview(request.cwd, dataPath, pin);
-        warnCoverage(ctx.coverage, "serve continues; git wins, unassigned/stale are visible");
+        warnReview(ctx, "serve continues; git wins, unassigned/stale are visible");
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
         console.error(`serving ${dataPath}  cwd=${request.cwd}  localhost only`);
@@ -61,7 +60,7 @@ export async function run(argv: string[]): Promise<number> {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const outDir = resolveOutPath(request.out, request.cwd);
         const ctx = await openReview(request.cwd, dataPath);
-        warnCoverage(ctx.coverage, "export continues; git wins, unassigned/stale are visible");
+        warnReview(ctx, "export continues; git wins, unassigned/stale are visible");
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);
         console.error(`exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`);
@@ -74,8 +73,8 @@ export async function run(argv: string[]): Promise<number> {
   }
 }
 
-function warnCoverage(coverage: Parameters<typeof coverageErrors>[0], note: string): void {
-  const problems = coverageErrors(coverage);
+function warnReview(ctx: Parameters<typeof reviewProblems>[0], note: string): void {
+  const problems = reviewProblems(ctx);
   if (problems.length > 0) {
     console.error(`coverage issues (${note}):\n${problems.join("\n\n")}`);
   }

@@ -8,19 +8,36 @@
   "size": "large",
   "title": "Ask AI about this review",
   "summary": "Add Ask AI about this \u2014 copies a prompt so an agent can answer about the review from live git.",
-  "why": "Fixes #24. Reviewers need a quick way to ask an agent about a review without guessing SHAs or hunk refs.",
-  "tickets": [
+  "why": "[#24](source:s1) asks for a way to ask an agent about a review without guessing SHAs or hunk refs.",
+  "sources": [
     {
-      "id": "#24",
-      "url": "https://github.com/matemolnar8/comprehende/issues/24"
+      "id": "s1",
+      "kind": "ticket",
+      "label": "#24",
+      "url": "https://github.com/matemolnar8/comprehende/issues/24",
+      "title": "Explain with coding agent button",
+      "gist": "Asks for a copy-prompt so a human can ask an agent about this review."
+    },
+    {
+      "id": "s2",
+      "kind": "pr-comment",
+      "label": "reviewer on PR #32",
+      "url": "https://github.com/matemolnar8/comprehende/pull/32",
+      "gist": "Asked that agent markdown omit patch text.",
+      "author": "reviewer",
+      "body": "Agent markdown should omit patch text and point at live git.",
+      "path": "src/api/agent-md.ts",
+      "side": "new",
+      "line": 26
     }
   ],
   "groups": [
     {
       "id": "agent-plumbing",
       "title": "Agent markdown and live-git plumbing",
-      "why": "Provide the markdown and endpoints that let an agent identify the review from live git without guessing.",
+      "why": "Provide the markdown and endpoints that let an agent identify the review from live git without guessing. [Reviewers asked](source:s2) that this markdown omit patch text.",
       "summary": "Adds agent-md generation, live patch/file endpoints, repo SHA helpers, and pack-smoke coverage.",
+      "sources": ["s1", "s2"],
       "suggestedOrder": 0,
       "hunkRefs": [
         {

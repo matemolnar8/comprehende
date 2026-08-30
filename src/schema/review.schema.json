@@ -63,35 +63,13 @@
     "why": {
       "type": "string",
       "minLength": 1,
-      "description": "Generated why for the whole change, from tickets, issues, a request description, or a transcript."
+      "description": "Generated why for the whole change, from tickets, issues, a request description, or a transcript. Cite sources with [text](source:id)."
     },
-    "tickets": {
+    "sources": {
       "type": "array",
+      "description": "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
       "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "url": {
-            "type": "string",
-            "minLength": 1
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1
-          },
-          "part": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Short name of the independent story this ticket belongs to. Same name as the groups in that story."
-          }
-        }
+        "$ref": "#/$defs/source"
       }
     },
     "groups": {
@@ -146,6 +124,14 @@
             "minLength": 1,
             "description": "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs."
           },
+          "sources": {
+            "type": "array",
+            "description": "Ids of document sources this group names, even when the prose does not cite them inline.",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "suggestedOrder": {
             "type": "number"
           },
@@ -160,6 +146,82 @@
     }
   },
   "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "ticket",
+            "pr",
+            "pr-comment",
+            "commit",
+            "transcript"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short name shown in the UI. Examples: #24, alice on PR #32, Cursor session · Aug 12."
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Omit for transcripts."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gist": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One or two sentences, written by the skill, saying why this source matters."
+        },
+        "part": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Short name of the independent story this source belongs to. Same name as the groups in that story."
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1,
+          "description": "pr-comment only."
+        },
+        "body": {
+          "type": "string",
+          "description": "pr-comment only. The comment, faithful."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "pr-comment only. Git path. With side and line, pins the comment to live git."
+        },
+        "side": {
+          "type": "string",
+          "enum": [
+            "old",
+            "new"
+          ],
+          "description": "pr-comment only. Git-shaped, not GitHub-shaped."
+        },
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "pr-comment only. 1-based line on that side."
+        }
+      }
+    },
     "hunkRef": {
       "type": "object",
       "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed.",

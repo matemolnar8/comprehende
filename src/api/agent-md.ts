@@ -35,7 +35,7 @@ function overviewAgentMd(review: ApiReview): string {
     "Answer questions about this git change.",
     overviewSteps(review),
     pinBlock(review, { commits: true }),
-    ticketsBlock(review),
+    sourcesBlock(review),
     coverageBlock(review),
     joinBlocks(["The title:", review.document.title]),
     review.document.why !== undefined ? joinBlocks(["The why:", review.document.why]) : null,
@@ -96,17 +96,17 @@ function pinBlock(review: ApiReview, options: { commits: boolean }): string {
   ]);
 }
 
-function ticketsBlock(review: ApiReview): string | null {
-  const tickets = review.document.tickets ?? [];
-  if (tickets.length === 0) {
+function sourcesBlock(review: ApiReview): string | null {
+  const sources = review.document.sources ?? [];
+  if (sources.length === 0) {
     return null;
   }
-  const lines = tickets.map((ticket) => {
-    const title = ticket.title !== undefined ? ` ${ticket.title}` : "";
-    const url = ticket.url !== undefined ? `\n  ${ticket.url}` : "";
-    return `- ${ticket.id}${title}${url}`;
+  const lines = sources.map((source) => {
+    const gist = source.gist !== undefined ? ` ${source.gist}` : "";
+    const url = source.url !== undefined ? `\n  ${source.url}` : "";
+    return `- ${source.kind} ${source.label}${gist}${url}`;
   });
-  return ["Tickets:", ...lines].join("\n");
+  return ["Sources:", ...lines].join("\n");
 }
 
 function coverageBlock(review: ApiReview): string | null {

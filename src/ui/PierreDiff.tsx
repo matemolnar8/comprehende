@@ -1,6 +1,7 @@
 import {
   hydratePartialDiff,
   parsePatchFiles,
+  type DiffLineAnnotation,
   type FileDiffLoadedFiles,
   type FileDiffMetadata,
   type LineAnnotation,
@@ -31,6 +32,9 @@ import {
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
+import { CommentPin } from "./components/CommentPin.tsx";
+import type { FileComment } from "./lib/source-display.ts";
+import { commentsByLine, pierreSide } from "./lib/source-display.ts";
 
 /** GitHub Primer diffblob colors, mapped into Pierre's shadow tree. */
 const PIERRE_UNSAFE_CSS = `
@@ -151,6 +155,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   wrap: boolean;
   themeType: "light" | "dark";
   loadFiles: boolean;
+  annotations?: DiffLineAnnotation<CommentMeta>[];
   onPostRender?: (node: HTMLElement) => void;
 }) {
   const onPostRenderRef = useRef(props.onPostRender);
@@ -176,7 +181,15 @@ const StableFileDiff = memo(function StableFileDiff(props: {
     }),
     [props.loadFiles, props.split, props.themeType, props.wrap],
   );
-  return <FileDiff className="block w-full" fileDiff={props.fileDiff} options={options} />;
+  return (
+    <FileDiff
+      className="block w-full"
+      fileDiff={props.fileDiff}
+      options={options}
+      lineAnnotations={props.annotations}
+      renderAnnotation={props.annotations === undefined ? undefined : renderCommentAnnotation}
+    />
+  );
 });
 
 const StablePierreFile = memo(function StablePierreFile(props: {
@@ -226,6 +239,33 @@ export type FileAnnotation = {
   };
 };
 
+type CommentMeta = {
+  comments: FileComment[];
+  focusId?: string;
+};
+
+function commentAnnotations(
+  comments: readonly FileComment[],
+  focusId?: string,
+): DiffLineAnnotation<CommentMeta>[] {
+  return [...commentsByLine(comments).values()].flatMap((list) => {
+    const first = list[0];
+    if (first === undefined) {
+      return [];
+    }
+    const annotation: DiffLineAnnotation<CommentMeta> = {
+      side: pierreSide(first.side),
+      lineNumber: first.line,
+      metadata: { comments: list, focusId },
+    };
+    return [annotation];
+  });
+}
+
+function renderCommentAnnotation(annotation: DiffLineAnnotation<CommentMeta>): ReactNode {
+  return <CommentPin comments={annotation.metadata.comments} focusId={annotation.metadata.focusId} />;
+}
+
 function renderBlameAnnotation(annotation: LineAnnotation<FileAnnotation["metadata"]>): ReactNode {
   const meta = annotation.metadata;
   const day = new Date(meta.timestamp * 1000).toISOString().slice(0, 10);
@@ -268,8 +308,10 @@ export function PierreFileDiff(props: {
   onSplitRatio: (ratio: number) => void;
   /** False for grouped subset patches. Full-file blobs do not match those patches. */
   hydrate?: boolean;
+  comments?: FileComment[];
+  focusCommentId?: string;
 }) {
-  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true, comments, focusCommentId } = props;
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
@@ -339,6 +381,11 @@ export function PierreFileDiff(props: {
     );
   };
 
+  const annotations = useMemo(
+    () => (comments === undefined || comments.length === 0 ? undefined : commentAnnotations(comments, focusCommentId)),
+    [comments, focusCommentId],
+  );
+
   if (fileDiff === undefined) {
     return <p className="px-3 py-2 text-xs text-warn">Could not render this git patch.</p>;
   }
@@ -362,6 +409,7 @@ export function PierreFileDiff(props: {
         wrap={wrap}
         themeType={resolved}
         loadFiles={hydrate}
+        annotations={annotations}
         onPostRender={onPostRender}
       />
       {splitPanes ? <SplitResizeHandle ratio={splitRatio} onRatio={onSplitRatio} /> : null}

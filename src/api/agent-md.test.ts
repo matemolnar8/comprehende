@@ -66,6 +66,7 @@ describe("agentMd", () => {
     assert.match(prompt, /Done when the answer quotes the live code/);
     assert.match(prompt, /The title:\n\nAsk AI about this review/);
     assert.match(prompt, /#24 Explain with coding agent button/);
+    assert.match(prompt, /Sources:/);
     assert.match(prompt, /Unassigned live hunks: 2/);
     assert.match(prompt, /Done when both objects exist/);
     assert.match(prompt, /Live git wins when they disagree/);
@@ -103,6 +104,7 @@ describe("agentMd", () => {
     assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
     assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
     assert.doesNotMatch(prompt, /Tickets:/);
+    assert.doesNotMatch(prompt, /Sources:/);
     assert.doesNotMatch(prompt, /Commits:/);
     assert.doesNotMatch(prompt, /cites the matching hunk refs/);
     assert.doesNotMatch(prompt, /groups\/login\.md/);
@@ -114,10 +116,10 @@ describe("agentMd", () => {
     assert.equal(agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "missing" }), null);
   });
 
-  it("omits silent why, tickets, and coverage", () => {
+  it("omits silent why, sources, and coverage", () => {
     const review = sampleReview();
     delete review.document.why;
-    delete review.document.tickets;
+    delete review.document.sources;
     review.coverage.unassignedCount = 0;
     review.coverage.staleCount = 0;
     review.commits = [];
@@ -125,6 +127,7 @@ describe("agentMd", () => {
     assert.ok(prompt !== null);
     assert.doesNotMatch(prompt, /Ticket #24 needs a prompt a coding agent can paste/);
     assert.doesNotMatch(prompt, /Tickets:/);
+    assert.doesNotMatch(prompt, /Sources:/);
     assert.doesNotMatch(prompt, /Unassigned live hunks/);
     assert.doesNotMatch(prompt, /^Commits:/m);
     assert.match(prompt, /The what \(medium\):/);
@@ -150,10 +153,13 @@ function sampleReview(): ApiReview {
       title: "Ask AI about this review",
       why: "Ticket #24 needs a prompt a coding agent can paste.",
       summary: "Adds a copy-prompt control to overview and group.",
-      tickets: [
+      sources: [
         {
-          id: "#24",
+          id: "s1",
+          kind: "ticket",
+          label: "#24",
           title: "Explain with coding agent button",
+          gist: "Explain with coding agent button",
           url: "https://github.com/matemolnar8/comprehende/issues/24",
         },
       ],
@@ -202,6 +208,7 @@ function sampleReview(): ApiReview {
       assignedHunks: 3,
       unassignedCount: 2,
       staleCount: 0,
+      staleSourceCount: 0,
     },
     groups: [
       {
@@ -212,6 +219,7 @@ function sampleReview(): ApiReview {
         lookFor: ["Breaking. Throws when httpOnly is false."],
         dependsOn: [],
         part: "Session cookie",
+        sources: [],
         suggestedOrder: 0,
         hunkCount: 3,
         staleCount: 0,
@@ -225,6 +233,7 @@ function sampleReview(): ApiReview {
         lookFor: [],
         dependsOn: ["cookie"],
         suggestedOrder: 1,
+        sources: [],
         hunkCount: 1,
         staleCount: 0,
         files: ["src/api/login.ts"],
@@ -233,6 +242,7 @@ function sampleReview(): ApiReview {
     unassigned: { hunkCount: 2, files: ["README.md"] },
     lockfiles: { fileCount: 0, files: [] },
     stale: [],
+    staleSources: [],
     files: [
       { path: "src/auth/session.ts", status: "modified", binary: false, image: false, hunkCount: 1 },
       { path: "src/api/login.ts", status: "modified", binary: false, image: false, hunkCount: 1 },

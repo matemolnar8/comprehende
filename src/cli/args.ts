@@ -27,7 +27,7 @@ Commands:
             List hunk refs from live git (no patch text)
 
   validate  --data <review.json>
-            Check schema, ref resolution, and hunk coverage
+            Check schema, ref resolution, hunk coverage, and source citations
 
   serve     --data <review.json> [--port <n>] [--open]
             Serve the local UI on 127.0.0.1 (pins commit SHAs at start)

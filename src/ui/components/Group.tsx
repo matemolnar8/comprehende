@@ -1,10 +1,12 @@
 import { groupIndex, type ReviewMeta } from "../api.ts";
 import type { GroupFile } from "../lib/group-files.ts";
+import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { FileRail } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { WaitMark } from "./WaitMark.tsx";
+import { useEffect } from "react";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -25,6 +27,9 @@ export function Group(props: {
   onOpenFile: (path: string) => void;
   onSplitRatio: (ratio: number) => void;
   onViewed: (path: string, viewed: boolean) => void;
+  document: ReviewMeta["document"];
+  comments?: FileComment[];
+  focusCommentId?: string;
 }) {
   const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
@@ -34,6 +39,26 @@ export function Group(props: {
     (lockfiles ? "var(--muted-foreground)" : bucket === "unassigned" ? "var(--warn)" : "var(--primary)");
 
   const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
+
+  useEffect(() => {
+    const id = props.focusCommentId;
+    if (id === undefined || loading) {
+      return;
+    }
+    let frames = 0;
+    const tick = (): void => {
+      const el = document.querySelector(`[data-source-id="${CSS.escape(id)}"]`);
+      if (el instanceof HTMLElement) {
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        return;
+      }
+      frames += 1;
+      if (frames < 90) {
+        requestAnimationFrame(tick);
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [loading, props.focusCommentId, files]);
 
   const renderFile = (file: GroupFile, _idx: number, active: boolean) => (
     <HunkView
@@ -48,6 +73,8 @@ export function Group(props: {
       onSplitRatio={props.onSplitRatio}
       onOpen={props.onOpenFile}
       onViewed={props.onViewed}
+      comments={props.comments}
+      focusCommentId={props.focusCommentId}
     />
   );
 
@@ -65,6 +92,7 @@ export function Group(props: {
               group={group}
               index={groupIndex(groups, group.id)}
               groups={groups}
+              document={props.document}
               partTitle={mixed ? group.part : undefined}
               onOpenGroup={props.onOpenGroup}
             />
