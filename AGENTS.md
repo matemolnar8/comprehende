@@ -80,6 +80,10 @@ If the UI already shows the state, do not add a sentence that narrates it.
 
 Type safety helps humans and agents alike. Parse at the boundary, where the schema is the source of truth, and infer everywhere inside. If a bug could have been a type error, make it one before fixing it.
 
+Releases happen manually. Updating package.json should be explicitly requested (like asking for a release), don't do it automatically.
+
+Release flow: when the user asks for a release, bump `version` in `package.json`. Use the number they name. If they do not name one, pick the next semver from the changes since the last release (patch for fixes, minor for new capability, major for breaking). Match that version in the README `npx` pin. Run `pnpm release:skill` so the skill pin matches.
+
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. Make every change, design, and text in that spirit. The skill is reviewed and adjusted by me manually, but write it with these principles in mind too.
