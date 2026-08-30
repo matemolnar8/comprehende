@@ -39,7 +39,7 @@ export function SourceCite(props: {
           {children}
         </span>
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm space-y-1 bg-popover px-3 py-2 text-popover-foreground">
+      <TooltipContent className="max-w-sm space-y-1 border border-border bg-popover px-3 py-2 text-popover-foreground shadow-card">
         <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
           {SOURCE_KIND_LABEL[source.kind]}
         </p>
