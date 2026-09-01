@@ -1,6 +1,6 @@
 ---
 name: comprehende
-description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, or when the user asks to run comprehende.
+description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, or when the user asks to run comprehende or to upload the report.
 license: MIT
 compatibility: Requires Node.js 24+, git, and a git work tree as the current working directory.
 ---
@@ -33,6 +33,18 @@ The review document is interpretation only. It holds a title, groups, summaries,
 6. Write `review.json` in a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Copy hunk objects verbatim from the index. Set document `size` from review burden, not `git diff --stat`.
 7. Run `npx comprehende@0.6.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
 8. Run `npx comprehende@0.6.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+
+When they ask to upload the report, follow Export.
+
+## Export
+
+Write a static site and put that folder where they asked.
+
+```sh
+npx comprehende@0.6.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
+```
+
+`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is not written yet, finish the Workflow through validate first.
 
 ## The title
 
