@@ -115,6 +115,30 @@ async function run(): Promise<void> {
   assert.equal(existsSync(join(outDir, ".git")), false, "export must not copy git");
   assert.match(exportOut, /\/site/);
 
+  const packedUi = join(installDir, "node_modules/comprehende/dist/ui");
+  const packedManifest = JSON.parse(await readFile(join(packedUi, "shiki-langs.json"), "utf8")) as {
+    chunks: string[];
+  };
+  assert.ok(packedManifest.chunks.length > 20, "prebuilt UI must keep every highlighter chunk");
+  assert.ok(
+    packedManifest.chunks.every((file) => existsSync(join(packedUi, file))),
+    "serve UI must keep unused highlighter files on disk",
+  );
+  assert.ok(
+    packedManifest.chunks.some((file) => file.includes("shiki-lang-python")),
+    "serve UI must still include unused languages such as python",
+  );
+
+  const exportedManifest = JSON.parse(await readFile(join(outDir, "shiki-langs.json"), "utf8")) as {
+    chunks: string[];
+  };
+  const kept = exportedManifest.chunks.filter((file) => existsSync(join(outDir, file)));
+  const dropped = exportedManifest.chunks.filter((file) => !existsSync(join(outDir, file)));
+  assert.ok(kept.some((file) => file.includes("shiki-lang-typescript")), "export must keep typescript");
+  assert.ok(kept.some((file) => file.includes("shiki-lang-markdown")), "export must keep markdown");
+  assert.ok(dropped.some((file) => file.includes("shiki-lang-python")), "export must drop unused python");
+  assert.ok(dropped.length > kept.length, "export must drop most highlighter files");
+
   console.log("pack-smoke ok");
 }
 

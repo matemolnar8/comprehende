@@ -2,11 +2,12 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath } from "node:url";
+import { shikiLangChunks } from "./vite-shiki-langs.ts";
 
 const uiRoot = fileURLToPath(new URL("./src/ui", import.meta.url));
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), shikiLangChunks()],
   root: uiRoot,
   base: "./",
   resolve: {

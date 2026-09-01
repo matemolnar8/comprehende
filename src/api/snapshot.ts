@@ -12,6 +12,7 @@ import {
   type Snapshot,
 } from "./live.ts";
 import { apiFsRel } from "./paths.ts";
+import { highlightPathsFromFiles, pruneUnusedHighlighterChunks } from "./shiki-langs.ts";
 
 export type ExportOptions = {
   cwd: string;
@@ -65,5 +66,6 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     }
     apiFiles.push(rel);
   }
+  await pruneUnusedHighlighterChunks(outDir, highlightPathsFromFiles(ctx.files));
   return { outDir, apiFiles };
 }

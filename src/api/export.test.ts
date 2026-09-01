@@ -99,6 +99,42 @@ describe("export static site", () => {
     assert.equal(file.content.includes(SECRET_ADD), true);
   });
 
+  it("drops unused highlighter chunks from the exported UI", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-export-langs-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    const index = await cmdIndex(repo.root, repo.base, repo.head);
+    await writeCoveringDocument(dataPath, index);
+
+    const uiRoot = join(root, "ui");
+    await mkdir(join(uiRoot, "assets"), { recursive: true });
+    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(
+      join(uiRoot, "shiki-langs.json"),
+      `${JSON.stringify({
+        version: 1,
+        chunks: ["assets/shiki-lang-typescript-aaa.js", "assets/shiki-lang-python-eee.js", "assets/shiki-lang-markdown-fff.js"],
+        files: {
+          typescript: ["assets/shiki-lang-typescript-aaa.js"],
+          python: ["assets/shiki-lang-python-eee.js"],
+          markdown: ["assets/shiki-lang-markdown-fff.js"],
+        },
+        lookup: { ts: "typescript", md: "markdown", py: "python" },
+      })}\n`,
+    );
+    await writeFile(join(uiRoot, "assets/shiki-lang-typescript-aaa.js"), "// ts\n");
+    await writeFile(join(uiRoot, "assets/shiki-lang-python-eee.js"), "// py\n");
+    await writeFile(join(uiRoot, "assets/shiki-lang-markdown-fff.js"), "// md\n");
+
+    const outDir = join(root, "site");
+    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
+
+    assert.equal(existsSync(join(outDir, "assets/shiki-lang-typescript-aaa.js")), true);
+    assert.equal(existsSync(join(outDir, "assets/shiki-lang-markdown-fff.js")), true);
+    assert.equal(existsSync(join(outDir, "assets/shiki-lang-python-eee.js")), false);
+  });
+
   it("refuses unresolved source refs", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-export-badref-"));
     roots.push(root);
