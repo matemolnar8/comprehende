@@ -33,7 +33,8 @@ Commands:
             Serve the local UI on 127.0.0.1 (pins commit SHAs at start)
 
   export    --data <review.json> --out <dir>
-            Write a static site (same UI + frozen git payloads). No server after that.
+            Write a static site (same UI + frozen git payloads). Highlighters only
+            for languages in the review. No server after that.
 
 Options:
   --base <ref>     Base ref (default: origin/HEAD or main/master)
