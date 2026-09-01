@@ -1,6 +1,6 @@
 ---
 name: comprehende
-description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, or when the user asks to run comprehende.
+description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, or when the user asks to run comprehende or to upload the report.
 license: MIT
 compatibility: Requires Node.js 24+, git, and a git work tree as the current working directory.
 ---
@@ -12,14 +12,14 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Cwd is the repo; there is no `--repo` flag. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.6.0 <command>
+npx comprehende@0.6.1 <command>
 ```
 
 The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. Do not copy patch text into it. `serve` reads the diff from git.
 
 ## Workflow
 
-1. Check npm for a newer package. Run `npm view comprehende version`. If that version is newer than this pin (`npx comprehende@0.6.0`), stop and tell the user. Show this command as an option they can run:
+1. Check npm for a newer package. Run `npm view comprehende version`. If that version is newer than this pin (`npx comprehende@0.6.1`), stop and tell the user. Show this command as an option they can run:
 
    ```sh
    npx skills update
@@ -27,12 +27,22 @@ The review document is interpretation only. It holds a title, groups, summaries,
 
    Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
 2. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-3. Run `npx comprehende@0.6.0 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
+3. Run `npx comprehende@0.6.1 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
 4. Recover the why, write the title, and write the what. Read the sources listed under The why and The title, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `title` (always), document `summary` (always), and document `why` (only when a source names the motive). Summaries come from the code, not the log.
 5. Group the hunks by review concern, following the Grouping rules. Done when every hunk ref from the index appears in at least one group and every group has its `why`.
 6. Write `review.json` in a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Copy hunk objects verbatim from the index. Set document `size` from review burden, not `git diff --stat`.
-7. Run `npx comprehende@0.6.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
-8. Run `npx comprehende@0.6.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+7. Run `npx comprehende@0.6.1 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
+8. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.6.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+
+## Export
+
+Write a static site and put that folder where they asked.
+
+```sh
+npx comprehende@0.6.1 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
+```
+
+`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is not written yet, finish the Workflow through validate, then export.
 
 ## The title
 
