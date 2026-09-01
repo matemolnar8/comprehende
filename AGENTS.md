@@ -88,7 +88,7 @@ Release flow: when the user asks for a release, bump `version` in `package.json`
 
 ## Pull requests
 
-When opening a pull request, run the comprehende skill on that PR, export the review, and publish the folder:
+When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and publish the folder:
 
 ```sh
 npx -y netlify-cli deploy --dir="$EXPORT_DIR" --no-build --allow-anonymous --json
