@@ -78,6 +78,8 @@ Component look lives on the component. Tailwind first. If a bit of CSS is requir
 
 If the UI already shows the state, do not add a sentence that narrates it.
 
+README is for people using the tool. Change it when a command, install step, or other user-visible behavior changes. Leave it alone for internal implementation.
+
 Type safety helps humans and agents alike. Parse at the boundary, where the schema is the source of truth, and infer everywhere inside. If a bug could have been a type error, make it one before fixing it.
 
 Releases happen manually. Updating package.json should be explicitly requested (like asking for a release), don't do it automatically.
