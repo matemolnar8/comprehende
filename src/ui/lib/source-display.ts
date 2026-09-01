@@ -46,6 +46,17 @@ export function commentsForFile(
   });
 }
 
+export function visibleFileComments(
+  comments: readonly LinePinnedSource[],
+  show: boolean,
+  staleIds: ReadonlySet<string>,
+): FileComment[] {
+  if (!show) {
+    return [];
+  }
+  return comments.map((source) => ({ ...source, stale: staleIds.has(source.id) }));
+}
+
 export function commentsByLine(comments: readonly FileComment[]): Map<string, FileComment[]> {
   const map = new Map<string, FileComment[]>();
   for (const comment of comments) {
