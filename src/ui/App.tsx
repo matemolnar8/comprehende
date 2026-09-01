@@ -10,6 +10,7 @@ import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
+import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
@@ -243,10 +244,10 @@ export function App() {
     [meta],
   );
   const pinnedComments = useMemo(() => linePinnedSources(meta?.document.sources), [meta]);
-  const visibleComments = useMemo(() => {
-    const shown = showComments ? pinnedComments : pinnedComments.filter((source) => source.id === focusCommentId);
-    return shown.map((source) => ({ ...source, stale: staleSourceIds.has(source.id) }));
-  }, [focusCommentId, pinnedComments, showComments, staleSourceIds]);
+  const visibleComments = useMemo(
+    () => visibleFileComments(pinnedComments, showComments, staleSourceIds),
+    [pinnedComments, showComments, staleSourceIds],
+  );
   const sourcesHandle = useMemo(() => {
     const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
     return {
@@ -260,6 +261,7 @@ export function App() {
         if (groupId === undefined) {
           return;
         }
+        setShowComments(true);
         setFocusCommentId(source.id);
         selectWithMotion({ kind: "group", id: groupId });
       },
