@@ -86,6 +86,16 @@ Releases happen manually. Updating package.json should be explicitly requested (
 
 Release flow: when the user asks for a release, bump `version` in `package.json`. Use the number they name. If they do not name one, pick the next semver from the changes since the last release (patch for fixes, minor for new capability, major for breaking). Match that version in the README `npx` pin. Run `pnpm release:skill` so the skill pin matches.
 
+## Pull requests
+
+When opening a pull request, run the comprehende skill on that PR, export the review, and publish the folder:
+
+```sh
+npx -y netlify-cli deploy --dir="$EXPORT_DIR" --no-build --allow-anonymous --json
+```
+
+Cwd is `$EXPORT_DIR`. Put `site_url` and `password` in the PR body. Unclaimed sites last one hour.
+
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. Make every change, design, and text in that spirit. The skill is reviewed and adjusted by me manually, but write it with these principles in mind too.
