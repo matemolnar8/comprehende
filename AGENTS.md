@@ -88,13 +88,7 @@ Release flow: when the user asks for a release, bump `version` in `package.json`
 
 ## Pull requests
 
-When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and publish the folder with VibeDrop:
-
-```sh
-npx -y @vibedrop/cli deploy "$EXPORT_DIR"
-```
-
-Put the site URL in the PR body. If a claim URL is printed, include it. Do not print the API key. Leave the site unlisted.
+When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and use VibeDrop to publish. Put the URL in the PR body.
 
 ## Notes from Máté, the repo owner
 
