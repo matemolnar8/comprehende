@@ -88,13 +88,13 @@ Release flow: when the user asks for a release, bump `version` in `package.json`
 
 ## Pull requests
 
-When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and publish the folder:
+When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and publish the folder with VibeDrop:
 
 ```sh
-npx -y netlify-cli deploy --dir="$EXPORT_DIR" --no-build --allow-anonymous --json
+npx -y @vibedrop/cli deploy "$EXPORT_DIR"
 ```
 
-Cwd is `$EXPORT_DIR`. Put `site_url` and `password` in the PR body. Unclaimed sites last one hour.
+Put the site URL in the PR body. If a claim URL is printed, include it. Do not print the API key. Leave the site unlisted.
 
 ## Notes from Máté, the repo owner
 
