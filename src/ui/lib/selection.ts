@@ -53,6 +53,7 @@ export function serializeSelection(selection: Selection): string {
 }
 
 export function restoreSelection(source: SelectionStackSource, stored: Selection | null): Selection {
+  // Invariant: unknown or missing buckets fall back to the default selection.
   if (stored === null) {
     return defaultSelection(source);
   }

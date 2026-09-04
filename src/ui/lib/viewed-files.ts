@@ -43,6 +43,7 @@ export function writeViewed(key: string, paths: Set<string>): void {
   writeKey(sessionStorage, key, serializeViewed(paths));
 }
 
+// TODO: drop localStorage cleanup in 0.7.0; viewed state now lives in sessionStorage.
 function forgetLocalViewed(key: string): void {
   removeKey(localStorage, key);
 }

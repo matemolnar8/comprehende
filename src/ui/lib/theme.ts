@@ -14,6 +14,7 @@ export function parseThemePreference(raw: string | null): ThemePreference {
   if (raw === "light" || raw === "dark" || raw === "auto") {
     return raw;
   }
+  // Shim: old stored "system" means "auto".
   if (raw === "system") {
     return "auto";
   }

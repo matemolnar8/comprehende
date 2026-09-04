@@ -288,6 +288,7 @@ function parseKind(value: unknown, label: string, errors: string[]): SourceKind 
   return undefined;
 }
 
+// TODO: drop legacy tickets support in 0.7.0; use sources instead.
 function parseLegacyTickets(value: unknown, errors: string[]): Source[] | undefined {
   if (!Array.isArray(value)) {
     errors.push("tickets must be an array");
