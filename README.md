@@ -48,7 +48,7 @@ This tool is for preventing this cognitive surrender while trying to maintain mo
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.
 
-Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the next skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and next skill pin differ. Do not bump for skill-only edits.
+Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the next skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and next skill pin differ. Do not bump for skill-only edits. Use the number the user names. If they name none, use the next semver: patch for fixes, minor for new use, major for breaking.
 
 When that next skill should ship with `npx skills add`, run `pnpm release:skill`. That copies `skills-next/comprehende/` onto `skills/comprehende/`. Run it in the same change that publishes a new CLI. Then `npx skills add` installs instructions that match the package they pin.
 

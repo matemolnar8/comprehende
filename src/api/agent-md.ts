@@ -1,4 +1,7 @@
+import { formatHunkRef } from "../schema/identity.ts";
+import { padIndex, sizeLabel } from "../schema/types.ts";
 import type { HunkRef } from "../schema/types.ts";
+import { agentMdGroupHref } from "./paths.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiReview } from "./types.ts";
 
@@ -6,10 +9,7 @@ export const AGENT_MD_MEDIA_TYPE = "text/markdown; charset=utf-8";
 
 export type AgentMdResource = Extract<ApiResource, { kind: "agent-md" }>;
 
-export function formatHunkRef(ref: HunkRef): string {
-  const rename = ref.oldPath !== undefined ? `${ref.oldPath} -> ` : "";
-  return `${rename}${ref.path} @@ -${ref.oldStart},${ref.oldLines} +${ref.newStart},${ref.newLines} @@`;
-}
+export { formatHunkRef };
 
 export function isImageSlot(ref: HunkRef): boolean {
   return ref.oldStart === 0 && ref.oldLines === 0 && ref.newStart === 0 && ref.newLines === 0;
@@ -17,10 +17,6 @@ export function isImageSlot(ref: HunkRef): boolean {
 
 export function agentClipboardPrompt(url: string): string {
   return `Answer the following questions by using ${url}`;
-}
-
-function groupAgentMdHref(id: string): string {
-  return `groups/${encodeURIComponent(id)}.md`;
 }
 
 export function agentMd(review: ApiReview, resource: AgentMdResource): string | null {
@@ -124,7 +120,7 @@ function coverageBlock(review: ApiReview): string | null {
 
 function reviewConcernsBlock(review: ApiReview): string {
   const sections = review.groups.map((group, i) => {
-    const href = groupAgentMdHref(group.id);
+    const href = agentMdGroupHref(group.id);
     return joinBlocks([
       `### ${padIndex(i + 1)} ${group.title} (\`${group.id}\`)`,
       group.summary,
@@ -185,7 +181,7 @@ function overviewSteps(review: ApiReview): string {
     "",
     "3. Answer from live git.",
     "   Follow those files. Use the why and the what as interpretation. Live git wins when they disagree.",
-    `   ${showCodeRule()}`,
+    `   ${SHOW_CODE_RULE}`,
     "   Done when the answer quotes the live code.",
   ].join("\n");
 }
@@ -206,7 +202,7 @@ function groupSteps(review: ApiReview): string {
     "",
     "3. Answer from live git.",
     "   Read those hunks. Use the why and the what as interpretation. Live git wins when they disagree.",
-    `   ${showCodeRule()}`,
+    `   ${SHOW_CODE_RULE}`,
     "   Done when the answer quotes the live code.",
   ].join("\n");
 }
@@ -220,17 +216,7 @@ function resolveShaSteps(review: ApiReview): string[] {
   ];
 }
 
-function showCodeRule(): string {
-  return "When you show code, quote the live git lines.";
-}
-
-function padIndex(index: number): string {
-  return String(index).padStart(2, "0");
-}
-
-function sizeLabel(size: ApiReview["document"]["size"]): string {
-  return size.replace("-", " ");
-}
+const SHOW_CODE_RULE = "When you show code, quote the live git lines.";
 
 function joinBlocks(parts: Array<string | null | undefined>): string {
   return parts.filter((part): part is string => part !== null && part !== undefined && part.length > 0).join("\n\n");

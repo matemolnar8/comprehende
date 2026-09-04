@@ -1,3 +1,5 @@
+import { readKey, writeKey } from "./storage.ts";
+
 export type ThemePreference = "light" | "dark" | "auto";
 export type ResolvedTheme = "light" | "dark";
 
@@ -31,19 +33,11 @@ export function applyResolvedTheme(theme: ResolvedTheme): void {
 }
 
 export function readStoredPreference(): ThemePreference {
-  try {
-    return parseThemePreference(localStorage.getItem(THEME_STORAGE_KEY));
-  } catch {
-    return "auto";
-  }
+  return parseThemePreference(readKey(localStorage, THEME_STORAGE_KEY));
 }
 
 export function writeStoredPreference(preference: ThemePreference): void {
-  try {
-    localStorage.setItem(THEME_STORAGE_KEY, preference);
-  } catch {
-    // quota / private mode
-  }
+  writeKey(localStorage, THEME_STORAGE_KEY, preference);
 }
 
 export function systemPrefersDark(): boolean {

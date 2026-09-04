@@ -16,7 +16,16 @@ export type CliRequest =
       open: boolean;
     };
 
-const COMMANDS = new Set<CommandName>(["index", "validate", "serve", "export"]);
+const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["index", "validate", "serve", "export"]);
+
+export const DEFAULT_PORT = 4567;
+
+export class ArgError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ArgError";
+  }
+}
 
 export const USAGE = `Usage: comprehende <command> [options]
 
@@ -41,7 +50,7 @@ Options:
   --head <ref>     Head ref (default: HEAD)
   --data <path>    Review document path
   --out <dir>      Output directory for export
-  --port <n>       Listen port (default: 4567, 0 for ephemeral)
+  --port <n>       Listen port (default: ${DEFAULT_PORT}, 0 for ephemeral)
   --open           Open the UI in a browser
   -h, --help       Show this help
   -v, --version    Show version
@@ -69,9 +78,9 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
 
   const rest = args.slice(1);
   try {
-    const port = Number(flag(rest, "--port") ?? "4567");
+    const port = Number(flag(rest, "--port") ?? String(DEFAULT_PORT));
     if (!Number.isInteger(port) || port < 0) {
-      throw new Error("--port must be a non-negative integer");
+      throw new ArgError("--port must be a non-negative integer");
     }
     return {
       kind: "command",
@@ -90,7 +99,7 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
 }
 
 function isCommand(value: string): value is CommandName {
-  return COMMANDS.has(value as CommandName);
+  return COMMANDS.has(value);
 }
 
 function flag(args: string[], name: string): string | undefined {
@@ -103,14 +112,14 @@ function flag(args: string[], name: string): string | undefined {
     if (arg === name) {
       const value = args[i + 1];
       if (value === undefined || value.startsWith("-")) {
-        throw new Error(`${name} requires a value`);
+        throw new ArgError(`${name} requires a value`);
       }
       return value;
     }
     if (arg.startsWith(prefix)) {
       const value = arg.slice(prefix.length);
       if (value === "") {
-        throw new Error(`${name} requires a value`);
+        throw new ArgError(`${name} requires a value`);
       }
       return value;
     }

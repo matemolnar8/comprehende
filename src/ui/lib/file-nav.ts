@@ -1,25 +1,19 @@
+import { basename } from "../../schema/types.ts";
+import { readKey, writeKey } from "./storage.ts";
+
 const RAIL_COLLAPSED_KEY = "comprehende:rail-collapsed";
 
 export function readStoredRailCollapsed(): boolean {
-  try {
-    return localStorage.getItem(RAIL_COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
+  return readKey(localStorage, RAIL_COLLAPSED_KEY) === "1";
 }
 
 export function writeStoredRailCollapsed(collapsed: boolean): void {
-  try {
-    localStorage.setItem(RAIL_COLLAPSED_KEY, collapsed ? "1" : "0");
-  } catch {
-    // ignore
-  }
+  writeKey(localStorage, RAIL_COLLAPSED_KEY, collapsed ? "1" : "0");
 }
 
 /** File path helpers for display. */
 export function fileBasename(path: string): string {
-  const slash = path.lastIndexOf("/");
-  return slash === -1 ? path : path.slice(slash + 1);
+  return basename(path);
 }
 
 export function fileDirname(path: string): string {

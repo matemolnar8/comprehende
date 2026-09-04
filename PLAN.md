@@ -67,18 +67,23 @@ type ReviewDocument = {
     headRef: string
     range?: string
   }
-  walkthrough?: string // extra: whole-change read for Overview
-  size: "trivial" | "small" | "medium" | "large" | "very-large" // extra: human review burden, not file count
-  tickets?: { id: string; url?: string; title?: string }[]
+  size: "trivial" | "small" | "medium" | "large" | "very-large" // human review burden, not file count
+  title: string // short name of the whole change
+  summary: string // short what of the whole change
+  why?: string // generated why, from sources
+  sources?: Source[] // locators the skill read, plus gist
   groups: ReviewGroup[]
 }
 
 type ReviewGroup = {
   id: string
   title: string
-  summary: string
-  lookFor?: string[] // extra: scannable inspect list
-  dependsOn?: string[] // extra: earlier group ids
+  why: string // why this group exists
+  summary: string // one sentence: what this group is
+  lookFor?: string[] // scannable inspect list
+  dependsOn?: string[] // earlier group ids, same story only
+  part?: string // story name
+  sources?: string[] // source ids
   suggestedOrder: number
   hunkRefs: HunkRef[]
 }
@@ -101,7 +106,7 @@ type HunkRef = {
 
 **Stale refs:** if a `HunkRef` does not match a live hunk (rebase, uncommitted edit), serve still shows the live git diff and flags the broken pointer. Git wins. Do not invent a replacement hunk.
 
-**Drill-down** is CLI APIs against cwd, not fields in JSON: full file (`git show`), blame (`git blame --line-porcelain`), log, rename detection. The document may list ticket ids; the UI renders `id` / `url` / `title` from the document. It does not fetch a host. Host CLIs are never required.
+**Drill-down** is CLI APIs against cwd, not fields in JSON: full file (`git show`), blame (`git blame --line-porcelain`), log, rename detection. The document may list sources; the UI renders `label` / `url` / `title` / `gist` from the document. It does not fetch a host. Host CLIs are never required.
 
 Drill-down **works** (file inspector, blame inspector, commit list on Overview, header refs/SHAs). Convenience of that drill-down is an open product question — no design yet.
 
@@ -136,10 +141,12 @@ Run inside the target repo.
 comprehende index  [--base <ref>] [--head <ref>]
 comprehende validate --data <review.json>
 comprehende serve --data <review.json> [--port] [--open]
+comprehende export --data <review.json> --out <dir>
 ```
 
 - `base` / `head` default to `origin/HEAD` (fallback `main` / `master`) … `HEAD`. Override via flags or `source` in the JSON.
 - `serve` binds `127.0.0.1` only. It re-reads git on every request; it does not cache patch text in the document.
+- `export` writes the same UI plus frozen git payloads to `--out` dir for static hosting. No git in that folder.
 - No `--repo` flag in v1. Cwd is the repo. If cwd is not a git work tree, exit with an error.
 
 ## UI (shipped)
@@ -178,7 +185,7 @@ Unit tests cover index, validate, coverage, stale refs, and HTTP smoke (`serve` 
 
 ### Prerequisite to 5 — npm-publishable package
 
-Done mechanically. `prepack` builds CLI + UI; UI libraries are `devDependencies`; `pnpm pack:smoke` installs the tarball in a foreign cwd and runs `index` / `validate` / `serve`. README uses `npx comprehende@0.1.0`. CI publishes from `main` when `package.json` version is new.
+Done mechanically. `prepack` builds CLI + UI; UI libraries are `devDependencies`; `pnpm pack:smoke` installs the tarball in a foreign cwd and runs `index` / `validate` / `serve`. README uses `npx comprehende@0.6.1`. CI publishes from `main` when `package.json` version is new.
 
 First npm publish (unscoped name `comprehende`, account, trusted publisher for workflow `ci.yml`) is Máté’s. Until that exists, CI skips publish.
 

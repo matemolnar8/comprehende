@@ -1,3 +1,4 @@
+import { isSourceSide } from "../schema/types.ts";
 import type { FileSide } from "./types.ts";
 
 export type ApiResource =
@@ -11,26 +12,21 @@ export type ApiResource =
   | { kind: "patch"; path: string };
 
 export function apiHref(resource: ApiResource): string {
-  switch (resource.kind) {
-    case "review":
-      return "api/review.json";
-    case "agent-md":
-      return agentMdRel(resource);
-    case "hunks":
-      return `api/hunks/${encodeURIComponent(resource.group)}.json`;
-    case "file":
-      return `api/files/${resource.side}/${encodeFilePath(resource.path)}.json`;
-    case "blame":
-      return `api/blame/${resource.side}/${encodeFilePath(resource.path)}.json`;
-    case "image":
-      return `api/images/${resource.side}/${encodeFilePath(resource.path)}`;
-    case "patch":
-      return `api/patches/${encodeFilePath(resource.path)}.json`;
-  }
+  return apiRel(resource, true);
 }
 
 /** Decoded relative path under the site root. Static hosts map encoded request URLs onto this. */
 export function apiFsRel(resource: ApiResource): string {
+  return apiRel(resource, false);
+}
+
+/** Relative link from overview.md to a group file. Overview lives in api/agent, groups live in api/agent/groups. */
+export function agentMdGroupHref(group: string): string {
+  return `groups/${encodeURIComponent(group)}.md`;
+}
+
+function apiRel(resource: ApiResource, encodeFiles: boolean): string {
+  const filePath = (path: string): string => (encodeFiles ? encodeFilePath(path) : path);
   switch (resource.kind) {
     case "review":
       return "api/review.json";
@@ -39,13 +35,13 @@ export function apiFsRel(resource: ApiResource): string {
     case "hunks":
       return `api/hunks/${encodeURIComponent(resource.group)}.json`;
     case "file":
-      return `api/files/${resource.side}/${resource.path}.json`;
+      return `api/files/${resource.side}/${filePath(resource.path)}.json`;
     case "blame":
-      return `api/blame/${resource.side}/${resource.path}.json`;
+      return `api/blame/${resource.side}/${filePath(resource.path)}.json`;
     case "image":
-      return `api/images/${resource.side}/${resource.path}`;
+      return `api/images/${resource.side}/${filePath(resource.path)}`;
     case "patch":
-      return `api/patches/${resource.path}.json`;
+      return `api/patches/${filePath(resource.path)}.json`;
   }
 }
 
@@ -79,11 +75,11 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
   }
   if (parts[1] === "images" && parts.length >= 4 && parts[2] !== undefined) {
     const side = parts[2];
-    if (side !== "old" && side !== "new") {
+    if (!isSourceSide(side)) {
       return undefined;
     }
     const path = parts.slice(3).join("/");
-    if (!isRepoPath(path)) {
+    if (!isSafePath(path)) {
       return undefined;
     }
     return { kind: "image", path, side };
@@ -97,14 +93,14 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
     }
     rest[rest.length - 1] = stem;
     const path = rest.join("/");
-    if (!isRepoPath(path)) {
+    if (!isSafePath(path)) {
       return undefined;
     }
     return { kind: "patch", path };
   }
   if ((parts[1] === "files" || parts[1] === "blame") && parts.length >= 4 && parts[2] !== undefined) {
     const side = parts[2];
-    if (side !== "old" && side !== "new") {
+    if (!isSourceSide(side)) {
       return undefined;
     }
     const rest = parts.slice(3);
@@ -115,7 +111,7 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
     }
     rest[rest.length - 1] = stem;
     const path = rest.join("/");
-    if (!isRepoPath(path)) {
+    if (!isSafePath(path)) {
       return undefined;
     }
     return { kind: parts[1] === "files" ? "file" : "blame", path, side };
@@ -139,25 +135,33 @@ function agentMdRel(resource: Extract<ApiResource, { kind: "agent-md" }>): strin
   if (resource.target === "overview") {
     return "api/agent/overview.md";
   }
-  return `api/agent/groups/${encodeURIComponent(resource.group)}.md`;
+  return `api/agent/${agentMdGroupHref(resource.group)}`;
 }
 
 function jsonStem(file: string): string | undefined {
-  if (!file.endsWith(".json")) {
-    return undefined;
-  }
-  const stem = file.slice(0, -".json".length);
-  return stem === "" ? undefined : stem;
+  return stem(file, ".json");
 }
 
 function mdStem(file: string): string | undefined {
-  if (!file.endsWith(".md")) {
-    return undefined;
-  }
-  const stem = file.slice(0, -".md".length);
-  return stem === "" ? undefined : stem;
+  return stem(file, ".md");
 }
 
-function isRepoPath(path: string): boolean {
-  return path !== "" && !path.startsWith("/") && !path.includes("\0") && !path.split("/").includes("..");
+function stem(file: string, ext: string): string | undefined {
+  if (!file.endsWith(ext)) {
+    return undefined;
+  }
+  const bare = file.slice(0, -ext.length);
+  return bare === "" ? undefined : bare;
+}
+
+export function isSafePath(path: string): boolean {
+  return (
+    path.trim() !== "" && !path.startsWith("/") && !path.includes("\0") && !path.split("/").includes("..")
+  );
+}
+
+export function assertSafePath(path: string): void {
+  if (!isSafePath(path)) {
+    throw new Error(`invalid path: ${path}`);
+  }
 }

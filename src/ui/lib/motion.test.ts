@@ -4,16 +4,15 @@ import { shouldViewTransition } from "./motion.ts";
 import { selectionStack } from "./selection.ts";
 
 describe("shouldViewTransition", () => {
-  it("is off when the user prefers reduced motion", () => {
-    assert.equal(shouldViewTransition({ reducedMotion: true, startViewTransition: () => undefined }), false);
-  });
-
-  it("is off when the browser has no View Transition API", () => {
-    assert.equal(shouldViewTransition({ reducedMotion: false, startViewTransition: undefined }), false);
-  });
-
-  it("is on when motion is allowed and the API exists", () => {
-    assert.equal(shouldViewTransition({ reducedMotion: false, startViewTransition: () => undefined }), true);
+  it("needs motion allowed and the View Transition API", () => {
+    const cases: Array<[{ reducedMotion: boolean; startViewTransition: (() => undefined) | undefined }, boolean]> = [
+      [{ reducedMotion: true, startViewTransition: () => undefined }, false],
+      [{ reducedMotion: false, startViewTransition: undefined }, false],
+      [{ reducedMotion: false, startViewTransition: () => undefined }, true],
+    ];
+    for (const [options, expected] of cases) {
+      assert.equal(shouldViewTransition(options), expected);
+    }
   });
 });
 

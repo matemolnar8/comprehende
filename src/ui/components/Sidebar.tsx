@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
-import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
+import { type ReviewMeta } from "../api.ts";
+import { REVIEW_BUCKETS } from "../../api/types.ts";
+import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
@@ -47,8 +49,8 @@ export function Sidebar(props: {
           {meta.unassigned.hunkCount > 0 ? (
             <li>
               <StackItem
-                active={selection?.kind === "unassigned"}
-                onClick={() => onSelect({ kind: "unassigned" })}
+                active={selection?.kind === REVIEW_BUCKETS.unassigned}
+                onClick={() => onSelect({ kind: REVIEW_BUCKETS.unassigned })}
                 title="Unassigned"
                 files={meta.unassigned.files}
                 count={String(meta.unassigned.hunkCount)}
@@ -59,8 +61,8 @@ export function Sidebar(props: {
           {meta.lockfiles.fileCount > 0 ? (
             <li>
               <StackItem
-                active={selection?.kind === "lockfiles"}
-                onClick={() => onSelect({ kind: "lockfiles" })}
+                active={selection?.kind === REVIEW_BUCKETS.lockfiles}
+                onClick={() => onSelect({ kind: REVIEW_BUCKETS.lockfiles })}
                 title="Lockfiles"
                 files={meta.lockfiles.files}
                 count={String(meta.lockfiles.fileCount)}

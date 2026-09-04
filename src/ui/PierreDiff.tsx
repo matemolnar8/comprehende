@@ -19,7 +19,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import { fetchFile } from "./api.ts";
+import { fetchFile, shortSha } from "./api.ts";
 import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
 import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides } from "@/lib/load-diff-files.ts";
 import {
@@ -34,7 +34,7 @@ import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { CommentPin } from "./components/CommentPin.tsx";
 import type { FileComment } from "./lib/source-display.ts";
-import { commentsByLine, pierreSide } from "./lib/source-display.ts";
+import { commentsByLine } from "./lib/source-display.ts";
 
 /** GitHub Primer diffblob colors, mapped into Pierre's shadow tree. */
 const PIERRE_UNSAFE_CSS = `
@@ -131,7 +131,8 @@ function parseGitPatch(patch: string, path: string): FileDiffMetadata | undefine
   try {
     const parsed = parsePatchFiles(patch, `comprehende:${path}:${patchKey(patch)}`);
     return parsed[0]?.files[0];
-  } catch {
+  } catch (cause: unknown) {
+    console.error(cause);
     return undefined;
   }
 }
@@ -254,7 +255,7 @@ function commentAnnotations(
       return [];
     }
     const annotation: DiffLineAnnotation<CommentMeta> = {
-      side: pierreSide(first.side),
+      side: first.side === "old" ? "deletions" : "additions",
       lineNumber: first.line,
       metadata: { comments: list, focusId },
     };
@@ -271,7 +272,7 @@ function renderBlameAnnotation(annotation: LineAnnotation<FileAnnotation["metada
   const day = new Date(meta.timestamp * 1000).toISOString().slice(0, 10);
   return (
     <div className="flex min-w-0 items-baseline gap-2 px-2 py-1 font-sans text-[11px] text-muted-foreground">
-      <code className="text-primary">{meta.sha.slice(0, 7)}</code>
+      <code className="text-primary">{shortSha(meta.sha)}</code>
       <span className="min-w-0 truncate">{meta.author}</span>
       <span className="shrink-0 tabular-nums">{day}</span>
       {meta.lines > 1 ? <span className="shrink-0 tabular-nums">{meta.lines} lines</span> : null}
@@ -335,11 +336,14 @@ export function PierreFileDiff(props: {
         }
         try {
           setFileDiff(hydratePartialDiff("clone", parsed, files));
-        } catch {
+        } catch (cause: unknown) {
           // Keep the parsed subset patch. Full blobs only match when this group has every hunk.
+          console.error(cause);
         }
       })
-      .catch(() => undefined);
+      .catch((cause: unknown) => {
+        console.error(cause);
+      });
     return () => {
       cancelled = true;
     };

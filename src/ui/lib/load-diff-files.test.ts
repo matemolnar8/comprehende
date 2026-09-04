@@ -12,7 +12,13 @@ describe("load diff files", () => {
     const file = toPierreFile(apiFile("new", "src/app.ts", "export const n = 1;\n"));
     assert.equal(file.name, "src/app.ts");
     assert.equal(file.contents, "export const n = 1;\n");
-    assert.equal(file.cacheKey, "new:new-sha:src/app.ts");
+    assert.equal(file.cacheKey, toPierreFile(apiFile("new", "src/app.ts", "export const n = 1;\n")).cacheKey);
+    assert.notEqual(file.cacheKey, toPierreFile(apiFile("old", "src/app.ts", "export const n = 1;\n")).cacheKey);
+    assert.notEqual(file.cacheKey, toPierreFile(apiFile("new", "src/other.ts", "export const n = 1;\n")).cacheKey);
+    assert.notEqual(
+      file.cacheKey,
+      toPierreFile({ path: "src/app.ts", ref: "other-sha", side: "new", content: "export const n = 1;\n", language: "typescript" }).cacheKey,
+    );
   });
 
   it("loads both sides for a changed file", async () => {

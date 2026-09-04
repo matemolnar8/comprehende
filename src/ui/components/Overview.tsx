@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import { padIndex, sizeLabel, type ReviewMeta } from "../api.ts";
+import { type ReviewMeta } from "../api.ts";
+import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";

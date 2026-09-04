@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useDefaultLayout } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
+import { REVIEW_BUCKETS } from "../api/types.ts";
 import { Group } from "./components/Group.tsx";
 import { Header } from "./components/Header.tsx";
 import { Logo } from "./components/Logo.tsx";
@@ -12,7 +13,7 @@ import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition } from "./lib/motion.ts";
-import { initialSelection, persistSelection, sameSelection, shiftSelection, type Selection } from "./lib/selection.ts";
+import { readStoredSelection, restoreSelection, sameSelection, shiftSelection, writeStoredSelection, type Selection } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
@@ -50,7 +51,7 @@ export function App() {
     try {
       const next = await fetchReview();
       setMeta(next);
-      setSelection((current) => current ?? initialSelection(next));
+      setSelection((current) => current ?? restoreSelection(next, readStoredSelection(next.resolved.baseSha, next.resolved.headSha)));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -66,16 +67,16 @@ export function App() {
     if (meta === null || selection === null) {
       return;
     }
-    persistSelection(meta, selection);
+    writeStoredSelection(meta.resolved.baseSha, meta.resolved.headSha, selection);
   }, [meta, selection]);
 
   const selectedKey =
     selection?.kind === "group"
       ? selection.id
-      : selection?.kind === "unassigned"
-        ? "unassigned"
-        : selection?.kind === "lockfiles"
-          ? "lockfiles"
+      : selection?.kind === REVIEW_BUCKETS.unassigned
+        ? REVIEW_BUCKETS.unassigned
+        : selection?.kind === REVIEW_BUCKETS.lockfiles
+          ? REVIEW_BUCKETS.lockfiles
           : null;
 
   useEffect(() => {
@@ -187,7 +188,7 @@ export function App() {
       } else if (event.key === "o") {
         selectWithMotion({ kind: "overview" });
       } else if (event.key === "u") {
-        selectWithMotion({ kind: "unassigned" });
+        selectWithMotion({ kind: REVIEW_BUCKETS.unassigned });
       } else if (event.key === "Escape") {
         closeInspector();
       } else if (event.key === "[") {
@@ -333,10 +334,10 @@ export function App() {
                     <Group
                       group={selectedGroup}
                       bucket={
-                        selection?.kind === "lockfiles"
-                          ? "lockfiles"
-                          : selection?.kind === "unassigned"
-                            ? "unassigned"
+                        selection?.kind === REVIEW_BUCKETS.lockfiles
+                          ? REVIEW_BUCKETS.lockfiles
+                          : selection?.kind === REVIEW_BUCKETS.unassigned
+                            ? REVIEW_BUCKETS.unassigned
                             : undefined
                       }
                       groups={meta.groups}

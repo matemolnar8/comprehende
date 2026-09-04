@@ -2,7 +2,7 @@ import { createElement, type ReactNode } from "react";
 import Markdown, { type Components } from "react-markdown";
 import { defaultUrlTransform } from "react-markdown";
 import { flattenInline, INLINE_MD_ELEMENTS } from "../lib/inline-md.ts";
-import { parseSourceHref } from "../../schema/source.ts";
+import { parseSourceHref, SOURCE_HREF_PREFIX } from "../../schema/source.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import { SourceCite, StaleCite } from "./SourceCite.tsx";
 
@@ -10,7 +10,7 @@ const CODE_CLASS =
   "mx-[0.08em] box-decoration-clone rounded-[0.22em] bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)] px-[0.32em] py-[0.12em] font-mono text-[0.86em] font-medium not-italic";
 
 function urlTransform(value: string): string {
-  if (value.startsWith("source:")) {
+  if (value.startsWith(SOURCE_HREF_PREFIX)) {
     return value;
   }
   return defaultUrlTransform(value);

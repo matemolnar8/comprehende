@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
+import { copyText } from "../lib/copy-text.ts";
 import { reviewRef } from "../lib/review-ref.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -146,8 +147,9 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
           aria-live="polite"
           onClick={() => {
             setCopied(true);
-            void navigator.clipboard.writeText(props.copy).catch(() => {
+            void copyText(props.copy).catch((cause: unknown) => {
               setCopied(false);
+              console.error(cause);
             });
           }}
         >

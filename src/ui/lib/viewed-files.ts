@@ -1,3 +1,5 @@
+import { readKey, removeKey, writeKey } from "./storage.ts";
+
 export function viewedStorageKey(baseSha: string, headSha: string): string {
   return `comprehende.viewed.${baseSha}.${headSha}`;
 }
@@ -32,27 +34,15 @@ export function setPathViewed(paths: Set<string>, path: string, viewed: boolean)
 }
 
 export function readViewed(key: string): Set<string> {
-  try {
-    forgetLocalViewed(key);
-    return parseViewed(sessionStorage.getItem(key));
-  } catch {
-    return new Set();
-  }
+  forgetLocalViewed(key);
+  return parseViewed(readKey(sessionStorage, key));
 }
 
 export function writeViewed(key: string, paths: Set<string>): void {
-  try {
-    forgetLocalViewed(key);
-    sessionStorage.setItem(key, serializeViewed(paths));
-  } catch {
-    // quota / private mode
-  }
+  forgetLocalViewed(key);
+  writeKey(sessionStorage, key, serializeViewed(paths));
 }
 
 function forgetLocalViewed(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // private mode
-  }
+  removeKey(localStorage, key);
 }

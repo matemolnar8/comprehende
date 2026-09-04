@@ -6,6 +6,7 @@
     <title>Comprehende</title>
     <base href="./" />
     <script>
+      // Mirrors THEME_STORAGE_KEY in src/ui/lib/theme.ts. Runs before the bundle loads, so it cannot import it.
       (() => {
         try {
           const stored = localStorage.getItem("comprehende.theme");

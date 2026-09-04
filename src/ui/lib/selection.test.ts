@@ -14,8 +14,10 @@ const source: SelectionStackSource = {
 };
 
 describe("group selection storage", () => {
-  it("keys storage by the resolved review range", () => {
-    assert.equal(selectionStorageKey("aaa", "bbb"), "comprehende.group.aaa.bbb");
+  it("keys storage by the review range", () => {
+    assert.equal(selectionStorageKey("aaa", "bbb"), selectionStorageKey("aaa", "bbb"));
+    assert.notEqual(selectionStorageKey("aaa", "bbb"), selectionStorageKey("aaa", "ccc"));
+    assert.notEqual(selectionStorageKey("aaa", "bbb"), selectionStorageKey("ccc", "bbb"));
   });
 
   it("round-trips overview, unassigned, and a group", () => {

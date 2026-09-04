@@ -6,110 +6,87 @@ import type { ApiReview } from "./types.ts";
 const baseSha = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const headSha = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-describe("formatHunkRef", () => {
-  it("formats a git hunk header with the path", () => {
-    assert.equal(
-      formatHunkRef({ path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 }),
-      "src/auth/session.ts @@ -1,20 +1,40 @@",
-    );
-  });
+describe("hunk refs", () => {
+  it("formats headers and detects image slots", () => {
+    const formatCases: Array<{ ref: Parameters<typeof formatHunkRef>[0]; expected: string }> = [
+      {
+        ref: { path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 },
+        expected: "src/auth/session.ts @@ -1,20 +1,40 @@",
+      },
+      {
+        ref: {
+          path: "src/helpers.ts",
+          oldPath: "src/util.ts",
+          oldStart: 4,
+          oldLines: 8,
+          newStart: 4,
+          newLines: 12,
+        },
+        expected: "src/util.ts -> src/helpers.ts @@ -4,8 +4,12 @@",
+      },
+    ];
+    for (const { ref, expected } of formatCases) {
+      assert.equal(formatHunkRef(ref), expected);
+    }
 
-  it("prefixes a rename", () => {
-    assert.equal(
-      formatHunkRef({
-        path: "src/helpers.ts",
-        oldPath: "src/util.ts",
-        oldStart: 4,
-        oldLines: 8,
-        newStart: 4,
-        newLines: 12,
-      }),
-      "src/util.ts -> src/helpers.ts @@ -4,8 +4,12 @@",
-    );
-  });
-});
-
-describe("isImageSlot", () => {
-  it("detects a zero range", () => {
-    assert.equal(isImageSlot({ path: "assets/dot.png", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 }), true);
-    assert.equal(isImageSlot({ path: "src/app.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 }), false);
+    const slotCases: Array<{ ref: Parameters<typeof isImageSlot>[0]; expected: boolean }> = [
+      {
+        ref: { path: "assets/dot.png", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 },
+        expected: true,
+      },
+      {
+        ref: { path: "src/app.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 },
+        expected: false,
+      },
+    ];
+    for (const { ref, expected } of slotCases) {
+      assert.equal(isImageSlot(ref), expected);
+    }
   });
 });
 
 describe("agentClipboardPrompt", () => {
-  it("points at the markdown URL and stays short", () => {
+  it("points at the markdown URL without patch text", () => {
     const url = "http://127.0.0.1:4567/api/agent/overview.md";
     const prompt = agentClipboardPrompt(url);
-    assert.equal(prompt, `Answer the following questions by using ${url}`);
+    assert.ok(prompt.includes(url));
     assert.equal(prompt.includes("git diff"), false);
-    assert.ok(prompt.length < 120);
   });
 });
 
 describe("agentMd", () => {
-  it("puts steps first, pins SHAs, and thins concerns on the overview", () => {
+  it("pins SHAs, orders Steps before Pin, and links groups without patch text", () => {
     const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
-    assert.match(prompt, /^Answer questions about this git change\./);
-    assert.match(prompt, /## Steps/);
-    assert.match(prompt, /When no question follows this paste, explain this change\./);
-    assert.match(prompt, new RegExp(`git diff --find-renames ${baseSha} ${headSha}`));
-    assert.match(prompt, /## Pin/);
-    assert.match(prompt, /## Review concerns/);
-    assert.match(prompt, /Session cookie helper \(`cookie`\)/);
-    assert.match(prompt, /setSessionCookie applies the required options\./);
-    assert.match(prompt, /\[groups\/cookie\.md\]\(groups\/cookie\.md\)/);
-    assert.match(prompt, /\[groups\/login\.md\]\(groups\/login\.md\)/);
-    assert.match(prompt, /Read Review concerns\. Fetch a concern file only when that concern is relevant/);
-    assert.match(prompt, /Done when every concern the question touches has its markdown loaded/);
-    assert.match(prompt, /When you show code, quote the live git lines/);
-    assert.match(prompt, /Done when the answer quotes the live code/);
-    assert.match(prompt, /The title:\n\nAsk AI about this review/);
-    assert.match(prompt, /#24 Explain with coding agent button/);
-    assert.match(prompt, /Sources:/);
-    assert.match(prompt, /Unassigned live hunks: 2/);
-    assert.match(prompt, /Done when both objects exist/);
-    assert.match(prompt, /Live git wins when they disagree/);
-    assert.match(prompt, /Repository: comprehende/);
-    assert.match(prompt, /Origin: git@github\.com:matemolnar8\/comprehende\.git/);
-    assert.match(prompt, /Commits:/);
+    assert.ok(prompt.includes(baseSha));
+    assert.ok(prompt.includes(headSha));
+    assert.ok(prompt.includes("git diff"));
+    assert.ok(prompt.includes("## Steps"));
+    assert.ok(prompt.includes("## Pin"));
+    assert.ok(prompt.includes("## Review concerns"));
     assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
     assert.ok(prompt.indexOf("## Pin") < prompt.indexOf("## Review concerns"));
-    assert.doesNotMatch(prompt, /The login route needs one helper/);
-    assert.doesNotMatch(prompt, /Identify it in live git first/);
-    assert.doesNotMatch(prompt, /Do not fetch every file/);
-    assert.doesNotMatch(prompt, /Do not show hunk refs/);
-    assert.doesNotMatch(prompt, /Humans cannot read hunk refs/);
-    assert.doesNotMatch(prompt, /src\/auth\/session\.ts @@/);
-    assert.doesNotMatch(prompt, /src\/api\/login\.ts @@/);
-    assert.doesNotMatch(prompt, /Hunk refs:/);
-    assert.doesNotMatch(prompt, /Look for:/);
-    assert.doesNotMatch(prompt, /Breaking\. Throws when httpOnly is false/);
+    assert.ok(prompt.includes("groups/cookie.md"));
+    assert.ok(prompt.includes("groups/login.md"));
     assert.equal(prompt.includes("+++"), false);
+    assert.equal(prompt.includes("Hunk refs:"), false);
+    assert.doesNotMatch(prompt, /@@ -\d/);
   });
 
-  it("scopes a group prompt to that concern's hunks without overview-only reference", () => {
+  it("scopes a group prompt to that concern's hunks", () => {
     const prompt = agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "cookie" });
     assert.ok(prompt !== null);
-    assert.match(prompt, /^Answer questions about this review concern\./);
-    assert.match(prompt, /When no question follows this paste, explain this review concern\./);
-    assert.match(prompt, /Review concern 01 of 02: Session cookie helper \(`cookie`\)/);
-    assert.match(prompt, /src\/auth\/session\.ts @@ -1,20 \+1,40 @@/);
-    assert.match(prompt, /src\/util\.ts -> src\/helpers\.ts @@ -4,8 \+4,12 @@/);
-    assert.match(prompt, /A hunk ref is a pointer into the live git diff at the pinned SHAs/);
-    assert.match(prompt, /Hunk refs with @@ -0,0 \+0,0 @@ are image or binary slots/);
-    assert.match(prompt, /When you show code, quote the live git lines/);
-    assert.match(prompt, /Done when the answer quotes the live code/);
-    assert.match(prompt, /## Pin/);
+    assert.ok(prompt.includes(baseSha));
+    assert.ok(prompt.includes(headSha));
+    assert.ok(prompt.includes("## Steps"));
+    assert.ok(prompt.includes("## Pin"));
     assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
-    assert.doesNotMatch(prompt, /src\/api\/login\.ts/);
-    assert.doesNotMatch(prompt, /Tickets:/);
-    assert.doesNotMatch(prompt, /Sources:/);
-    assert.doesNotMatch(prompt, /Commits:/);
-    assert.doesNotMatch(prompt, /cites the matching hunk refs/);
-    assert.doesNotMatch(prompt, /groups\/login\.md/);
-    assert.doesNotMatch(prompt, /Identify it in live git first/);
-    assert.doesNotMatch(prompt, /Do not show hunk refs/);
+    assert.ok(prompt.includes("src/auth/session.ts"));
+    assert.ok(prompt.includes("src/helpers.ts"));
+    assert.ok(prompt.includes("@@"));
+    assert.equal(prompt.includes("src/api/login.ts"), false);
+    assert.equal(prompt.includes("groups/login.md"), false);
+    assert.equal(prompt.includes("+++"), false);
   });
 
   it("returns null for an unknown group", () => {

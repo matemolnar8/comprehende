@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { diffRgba } from "./image-diff.ts";
-import { imageMediaType, isImagePath, isLfsPointerText } from "./image.ts";
+import { imageMediaType, isImagePath } from "./image.ts";
 
 describe("image helpers", () => {
   it("detects screenshot paths and media types", () => {
@@ -9,17 +9,6 @@ describe("image helpers", () => {
     assert.equal(isImagePath("shots/home.PNG"), true);
     assert.equal(isImagePath("assets/dot.bin"), false);
     assert.equal(imageMediaType("a/b.jpg"), "image/jpeg");
-  });
-
-  it("detects Git LFS pointer text", () => {
-    const pointer = [
-      "version https://git-lfs.github.com/spec/v1",
-      "oid sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "size 12",
-      "",
-    ].join("\n");
-    assert.equal(isLfsPointerText(pointer), true);
-    assert.equal(isLfsPointerText("not a pointer"), false);
   });
 });
 

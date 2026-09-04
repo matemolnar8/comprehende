@@ -1,6 +1,6 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
 import { pinRange, type PinnedRange } from "../git/repo.ts";
-import { hunkKey } from "../schema/identity.ts";
+import { formatHunkRef, hunkKey } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { HunkRef, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 
@@ -32,7 +32,8 @@ export async function coverReview(
 export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): ReviewCoverage {
   const liveByKey = new Map<string, LiveHunk>();
   for (const hunk of live) {
-    liveByKey.set(hunkKey(hunk), hunk);
+    const key = hunkKey(hunk);
+    liveByKey.set(key, hunk);
   }
 
   const assignedKeys = new Set<string>();
@@ -44,19 +45,23 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
       if (isLockfilePath(ref.path)) {
         continue;
       }
-      const match = liveByKey.get(hunkKey(ref));
+      const key = hunkKey(ref);
+      const match = liveByKey.get(key);
       if (match === undefined) {
         stale.push(ref);
         allStale.push(ref);
         continue;
       }
       hunks.push(match);
-      assignedKeys.add(hunkKey(match));
+      assignedKeys.add(key);
     }
     return { group, hunks, stale };
   });
 
-  const unassigned = live.filter((hunk) => !assignedKeys.has(hunkKey(hunk)));
+  const unassigned = live.filter((hunk) => {
+    const key = hunkKey(hunk);
+    return !assignedKeys.has(key);
+  });
   return {
     groups,
     unassigned,
@@ -84,10 +89,5 @@ export function coverageErrors(coverage: ReviewCoverage): string[] {
 }
 
 function formatRefs(refs: HunkRef[]): string {
-  return refs
-    .map((ref) => {
-      const rename = ref.oldPath !== undefined ? `${ref.oldPath} -> ` : "";
-      return `  ${rename}${ref.path} @@ -${ref.oldStart},${ref.oldLines} +${ref.newStart},${ref.newLines} @@`;
-    })
-    .join("\n");
+  return refs.map((ref) => `  ${formatHunkRef(ref)}`).join("\n");
 }

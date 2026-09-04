@@ -1,5 +1,9 @@
-import { basename, dirname, isAbsolute, resolve } from "node:path";
+import { basename as nodeBasename, dirname, isAbsolute, resolve } from "node:path";
+import { assertSafePath, isSafePath } from "../api/paths.ts";
+import { basename as posixBasename } from "../schema/types.ts";
 import { git, gitOk } from "./exec.ts";
+
+export { assertSafePath, isSafePath };
 
 export async function assertWorkTree(cwd: string): Promise<void> {
   const inside = await git(cwd, ["rev-parse", "--is-inside-work-tree"], { allowFail: true });
@@ -44,8 +48,8 @@ export function nameFromRemoteUrl(url: string): string | null {
     : value.includes(":")
       ? value.slice(value.lastIndexOf(":") + 1)
       : value;
-  const last = pathPart.split("/").filter(Boolean).at(-1);
-  return last === undefined || last === "" ? null : last;
+  const last = posixBasename(pathPart);
+  return last === "" ? null : last;
 }
 
 export async function gitCommonDir(cwd: string): Promise<string> {
@@ -60,7 +64,7 @@ export async function readRepoIdentity(cwd: string): Promise<RepoIdentity> {
   if (fromOrigin !== null) {
     return { name: fromOrigin, origin };
   }
-  return { name: basename(dirname(await gitCommonDir(cwd))), origin };
+  return { name: nodeBasename(dirname(await gitCommonDir(cwd))), origin };
 }
 
 /** Drop userinfo from an http(s) remote so a copied prompt never carries a token. */
@@ -117,8 +121,12 @@ export function assertSafeRef(ref: string): void {
   }
 }
 
-export function assertSafePath(path: string): void {
-  if (path.trim() === "" || path.startsWith("/") || path.includes("\0") || path.split("/").includes("..")) {
-    throw new Error(`invalid path: ${path}`);
+export function resolveInsideRoot(root: string, relative: string): string {
+  assertSafePath(relative);
+  const rootAbs = resolve(root);
+  const abs = resolve(root, relative);
+  if (abs !== rootAbs && !abs.startsWith(`${rootAbs}/`)) {
+    throw new Error(`invalid path: ${relative}`);
   }
+  return abs;
 }

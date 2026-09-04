@@ -1,6 +1,14 @@
 import type { LinePinnedSource, ReviewDocument, Source } from "./types.ts";
 
-const SOURCE_LINK = /\]\(\s*source:([^)\s]+)(?:\s+"[^"]*")?\s*\)/g;
+export const SOURCE_HREF_PREFIX = "source:";
+
+function escapeRegExp(value: string): string {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function sourceLinkPattern(): RegExp {
+  return new RegExp(`\\]\\(\\s*${escapeRegExp(SOURCE_HREF_PREFIX)}([^)\\s]+)(?:\\s+"[^"]*")?\\s*\\)`, "g");
+}
 
 export function isLinePinned(source: Source): source is LinePinnedSource {
   return (
@@ -13,8 +21,7 @@ export function isLinePinned(source: Source): source is LinePinnedSource {
 
 export function citationIds(text: string): string[] {
   const ids: string[] = [];
-  SOURCE_LINK.lastIndex = 0;
-  for (const match of text.matchAll(SOURCE_LINK)) {
+  for (const match of text.matchAll(sourceLinkPattern())) {
     const id = match[1];
     if (id !== undefined && id !== "") {
       ids.push(id);
@@ -68,19 +75,15 @@ export function sourceCitationErrors(document: ReviewDocument): string[] {
 }
 
 export function parseSourceHref(href: string | undefined): string | undefined {
-  if (href === undefined || !href.startsWith("source:")) {
+  if (href === undefined || !href.startsWith(SOURCE_HREF_PREFIX)) {
     return undefined;
   }
-  const id = href.slice("source:".length);
+  const id = href.slice(SOURCE_HREF_PREFIX.length);
   return id === "" ? undefined : id;
 }
 
 export function linePinnedSources(sources: readonly Source[] | undefined): LinePinnedSource[] {
   return (sources ?? []).filter(isLinePinned);
-}
-
-export function citedSourceIds(text: string): string[] {
-  return [...new Set(citationIds(text))];
 }
 
 export function groupIdForPinnedSource(document: ReviewDocument, source: Source): string | undefined {

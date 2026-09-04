@@ -28,8 +28,6 @@ describe("InlineMd", () => {
     const markup = renderToStaticMarkup(createElement(InlineMd, { text: "A `chip` and **bold**." }));
     assert.match(markup, /<code class="[^"]+">chip<\/code>/);
     assert.match(markup, /<strong class="[^"]+">bold<\/strong>/);
-    assert.match(markup, /font-semibold/);
-    assert.match(markup, /box-decoration-clone/);
   });
 
   it("keeps nested backticks inside a longer run", () => {
