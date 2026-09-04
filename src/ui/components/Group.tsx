@@ -1,4 +1,5 @@
 import { groupIndex, type ReviewMeta } from "../api.ts";
+import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
@@ -10,7 +11,7 @@ import { useEffect } from "react";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
-  bucket?: "unassigned" | "lockfiles";
+  bucket?: ReviewBucket;
   groups: ReviewMeta["groups"];
   mixed: boolean;
   strandColor?: string;
@@ -33,10 +34,10 @@ export function Group(props: {
 }) {
   const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
-  const lockfiles = bucket === "lockfiles";
+  const lockfiles = bucket === REVIEW_BUCKETS.lockfiles;
   const strand =
     strandColor ??
-    (lockfiles ? "var(--muted-foreground)" : bucket === "unassigned" ? "var(--warn)" : "var(--primary)");
+    (lockfiles ? "var(--muted-foreground)" : bucket === REVIEW_BUCKETS.unassigned ? "var(--warn)" : "var(--primary)");
 
   const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
 
@@ -60,7 +61,7 @@ export function Group(props: {
     requestAnimationFrame(tick);
   }, [loading, props.focusCommentId, files]);
 
-  const renderFile = (file: GroupFile, _idx: number, active: boolean) => (
+  const renderFile = (file: GroupFile, active: boolean) => (
     <HunkView
       key={file.path}
       file={file}
@@ -126,7 +127,7 @@ export function Group(props: {
 
       {!loading && files.length > 0 ? (
         <FileRail files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk} onViewed={props.onViewed}>
-          {files.map((file) => renderFile(file, file.firstIndex, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
+          {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
         </FileRail>
       ) : null}
     </>

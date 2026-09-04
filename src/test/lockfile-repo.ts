@@ -2,16 +2,13 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { git } from "../git/exec.ts";
 import type { ExampleRepo } from "./example-repo.ts";
+import { initEmptyRepo } from "./init-repo.ts";
 
 export const LOCKFILE_SECRET = "LOCKFILE_SECRET_LINE_a8f2";
 export const APP_SECRET = "APP_SECRET_LINE_b4c1";
 
 export async function createLockfileRepo(root: string): Promise<ExampleRepo> {
-  await mkdir(root, { recursive: true });
-  await git(root, ["init", "-b", "main"]);
-  await git(root, ["config", "user.email", "comprehende@example.com"]);
-  await git(root, ["config", "user.name", "Comprehende Fixture"]);
-  await git(root, ["config", "commit.gpgsign", "false"]);
+  await initEmptyRepo(root);
   await mkdir(join(root, "src"), { recursive: true });
   await mkdir(join(root, "apps/web"), { recursive: true });
 

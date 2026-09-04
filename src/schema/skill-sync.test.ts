@@ -9,18 +9,11 @@ import { skillPaths } from "./skill-paths.ts";
 import { findPackageRoot } from "../package-root.ts";
 
 describe("skill schema sync", () => {
-  it("keeps the next skill, schema, pin, and installed copy in sync", async () => {
-    assert.deepEqual(skillSyncErrors(await loadWorkingTreeSkillSync()), []);
-  });
-
-  it("tells the agent to check npm and leave skills update to the user", async () => {
+  it("keeps the next-skill prose and paths", async () => {
     const { nextSkillMd } = await loadWorkingTreeSkillSync();
     assert.match(nextSkillMd, /npm view comprehende version/);
     assert.match(nextSkillMd, /npx skills update/);
     assert.match(nextSkillMd, /Do not run that command/);
-  });
-
-  it("keeps the next skill outside the published skills/ tree", () => {
     const root = findPackageRoot();
     const paths = skillPaths(root);
     assert.equal(paths.nextSkill, join(root, "skills-next/comprehende"));

@@ -1,6 +1,8 @@
+import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import type { ReviewMeta } from "../api.ts";
+import { readKey, writeKey } from "./storage.ts";
 
-export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: "unassigned" } | { kind: "lockfiles" };
+export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: ReviewBucket };
 
 export type SelectionStackSource = {
   groups: { id: string }[];
@@ -12,7 +14,7 @@ export function defaultSelection(source: SelectionStackSource): Selection {
   if (source.groups.length > 0) {
     return { kind: "overview" };
   }
-  return { kind: "unassigned" };
+  return { kind: REVIEW_BUCKETS.unassigned };
 }
 
 export function selectionStorageKey(baseSha: string, headSha: string): string {
@@ -31,11 +33,11 @@ export function parseSelection(raw: string | null): Selection | null {
     if (parsed.kind === "overview") {
       return { kind: "overview" };
     }
-    if (parsed.kind === "unassigned") {
-      return { kind: "unassigned" };
+    if (parsed.kind === REVIEW_BUCKETS.unassigned) {
+      return { kind: REVIEW_BUCKETS.unassigned };
     }
-    if (parsed.kind === "lockfiles") {
-      return { kind: "lockfiles" };
+    if (parsed.kind === REVIEW_BUCKETS.lockfiles) {
+      return { kind: REVIEW_BUCKETS.lockfiles };
     }
     if (parsed.kind === "group" && "id" in parsed && typeof parsed.id === "string" && parsed.id !== "") {
       return { kind: "group", id: parsed.id };
@@ -51,52 +53,37 @@ export function serializeSelection(selection: Selection): string {
 }
 
 export function restoreSelection(source: SelectionStackSource, stored: Selection | null): Selection {
+  // Invariant: unknown or missing buckets fall back to the default selection.
   if (stored === null) {
     return defaultSelection(source);
   }
   if (stored.kind === "group" && !source.groups.some((group) => group.id === stored.id)) {
     return defaultSelection(source);
   }
-  if (stored.kind === "unassigned" && source.unassigned.hunkCount === 0 && source.groups.length > 0) {
+  if (stored.kind === REVIEW_BUCKETS.unassigned && source.unassigned.hunkCount === 0 && source.groups.length > 0) {
     return defaultSelection(source);
   }
-  if (stored.kind === "lockfiles" && (source.lockfiles?.fileCount ?? 0) === 0) {
+  if (stored.kind === REVIEW_BUCKETS.lockfiles && (source.lockfiles?.fileCount ?? 0) === 0) {
     return defaultSelection(source);
   }
   return stored;
 }
 
-export function initialSelection(meta: ReviewMeta): Selection {
-  return restoreSelection(meta, readStoredSelection(meta.resolved.baseSha, meta.resolved.headSha));
-}
-
-export function persistSelection(meta: ReviewMeta, selection: Selection): void {
-  writeStoredSelection(meta.resolved.baseSha, meta.resolved.headSha, selection);
-}
-
 export function readStoredSelection(baseSha: string, headSha: string): Selection | null {
-  try {
-    return parseSelection(sessionStorage.getItem(selectionStorageKey(baseSha, headSha)));
-  } catch {
-    return null;
-  }
+  return parseSelection(readKey(sessionStorage, selectionStorageKey(baseSha, headSha)));
 }
 
 export function writeStoredSelection(baseSha: string, headSha: string, selection: Selection): void {
-  try {
-    sessionStorage.setItem(selectionStorageKey(baseSha, headSha), serializeSelection(selection));
-  } catch {
-    // quota / private mode
-  }
+  writeKey(sessionStorage, selectionStorageKey(baseSha, headSha), serializeSelection(selection));
 }
 
 export function selectionStack(source: SelectionStackSource): Selection[] {
   const ids: Selection[] = [{ kind: "overview" }, ...source.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
   if (source.unassigned.hunkCount > 0) {
-    ids.push({ kind: "unassigned" });
+    ids.push({ kind: REVIEW_BUCKETS.unassigned });
   }
   if ((source.lockfiles?.fileCount ?? 0) > 0) {
-    ids.push({ kind: "lockfiles" });
+    ids.push({ kind: REVIEW_BUCKETS.lockfiles });
   }
   return ids;
 }
@@ -125,11 +112,11 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
   if (a.kind === "overview") {
     return b.kind === "overview";
   }
-  if (a.kind === "unassigned") {
-    return b.kind === "unassigned";
+  if (a.kind === REVIEW_BUCKETS.unassigned) {
+    return b.kind === REVIEW_BUCKETS.unassigned;
   }
-  if (a.kind === "lockfiles") {
-    return b.kind === "lockfiles";
+  if (a.kind === REVIEW_BUCKETS.lockfiles) {
+    return b.kind === REVIEW_BUCKETS.lockfiles;
   }
-  return b.kind === "group" && b.id === a.id;
+  return a.kind === "group" && b.kind === "group" && b.id === a.id;
 }

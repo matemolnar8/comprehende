@@ -32,20 +32,33 @@ export function FileRail(props: {
       const q = new URLSearchParams(window.location.search).get("rail");
       if (q === "collapsed") return true;
       if (q === "open") return false;
-    } catch {}
-    try { return readStoredRailCollapsed(); } catch { return false; }
+    } catch {
+      // ignore malformed query, fall back to stored value
+    }
+    try {
+      return readStoredRailCollapsed();
+    } catch {
+      // private mode: fall back to expanded
+      return false;
+    }
   });
 
   const toggle = () => {
     const next = !collapsed;
     setCollapsed(next);
-    try { writeStoredRailCollapsed(next); } catch {}
+    try {
+      writeStoredRailCollapsed(next);
+    } catch {
+      // quota / private mode: rail state stays in memory
+    }
     try {
       const url = new URL(window.location.href);
       if (next) url.searchParams.set("rail", "collapsed");
       else url.searchParams.delete("rail");
       window.history.replaceState(null, "", url);
-    } catch {}
+    } catch {
+      // ignore history failures, rail state stays in memory
+    }
   };
 
   useEffect(() => {

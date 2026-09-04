@@ -1,4 +1,4 @@
-import { fileExistsAt, showFile } from "../git/show.ts";
+import { showFile } from "../git/show.ts";
 import { isLinePinned, textLineCount } from "../schema/source.ts";
 import type { LinePinnedSource, ReviewDocument, SourceSide } from "../schema/types.ts";
 
@@ -40,10 +40,12 @@ async function commentPinMatches(
   range: { baseSha: string; headSha: string },
 ): Promise<boolean> {
   const sha = source.side === "old" ? range.baseSha : range.headSha;
-  if (!(await fileExistsAt(cwd, sha, source.path))) {
+  let content: string;
+  try {
+    content = await showFile(cwd, sha, source.path);
+  } catch {
     return false;
   }
-  const content = await showFile(cwd, sha, source.path);
   const count = textLineCount(content);
   return source.line >= 1 && source.line <= count;
 }

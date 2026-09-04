@@ -74,7 +74,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 Skill edits go in `skills-next/comprehende/`. `pnpm release:skill` writes `skills/comprehende/` and `pnpm sync:skill` writes `.agents/skills/comprehende/`. Leave both alone. Edit source under `src/` normally.
 
-Component look lives on the component. Tailwind first. If a bit of CSS is required, colocate it with that component using a CSS module. A component must not import a global stylesheet. Do not add descendant selectors in `styles.css` to style markup a component already owns. `styles.css` holds globals such as variables and themes.
+Component look lives on the component. Tailwind first. If a bit of CSS is required, colocate it with that component using a CSS module. A component must not import a global stylesheet. Do not add descendant selectors in `styles.css` to style markup a component already owns. `styles.css` holds globals such as variables and themes. Exception: `src/ui/lib/gap-style.ts` may use descendant selectors to style Pierre markup.
 
 If the UI already shows the state, do not add a sentence that narrates it.
 
@@ -82,9 +82,7 @@ README is for people using the tool. Change it when a command, install step, or 
 
 Type safety helps humans and agents alike. Parse at the boundary, where the schema is the source of truth, and infer everywhere inside. If a bug could have been a type error, make it one before fixing it.
 
-Releases happen manually. Updating package.json should be explicitly requested (like asking for a release), don't do it automatically.
-
-Release flow: when the user asks for a release, bump `version` in `package.json`. Use the number they name. If they do not name one, pick the next semver from the changes since the last release (patch for fixes, minor for new capability, major for breaking). Match that version in the README `npx` pin. Run `pnpm release:skill` so the skill pin matches.
+Releases happen manually. Do not change `package.json` version unless the user asks for a release. When they do, follow the Release section in [README.md](./README.md).
 
 ## Pull requests
 

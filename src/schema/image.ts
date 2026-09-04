@@ -1,3 +1,5 @@
+import { basename } from "./types.ts";
+
 export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "ico"] as const;
 
 const IMAGE_EXT = new Set<string>(IMAGE_EXTENSIONS);
@@ -16,7 +18,7 @@ const MEDIA: Record<(typeof IMAGE_EXTENSIONS)[number], string> = {
 };
 
 export function imageExtension(path: string): (typeof IMAGE_EXTENSIONS)[number] | undefined {
-  const base = path.split("/").pop() ?? path;
+  const base = basename(path);
   const dot = base.lastIndexOf(".");
   if (dot <= 0) {
     return undefined;
@@ -32,12 +34,4 @@ export function isImagePath(path: string): boolean {
 export function imageMediaType(path: string): string {
   const ext = imageExtension(path);
   return ext === undefined ? "application/octet-stream" : MEDIA[ext];
-}
-
-export function isLfsPointerText(text: string): boolean {
-  return text.includes(LFS_POINTER_VERSION) && /oid sha256:[a-f0-9]{64}/.test(text);
-}
-
-export function isImageHunkRef(ref: { oldStart: number; oldLines: number; newStart: number; newLines: number }): boolean {
-  return ref.oldStart === 0 && ref.oldLines === 0 && ref.newStart === 0 && ref.newLines === 0;
 }

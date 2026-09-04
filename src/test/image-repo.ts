@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { git } from "../git/exec.ts";
 import { lfsObjectPath } from "../git/lfs.ts";
 import type { ExampleRepo } from "./example-repo.ts";
+import { initEmptyRepo } from "./init-repo.ts";
 import { encodePng } from "./png.ts";
 
 export type ImageRepo = ExampleRepo & {
@@ -14,11 +15,7 @@ export type ImageRepo = ExampleRepo & {
 };
 
 export async function createImageRepo(root: string): Promise<ImageRepo> {
-  await mkdir(root, { recursive: true });
-  await git(root, ["init", "-b", "main"]);
-  await git(root, ["config", "user.email", "comprehende@example.com"]);
-  await git(root, ["config", "user.name", "Comprehende Fixture"]);
-  await git(root, ["config", "commit.gpgsign", "false"]);
+  await initEmptyRepo(root);
   await mkdir(join(root, "assets"), { recursive: true });
   await mkdir(join(root, "shots"), { recursive: true });
 

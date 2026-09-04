@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { git } from "../git/exec.ts";
+import { initEmptyRepo } from "./init-repo.ts";
 
 export const SECRET_ADD = "UNIQUE_ADDED_LINE_CONTENT_7f3a";
 export const SECRET_DEL = "UNIQUE_REMOVED_LINE_CONTENT_9c1b";
@@ -12,11 +13,7 @@ export type ExampleRepo = {
 };
 
 export async function createExampleRepo(root: string): Promise<ExampleRepo> {
-  await mkdir(root, { recursive: true });
-  await git(root, ["init", "-b", "main"]);
-  await git(root, ["config", "user.email", "comprehende@example.com"]);
-  await git(root, ["config", "user.name", "Comprehende Fixture"]);
-  await git(root, ["config", "commit.gpgsign", "false"]);
+  await initEmptyRepo(root);
 
   await mkdir(join(root, "src"), { recursive: true });
   await mkdir(join(root, "assets"), { recursive: true });

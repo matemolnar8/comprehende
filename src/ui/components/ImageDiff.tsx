@@ -10,7 +10,7 @@ import {
 } from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
-import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "../lib/image-stage.ts";
+import { fitImageStage, fitTwoColumnStage, stageCaption } from "../lib/image-stage.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -250,7 +250,7 @@ function WipeStage(props: {
         onPointerMove={onPointerMove}
       >
         <StageImage src={oldUrl} alt="Old" width={width} height={height} />
-        <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: wipeOverlayWidth(wipe) }}>
+        <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${wipe}%` }}>
           <StageImage src={newUrl} alt="New" width={width} height={height} />
         </div>
         <div className="pointer-events-none absolute inset-y-0" style={{ left: `${wipe}%` }} aria-hidden>

@@ -1,6 +1,4 @@
-import type { LinePinnedSource, Source, SourceKind, SourceSide } from "../../schema/types.ts";
-import { isLinePinned } from "../../schema/source.ts";
-import type { AnnotationSide } from "@pierre/diffs";
+import type { LinePinnedSource, SourceKind } from "../../schema/types.ts";
 import {
   BotIcon,
   CircleDotIcon,
@@ -26,25 +24,7 @@ export const SOURCE_KIND_ICON: Record<SourceKind, LucideIcon> = {
   transcript: BotIcon,
 };
 
-export function pierreSide(side: SourceSide): AnnotationSide {
-  return side === "old" ? "deletions" : "additions";
-}
-
 export type FileComment = LinePinnedSource & { stale: boolean };
-
-export function commentsForFile(
-  sources: readonly Source[],
-  staleIds: ReadonlySet<string>,
-  path: string,
-  oldPath?: string,
-): FileComment[] {
-  return sources.filter(isLinePinned).flatMap((source) => {
-    if (source.path !== path && source.path !== oldPath) {
-      return [];
-    }
-    return [{ ...source, stale: staleIds.has(source.id) }];
-  });
-}
 
 export function visibleFileComments(
   comments: readonly LinePinnedSource[],

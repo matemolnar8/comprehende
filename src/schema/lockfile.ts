@@ -1,3 +1,5 @@
+import { basename } from "./types.ts";
+
 const LOCKFILE_NAMES = new Set([
   ".terraform.lock.hcl",
   "bun.lock",
@@ -34,6 +36,6 @@ const LOCKFILE_NAMES = new Set([
 ]);
 
 export function isLockfilePath(path: string): boolean {
-  const base = path.split("/").pop() ?? path;
+  const base = basename(path);
   return LOCKFILE_NAMES.has(base) || base.endsWith(".gradle.lockfile");
 }

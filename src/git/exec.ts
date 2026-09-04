@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
+/** Mirrored in scripts/install-git-hooks.js, which runs as plain node without tsx. Update both. */
 const GIT_DIR_VARS = new Set([
   "GIT_DIR",
   "GIT_WORK_TREE",
@@ -89,18 +90,12 @@ type ExecFailure = {
 };
 
 function asExecFailure(error: unknown): ExecFailure {
-  if (typeof error === "object" && error !== null) {
-    const record = error as {
-      message?: unknown;
-      stdout?: unknown;
-      stderr?: unknown;
-      code?: unknown;
-    };
+  if (isRecord(error)) {
     return {
-      message: typeof record.message === "string" ? record.message : "git failed",
-      stdout: bufferText(record.stdout),
-      stderr: bufferText(record.stderr),
-      code: typeof record.code === "number" ? record.code : null,
+      message: typeof error.message === "string" ? error.message : "git failed",
+      stdout: bufferText(error.stdout),
+      stderr: bufferText(error.stderr),
+      code: typeof error.code === "number" ? error.code : null,
     };
   }
   return { message: "git failed", stdout: "", stderr: "", code: null };
@@ -114,6 +109,10 @@ function bufferText(value: unknown): string {
     return value.toString("utf8");
   }
   return "";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function gitFailure(args: string[], failure: ExecFailure): GitError {

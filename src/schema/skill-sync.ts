@@ -3,7 +3,7 @@ import { cp, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/p
 import { dirname, join, relative } from "node:path";
 import { applyCliPin, cliPinErrors, listedCliPins } from "./cli-pin.ts";
 import { skillPaths } from "./skill-paths.ts";
-import { findPackageRoot } from "../package-root.ts";
+import { findPackageRoot, parsePackageVersion, readPackageVersionFromDir } from "../package-root.ts";
 import { gitEnv } from "../git/exec.ts";
 
 export type SkillSyncInput = {
@@ -47,7 +47,7 @@ export async function loadWorkingTreeSkillSync(root = findPackageRoot()): Promis
   const nextFiles = await readTree(paths.nextSkill);
   const installedFiles = await readTree(paths.installedSkill);
   return {
-    version: await readVersion(root),
+    version: await readPackageVersionFromDir(root),
     canonicalSchema: await readFile(paths.canonicalSchema, "utf8"),
     nextSchema: nextFiles.get("references/review.schema.json") ?? "",
     nextSkillMd: nextFiles.get("SKILL.md") ?? "",
@@ -60,9 +60,8 @@ export async function loadWorkingTreeSkillSync(root = findPackageRoot()): Promis
 export function loadStagedSkillSync(root = findPackageRoot()): SkillSyncInput {
   const nextFiles = gitStagedTree(root, "skills-next/comprehende");
   const installedFiles = gitStagedTree(root, ".agents/skills/comprehende");
-  const pkg = JSON.parse(gitShowStaged(root, "package.json")) as { version: string };
   return {
-    version: pkg.version,
+    version: parsePackageVersion(gitShowStaged(root, "package.json")),
     canonicalSchema: gitShowStaged(root, "src/schema/review.schema.json"),
     nextSchema: nextFiles.get("references/review.schema.json") ?? "",
     nextSkillMd: nextFiles.get("SKILL.md") ?? "",
@@ -76,7 +75,7 @@ export async function syncNextSkill(options?: { root?: string; release?: boolean
   const root = options?.root ?? findPackageRoot();
   const release = options?.release === true;
   const paths = skillPaths(root);
-  const version = await readVersion(root);
+  const version = await readPackageVersionFromDir(root);
   const skillFile = join(paths.nextSkill, "SKILL.md");
 
   await mkdir(dirname(paths.nextSchema), { recursive: true });
@@ -104,11 +103,6 @@ export async function syncNextSkill(options?: { root?: string; release?: boolean
     logs.push(`copied ${paths.nextSkill} -> ${paths.publishedSkill}`);
   }
   return logs;
-}
-
-async function readVersion(root: string): Promise<string> {
-  const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as { version: string };
-  return pkg.version;
 }
 
 async function replaceDir(from: string, to: string): Promise<void> {

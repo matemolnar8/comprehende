@@ -1,10 +1,11 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { createReadStream, existsSync, statSync } from "node:fs";
-import { extname, join, resolve } from "node:path";
+import { extname, join } from "node:path";
 import { ApiError } from "../api/error.ts";
-import { openReview, pinReviewSource, renderResource, snapshotJson, type PinnedRange, type Snapshot } from "../api/live.ts";
-import { parseApiPath } from "../api/paths.ts";
+import { openReview, pinReviewSource, renderResource, snapshotJson, type Snapshot } from "../api/live.ts";
+import { isSafePath, parseApiPath } from "../api/paths.ts";
 import { GitError } from "../git/exec.ts";
+import { resolveInsideRoot, type PinnedRange } from "../git/repo.ts";
 import { findPackageRoot } from "../package-root.ts";
 
 export type ServeOptions = {
@@ -14,6 +15,8 @@ export type ServeOptions = {
   uiRoot?: string;
   pin?: PinnedRange;
 };
+
+const LOOPBACK_HOST = "127.0.0.1";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -49,15 +52,15 @@ export async function startServer(opts: ServeOptions): Promise<RunningServer> {
   });
 
   await new Promise<void>((resolveListen, reject) => {
-    server.listen(opts.port, "127.0.0.1", () => resolveListen());
+    server.listen(opts.port, LOOPBACK_HOST, () => resolveListen());
     server.once("error", reject);
   });
 
   const address = server.address();
   if (address === null || typeof address === "string") {
-    throw new Error("server failed to bind 127.0.0.1");
+    throw new Error(`server failed to bind ${LOOPBACK_HOST}`);
   }
-  const url = `http://127.0.0.1:${address.port}`;
+  const url = `http://${LOOPBACK_HOST}:${address.port}`;
   return { server, port: address.port, url };
 }
 
@@ -68,7 +71,7 @@ async function handle(
   uiRoot: string,
 ): Promise<void> {
   try {
-    const host = req.headers.host ?? `127.0.0.1:${opts.port}`;
+    const host = req.headers.host ?? `${LOOPBACK_HOST}:${opts.port}`;
     const url = new URL(req.url ?? "/", `http://${host}`);
     if (req.method !== "GET") {
       json(res, 405, { error: "method not allowed" });
@@ -117,6 +120,35 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload);
 }
 
+async function serveFileFromRoot(
+  res: ServerResponse,
+  root: string,
+  relative: string,
+  opts?: { immutable?: boolean },
+): Promise<void> {
+  if (!isSafePath(relative)) {
+    throw new ApiError(400, "invalid path");
+  }
+  let abs: string;
+  try {
+    abs = resolveInsideRoot(root, relative);
+  } catch {
+    throw new ApiError(400, "invalid path");
+  }
+  if (!existsSync(abs) || !statSync(abs).isFile()) {
+    throw new ApiError(404, "not found");
+  }
+  const stream = createReadStream(abs);
+  const headers: Record<string, string> = {
+    "content-type": MIME[extname(abs)] ?? "application/octet-stream",
+  };
+  if (opts !== undefined) {
+    headers["cache-control"] = opts.immutable ? "public, max-age=31536000, immutable" : "no-store";
+  }
+  res.writeHead(200, headers);
+  stream.pipe(res);
+}
+
 async function serveStatic(res: ServerResponse, uiRoot: string, pathname: string): Promise<void> {
   if (!existsSync(uiRoot)) {
     throw new ApiError(
@@ -125,20 +157,7 @@ async function serveStatic(res: ServerResponse, uiRoot: string, pathname: string
     );
   }
   const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
-  const uiAbs = resolve(uiRoot);
-  const candidate = resolve(uiRoot, relative);
-  if (candidate !== uiAbs && !candidate.startsWith(`${uiAbs}/`)) {
-    throw new ApiError(400, "invalid path");
-  }
-  if (!existsSync(candidate) || !statSync(candidate).isFile()) {
-    throw new ApiError(404, "not found");
-  }
-  const stream = createReadStream(candidate);
-  res.writeHead(200, {
-    "content-type": MIME[extname(candidate)] ?? "application/octet-stream",
-    "cache-control": pathname.startsWith("/assets/") ? "public, max-age=31536000, immutable" : "no-store",
-  });
-  stream.pipe(res);
+  await serveFileFromRoot(res, uiRoot, relative, { immutable: pathname.startsWith("/assets/") });
 }
 
 /** Static file server for an exported site. No git. Used by tests to prove the folder is self-contained. */
@@ -150,25 +169,10 @@ export async function startStaticSite(root: string, port = 0): Promise<RunningSe
           json(res, 405, { error: "method not allowed" });
           return;
         }
-        const host = req.headers.host ?? "127.0.0.1";
+        const host = req.headers.host ?? LOOPBACK_HOST;
         const url = new URL(req.url ?? "/", `http://${host}`);
         const relative = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.replace(/^\/+/, ""));
-        if (relative.split("/").includes("..")) {
-          throw new ApiError(400, "invalid path");
-        }
-        const abs = resolve(root, relative);
-        const rootAbs = resolve(root);
-        if (abs !== rootAbs && !abs.startsWith(`${rootAbs}/`)) {
-          throw new ApiError(400, "invalid path");
-        }
-        if (!existsSync(abs) || !statSync(abs).isFile()) {
-          throw new ApiError(404, "not found");
-        }
-        const stream = createReadStream(abs);
-        res.writeHead(200, {
-          "content-type": MIME[extname(abs)] ?? "application/octet-stream",
-        });
-        stream.pipe(res);
+        await serveFileFromRoot(res, root, relative);
       } catch (error) {
         const status = error instanceof ApiError ? error.status : 500;
         const message = error instanceof Error ? error.message : String(error);
@@ -178,12 +182,12 @@ export async function startStaticSite(root: string, port = 0): Promise<RunningSe
   });
 
   await new Promise<void>((resolveListen, reject) => {
-    server.listen(port, "127.0.0.1", () => resolveListen());
+    server.listen(port, LOOPBACK_HOST, () => resolveListen());
     server.once("error", reject);
   });
   const address = server.address();
   if (address === null || typeof address === "string") {
-    throw new Error("static site failed to bind 127.0.0.1");
+    throw new Error(`static site failed to bind ${LOOPBACK_HOST}`);
   }
-  return { server, port: address.port, url: `http://127.0.0.1:${address.port}` };
+  return { server, port: address.port, url: `http://${LOOPBACK_HOST}:${address.port}` };
 }

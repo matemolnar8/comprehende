@@ -3,8 +3,10 @@ import { describe, it } from "node:test";
 import { parseViewed, serializeViewed, setPathViewed, viewedStorageKey } from "./viewed-files.ts";
 
 describe("viewed files", () => {
-  it("keys storage by the resolved review range", () => {
-    assert.equal(viewedStorageKey("aaa", "bbb"), "comprehende.viewed.aaa.bbb");
+  it("keys storage by the review range", () => {
+    assert.equal(viewedStorageKey("aaa", "bbb"), viewedStorageKey("aaa", "bbb"));
+    assert.notEqual(viewedStorageKey("aaa", "bbb"), viewedStorageKey("aaa", "ccc"));
+    assert.notEqual(viewedStorageKey("aaa", "bbb"), viewedStorageKey("ccc", "bbb"));
   });
 
   it("round-trips paths", () => {

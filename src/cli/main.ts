@@ -5,7 +5,8 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdIndex, cmdValidate, resolveDataPath, resolveOutPath } from "./commands.ts";
+import { cmdIndex, cmdValidate, resolveOutPath } from "./commands.ts";
+import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
 import { assertWorkTree } from "../git/repo.ts";
@@ -44,8 +45,9 @@ export async function run(argv: string[]): Promise<number> {
       }
       case "serve": {
         const dataPath = resolveDataPath(request.data, request.cwd);
-        const pin = await pinReviewSource(request.cwd, dataPath);
-        const ctx = await openReview(request.cwd, dataPath, pin);
+        const document = await loadDocument(dataPath);
+        const pin = await pinReviewSource(request.cwd, document);
+        const ctx = await openReview(request.cwd, document, pin);
         warnReview(ctx, "serve continues; git wins, unassigned/stale are visible");
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
@@ -59,7 +61,8 @@ export async function run(argv: string[]): Promise<number> {
       case "export": {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const outDir = resolveOutPath(request.out, request.cwd);
-        const ctx = await openReview(request.cwd, dataPath);
+        const document = await loadDocument(dataPath);
+        const ctx = await openReview(request.cwd, document);
         warnReview(ctx, "export continues; git wins, unassigned/stale are visible");
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);

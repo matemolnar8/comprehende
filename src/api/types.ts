@@ -1,10 +1,17 @@
-import type { DiffLine, FileStatus, HunkRef, ReviewDocument, SkippedFile } from "../schema/types.ts";
+import type { DiffLine, FileStatus, HunkRef, ReviewDocument, SkippedFile, SourceSide } from "../schema/types.ts";
 
-export type { FileStatus };
-
-export type FileSide = "old" | "new";
+/** Single home for the git side union. SourceSide in schema is the same fact. */
+export type FileSide = SourceSide;
 
 export type FileKind = "text" | "image" | "lockfile";
+
+/** Hunk group ids outside the review document. The UI fetches them with the same hunks endpoint. */
+export const REVIEW_BUCKETS = {
+  unassigned: "unassigned",
+  lockfiles: "lockfiles",
+} as const;
+
+export type ReviewBucket = (typeof REVIEW_BUCKETS)[keyof typeof REVIEW_BUCKETS];
 
 export type ApiHunk = HunkRef & {
   header: string;
@@ -84,7 +91,7 @@ export type ApiReview = {
   unassigned: { hunkCount: number; files: string[] };
   lockfiles: { fileCount: number; files: string[] };
   stale: { path: string; oldStart: number; newStart: number }[];
-  staleSources: { id: string; path: string; side: "old" | "new"; line: number }[];
+  staleSources: { id: string; path: string; side: FileSide; line: number }[];
   files: {
     path: string;
     oldPath?: string;

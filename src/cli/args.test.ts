@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readPackageVersion } from "../package-root.ts";
-import { parseArgv } from "./args.ts";
+import { parseArgv, DEFAULT_PORT } from "./args.ts";
 import { isCliEntry, run } from "./main.ts";
 
 describe("parseArgv", () => {
@@ -30,7 +30,7 @@ describe("parseArgv", () => {
       head: undefined,
       data: "review.json",
       out: "dist/review",
-      port: 4567,
+      port: DEFAULT_PORT,
       open: false,
     });
   });

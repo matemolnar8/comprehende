@@ -3,9 +3,14 @@ import { SparkleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { copyText } from "../lib/copy-text.ts";
-import { ASK_CTA } from "../lib/cta.ts";
 
 const COPIED_MS = 1600;
+
+const ASK_CTA = {
+  label: "Ask AI about this",
+  copied: "Copied",
+  hint: "Copy a prompt for your coding agent",
+} as const;
 
 export function CopyPrompt(props: { prompt: string; scope: "overview" | "group" }) {
   const [copied, setCopied] = useState(false);
@@ -38,7 +43,10 @@ export function CopyPrompt(props: { prompt: string; scope: "overview" | "group" 
           data-cta="ask"
           onClick={() => {
             setCopied(true);
-            void copyText(props.prompt).catch(() => setCopied(false));
+            void copyText(props.prompt).catch((cause: unknown) => {
+              setCopied(false);
+              console.error(cause);
+            });
           }}
         >
           <SparkleIcon aria-hidden className="size-3.5" />

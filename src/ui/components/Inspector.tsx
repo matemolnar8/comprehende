@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchBlame, fetchFile, resourceHref } from "../api.ts";
+import type { FileSide } from "../../api/types.ts";
 import { isImagePath } from "../../schema/image.ts";
 import { groupBlameRuns } from "../../schema/blame-runs.ts";
 import { PierreFile } from "../PierreDiff.tsx";
@@ -13,7 +14,7 @@ import { WaitMark } from "./WaitMark.tsx";
 export type InspectorState = {
   path: string;
   mode: "file" | "blame";
-  side: "old" | "new";
+  side: FileSide;
 };
 
 export function Inspector(props: {

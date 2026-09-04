@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseReviewDocument } from "./parse.ts";
-import { addedSymbols, hunkContext, hunkRangeLabel, splitDiffRows, type HunkLine } from "./hunk-meta.ts";
+import { addedSymbols, hunkRangeLabel } from "./hunk-meta.ts";
 
 describe("parseReviewDocument", () => {
   it("accepts a minimal valid document", () => {
@@ -290,213 +290,90 @@ describe("parseReviewDocument", () => {
     }
   });
 
-  it("requires a known size", () => {
-    const missing = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      groups: [],
-    });
-    assert.equal(missing.ok, false);
-    if (!missing.ok) {
-      assert.match(missing.errors.join("\n"), /size must be one of/);
-    }
-
-    const bad = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      size: "huge",
-      groups: [],
-    });
-    assert.equal(bad.ok, false);
-  });
-
-  it("requires a why on each group", () => {
-    const result = parseReviewDocument({
+  it("rejects single-field shape errors", () => {
+    const groupBase = {
+      id: "g1",
+      title: "CLI",
+      why: "The command is how an agent starts a review.",
+      summary: "Adds a command.",
+      suggestedOrder: 0,
+      hunkRefs: [],
+    };
+    const docBase = {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
       size: "small",
       title: "Review command",
       summary: "Adds a review command.",
-      groups: [
-        {
-          id: "g1",
-          title: "CLI",
-          summary: "Adds a command.",
-          suggestedOrder: 0,
-          hunkRefs: [],
+    };
+    const cases: Array<{ name: string; input: unknown; match?: RegExp }> = [
+      {
+        name: "missing size",
+        input: { ...docBase, size: undefined, groups: [] },
+        match: /size must be one of/,
+      },
+      {
+        name: "unknown size",
+        input: { ...docBase, size: "huge", groups: [] },
+        match: /size must be one of/,
+      },
+      {
+        name: "missing group why",
+        input: {
+          ...docBase,
+          groups: [{ id: "g1", title: "CLI", summary: "Adds a command.", suggestedOrder: 0, hunkRefs: [] }],
         },
-      ],
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a string/);
-    }
-  });
-
-  it("requires a title on the document", () => {
-    const result = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      size: "small",
-      summary: "Adds a review command.",
-      groups: [
-        {
-          id: "g1",
-          title: "CLI",
-          why: "The command is how an agent starts a review.",
-          summary: "Adds a command.",
-          suggestedOrder: 0,
-          hunkRefs: [],
+        match: /groups\[0\]\.why must be a string/,
+      },
+      {
+        name: "missing document title",
+        input: { ...docBase, title: undefined, groups: [groupBase] },
+        match: /title must be a string/,
+      },
+      {
+        name: "missing document summary",
+        input: { ...docBase, summary: undefined, groups: [groupBase] },
+        match: /summary must be a string/,
+      },
+      {
+        name: "empty group why",
+        input: { ...docBase, groups: [{ ...groupBase, why: "   " }] },
+        match: /groups\[0\]\.why must be a non-empty string/,
+      },
+      {
+        name: "unknown walkthrough field",
+        input: {
+          ...docBase,
+          walkthrough: "Stop per-song lookups from flooding the API.",
+          groups: [groupBase],
         },
-      ],
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.match(result.errors.join("\n"), /title must be a string/);
-    }
-  });
-
-  it("requires a summary on the document", () => {
-    const result = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      size: "small",
-      title: "Review command",
-      groups: [
-        {
-          id: "g1",
-          title: "CLI",
-          why: "The command is how an agent starts a review.",
-          summary: "Adds a command.",
-          suggestedOrder: 0,
-          hunkRefs: [],
-        },
-      ],
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.match(result.errors.join("\n"), /summary must be a string/);
-    }
-  });
-
-  it("rejects an empty group why", () => {
-    const result = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      size: "small",
-      title: "Review command",
-      summary: "Adds a review command.",
-      groups: [
-        {
-          id: "g1",
-          title: "CLI",
-          why: "   ",
-          summary: "Adds a command.",
-          suggestedOrder: 0,
-          hunkRefs: [],
-        },
-      ],
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.match(result.errors.join("\n"), /groups\[0\]\.why must be a non-empty string/);
-    }
-  });
-
-  it("rejects walkthrough as an unknown document field", () => {
-    const result = parseReviewDocument({
-      version: 1,
-      source: { baseRef: "main", headRef: "HEAD" },
-      size: "small",
-      title: "Review command",
-      summary: "Adds a review command.",
-      walkthrough: "Stop per-song lookups from flooding the API.",
-      groups: [
-        {
-          id: "g1",
-          title: "CLI",
-          why: "The command is how an agent starts a review.",
-          summary: "Adds a command.",
-          suggestedOrder: 0,
-          hunkRefs: [],
-        },
-      ],
-    });
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.match(result.errors.join("\n"), /unknown field "walkthrough"/);
+        match: /unknown field "walkthrough"/,
+      },
+    ];
+    for (const { name, input, match } of cases) {
+      const result = parseReviewDocument(input);
+      assert.equal(result.ok, false, name);
+      if (!result.ok && match) {
+        assert.match(result.errors.join("\n"), match, name);
+      }
     }
   });
 });
 
 describe("hunk-meta", () => {
-  it("reads @@ context and added symbols", () => {
-    assert.equal(hunkContext("@@ -10,6 +10,8 @@ export function serve"), "export function serve");
-    assert.equal(hunkContext("@@ -1,3 +1,4 @@"), undefined);
+  it("reads added symbols", () => {
     assert.deepEqual(addedSymbols(["export function createInvitation() {", "const x = 1", "export type Id = string"]), [
       "createInvitation",
       "Id",
     ]);
   });
 
-  it("does not treat nearby markdown or prose as hunk context", () => {
-    assert.equal(
-      hunkContext(
-        "@@ -19,6 +19,10 @@ Composer 2.5: Cheap model, preferred to use when possible for: low complexity si",
-      ),
-      undefined,
-    );
-    assert.equal(hunkContext("@@ -1,3 +1,8 @@ # Heading"), undefined);
+  it("reads @@ range label without context prose", () => {
     assert.equal(
       hunkRangeLabel(
         "@@ -19,6 +19,10 @@ Composer 2.5: Cheap model, preferred to use when possible for: low complexity si",
       ),
       "@@ -19,6 +19,10 @@",
     );
-  });
-
-  it("pairs unified hunk lines into split rows", () => {
-    const line = (
-      kind: HunkLine["kind"],
-      text: string,
-      oldNumber: number | null,
-      newNumber: number | null,
-    ): HunkLine => ({ kind, text, oldNumber, newNumber });
-
-    assert.deepEqual(splitDiffRows([line("ctx", "keep", 1, 1)]), [
-      {
-        left: { kind: "ctx", number: 1, text: "keep" },
-        right: { kind: "ctx", number: 1, text: "keep" },
-      },
-    ]);
-
-    assert.deepEqual(splitDiffRows([line("del", "old", 1, null), line("add", "new", null, 1)]), [
-      {
-        left: { kind: "del", number: 1, text: "old" },
-        right: { kind: "add", number: 1, text: "new" },
-      },
-    ]);
-
-    assert.deepEqual(
-      splitDiffRows([
-        line("del", "a", 1, null),
-        line("del", "b", 2, null),
-        line("add", "c", null, 1),
-      ]),
-      [
-        {
-          left: { kind: "del", number: 1, text: "a" },
-          right: { kind: "add", number: 1, text: "c" },
-        },
-        {
-          left: { kind: "del", number: 2, text: "b" },
-          right: null,
-        },
-      ],
-    );
-
-    assert.deepEqual(splitDiffRows([line("add", "only", null, 1)]), [
-      { left: null, right: { kind: "add", number: 1, text: "only" } },
-    ]);
   });
 });

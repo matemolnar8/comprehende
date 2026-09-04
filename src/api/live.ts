@@ -1,4 +1,4 @@
-import { loadDocument } from "../cli/commands.ts";
+import { loadDocument } from "../review/load.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
 import { fileLanguage, filePatchFromGit, readPathDiff, toHunkRef } from "../git/diff.ts";
@@ -15,8 +15,7 @@ import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
-
-export type { PinnedRange } from "../git/repo.ts";
+import { REVIEW_BUCKETS } from "./types.ts";
 
 export type JsonSnapshot = {
   encoding: "json";
@@ -43,13 +42,13 @@ export type ReviewContext = {
   commits: ApiReview["commits"];
 };
 
-export async function pinReviewSource(cwd: string, dataPath: string): Promise<PinnedRange> {
-  const document = await loadDocument(dataPath);
+export async function pinReviewSource(cwd: string, data: string | ReviewDocument): Promise<PinnedRange> {
+  const document = typeof data === "string" ? await loadDocument(data) : data;
   return pinRange(cwd, document.source.baseRef, document.source.headRef);
 }
 
-export async function openReview(cwd: string, dataPath: string, pin?: PinnedRange): Promise<ReviewContext> {
-  const document = await loadDocument(dataPath);
+export async function openReview(cwd: string, data: string | ReviewDocument, pin?: PinnedRange): Promise<ReviewContext> {
+  const document = typeof data === "string" ? await loadDocument(data) : data;
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   const { files, coverage } = await coverReview(cwd, document, range);
   const pins = await staleCommentPins(cwd, document, range);
@@ -145,10 +144,10 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
   if (groupId === "") {
     throw new ApiError(400, "missing group");
   }
-  if (groupId === "unassigned") {
+  if (groupId === REVIEW_BUCKETS.unassigned) {
     return serializeGroup(ctx.files, ctx.coverage.unassigned);
   }
-  if (groupId === "lockfiles") {
+  if (groupId === REVIEW_BUCKETS.lockfiles) {
     return serializeLockfiles(ctx.files);
   }
   const group = ctx.coverage.groups.find((item) => item.group.id === groupId);
@@ -235,8 +234,8 @@ export function listResources(ctx: ReviewContext): ApiResource[] {
   const resources: ApiResource[] = [
     { kind: "review" },
     { kind: "agent-md", target: "overview" },
-    { kind: "hunks", group: "unassigned" },
-    { kind: "hunks", group: "lockfiles" },
+    { kind: "hunks", group: REVIEW_BUCKETS.unassigned },
+    { kind: "hunks", group: REVIEW_BUCKETS.lockfiles },
   ];
   for (const group of ctx.document.groups) {
     resources.push({ kind: "hunks", group: group.id });
@@ -302,11 +301,19 @@ async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiGroupF
   if (!isLockfilePath(file.path) || file.binary || file.image) {
     throw new ApiError(404, "path is not a deferred lockfile");
   }
-  const live = await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, file.path);
+  const live = await readPathDiffSafe(ctx, file.path);
   if (live === undefined) {
     throw new ApiError(404, `no live diff for ${path}`);
   }
   return serializeGroupFile(live, live.hunks, false);
+}
+
+async function readPathDiffSafe(ctx: ReviewContext, path: string): Promise<DiffFile | undefined> {
+  try {
+    return await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, path);
+  } catch (error) {
+    throw new ApiError(404, error instanceof Error ? error.message : "diff not available");
+  }
 }
 
 function serializeGroupFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile: boolean): ApiGroupFile {
@@ -366,9 +373,10 @@ export function snapshotJson(body: unknown): string {
   return `${JSON.stringify(body)}\n`;
 }
 
+/** 404 (and transient git failures) mean the live object moved. Skip it in export. 400 is a bad request, not a skip. */
 export function isUnavailableSnapshot(error: unknown): boolean {
   if (error instanceof ApiError) {
-    return error.status === 404 || error.status === 400;
+    return error.status === 404;
   }
   return error instanceof GitError;
 }

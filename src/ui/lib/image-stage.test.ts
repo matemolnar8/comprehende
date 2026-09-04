@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { fitImageStage, fitTwoColumnStage, stageCaption, wipeOverlayWidth } from "./image-stage.ts";
+import { fitImageStage, fitTwoColumnStage, stageCaption } from "./image-stage.ts";
 
 describe("fitImageStage", () => {
   it("keeps native pixels when the image fits", () => {
@@ -40,10 +40,3 @@ describe("stageCaption", () => {
   });
 });
 
-describe("wipeOverlayWidth", () => {
-  it("reveals new from the left as wipe moves toward New", () => {
-    assert.equal(wipeOverlayWidth(0), "0%");
-    assert.equal(wipeOverlayWidth(25), "25%");
-    assert.equal(wipeOverlayWidth(100), "100%");
-  });
-});

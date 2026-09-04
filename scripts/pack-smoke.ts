@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { HunkIndex } from "../src/schema/types.ts";
+import { readPackageVersionFromDir } from "../src/package-root.ts";
 import { writeCoveringDocument } from "../src/test/covering-document.ts";
 import { createExampleRepo } from "../src/test/example-repo.ts";
 
@@ -27,8 +28,8 @@ async function run(): Promise<void> {
   roots.push(packDir);
   execFileSync("pnpm", ["pack", "--pack-destination", packDir], { cwd: repoRoot, stdio: "inherit" });
 
-  const pkg = JSON.parse(await readFile(join(repoRoot, "package.json"), "utf8")) as { version: string };
-  const tarball = join(packDir, `comprehende-${pkg.version}.tgz`);
+  const version = await readPackageVersionFromDir(repoRoot);
+  const tarball = join(packDir, `comprehende-${version}.tgz`);
   assert.equal(existsSync(tarball), true, `expected ${tarball}`);
 
   const listing = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" }).split("\n");
@@ -41,10 +42,11 @@ async function run(): Promise<void> {
     "tarball must not include skills-next",
   );
 
-  const packedPkg = JSON.parse(execFileSync("tar", ["-xOf", tarball, "package/package.json"], { encoding: "utf8" })) as {
-    dependencies?: Record<string, string>;
-  };
-  assert.deepEqual(packedPkg.dependencies ?? {}, {}, "packed tarball must not pull UI libraries");
+  const packedPkg: unknown = JSON.parse(
+    execFileSync("tar", ["-xOf", tarball, "package/package.json"], { encoding: "utf8" }),
+  );
+  const packedDependencies: unknown = isRecord(packedPkg) ? packedPkg.dependencies : undefined;
+  assert.deepEqual(packedDependencies ?? {}, {}, "packed tarball must not pull UI libraries");
 
   const installDir = await mkdtemp(join(tmpdir(), "comprehende-install-"));
   roots.push(installDir);
@@ -60,7 +62,7 @@ async function run(): Promise<void> {
   );
 
   const versionOut = execFileSync(bin, ["--version"], { encoding: "utf8" });
-  assert.equal(versionOut.trim(), pkg.version, `packed bin --version: ${JSON.stringify(versionOut)}`);
+  assert.equal(versionOut.trim(), version, `packed bin --version: ${JSON.stringify(versionOut)}`);
 
   const work = await mkdtemp(join(tmpdir(), "comprehende-cwd-"));
   roots.push(work);
@@ -71,8 +73,12 @@ async function run(): Promise<void> {
     cwd: repo.root,
     encoding: "utf8",
   });
-  const index = JSON.parse(indexRaw) as HunkIndex;
-  assert.ok(index.hunks.length > 0, "index from packed bin returned no hunks");
+  const parsedIndex: unknown = JSON.parse(indexRaw);
+  assert.ok(
+    isRecord(parsedIndex) && Array.isArray(parsedIndex.hunks) && parsedIndex.hunks.length > 0,
+    "index from packed bin returned no hunks",
+  );
+  const index = parsedIndex as HunkIndex;
   await writeCoveringDocument(dataPath, index);
 
   const validateOut = execFileSync(bin, ["validate", "--data", dataPath], {
@@ -180,4 +186,8 @@ function waitForExit(child: ReturnType<typeof spawn>): Promise<void> {
   return new Promise((resolve) => {
     child.once("exit", () => resolve());
   });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

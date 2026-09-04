@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { groupIndex, padIndex, type ReviewMeta } from "../api.ts";
+import { groupIndex, type ReviewMeta } from "../api.ts";
+import { padIndex } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
