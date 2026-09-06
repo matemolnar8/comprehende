@@ -6,17 +6,23 @@ export function shikiLangChunks(): Plugin {
   return {
     name: "shiki-lang-chunks",
     outputOptions(options) {
-      const previous = options.manualChunks;
-      options.manualChunks = (id, meta) => {
-        const lang = shikiLangId(id);
-        if (lang !== undefined) {
-          return `shiki-lang-${lang}`;
-        }
-        if (typeof previous === "function") {
-          return previous(id, meta);
-        }
-        return undefined;
+      const previous = options.codeSplitting;
+      const previousGroups = typeof previous === "object" && previous !== null ? (previous.groups ?? []) : [];
+      options.codeSplitting = {
+        ...(typeof previous === "object" && previous !== null ? previous : {}),
+        includeDependenciesRecursively: false,
+        groups: [
+          {
+            test: (id) => shikiLangId(id) !== undefined,
+            name(id) {
+              const lang = shikiLangId(id);
+              return lang === undefined ? undefined : `shiki-lang-${lang}`;
+            },
+          },
+          ...previousGroups,
+        ],
       };
+      return options;
     },
     generateBundle(_options, bundle) {
       const chunkImports = new Map<string, string[]>();
