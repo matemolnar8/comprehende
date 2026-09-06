@@ -159,6 +159,29 @@ describe("parseReviewDocument", () => {
       assert.match(missing.errors.join("\n"), /sources unknown id "nope"/);
     }
 
+    const citation = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      why: "See [#24](source:missing).",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(citation.ok, false);
+    if (!citation.ok) {
+      assert.match(citation.errors.join("\n"), /unknown id "missing"/);
+    }
+
     const mixed = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
