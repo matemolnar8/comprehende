@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   parseSelection,
   restoreSelection,
+  selectionCaption,
   selectionStorageKey,
   serializeSelection,
   type SelectionStackSource,
@@ -62,5 +63,22 @@ describe("group selection storage", () => {
       ),
       { kind: "overview" },
     );
+  });
+
+  it("names the current selection for the mobile chrome", () => {
+    const meta = {
+      document: { title: "Pin reviews to SHAs" },
+      groups: [
+        { id: "auth", title: "Keep the pin at serve time" },
+        { id: "ui", title: "Show the resolved range" },
+      ],
+    } as const;
+    assert.deepEqual(selectionCaption(meta, { kind: "overview" }), { title: "Overview" });
+    assert.deepEqual(selectionCaption(meta, { kind: "group", id: "ui" }), {
+      index: "02",
+      title: "Show the resolved range",
+    });
+    assert.deepEqual(selectionCaption(meta, { kind: "unassigned" }), { title: "Unassigned" });
+    assert.deepEqual(selectionCaption(meta, { kind: "lockfiles" }), { title: "Lockfiles" });
   });
 });

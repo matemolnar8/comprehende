@@ -17,7 +17,6 @@ import { readStoredSelection, restoreSelection, sameSelection, shiftSelection, w
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
-import { useMobileDesign } from "./lib/mobile-design.ts";
 import { useNarrow } from "./lib/narrow.ts";
 import { groupIdForPinnedSource, isLinePinned, linePinnedSources } from "../schema/source.ts";
 import type { Source } from "../schema/types.ts";
@@ -42,7 +41,6 @@ export function App() {
   const [loading, setLoading] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
   const narrow = useNarrow();
-  const mobileDesign = useMobileDesign();
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell-overlay",
     panelIds: ["stack", "main"],
@@ -328,7 +326,6 @@ export function App() {
       <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
         {narrow ? (
           <MobileShell
-            design={mobileDesign}
             meta={meta}
             selection={selection}
             parts={parts}

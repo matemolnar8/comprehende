@@ -1,4 +1,5 @@
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
+import { padIndex } from "../../schema/types.ts";
 import type { ReviewMeta } from "../api.ts";
 import { readKey, writeKey } from "./storage.ts";
 
@@ -119,4 +120,25 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
     return b.kind === REVIEW_BUCKETS.lockfiles;
   }
   return a.kind === "group" && b.kind === "group" && b.id === a.id;
+}
+
+export function selectionCaption(
+  meta: Pick<ReviewMeta, "document" | "groups">,
+  selection: Selection | null,
+): { index?: string; title: string } {
+  if (selection === null || selection.kind === "overview") {
+    return { title: "Overview" };
+  }
+  if (selection.kind === "group") {
+    const index = meta.groups.findIndex((group) => group.id === selection.id);
+    const group = index >= 0 ? meta.groups[index] : undefined;
+    return {
+      index: index >= 0 ? padIndex(index + 1) : undefined,
+      title: group?.title ?? "Group",
+    };
+  }
+  if (selection.kind === REVIEW_BUCKETS.unassigned) {
+    return { title: "Unassigned" };
+  }
+  return { title: "Lockfiles" };
 }
