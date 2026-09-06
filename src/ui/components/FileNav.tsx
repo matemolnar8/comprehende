@@ -6,6 +6,45 @@ import { fileBasename, fileDirname, readStoredRailCollapsed, writeStoredRailColl
 import { fileIndexAtHunk } from "../lib/group-files.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 
+export function FileStrip(props: {
+  files: GroupFile[];
+  activeHunk: number;
+  viewedPaths: ReadonlySet<string>;
+  onSelect: (index: number) => void;
+  children: React.ReactNode;
+}) {
+  const { files, activeHunk, viewedPaths } = props;
+  const activeIndex = Math.max(0, fileIndexAtHunk(files, activeHunk));
+  return (
+    <div className="mt-3">
+      <nav aria-label="Files in group" className="-mx-4 mb-4 overflow-x-auto border-y border-border bg-card">
+        <ul className="flex gap-1 px-3 py-2">
+          {files.map((file, i) => {
+            const viewed = viewedPaths.has(file.path);
+            const active = i === activeIndex;
+            return (
+              <li key={file.path} className="shrink-0">
+                <button
+                  type="button"
+                  onClick={() => props.onSelect(file.firstIndex)}
+                  className={cn(
+                    "max-w-[11rem] truncate rounded-md px-2 py-1 font-mono text-[11px] leading-tight",
+                    active ? "bg-accent text-foreground" : "text-muted-foreground",
+                    viewed && !active && "opacity-60",
+                  )}
+                >
+                  {fileBasename(file.path)}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      <div className="space-y-5">{props.children}</div>
+    </div>
+  );
+}
+
 function FileCounters(props: { file: GroupFile }) {
   const { file } = props;
   if (file.kind === "image") return <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>;

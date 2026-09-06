@@ -4,10 +4,11 @@ import type { GroupFile } from "../lib/group-files.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
-import { FileRail } from "./FileNav.tsx";
+import { FileRail, FileStrip } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { useEffect } from "react";
+import { useNarrow } from "../lib/narrow.ts";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -40,6 +41,7 @@ export function Group(props: {
     (lockfiles ? "var(--muted-foreground)" : bucket === REVIEW_BUCKETS.unassigned ? "var(--warn)" : "var(--primary)");
 
   const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
+  const narrow = useNarrow();
 
   useEffect(() => {
     const id = props.focusCommentId;
@@ -81,7 +83,7 @@ export function Group(props: {
 
   return (
     <>
-      <div className="mb-8 flex items-stretch gap-4">
+      <div className="mb-5 flex items-stretch gap-3 min-[800px]:mb-8 min-[800px]:gap-4">
         <span
           className="w-[3px] flex-none rounded-px [[data-motion=group]_&]:[view-transition-name:review-strand]"
           style={{ backgroundColor: strand }}
@@ -118,7 +120,7 @@ export function Group(props: {
         <p className="mt-8 text-muted-foreground">No hunks in this group.</p>
       ) : null}
 
-      {!loading && files.length > 0 ? (
+      {!loading && files.length > 0 && !narrow ? (
         <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
           {viewedCount} of {files.length} files viewed
           <span className="hidden sm:inline"> · j/k to move, v to toggle</span>
@@ -126,9 +128,15 @@ export function Group(props: {
       ) : null}
 
       {!loading && files.length > 0 ? (
-        <FileRail files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk} onViewed={props.onViewed}>
-          {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
-        </FileRail>
+        narrow ? (
+          <FileStrip files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk}>
+            {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
+          </FileStrip>
+        ) : (
+          <FileRail files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk} onViewed={props.onViewed}>
+            {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
+          </FileRail>
+        )
       ) : null}
     </>
   );
