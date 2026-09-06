@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useDefaultLayout } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
 import { REVIEW_BUCKETS } from "../api/types.ts";
-import { Group } from "./components/Group.tsx";
 import { Header } from "./components/Header.tsx";
 import { Logo } from "./components/Logo.tsx";
-import { Inspector, type InspectorState } from "./components/Inspector.tsx";
-import { Overview } from "./components/Overview.tsx";
+import { type InspectorState } from "./components/Inspector.tsx";
+import { MobileShell } from "./components/MobileShell.tsx";
+import { ReviewStage } from "./components/ReviewStage.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
@@ -17,6 +17,7 @@ import { readStoredSelection, restoreSelection, sameSelection, shiftSelection, w
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
+import { useNarrow } from "./lib/narrow.ts";
 import { groupIdForPinnedSource, isLinePinned, linePinnedSources } from "../schema/source.ts";
 import type { Source } from "../schema/types.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
@@ -39,6 +40,7 @@ export function App() {
   const [inspector, setInspector] = useState<InspectorState | null>(null);
   const [loading, setLoading] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
+  const narrow = useNarrow();
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell-overlay",
     panelIds: ["stack", "main"],
@@ -286,86 +288,92 @@ export function App() {
     return null;
   }
 
+  const effectiveSplit = split && !narrow;
+  const stage = (
+    <ReviewStage
+      inspector={inspector}
+      wrap={wrap}
+      setInspector={setInspector}
+      onCloseInspector={closeInspector}
+      mainRef={mainRef}
+      hunksLoading={hunksLoading}
+      compact={narrow}
+      selection={selection}
+      meta={meta}
+      parts={parts}
+      selectedGroup={selectedGroup}
+      mixed={mixed}
+      strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
+      hunkError={hunkError}
+      files={groupFiles}
+      activeHunk={activeHunk}
+      split={effectiveSplit}
+      splitRatio={splitRatio}
+      viewedPaths={viewedPaths}
+      onScrollToHunk={scrollToHunk}
+      onSelect={selectWithMotion}
+      onOpenFile={openInspector}
+      onSplitRatio={setSplitRatio}
+      onViewed={setFileViewed}
+      comments={visibleComments}
+      focusCommentId={focusCommentId ?? undefined}
+    />
+  );
+
   return (
     <TooltipProvider>
       <SourcesProvider value={sourcesHandle}>
       <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
-        <Header
-          meta={meta}
-          wrap={wrap}
-          split={split}
-          onWrap={() => setWrap((value) => !value)}
-          onUnified={() => setSplit(false)}
-          onSplit={() => {
-            setSplit(true);
-            if (!split) {
-              setSplitRatio(0.5);
-            }
-          }}
-          onRefresh={() => void load()}
-          busy={loading}
-          comments={showComments}
-          onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
-        />
+        {narrow ? (
+          <MobileShell
+            meta={meta}
+            selection={selection}
+            parts={parts}
+            onSelect={selectWithMotion}
+            wrap={wrap}
+            onWrap={() => setWrap((value) => !value)}
+            comments={showComments}
+            onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
+          >
+            {stage}
+          </MobileShell>
+        ) : (
+          <>
+            <Header
+              meta={meta}
+              wrap={wrap}
+              split={split}
+              onWrap={() => setWrap((value) => !value)}
+              onUnified={() => setSplit(false)}
+              onSplit={() => {
+                setSplit(true);
+                if (!split) {
+                  setSplitRatio(0.5);
+                }
+              }}
+              onRefresh={() => void load()}
+              busy={loading}
+              comments={showComments}
+              onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
+            />
 
-        <ResizablePanelGroup
-          className="min-h-0 flex-1"
-          defaultLayout={defaultLayout}
-          onLayoutChanged={onLayoutChanged}
-        >
-          <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-            <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectWithMotion} />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-            <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
-              {inspector !== null ? (
-                <Inspector
-                  inspector={inspector}
-                  wrap={wrap}
-                  setInspector={setInspector}
-                  onClose={closeInspector}
-                />
-              ) : (
-                <main ref={mainRef} className="h-full overflow-auto px-10 py-8" aria-busy={hunksLoading}>
-                  {selection?.kind === "overview" ? (
-                    <Overview meta={meta} parts={parts} onOpenGroup={(id) => selectWithMotion({ kind: "group", id })} />
-                  ) : (
-                    <Group
-                      group={selectedGroup}
-                      bucket={
-                        selection?.kind === REVIEW_BUCKETS.lockfiles
-                          ? REVIEW_BUCKETS.lockfiles
-                          : selection?.kind === REVIEW_BUCKETS.unassigned
-                            ? REVIEW_BUCKETS.unassigned
-                            : undefined
-                      }
-                      groups={meta.groups}
-                      mixed={mixed}
-                      strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
-                      loading={hunksLoading}
-                      hunkError={hunkError}
-                      files={hunksLoading ? [] : groupFiles}
-                      activeHunk={activeHunk}
-                      split={split}
-                      splitRatio={splitRatio}
-                      wrap={wrap}
-                      viewedPaths={viewedPaths}
-                      onScrollToHunk={scrollToHunk}
-                      onOpenGroup={(id) => selectWithMotion({ kind: "group", id })}
-                      onOpenFile={openInspector}
-                      onSplitRatio={setSplitRatio}
-                      onViewed={setFileViewed}
-                      document={meta.document}
-                      comments={visibleComments}
-                      focusCommentId={focusCommentId ?? undefined}
-                    />
-                  )}
-                </main>
-              )}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+            <ResizablePanelGroup
+              className="min-h-0 flex-1"
+              defaultLayout={defaultLayout}
+              onLayoutChanged={onLayoutChanged}
+            >
+              <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
+                <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectWithMotion} />
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
+                <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
+                  {stage}
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </>
+        )}
       </div>
       </SourcesProvider>
     </TooltipProvider>

@@ -37,7 +37,7 @@ export function CopyPrompt(props: { prompt: string; scope: "overview" | "group" 
           type="button"
           size="sm"
           variant="outline"
-          className="shrink-0"
+          className="shrink-0 max-[799px]:size-8 max-[799px]:px-0"
           aria-label={hint}
           aria-live="polite"
           data-cta="ask"
@@ -50,7 +50,7 @@ export function CopyPrompt(props: { prompt: string; scope: "overview" | "group" 
           }}
         >
           <SparkleIcon aria-hidden className="size-3.5" />
-          {text}
+          <span className="max-[799px]:hidden">{text}</span>
         </Button>
       </TooltipTrigger>
       <TooltipContent>{copied ? ASK_CTA.copied : hint}</TooltipContent>

@@ -28,7 +28,7 @@ export function Brief(props: {
           <Kicker className="mb-2">{props.kicker}</Kicker>
         )
       ) : null}
-      <h1 className="mb-3 font-display text-[2.5rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground">
+      <h1 className="mb-2 font-display text-[1.65rem] leading-[1.15] tracking-[-0.015em] text-balance text-foreground min-[800px]:mb-3 min-[800px]:text-[2.5rem]">
         {props.title}
       </h1>
       {props.children}
@@ -55,11 +55,11 @@ export function GroupBrief(props: {
     >
       <div>
         <Kicker className="mb-2">Why</Kicker>
-        <p className="mb-6 font-display text-xl leading-relaxed text-pretty text-foreground">
+        <p className="mb-4 font-display text-base leading-relaxed text-pretty text-foreground min-[800px]:mb-6 min-[800px]:text-xl">
           <InlineMd text={group.why} />
         </p>
         <Kicker className="mb-2">What</Kicker>
-        <p className="mb-5 leading-relaxed text-pretty text-foreground">
+        <p className="mb-4 leading-relaxed text-pretty text-foreground min-[800px]:mb-5">
           <InlineMd text={group.summary} />
         </p>
         <SourceList ids={sourceIds} sources={document.sources ?? []} />

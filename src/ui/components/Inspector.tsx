@@ -96,12 +96,12 @@ export function Inspector(props: {
 
   return (
     <div className="review-inspector flex h-full min-h-0 flex-col" aria-busy={loading}>
-      <div className="flex flex-wrap items-center gap-3 px-8 pt-6 pb-4">
+      <div className="flex flex-wrap items-center gap-2 px-4 pt-3 pb-3 min-[800px]:gap-3 min-[800px]:px-8 min-[800px]:pt-6 min-[800px]:pb-4">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>
               Back
-              <Kbd>esc</Kbd>
+              <Kbd className="max-[799px]:hidden">esc</Kbd>
             </Button>
           </TooltipTrigger>
           <TooltipContent>Back to the diff</TooltipContent>
@@ -145,16 +145,16 @@ export function Inspector(props: {
           </Button>
         </div>
       </div>
-      {error !== null ? <p className="px-8 text-warn">{error}</p> : null}
+      {error !== null ? <p className="px-4 text-warn min-[800px]:px-8">{error}</p> : null}
       {loading && error === null && !image ? (
-        <div className="px-8 pt-2">
+        <div className="px-4 pt-2 min-[800px]:px-8">
           <WaitMark
             label={inspector.mode === "file" ? waitCopy.file : waitCopy.blame}
           />
         </div>
       ) : null}
       {image ? (
-        <div className="min-h-0 flex-1 overflow-auto px-8 pb-8">
+        <div className="min-h-0 flex-1 overflow-auto px-4 pb-8 min-[800px]:px-8">
           <img
             src={resourceHref({ kind: "image", path: inspector.path, side: inspector.side })}
             alt={`${inspector.side} ${inspector.path}`}

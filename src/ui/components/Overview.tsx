@@ -34,7 +34,7 @@ export function Overview(props: {
             <Kicker id="review-why" className="mb-2">
               Why
             </Kicker>
-            <p className="mb-6 font-display text-xl leading-relaxed text-pretty text-foreground">
+            <p className="mb-4 font-display text-base leading-relaxed text-pretty text-foreground min-[800px]:mb-6 min-[800px]:text-xl">
               <InlineMd text={why} />
             </p>
           </>
@@ -42,7 +42,7 @@ export function Overview(props: {
         <Kicker id="review-what" className="mb-2">
           What
         </Kicker>
-        <p className="mb-5 leading-relaxed text-pretty text-foreground">
+        <p className="mb-4 leading-relaxed text-pretty text-foreground min-[800px]:mb-5">
           <InlineMd text={meta.document.summary} />
         </p>
         <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
@@ -102,14 +102,14 @@ function PartColumn(props: {
                 variant="ghost"
                 className={cn(
                   "h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal",
-                  mixed ? "gap-4 py-4" : "gap-6 rounded-none py-5",
+                  mixed ? "gap-3 py-3 min-[800px]:gap-4 min-[800px]:py-4" : "gap-3 rounded-none py-3 min-[800px]:gap-6 min-[800px]:py-5",
                 )}
                 onClick={() => onOpenGroup(group.id)}
               >
                 <span
                   className={cn(
                     "shrink-0 tabular-nums text-muted-foreground",
-                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-display text-2xl leading-none opacity-60",
+                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-display text-lg leading-none opacity-60 min-[800px]:text-2xl",
                   )}
                 >
                   {padIndex(index)}
@@ -118,7 +118,7 @@ function PartColumn(props: {
                   <strong
                     className={cn(
                       "block text-foreground",
-                      mixed ? "font-medium" : "font-display text-xl leading-snug font-normal",
+                      mixed ? "font-medium" : "font-display text-lg leading-snug font-normal min-[800px]:text-xl",
                     )}
                   >
                     {group.title}

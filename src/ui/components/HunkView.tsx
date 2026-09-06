@@ -159,7 +159,7 @@ export function HunkView(props: {
                 checked={viewed}
                 onChange={(event) => onViewed(file.path, event.target.checked)}
               />
-              Viewed
+              <span className="max-[799px]:hidden">Viewed</span>
             </label>
           </TooltipTrigger>
           <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>

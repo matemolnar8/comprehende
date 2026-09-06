@@ -161,7 +161,7 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
   );
 }
 
-function ThemeToggle() {
+export function ThemeToggle() {
   const { preference, toggleTheme } = useTheme();
   const next = preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
   const label = next === "auto" ? "Use auto theme" : `Use ${next} theme`;
