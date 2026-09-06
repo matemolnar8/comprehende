@@ -1,3 +1,7 @@
+import type { HunkRef, ReviewSource, Source } from "./review.ts";
+
+export type { HunkRef, ReviewDocument, ReviewGroup, ReviewSource, Source } from "./review.ts";
+
 export const REVIEW_SIZES = ["trivial", "small", "medium", "large", "very-large"] as const;
 
 export type ReviewSize = (typeof REVIEW_SIZES)[number];
@@ -24,27 +28,6 @@ export function basename(path: string): string {
   return slash === -1 ? path : path.slice(slash + 1);
 }
 
-export type ReviewDocument = {
-  version: 1;
-  source: ReviewSource;
-  /** Human review burden of this change, not file or hunk count. */
-  size: ReviewSize;
-  /** Short name of the whole change. Always present. */
-  title: string;
-  /** Short what of the whole change. Always present. */
-  summary: string;
-  /** Generated why for the whole change. From tickets, issues, a request description, or a transcript. Omit only when those sources are silent. */
-  why?: string;
-  sources?: Source[];
-  groups: ReviewGroup[];
-};
-
-export type ReviewSource = {
-  baseRef: string;
-  headRef: string;
-  range?: string;
-};
-
 export const SOURCE_KINDS = ["ticket", "pr", "pr-comment", "commit", "transcript"] as const;
 
 export type SourceKind = (typeof SOURCE_KINDS)[number];
@@ -59,61 +42,11 @@ export function isSourceSide(value: unknown): value is SourceSide {
   return value === "old" || value === "new";
 }
 
-export type Source = {
-  id: string;
-  kind: SourceKind;
-  label: string;
-  url?: string;
-  title?: string;
-  /** One or two sentences: why this source matters. Written by the skill. */
-  gist?: string;
-  /** Independent story this source belongs to. Same name as that story's groups. */
-  part?: string;
-  /** pr-comment only. Copied at skill time. */
-  author?: string;
-  /** pr-comment only. The comment, faithful. */
-  body?: string;
-  /** pr-comment only. Git path at skill time. */
-  path?: string;
-  /** pr-comment only. Git-shaped, not GitHub-shaped. */
-  side?: SourceSide;
-  /** pr-comment only. 1-based line on that side. */
-  line?: number;
-};
-
 export type LinePinnedSource = Source & {
   kind: "pr-comment";
   path: string;
   side: SourceSide;
   line: number;
-};
-
-export type ReviewGroup = {
-  id: string;
-  title: string;
-  /** Generated why this group exists. From sources, or because later groups need it. */
-  why: string;
-  /** One sentence: what this group is. */
-  summary: string;
-  /** Scannable bullets of what to look at. Not a paragraph. */
-  lookFor?: string[];
-  /** Earlier group ids this one depends on. Same story only. Omit when independent. */
-  dependsOn?: string[];
-  /** Short name of the independent story this group belongs to. Same name = same story. */
-  part?: string;
-  /** Source ids this group names. Omit when none apply. */
-  sources?: string[];
-  suggestedOrder: number;
-  hunkRefs: HunkRef[];
-};
-
-export type HunkRef = {
-  path: string;
-  oldPath?: string;
-  oldStart: number;
-  oldLines: number;
-  newStart: number;
-  newLines: number;
 };
 
 export type HunkIndex = {

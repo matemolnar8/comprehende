@@ -46,7 +46,7 @@ async function run(): Promise<void> {
     execFileSync("tar", ["-xOf", tarball, "package/package.json"], { encoding: "utf8" }),
   );
   const packedDependencies: unknown = isRecord(packedPkg) ? packedPkg.dependencies : undefined;
-  assert.deepEqual(packedDependencies ?? {}, {}, "packed tarball must not pull UI libraries");
+  assert.deepEqual(Object.keys(packedDependencies ?? {}).sort(), ["zod"], "packed tarball may depend on zod only");
 
   const installDir = await mkdtemp(join(tmpdir(), "comprehende-install-"));
   roots.push(installDir);

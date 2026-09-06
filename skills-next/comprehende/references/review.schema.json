@@ -1,20 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json",
-  "title": "Comprehende ReviewDocument",
-  "description": "Interpretation only: title, groups, summaries, and hunk pointers.",
   "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "version",
-    "source",
-    "size",
-    "title",
-    "summary",
-    "groups"
-  ],
   "properties": {
     "version": {
+      "type": "number",
       "const": 1
     },
     "size": {
@@ -30,11 +20,6 @@
     },
     "source": {
       "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "baseRef",
-        "headRef"
-      ],
       "properties": {
         "baseRef": {
           "type": "string",
@@ -48,7 +33,12 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "required": [
+        "baseRef",
+        "headRef"
+      ],
+      "additionalProperties": false
     },
     "title": {
       "type": "string",
@@ -66,8 +56,8 @@
       "description": "Generated why for the whole change, from tickets, issues, a request description, or a transcript. Cite sources with [text](source:id)."
     },
     "sources": {
-      "type": "array",
       "description": "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
+      "type": "array",
       "items": {
         "$ref": "#/$defs/source"
       }
@@ -76,15 +66,6 @@
       "type": "array",
       "items": {
         "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "title",
-          "why",
-          "summary",
-          "suggestedOrder",
-          "hunkRefs"
-        ],
         "properties": {
           "id": {
             "type": "string",
@@ -104,16 +85,16 @@
             "description": "One sentence: what this group is."
           },
           "lookFor": {
-            "type": "array",
             "description": "Scannable bullets of what to inspect.",
+            "type": "array",
             "items": {
               "type": "string",
               "minLength": 1
             }
           },
           "dependsOn": {
-            "type": "array",
             "description": "Ids of earlier groups this one depends on. Same story only.",
+            "type": "array",
             "items": {
               "type": "string",
               "minLength": 1
@@ -125,8 +106,8 @@
             "description": "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs."
           },
           "sources": {
-            "type": "array",
             "description": "Ids of document sources this group names, even when the prose does not cite them inline.",
+            "type": "array",
             "items": {
               "type": "string",
               "minLength": 1
@@ -141,19 +122,33 @@
               "$ref": "#/$defs/hunkRef"
             }
           }
-        }
+        },
+        "required": [
+          "id",
+          "title",
+          "why",
+          "summary",
+          "suggestedOrder",
+          "hunkRefs"
+        ],
+        "additionalProperties": false
       }
     }
   },
+  "required": [
+    "version",
+    "size",
+    "source",
+    "title",
+    "summary",
+    "groups"
+  ],
+  "additionalProperties": false,
+  "title": "Comprehende ReviewDocument",
+  "description": "Interpretation only: title, groups, summaries, and hunk pointers.",
   "$defs": {
     "source": {
       "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "kind",
-        "label"
-      ],
       "properties": {
         "id": {
           "type": "string",
@@ -220,19 +215,16 @@
           "minimum": 1,
           "description": "pr-comment only. 1-based line on that side."
         }
-      }
+      },
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "additionalProperties": false
     },
     "hunkRef": {
       "type": "object",
-      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed.",
-      "additionalProperties": false,
-      "required": [
-        "path",
-        "oldStart",
-        "oldLines",
-        "newStart",
-        "newLines"
-      ],
       "properties": {
         "path": {
           "type": "string",
@@ -258,7 +250,16 @@
           "type": "integer",
           "minimum": 0
         }
-      }
+      },
+      "required": [
+        "path",
+        "oldStart",
+        "oldLines",
+        "newStart",
+        "newLines"
+      ],
+      "additionalProperties": false,
+      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed."
     }
   }
 }
