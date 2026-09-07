@@ -1,5 +1,7 @@
 # Comprehende
 
+[![npm](https://img.shields.io/npm/v/comprehende)](https://www.npmjs.com/package/comprehende)
+
 Local review assistant for git diffs. Groups changes by review concern and shows them in a fixed UI. Diffs always come from git in the repo you run the CLI in — never from the model, never stored in the review document.
 
 ## Install the skill
