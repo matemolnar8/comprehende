@@ -42,11 +42,12 @@ jobs:
           runtime: node@24
           cache: true
           install: false
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@11.19.1
       - run: pnpm install --frozen-lockfile
       - name: Publish if this version is new
         run: |
           set -euo pipefail
+          echo "npm $(npm --version) at $(command -v npm)"
           VERSION="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync('package.json','utf8')).version)")"
           if npm view "comprehende@${VERSION}" version >/dev/null 2>&1; then
             echo "comprehende@${VERSION} is already on npm — skipping publish"
