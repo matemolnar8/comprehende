@@ -15,7 +15,7 @@
     "prepack": "pnpm run build",
     "dev": "tsx src/cli/main.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "tsx --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\"",
     "fixture": "tsx scripts/build-fixture.ts",
     "generate:schema": "tsx scripts/generate-review-schema.ts",
     "sync:skill": "tsx scripts/sync-skill.ts",
