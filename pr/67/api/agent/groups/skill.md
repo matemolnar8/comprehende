@@ -33,23 +33,25 @@ Read the diff:
 
 git diff --find-renames c7978bdc875cecaa6e396c724e48bac751b1e10b 62f46c7abf557d7bc177a15e400d8f9861e35bd1
 
-Review concern 02 of 05: Close and TTL prune (`workflow`)
+Review concern 03 of 05: Pages skill (`skill`)
 
 Part: GitHub Pages hosting
 
 The why:
 
-[PR #67](source:s1) says a closed pull request should drop its folder, and old sites should expire.
+[The session](source:s5) wants hosting as a separate skill, like VibeDrop, that can run at any point.
 
 The what:
 
-`.github/workflows/pages-reviews.yml` runs `prune --pr` on close and `prune --ttl-days 30` on a daily cron.
+The pages skill and `AGENTS.md` tell agents to host with the CLI, and `.agents/skills/vibedrop/SKILL.md` is deleted.
 
 Look for:
-- Subtle. The close job runs `prune --pr` only, so `site/<name>/` remains until TTL.
+- Step 2 uses `--pr` for a pull request review and `--name` for any other static folder.
 
 Depends on:
 - 01 Pages publish CLI (`cli`)
 
 Hunk refs for this concern:
-- .github/workflows/pages-reviews.yml @@ -0,0 +1,39 @@
+- .agents/skills/pages/SKILL.md @@ -0,0 +1,17 @@
+- AGENTS.md @@ -88,7 +88,7 @@
+- .agents/skills/vibedrop/SKILL.md @@ -1,179 +0,0 @@

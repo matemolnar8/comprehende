@@ -33,23 +33,20 @@ Read the diff:
 
 git diff --find-renames c7978bdc875cecaa6e396c724e48bac751b1e10b 62f46c7abf557d7bc177a15e400d8f9861e35bd1
 
-Review concern 02 of 05: Close and TTL prune (`workflow`)
+Review concern 05 of 05: Pages URLs in README (`readme`)
 
 Part: GitHub Pages hosting
 
 The why:
 
-[PR #67](source:s1) says a closed pull request should drop its folder, and old sites should expire.
+People using the repo need the Pages URL and the one-time enable step.
 
 The what:
 
-`.github/workflows/pages-reviews.yml` runs `prune --pr` on close and `prune --ttl-days 30` on a daily cron.
-
-Look for:
-- Subtle. The close job runs `prune --pr` only, so `site/<name>/` remains until TTL.
+README Develop names the `pr/<number>/` and `site/<name>/` URLs, the one-time Pages enable, and the 30-day TTL.
 
 Depends on:
 - 01 Pages publish CLI (`cli`)
 
 Hunk refs for this concern:
-- .github/workflows/pages-reviews.yml @@ -0,0 +1,39 @@
+- README.md @@ -44,6 +44,8 @@

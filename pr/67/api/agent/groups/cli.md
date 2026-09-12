@@ -33,23 +33,21 @@ Read the diff:
 
 git diff --find-renames c7978bdc875cecaa6e396c724e48bac751b1e10b 62f46c7abf557d7bc177a15e400d8f9861e35bd1
 
-Review concern 02 of 05: Close and TTL prune (`workflow`)
+Review concern 01 of 05: Pages publish CLI (`cli`)
 
 Part: GitHub Pages hosting
 
 The why:
 
-[PR #67](source:s1) says a closed pull request should drop its folder, and old sites should expire.
+[PR #67](source:s1) needs a way to copy a static folder onto `gh-pages`. [Bugbot](source:s3) found listing races on that path.
 
 The what:
 
-`.github/workflows/pages-reviews.yml` runs `prune --pr` on close and `prune --ttl-days 30` on a daily cron.
+`publish` and `prune` in `scripts/pages-review.ts` write `pr/<n>/` or `site/<slug>/` and rebuild the listing from `published.json` after a rejected push.
 
 Look for:
-- Subtle. The close job runs `prune --pr` only, so `site/<name>/` remains until TTL.
-
-Depends on:
-- 01 Pages publish CLI (`cli`)
+- Race. Two publishes rewrite `index.html`. On a rejected push, `applyAndPush` does `reset --hard` to remote `gh-pages` and runs `apply` again.
+- For dest `{ kind: "name", name: "demo" }`, the copy lands in `site/demo/` and `prune --pr` leaves it.
 
 Hunk refs for this concern:
-- .github/workflows/pages-reviews.yml @@ -0,0 +1,39 @@
+- scripts/pages-review.ts @@ -0,0 +1,592 @@

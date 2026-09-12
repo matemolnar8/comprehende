@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify c7978bdc875cecaa6e396c724e48bac751b1e10b` and `git rev-parse --verify 16565def6a52a638a09689dc5f6ddfe45cab1504` in this repository.
+   Run `git rev-parse --verify c7978bdc875cecaa6e396c724e48bac751b1e10b` and `git rev-parse --verify 62f46c7abf557d7bc177a15e400d8f9861e35bd1` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,22 +24,33 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  c7978bdc875cecaa6e396c724e48bac751b1e10b
 
-head               16565def6a52a638a09689dc5f6ddfe45cab1504
+head               62f46c7abf557d7bc177a15e400d8f9861e35bd1
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames c7978bdc875cecaa6e396c724e48bac751b1e10b 16565def6a52a638a09689dc5f6ddfe45cab1504
+git diff --find-renames c7978bdc875cecaa6e396c724e48bac751b1e10b 62f46c7abf557d7bc177a15e400d8f9861e35bd1
 
 Commits:
+- 62f46c7 Support named GitHub Pages uploads without a pull request
+- f65da81 Add a pages skill to host static sites on GitHub Pages
+- 9db4afb Keep GitHub Pages publish out of the comprehende skill
+- d6ec9ee Replay Pages publishes onto gh-pages instead of rebasing
 - 16565de Publish PR reviews to GitHub Pages instead of VibeDrop
 
 Sources:
-- transcript Cursor session · Sep 12 Switch PR reports from VibeDrop to GitHub Pages. Remove VibeDrop references. Orphan old reports when a PR closes or after a TTL.
-- pr PR #67 Export stays a static site. This repo publishes it to GitHub Pages at pr/<n>/. Pages must be enabled once. Close and a 30-day TTL remove old reviews.
+- pr PR #67 Hosts export folders on this repo's GitHub Pages at pr/<n>/ or site/<name>/, and drops them on close or after 30 days.
   https://github.com/matemolnar8/comprehende/pull/67
-- commit 16565de Commit message names GitHub Pages at pr/<n>/, close cleanup, and a 30-day TTL.
+- pr-comment matemolnar8 on PR #67 The published review URL returns Site not found.
+  https://github.com/matemolnar8/comprehende/pull/67#issuecomment-5648282947
+- pr-comment cursor[bot] on PR #67 Concurrent publishes conflict on index.html. rebase with allowFail swallows the conflict, so retries never push.
+  https://github.com/matemolnar8/comprehende/pull/67#discussion_r3996639675
+- pr-comment cursor[bot] on PR #67 A rejected push now resets to remote gh-pages and re-applies, then rebuilds the listing from published.json.
+  https://github.com/matemolnar8/comprehende/pull/67#discussion_r3997365611
+- transcript Cursor session · Sep 12 Asked to host with a separate pages skill, like VibeDrop, including named uploads that are not pull requests.
+- pr-comment cursor[bot] on PR #67 Pages is still off for the repo, so the URL 404s until Settings enables the gh-pages branch.
+  https://github.com/matemolnar8/comprehende/pull/67#issuecomment-5648305695
 
 The title:
 
@@ -47,53 +58,55 @@ Publish PR reviews to GitHub Pages
 
 The why:
 
-The [Cursor session](source:s1) asked to drop VibeDrop, publish reviews on GitHub Pages, and remove old reports when a PR closes or after a TTL. [PR #67](source:s2) records that same setup.
+[PR #67](source:s1) hosts comprehende exports on this repo's GitHub Pages instead of VibeDrop. [The session](source:s5) wants a pages skill that can upload a static site at any point, including without a pull request.
 
 The what (medium):
 
-`scripts/pages-review.ts` pushes a static export to `gh-pages` at `pr/<n>/`. A workflow deletes that folder on PR close and after 30 days. The skill, AGENTS.md, and README tell agents to use it, and the VibeDrop skill is gone.
+`scripts/pages-review.ts` and the pages skill copy a static folder onto `gh-pages` at `pr/<n>/` or `site/<name>/`. A workflow removes a PR folder on close and drops sites older than 30 days.
 
 Look for:
-- [PR #67](source:s2) says Pages is not on yet. No hunk calls the GitHub Pages API, so the published URL 404s until Settings uses branch `gh-pages`.
-- The [session](source:s1) asked for orphaning on close or a TTL. The workflow does both: closed PRs run `--pr`, and a daily cron runs `--ttl-days 30`.
+- [Mate](source:s2) reports https://matemolnar8.github.io/comprehende/pr/67/ is Site not found. No hunk enables GitHub Pages in repo Settings.
 
 ## Review concerns
 
-### 01 pages-review publish and prune (`publish`)
+### 01 Pages publish CLI (`cli`)
 
-`scripts/pages-review.ts` copies an export to `pr/<n>/` on `gh-pages`, writes `.nojekyll` and an index, and deletes folders by PR number or `published.json` age.
+`publish` and `prune` in `scripts/pages-review.ts` write `pr/<n>/` or `site/<slug>/` and rebuild the listing from `published.json` after a rejected push.
 
-[groups/publish.md](groups/publish.md)
+[groups/cli.md](groups/cli.md)
 
-### 02 pages-review tests (`tests`)
+### 02 Close and TTL prune (`workflow`)
 
-`scripts/pages-review.test.ts` drives a local bare remote through publish and prune. `package.json` includes `scripts/**/*.test.ts` in `pnpm test`.
-
-Depends on:
-- 01 pages-review publish and prune (`publish`)
-
-[groups/tests.md](groups/tests.md)
-
-### 03 Pages prune workflow (`workflow`)
-
-`.github/workflows/pages-reviews.yml` runs `pages-review.ts prune --pr` on close, and `prune --ttl-days 30` on a daily cron.
+`.github/workflows/pages-reviews.yml` runs `prune --pr` on close and `prune --ttl-days 30` on a daily cron.
 
 Depends on:
-- 01 pages-review publish and prune (`publish`)
+- 01 Pages publish CLI (`cli`)
 
 [groups/workflow.md](groups/workflow.md)
 
-### 04 Agent and README instructions (`instructions`)
+### 03 Pages skill (`skill`)
 
-AGENTS.md, README, and both skill copies tell agents to run `pages-review.ts publish` and to put the GitHub Pages URL in the PR body.
+The pages skill and `AGENTS.md` tell agents to host with the CLI, and `.agents/skills/vibedrop/SKILL.md` is deleted.
 
 Depends on:
-- 01 pages-review publish and prune (`publish`)
+- 01 Pages publish CLI (`cli`)
 
-[groups/instructions.md](groups/instructions.md)
+[groups/skill.md](groups/skill.md)
 
-### 05 Remove the VibeDrop skill (`drop-vibedrop`)
+### 04 Pages CLI tests (`tests`)
 
-Deletes `.agents/skills/vibedrop/SKILL.md`.
+`scripts/pages-review.test.ts` covers publish, prune, named dests, and listing replay, and `package.json` includes it in `pnpm test`.
 
-[groups/drop-vibedrop.md](groups/drop-vibedrop.md)
+Depends on:
+- 01 Pages publish CLI (`cli`)
+
+[groups/tests.md](groups/tests.md)
+
+### 05 Pages URLs in README (`readme`)
+
+README Develop names the `pr/<number>/` and `site/<name>/` URLs, the one-time Pages enable, and the 30-day TTL.
+
+Depends on:
+- 01 Pages publish CLI (`cli`)
+
+[groups/readme.md](groups/readme.md)
