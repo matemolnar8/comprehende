@@ -7,6 +7,7 @@ import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Brief(props: {
@@ -80,15 +81,7 @@ export function GroupBrief(props: {
             })}
           </p>
         ) : null}
-        {group.lookFor.length > 0 ? (
-          <ul className="mb-2 list-disc space-y-2 pl-5 leading-relaxed">
-            {group.lookFor.map((item, i) => (
-              <li key={i}>
-                <InlineMd text={item} />
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <LookForList items={group.lookFor} />
         {group.staleCount > 0 ? (
           <p className="mt-4 text-warn">
             {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the

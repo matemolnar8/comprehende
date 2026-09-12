@@ -175,6 +175,9 @@ const reviewDocumentObject = z
           description:
             "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
         }),
+      lookFor: stringList(
+        "Whole-change and missing-work claims. Cite the source. Do not store a pass/fail.",
+      ),
       groups: z.array(groupSchema, { error: "must be an array" }),
     },
     { error: objectError },

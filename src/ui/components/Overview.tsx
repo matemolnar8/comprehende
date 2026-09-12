@@ -9,6 +9,7 @@ import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
@@ -46,6 +47,7 @@ export function Overview(props: {
           <InlineMd text={meta.document.summary} />
         </p>
         <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
+        <LookForList items={meta.document.lookFor} />
       </Brief>
       <div
         className={

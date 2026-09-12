@@ -69,6 +69,7 @@ describe("sourceCitationErrors", () => {
   it("names lookFor locations", () => {
     const result = sourceCitationErrors(
       doc({
+        lookFor: ["Check [the ticket](source:missing-doc)."],
         groups: [
           {
             ...group,
@@ -77,6 +78,7 @@ describe("sourceCitationErrors", () => {
         ],
       }),
     );
+    assert.match(result.join("\n"), /lookFor\[0\]/);
     assert.match(result.join("\n"), /groups\[0\]\.lookFor\[0\]/);
   });
 });
@@ -87,12 +89,13 @@ describe("documentCitationRefs", () => {
       doc({
         why: "[one](source:s1)",
         summary: "[two](source:s2)",
+        lookFor: ["[four](source:s4)"],
         groups: [{ ...group, why: "[three](source:s3)", summary: "plain" }],
       }),
     );
     assert.deepEqual(
       refs.map((ref) => `${ref.where}:${ref.id}`),
-      ["why:s1", "summary:s2", "groups[0].why:s3"],
+      ["why:s1", "summary:s2", "lookFor[0]:s4", "groups[0].why:s3"],
     );
   });
 });

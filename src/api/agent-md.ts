@@ -36,6 +36,7 @@ function overviewAgentMd(review: ApiReview): string {
     joinBlocks(["The title:", review.document.title]),
     review.document.why !== undefined ? joinBlocks(["The why:", review.document.why]) : null,
     joinBlocks([`The what (${sizeLabel(review.document.size)}):`, review.document.summary]),
+    lookForBlock(review.document.lookFor ?? []),
     reviewConcernsBlock(review),
   ]);
 }
