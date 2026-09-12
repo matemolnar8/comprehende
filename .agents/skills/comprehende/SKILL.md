@@ -36,23 +36,13 @@ The review document is interpretation only. It holds a title, groups, summaries,
 
 ## Export
 
-Write a static site.
+Write a static site and put that folder where they asked.
 
 ```sh
 npx comprehende@0.7.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
 ```
 
-`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. If `review.json` is not written yet, finish the Workflow through validate, then export.
-
-When they ask to upload the report, or when you open a GitHub pull request, publish that folder to GitHub Pages at `pr/<number>/` on the `gh-pages` branch. Put `https://<owner>.github.io/<repo>/pr/<number>/` in the PR body. Keep `.nojekyll` at the branch root. Do not copy the export into the work tree under review.
-
-If this checkout has `scripts/pages-review.ts`, run it and use the URL it prints:
-
-```sh
-pnpm exec tsx scripts/pages-review.ts publish --dir "$EXPORT_DIR" --pr <number>
-```
-
-In this repository a workflow removes the folder when the pull request closes, and drops reviews older than 30 days.
+`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is not written yet, finish the Workflow through validate, then export.
 
 ## The title
 
