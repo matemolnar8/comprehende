@@ -44,6 +44,8 @@ This tool is for preventing this cognitive surrender while trying to maintain mo
 
 `comprehende serve` and `comprehende export` share one UI and one git payload. Serve resolves refs to commit SHAs when it starts, then computes those payloads from the objects on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review.
 
+This repository publishes those exports to GitHub Pages at `https://matemolnar8.github.io/comprehende/pr/<number>/`. Enable Pages once. In the GitHub repo, open Settings, Pages, Deploy from a branch, branch `gh-pages`, folder `/`. A workflow removes the folder when the pull request closes, and drops reviews older than 30 days.
+
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.7.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
 
 ## Release

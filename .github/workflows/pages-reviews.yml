@@ -1,0 +1,39 @@
+name: Pages reviews
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pages-reviews
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Git identity for gh-pages commits
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Remove the review for a closed pull request
+        if: github.event_name == 'pull_request'
+        run: pnpm exec tsx scripts/pages-review.ts prune --pr ${{ github.event.pull_request.number }}
+      - name: Drop reviews older than 30 days
+        if: github.event_name != 'pull_request'
+        run: pnpm exec tsx scripts/pages-review.ts prune --ttl-days 30

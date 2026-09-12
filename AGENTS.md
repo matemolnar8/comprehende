@@ -88,7 +88,7 @@ Releases happen manually. Do not change `package.json` version unless the user a
 
 ## Pull requests
 
-When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, and use VibeDrop to publish. Put the URL in the PR body.
+When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, then publish it with `pnpm exec tsx scripts/pages-review.ts publish --dir "$EXPORT_DIR" --pr <number>`. Put the printed URL in the PR body.
 
 ## Notes from Máté, the repo owner
 

@@ -1,0 +1,176 @@
+import assert from "node:assert/strict";
+import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { existsSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { after, describe, it } from "node:test";
+import { git } from "../src/git/exec.ts";
+import { initEmptyRepo } from "../src/test/init-repo.ts";
+import {
+  githubPagesReviewUrl,
+  parseGithubRepo,
+  parsePrNumber,
+  prunePagesReviews,
+  publishPagesReview,
+  runPagesReview,
+} from "./pages-review.ts";
+
+const roots: string[] = [];
+
+after(() => {
+  for (const root of roots) {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+describe("pages-review urls", () => {
+  it("parses GitHub remotes and builds project Pages URLs", () => {
+    assert.deepEqual(parseGithubRepo("https://github.com/matemolnar8/comprehende.git"), {
+      owner: "matemolnar8",
+      repo: "comprehende",
+    });
+    assert.deepEqual(parseGithubRepo("https://x-access-token:tok@github.com/matemolnar8/comprehende"), {
+      owner: "matemolnar8",
+      repo: "comprehende",
+    });
+    assert.deepEqual(parseGithubRepo("git@github.com:matemolnar8/comprehende.git"), {
+      owner: "matemolnar8",
+      repo: "comprehende",
+    });
+    assert.equal(
+      githubPagesReviewUrl("https://github.com/matemolnar8/comprehende.git", 12),
+      "https://matemolnar8.github.io/comprehende/pr/12/",
+    );
+    assert.equal(
+      githubPagesReviewUrl("git@github.com:alice/alice.github.io.git", 3),
+      "https://alice.github.io/pr/3/",
+    );
+  });
+
+  it("rejects junk PR numbers", () => {
+    assert.equal(parsePrNumber("12"), 12);
+    assert.throws(() => parsePrNumber("0"));
+    assert.throws(() => parsePrNumber("../etc"));
+    assert.throws(() => parsePrNumber("12abc"));
+  });
+});
+
+describe("pages-review publish and prune", () => {
+  it("publishes to pr/<n>/, keeps sibling reviews, then prunes on close and TTL", async () => {
+    const ctx = await setupRemoteRepo();
+    const siteA = await writeExport(ctx.root, "site-a", "alpha");
+    const siteB = await writeExport(ctx.root, "site-b", "beta");
+    const t0 = new Date("2026-08-01T00:00:00.000Z");
+    const t1 = new Date("2026-09-01T00:00:00.000Z");
+    const now = new Date("2026-09-12T00:00:00.000Z");
+
+    const publishedA = await publishPagesReview({
+      repo: ctx.repo,
+      dir: siteA,
+      pr: 12,
+      now: t0,
+    });
+    assert.equal(publishedA.pushed, true);
+
+    const publishedB = await publishPagesReview({
+      repo: ctx.repo,
+      dir: siteB,
+      pr: 13,
+      now: t1,
+    });
+    assert.equal(publishedB.pushed, true);
+
+    let pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, ".nojekyll")), true);
+    assert.equal(await readFile(join(pages, "pr/12/index.html"), "utf8"), "<p>alpha</p>\n");
+    assert.equal(await readFile(join(pages, "pr/13/index.html"), "utf8"), "<p>beta</p>\n");
+    const listing = await readFile(join(pages, "index.html"), "utf8");
+    assert.match(listing, /PR #13/);
+    assert.match(listing, /PR #12/);
+    assert.equal(existsSync(join(pages, "pr/12/published.json")), true);
+
+    const closed = await prunePagesReviews({ repo: ctx.repo, pr: 12 });
+    assert.deepEqual(closed.removed, [12]);
+
+    pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/12")), false);
+    assert.equal(existsSync(join(pages, "pr/13/index.html")), true);
+    assert.doesNotMatch(await readFile(join(pages, "index.html"), "utf8"), /PR #12/);
+
+    const expired = await prunePagesReviews({ repo: ctx.repo, ttlDays: 30, now });
+    assert.deepEqual(expired.removed, []);
+
+    const later = await prunePagesReviews({
+      repo: ctx.repo,
+      ttlDays: 10,
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    assert.deepEqual(later.removed, [13]);
+
+    pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/13")), false);
+    assert.match(await readFile(join(pages, "index.html"), "utf8"), /No published reviews right now/);
+  });
+
+  it("replaces an existing PR folder on republish", async () => {
+    const ctx = await setupRemoteRepo();
+    const first = await writeExport(ctx.root, "v1", "one");
+    const second = await writeExport(ctx.root, "v2", "two");
+    await publishPagesReview({ repo: ctx.repo, dir: first, pr: 4 });
+    await publishPagesReview({ repo: ctx.repo, dir: second, pr: 4 });
+    const pages = await checkoutPages(ctx);
+    assert.equal(await readFile(join(pages, "pr/4/index.html"), "utf8"), "<p>two</p>\n");
+  });
+
+  it("prunes nothing when gh-pages is missing", async () => {
+    const ctx = await setupRemoteRepo();
+    const result = await prunePagesReviews({ repo: ctx.repo, pr: 1, ttlDays: 30 });
+    assert.deepEqual(result, { removed: [], pushed: false });
+  });
+
+  it("publishes and prunes through the CLI", async () => {
+    const ctx = await setupRemoteRepo();
+    const site = await writeExport(ctx.root, "cli", "cli");
+    assert.equal(await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9"]), 0);
+    const pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/9/index.html")), true);
+    assert.equal(await runPagesReview(["prune", "--repo", ctx.repo, "--pr", "9"]), 0);
+  });
+});
+
+type RemoteRepo = {
+  root: string;
+  repo: string;
+  bare: string;
+};
+
+async function setupRemoteRepo(): Promise<RemoteRepo> {
+  const root = await mkdtemp(join(tmpdir(), "comprehende-pages-test-"));
+  roots.push(root);
+  const repo = join(root, "repo");
+  const bare = join(root, "remote.git");
+  await initEmptyRepo(repo);
+  await writeFile(join(repo, "README.md"), "# test\n");
+  await git(repo, ["add", "."]);
+  await git(repo, ["commit", "-m", "init"]);
+  await mkdir(bare, { recursive: true });
+  await git(bare, ["init", "--bare", "-b", "main"]);
+  await git(repo, ["remote", "add", "origin", bare]);
+  await git(repo, ["push", "-u", "origin", "main"]);
+  return { root, repo, bare };
+}
+
+async function writeExport(root: string, name: string, body: string): Promise<string> {
+  const dir = join(root, name);
+  await mkdir(dir, { recursive: true });
+  await writeFile(join(dir, "index.html"), `<p>${body}</p>\n`);
+  await mkdir(join(dir, "api"), { recursive: true });
+  await writeFile(join(dir, "api/review.json"), "{}\n");
+  return dir;
+}
+
+async function checkoutPages(ctx: RemoteRepo): Promise<string> {
+  const dest = join(ctx.root, `pages-${crypto.randomUUID()}`);
+  await git(ctx.root, ["clone", "--branch", "gh-pages", "--single-branch", ctx.bare, dest]);
+  return dest;
+}
