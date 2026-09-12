@@ -47,6 +47,9 @@ export function documentCitationRefs(document: ReviewDocument): CitationRef[] {
   };
   add("why", document.why);
   add("summary", document.summary);
+  (document.lookFor ?? []).forEach((item, j) => {
+    add(`lookFor[${j}]`, item);
+  });
   document.groups.forEach((group, i) => {
     add(`groups[${i}].why`, group.why);
     add(`groups[${i}].summary`, group.summary);

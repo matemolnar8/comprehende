@@ -68,6 +68,8 @@ describe("agentMd", () => {
     assert.ok(prompt.indexOf("## Pin") < prompt.indexOf("## Review concerns"));
     assert.ok(prompt.includes("groups/cookie.md"));
     assert.ok(prompt.includes("groups/login.md"));
+    assert.ok(prompt.includes("Look for:"));
+    assert.ok(prompt.includes("Overview and group both have CopyPrompt."));
     assert.equal(prompt.includes("+++"), false);
     assert.equal(prompt.includes("Hunk refs:"), false);
     assert.doesNotMatch(prompt, /@@ -\d/);
@@ -97,6 +99,7 @@ describe("agentMd", () => {
     const review = sampleReview();
     delete review.document.why;
     delete review.document.sources;
+    delete review.document.lookFor;
     review.coverage.unassignedCount = 0;
     review.coverage.staleCount = 0;
     review.commits = [];
@@ -105,6 +108,7 @@ describe("agentMd", () => {
     assert.doesNotMatch(prompt, /Ticket #24 needs a prompt a coding agent can paste/);
     assert.doesNotMatch(prompt, /Tickets:/);
     assert.doesNotMatch(prompt, /Sources:/);
+    assert.doesNotMatch(prompt, /Look for:/);
     assert.doesNotMatch(prompt, /Unassigned live hunks/);
     assert.doesNotMatch(prompt, /^Commits:/m);
     assert.match(prompt, /The what \(medium\):/);
@@ -130,6 +134,7 @@ function sampleReview(): ApiReview {
       title: "Ask AI about this review",
       why: "Ticket #24 needs a prompt a coding agent can paste.",
       summary: "Adds a copy-prompt control to overview and group.",
+      lookFor: ["[#24](source:s1) asked for a pasteable prompt. Overview and group both have CopyPrompt."],
       sources: [
         {
           id: "s1",

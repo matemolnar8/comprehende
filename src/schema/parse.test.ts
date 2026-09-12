@@ -32,6 +32,33 @@ describe("parseReviewDocument", () => {
       assert.equal(result.document.why, "Split the review document from live git.");
       assert.equal(result.document.summary, "Adds a review command.");
       assert.equal(result.document.groups[0]?.why, "The command is how an agent starts a review.");
+      assert.deepEqual(result.document.lookFor, undefined);
+    }
+  });
+
+  it("accepts document lookFor", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      lookFor: ["[#24](source:s1) asked for a pasteable prompt. The copy control is on overview and group."],
+      sources: [{ id: "s1", kind: "ticket", label: "#24" }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.lookFor?.length, 1);
     }
   });
 

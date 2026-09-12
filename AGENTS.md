@@ -38,13 +38,15 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **The how.** How the change is implemented. The live git diff is the how. The agent may group and summarize it. The agent must not replace it.
 
+**Look for.** Claims the live diff does not make obvious. Group `lookFor` holds claims that live in those hunks. Document `lookFor` holds whole-change and missing-work claims. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
+
 **Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. Transcripts have no URL.
 
-**Citation.** A markdown link `[text](source:id)` in the why or the what. The UI turns it into a mark. `validate` fails on an unknown id.
+**Citation.** A markdown link `[text](source:id)` in the why, the what, or lookFor. The UI turns it into a mark. `validate` fails on an unknown id.
 
 ### Code
 
-**Review document.** Interpretation only. Title, groups, summaries, optional generated why, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
+**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
 **Group.** Schema `groups` item. The UI uses the same word.
 
