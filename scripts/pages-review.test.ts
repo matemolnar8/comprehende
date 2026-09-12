@@ -7,12 +7,14 @@ import { after, describe, it } from "node:test";
 import { git } from "../src/git/exec.ts";
 import { initEmptyRepo } from "../src/test/init-repo.ts";
 import {
-  githubPagesReviewUrl,
+  githubPagesUrl,
   parseGithubRepo,
   parsePrNumber,
+  parseSiteName,
   prunePagesReviews,
   publishPagesReview,
   runPagesReview,
+  type PagesDest,
 } from "./pages-review.ts";
 
 const roots: string[] = [];
@@ -22,6 +24,9 @@ after(() => {
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+const pr = (n: number): PagesDest => ({ kind: "pr", pr: n });
+const named = (name: string): PagesDest => ({ kind: "name", name });
 
 describe("pages-review urls", () => {
   it("parses GitHub remotes and builds project Pages URLs", () => {
@@ -38,20 +43,35 @@ describe("pages-review urls", () => {
       repo: "comprehende",
     });
     assert.equal(
-      githubPagesReviewUrl("https://github.com/matemolnar8/comprehende.git", 12),
+      githubPagesUrl("https://github.com/matemolnar8/comprehende.git", pr(12)),
       "https://matemolnar8.github.io/comprehende/pr/12/",
     );
     assert.equal(
-      githubPagesReviewUrl("git@github.com:alice/alice.github.io.git", 3),
+      githubPagesUrl("https://github.com/matemolnar8/comprehende.git", named("demo")),
+      "https://matemolnar8.github.io/comprehende/site/demo/",
+    );
+    assert.equal(
+      githubPagesUrl("git@github.com:alice/alice.github.io.git", pr(3)),
       "https://alice.github.io/pr/3/",
+    );
+    assert.equal(
+      githubPagesUrl("git@github.com:alice/alice.github.io.git", named("preview")),
+      "https://alice.github.io/site/preview/",
     );
   });
 
-  it("rejects junk PR numbers", () => {
+  it("rejects junk dests", () => {
     assert.equal(parsePrNumber("12"), 12);
     assert.throws(() => parsePrNumber("0"));
     assert.throws(() => parsePrNumber("../etc"));
     assert.throws(() => parsePrNumber("12abc"));
+    assert.equal(parseSiteName("demo"), "demo");
+    assert.equal(parseSiteName("a"), "a");
+    assert.equal(parseSiteName("my-preview"), "my-preview");
+    assert.throws(() => parseSiteName("Demo"));
+    assert.throws(() => parseSiteName("../etc"));
+    assert.throws(() => parseSiteName("has_underscore"));
+    assert.throws(() => parseSiteName(""));
   });
 });
 
@@ -67,7 +87,7 @@ describe("pages-review publish and prune", () => {
     const publishedA = await publishPagesReview({
       repo: ctx.repo,
       dir: siteA,
-      pr: 12,
+      dest: pr(12),
       now: t0,
     });
     assert.equal(publishedA.pushed, true);
@@ -75,7 +95,7 @@ describe("pages-review publish and prune", () => {
     const publishedB = await publishPagesReview({
       repo: ctx.repo,
       dir: siteB,
-      pr: 13,
+      dest: pr(13),
       now: t1,
     });
     assert.equal(publishedB.pushed, true);
@@ -90,7 +110,7 @@ describe("pages-review publish and prune", () => {
     assert.equal(existsSync(join(pages, "pr/12/published.json")), true);
 
     const closed = await prunePagesReviews({ repo: ctx.repo, pr: 12 });
-    assert.deepEqual(closed.removed, [12]);
+    assert.deepEqual(closed.removed, [pr(12)]);
 
     pages = await checkoutPages(ctx);
     assert.equal(existsSync(join(pages, "pr/12")), false);
@@ -105,21 +125,75 @@ describe("pages-review publish and prune", () => {
       ttlDays: 10,
       now: new Date("2026-09-20T00:00:00.000Z"),
     });
-    assert.deepEqual(later.removed, [13]);
+    assert.deepEqual(later.removed, [pr(13)]);
 
     pages = await checkoutPages(ctx);
     assert.equal(existsSync(join(pages, "pr/13")), false);
-    assert.match(await readFile(join(pages, "index.html"), "utf8"), /No published reviews right now/);
+    assert.match(await readFile(join(pages, "index.html"), "utf8"), /No published sites right now/);
   });
 
-  it("replaces an existing PR folder on republish", async () => {
+  it("publishes named sites under site/<slug>/ and leaves them when a PR closes", async () => {
+    const ctx = await setupRemoteRepo();
+    const t0 = new Date("2026-08-01T00:00:00.000Z");
+    await publishPagesReview({
+      repo: ctx.repo,
+      dir: await writeExport(ctx.root, "named", "named"),
+      dest: named("demo"),
+      now: t0,
+    });
+    await publishPagesReview({
+      repo: ctx.repo,
+      dir: await writeExport(ctx.root, "pr-site", "pr"),
+      dest: pr(8),
+      now: t0,
+    });
+
+    let pages = await checkoutPages(ctx);
+    assert.equal(await readFile(join(pages, "site/demo/index.html"), "utf8"), "<p>named</p>\n");
+    const listing = await readFile(join(pages, "index.html"), "utf8");
+    assert.match(listing, /site\/demo/);
+    assert.match(listing, />demo</);
+    assert.match(listing, /PR #8/);
+
+    const closed = await prunePagesReviews({ repo: ctx.repo, pr: 8 });
+    assert.deepEqual(closed.removed, [pr(8)]);
+    pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/8")), false);
+    assert.equal(existsSync(join(pages, "site/demo/index.html")), true);
+
+    const byName = await prunePagesReviews({ repo: ctx.repo, name: "demo" });
+    assert.deepEqual(byName.removed, [named("demo")]);
+    pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "site/demo")), false);
+  });
+
+  it("drops named sites on TTL", async () => {
+    const ctx = await setupRemoteRepo();
+    await publishPagesReview({
+      repo: ctx.repo,
+      dir: await writeExport(ctx.root, "old", "old"),
+      dest: named("stale"),
+      now: new Date("2026-08-01T00:00:00.000Z"),
+    });
+    const expired = await prunePagesReviews({
+      repo: ctx.repo,
+      ttlDays: 10,
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    assert.deepEqual(expired.removed, [named("stale")]);
+  });
+
+  it("replaces an existing folder on republish", async () => {
     const ctx = await setupRemoteRepo();
     const first = await writeExport(ctx.root, "v1", "one");
     const second = await writeExport(ctx.root, "v2", "two");
-    await publishPagesReview({ repo: ctx.repo, dir: first, pr: 4 });
-    await publishPagesReview({ repo: ctx.repo, dir: second, pr: 4 });
+    await publishPagesReview({ repo: ctx.repo, dir: first, dest: pr(4) });
+    await publishPagesReview({ repo: ctx.repo, dir: second, dest: pr(4) });
+    await publishPagesReview({ repo: ctx.repo, dir: first, dest: named("demo") });
+    await publishPagesReview({ repo: ctx.repo, dir: second, dest: named("demo") });
     const pages = await checkoutPages(ctx);
     assert.equal(await readFile(join(pages, "pr/4/index.html"), "utf8"), "<p>two</p>\n");
+    assert.equal(await readFile(join(pages, "site/demo/index.html"), "utf8"), "<p>two</p>\n");
   });
 
   it("prunes nothing when gh-pages is missing", async () => {
@@ -133,7 +207,7 @@ describe("pages-review publish and prune", () => {
     await publishPagesReview({
       repo: ctx.repo,
       dir: await writeExport(ctx.root, "a", "a"),
-      pr: 12,
+      dest: pr(12),
     });
     const competitor = await cloneCompetitor(ctx);
     const siteB = await writeExport(ctx.root, "b", "b");
@@ -141,18 +215,18 @@ describe("pages-review publish and prune", () => {
     await publishPagesReview({
       repo: ctx.repo,
       dir: siteB,
-      pr: 13,
+      dest: named("demo"),
       beforePush: async () => {
-        await publishPagesReview({ repo: competitor, dir: siteC, pr: 99 });
+        await publishPagesReview({ repo: competitor, dir: siteC, dest: pr(99) });
       },
     });
     const pages = await checkoutPages(ctx);
     assert.equal(existsSync(join(pages, "pr/12/index.html")), true);
-    assert.equal(existsSync(join(pages, "pr/13/index.html")), true);
+    assert.equal(existsSync(join(pages, "site/demo/index.html")), true);
     assert.equal(existsSync(join(pages, "pr/99/index.html")), true);
     const listing = await readFile(join(pages, "index.html"), "utf8");
     assert.match(listing, /PR #12/);
-    assert.match(listing, /PR #13/);
+    assert.match(listing, /site\/demo/);
     assert.match(listing, /PR #99/);
   });
 
@@ -160,9 +234,24 @@ describe("pages-review publish and prune", () => {
     const ctx = await setupRemoteRepo();
     const site = await writeExport(ctx.root, "cli", "cli");
     assert.equal(await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9"]), 0);
-    const pages = await checkoutPages(ctx);
+    assert.equal(await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--name", "demo"]), 0);
+    let pages = await checkoutPages(ctx);
     assert.equal(existsSync(join(pages, "pr/9/index.html")), true);
+    assert.equal(existsSync(join(pages, "site/demo/index.html")), true);
     assert.equal(await runPagesReview(["prune", "--repo", ctx.repo, "--pr", "9"]), 0);
+    assert.equal(await runPagesReview(["prune", "--repo", ctx.repo, "--name", "demo"]), 0);
+    pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/9")), false);
+    assert.equal(existsSync(join(pages, "site/demo")), false);
+  });
+
+  it("rejects publish with both --pr and --name", async () => {
+    const ctx = await setupRemoteRepo();
+    const site = await writeExport(ctx.root, "cli", "cli");
+    assert.equal(
+      await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9", "--name", "demo"]),
+      1,
+    );
   });
 });
 
