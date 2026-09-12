@@ -95,3 +95,5 @@ When opening a pull request, run the comprehende skill from skills-next on that 
 I love to see simple code solving real, complex problems. Make every change, design, and text in that spirit. The skill is reviewed and adjusted by me manually, but write it with these principles in mind too.
 
 I don't want this project to get overly complicated. In practice this means I want to keep the code focusing on the universal Git part, not specifics of any Git forge or issue tracker - those must be handled at the skill level.
+
+Watch out for small, quick neat wins and the attention to detail that makes people say wow, that's cool.

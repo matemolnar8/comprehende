@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { MessageSquareIcon, PanelLeftIcon, WrapTextIcon } from "lucide-react";
+import { MessageSquareIcon, PanelLeftIcon, SmartphoneIcon, WrapTextIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet.tsx";
@@ -67,7 +67,7 @@ export function MobileShell(props: {
               <MessageSquareIcon />
             </Button>
           ) : null}
-          <ThemeToggle />
+          <ThemeToggle system={<SmartphoneIcon />} />
         </div>
       </header>
       <div className="min-h-0 flex-1 [[data-motion=scene]_&]:[view-transition-name:review-scene]">{props.children}</div>

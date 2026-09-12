@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { copyText } from "../lib/copy-text.ts";
@@ -161,11 +161,12 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
   );
 }
 
-export function ThemeToggle() {
+export function ThemeToggle(props: { system?: ReactNode }) {
   const { preference, toggleTheme } = useTheme();
   const next = preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
   const label = next === "auto" ? "Use auto theme" : `Use ${next} theme`;
   const tooltip = next === "auto" ? "Follow system" : `Use ${next} theme`;
+  const system = props.system ?? <MonitorIcon />;
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -175,7 +176,7 @@ export function ThemeToggle() {
           aria-label={label}
           onClick={toggleTheme}
         >
-          {preference === "light" ? <SunIcon /> : preference === "dark" ? <MoonIcon /> : <MonitorIcon />}
+          {preference === "light" ? <SunIcon /> : preference === "dark" ? <MoonIcon /> : system}
         </Button>
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
