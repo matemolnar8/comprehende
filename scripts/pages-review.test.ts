@@ -128,6 +128,34 @@ describe("pages-review publish and prune", () => {
     assert.deepEqual(result, { removed: [], pushed: false });
   });
 
+  it("replays onto gh-pages when another publish rewrites the listing", async () => {
+    const ctx = await setupRemoteRepo();
+    await publishPagesReview({
+      repo: ctx.repo,
+      dir: await writeExport(ctx.root, "a", "a"),
+      pr: 12,
+    });
+    const competitor = await cloneCompetitor(ctx);
+    const siteB = await writeExport(ctx.root, "b", "b");
+    const siteC = await writeExport(ctx.root, "c", "c");
+    await publishPagesReview({
+      repo: ctx.repo,
+      dir: siteB,
+      pr: 13,
+      beforePush: async () => {
+        await publishPagesReview({ repo: competitor, dir: siteC, pr: 99 });
+      },
+    });
+    const pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "pr/12/index.html")), true);
+    assert.equal(existsSync(join(pages, "pr/13/index.html")), true);
+    assert.equal(existsSync(join(pages, "pr/99/index.html")), true);
+    const listing = await readFile(join(pages, "index.html"), "utf8");
+    assert.match(listing, /PR #12/);
+    assert.match(listing, /PR #13/);
+    assert.match(listing, /PR #99/);
+  });
+
   it("publishes and prunes through the CLI", async () => {
     const ctx = await setupRemoteRepo();
     const site = await writeExport(ctx.root, "cli", "cli");
@@ -158,6 +186,16 @@ async function setupRemoteRepo(): Promise<RemoteRepo> {
   await git(repo, ["remote", "add", "origin", bare]);
   await git(repo, ["push", "-u", "origin", "main"]);
   return { root, repo, bare };
+}
+
+async function cloneCompetitor(ctx: RemoteRepo): Promise<string> {
+  const competitor = join(ctx.root, "competitor");
+  await git(ctx.root, ["clone", ctx.repo, competitor]);
+  await git(competitor, ["remote", "set-url", "origin", ctx.bare]);
+  await git(competitor, ["config", "user.email", "comprehende@example.com"]);
+  await git(competitor, ["config", "user.name", "Comprehende Fixture"]);
+  await git(competitor, ["config", "commit.gpgsign", "false"]);
+  return competitor;
 }
 
 async function writeExport(root: string, name: string, body: string): Promise<string> {

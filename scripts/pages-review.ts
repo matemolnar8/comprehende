@@ -26,6 +26,7 @@ export type PublishPagesOpts = {
   remote?: string;
   branch?: string;
   now?: Date;
+  beforePush?: () => Promise<void>;
 };
 
 export type PrunePagesOpts = {
@@ -35,6 +36,7 @@ export type PrunePagesOpts = {
   remote?: string;
   branch?: string;
   now?: Date;
+  beforePush?: () => Promise<void>;
 };
 
 export type PagesResult = {
@@ -129,15 +131,17 @@ export async function publishPagesReview(opts: PublishPagesOpts): Promise<PagesR
   }
   const now = opts.now ?? new Date();
   const meta: PublishedMeta = { pr, publishedAt: now.toISOString() };
-  return withPagesWorktree({ ...opts, createIfMissing: true }, async (pagesDir, remoteUrl) => {
+  const ctx = { ...opts, createIfMissing: true };
+  return withPagesWorktree(ctx, async (pagesDir, remoteUrl) => {
     const pages = requirePages(pagesDir);
-    const dest = join(pages, "pr", String(pr));
-    await rm(dest, { recursive: true, force: true });
-    await mkdir(dest, { recursive: true });
-    await cp(opts.dir, dest, { recursive: true });
-    await writeFile(join(dest, PUBLISHED_FILE), `${JSON.stringify(meta)}\n`);
-    await writeScaffold(pages);
-    const pushed = await commitAndPush(pages, opts, `Publish review for PR #${pr}`);
+    const pushed = await applyAndPush(pages, ctx, `Publish review for PR #${pr}`, async () => {
+      const dest = join(pages, "pr", String(pr));
+      await rm(dest, { recursive: true, force: true });
+      await mkdir(dest, { recursive: true });
+      await cp(opts.dir, dest, { recursive: true });
+      await writeFile(join(dest, PUBLISHED_FILE), `${JSON.stringify(meta)}\n`);
+      await writeScaffold(pages);
+    });
     return { url: pagesUrlOrUndefined(remoteUrl, pr), removed: [], pushed };
   });
 }
@@ -147,43 +151,50 @@ export async function prunePagesReviews(opts: PrunePagesOpts): Promise<PagesResu
     throw new Error("prune needs --pr and/or --ttl-days");
   }
   const now = opts.now ?? new Date();
-  return withPagesWorktree({ ...opts, createIfMissing: false }, async (pages) => {
+  const ctx = { ...opts, createIfMissing: false };
+  return withPagesWorktree(ctx, async (pages) => {
     if (pages === undefined) {
       return { removed: [], pushed: false };
     }
-    const reviews = await listPublished(pages);
-    if (reviews.length === 0) {
-      return { removed: [], pushed: false };
-    }
     const removed: number[] = [];
-    for (const review of reviews) {
-      if (opts.pr === review.pr) {
-        removed.push(review.pr);
-        continue;
+    const pushed = await applyAndPush(pages, ctx, () => pruneMessage(removed), async () => {
+      removed.length = 0;
+      const reviews = await listPublished(pages);
+      for (const review of reviews) {
+        if (opts.pr === review.pr) {
+          removed.push(review.pr);
+          continue;
+        }
+        if (opts.ttlDays !== undefined && ageDays(review.publishedAt, now) >= opts.ttlDays) {
+          removed.push(review.pr);
+        }
       }
-      if (opts.ttlDays !== undefined && ageDays(review.publishedAt, now) >= opts.ttlDays) {
-        removed.push(review.pr);
+      if (removed.length === 0) {
+        return;
       }
-    }
-    if (removed.length === 0) {
-      return { removed: [], pushed: false };
-    }
-    for (const pr of removed) {
-      await rm(join(pages, "pr", String(pr)), { recursive: true, force: true });
-    }
-    await writeScaffold(pages);
-    const reason =
-      removed.length === 1 ? `Remove Pages review for PR #${removed[0]}` : `Remove Pages reviews for PR ${removed.map((n) => `#${n}`).join(", ")}`;
-    const pushed = await commitAndPush(pages, opts, reason);
+      for (const pr of removed) {
+        await rm(join(pages, "pr", String(pr)), { recursive: true, force: true });
+      }
+      await writeScaffold(pages);
+    });
     return { removed, pushed };
   });
 }
 
+function pruneMessage(removed: number[]): string {
+  if (removed.length === 1) {
+    return `Remove Pages review for PR #${removed[0]}`;
+  }
+  return `Remove Pages reviews for PR ${removed.map((n) => `#${n}`).join(", ")}`;
+}
+
 export async function initPagesBranch(opts: { repo: string; remote?: string; branch?: string }): Promise<PagesResult> {
-  return withPagesWorktree({ ...opts, createIfMissing: true }, async (pagesDir) => {
+  const ctx = { ...opts, createIfMissing: true };
+  return withPagesWorktree(ctx, async (pagesDir) => {
     const pages = requirePages(pagesDir);
-    await writeScaffold(pages);
-    const pushed = await commitAndPush(pages, opts, "Initialize GitHub Pages for PR reviews");
+    const pushed = await applyAndPush(pages, ctx, "Initialize GitHub Pages for PR reviews", async () => {
+      await writeScaffold(pages);
+    });
     return { removed: [], pushed };
   });
 }
@@ -193,6 +204,7 @@ type PagesCtx = {
   remote?: string;
   branch?: string;
   createIfMissing: boolean;
+  beforePush?: () => Promise<void>;
 };
 
 async function withPagesWorktree<T>(
@@ -261,28 +273,40 @@ function parsePublished(raw: string, pr: number): PublishedMeta {
   return { pr, publishedAt: parsed.publishedAt };
 }
 
-async function commitAndPush(pages: string, opts: PagesCtx, message: string): Promise<boolean> {
+async function applyAndPush(
+  pages: string,
+  opts: PagesCtx,
+  message: string | (() => string),
+  apply: () => Promise<void>,
+): Promise<boolean> {
   const remote = opts.remote ?? "origin";
   const branch = opts.branch ?? PAGES_BRANCH;
-  await git(pages, ["add", "-A"]);
-  const dirty = (await git(pages, ["status", "--porcelain"])).trim();
-  if (dirty === "") {
-    return false;
-  }
-  await git(pages, ["commit", "-m", message]);
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt++) {
-    try {
-      await git(pages, ["push", remote, `HEAD:${branch}`]);
-      return true;
-    } catch (error) {
-      lastError = error;
+    if (attempt > 0) {
       await git(pages, ["fetch", remote, `${branch}:refs/remotes/${remote}/${branch}`], { allowFail: true });
       const hasRemote = await gitOk(pages, ["rev-parse", "--verify", `refs/remotes/${remote}/${branch}`]);
       if (!hasRemote) {
         break;
       }
-      await git(pages, ["rebase", `refs/remotes/${remote}/${branch}`], { allowFail: true });
+      await git(pages, ["reset", "--hard", `refs/remotes/${remote}/${branch}`]);
+    }
+    await apply();
+    await git(pages, ["add", "-A"]);
+    const dirty = (await git(pages, ["status", "--porcelain"])).trim();
+    if (dirty === "") {
+      return attempt > 0;
+    }
+    const commitMessage = typeof message === "function" ? message() : message;
+    await git(pages, ["commit", "-m", commitMessage]);
+    try {
+      if (attempt === 0 && opts.beforePush !== undefined) {
+        await opts.beforePush();
+      }
+      await git(pages, ["push", remote, `HEAD:${branch}`]);
+      return true;
+    } catch (error) {
+      lastError = error;
     }
   }
   throw lastError instanceof Error ? lastError : new Error("git push to gh-pages failed");
