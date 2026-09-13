@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex } from "../../schema/types.ts";
-import { Button } from "@/components/ui/button.tsx";
 import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type Part } from "../lib/parts.ts";
 import { storyNav, type StoryHop } from "../lib/story-nav.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
+import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { claimsFromLookFor } from "../lib/look-for.ts";
@@ -110,9 +110,13 @@ function HopList(props: {
         return (
           <span key={hop.id}>
             {i > 0 ? ", " : ""}
-            <Button type="button" variant="link" className="h-auto p-0" onClick={() => props.onOpenGroup(hop.id)}>
+            <HashLink
+              selection={{ kind: "group", id: hop.id }}
+              onSelect={() => props.onOpenGroup(hop.id)}
+              className="text-primary underline-offset-2 hover:underline"
+            >
               {label}
-            </Button>
+            </HashLink>
           </span>
         );
       })}

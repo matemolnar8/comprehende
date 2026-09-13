@@ -1,13 +1,13 @@
 import type { CSSProperties } from "react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
-import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { lookForClaims, type LookForClaim } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
+import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { LookForIndex } from "./LookForList.tsx";
@@ -95,15 +95,15 @@ function PartColumn(props: {
       aria-label={part.title}
     >
       {mixed && part.title !== undefined && firstId !== undefined ? (
-        <button
-          type="button"
-          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
-          onClick={() => onOpenGroup(firstId)}
-          aria-label={`Open part ${part.title}`}
+        <HashLink
+          selection={{ kind: "group", id: firstId }}
+          onSelect={() => onOpenGroup(firstId)}
+          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground underline-offset-2 hover:underline"
+          ariaLabel={`Open part ${part.title}`}
         >
           <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           {part.title}
-        </button>
+        </HashLink>
       ) : null}
       <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
         {part.groupIds.map((id) => {
@@ -115,15 +115,14 @@ function PartColumn(props: {
           const depth = dependsOnDepth(groups, id, new Set(part.groupIds));
           return (
             <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
-              <Button
-                type="button"
-                variant="ghost"
+              <HashLink
+                selection={{ kind: "group", id: group.id }}
+                onSelect={() => onOpenGroup(group.id)}
                 className={cn(
-                  "h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal",
+                  "group flex h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal no-underline",
                   mixed ? "gap-3 py-3 min-[800px]:gap-4 min-[800px]:py-4" : "gap-3 rounded-none py-3 min-[800px]:gap-6 min-[800px]:py-5",
                 )}
                 style={depth > 0 ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` } : undefined}
-                onClick={() => onOpenGroup(group.id)}
               >
                 <span
                   className={cn(
@@ -136,7 +135,7 @@ function PartColumn(props: {
                 <span className="min-w-0 flex-1">
                   <strong
                     className={cn(
-                      "block text-foreground",
+                      "block text-foreground underline-offset-2 group-hover:underline",
                       mixed ? "font-medium" : "font-display text-lg leading-snug font-normal min-[800px]:text-xl",
                     )}
                   >
@@ -146,7 +145,7 @@ function PartColumn(props: {
                     <InlineMd text={group.summary} />
                   </span>
                 </span>
-              </Button>
+              </HashLink>
             </li>
           );
         })}

@@ -328,13 +328,22 @@ export function App() {
     () => (meta === null ? [] : lookForClaims(meta.document, meta.groups)),
     [meta],
   );
-  const openSource = useCallback(
+  const targetForSource = useCallback(
     (source: Source) => {
       if (meta === null) {
-        return;
+        return undefined;
       }
       const currentGroupId = selection?.kind === "group" ? selection.id : undefined;
-      const target = openTargetForSource(source, claims, meta.document, currentGroupId);
+      return openTargetForSource(source, claims, meta.document, currentGroupId);
+    },
+    [claims, meta, selection],
+  );
+  const openSource = useCallback(
+    (source: Source) => {
+      const target = targetForSource(source);
+      if (target === undefined) {
+        return;
+      }
       setFocusLookForKey(target.lookForKey ?? null);
       if (target.commentId !== undefined) {
         setShowComments(true);
@@ -344,7 +353,7 @@ export function App() {
       }
       selectWithMotion(target.selection);
     },
-    [claims, meta, selectWithMotion, selection],
+    [selectWithMotion, targetForSource],
   );
   const sourcesHandle = useMemo(() => {
     const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
@@ -353,8 +362,9 @@ export function App() {
       staleIds: staleSourceIds,
       onCite: openSource,
       onOpenSource: openSource,
+      selectionForSource: (source: Source) => targetForSource(source)?.selection ?? { kind: "overview" as const },
     };
-  }, [meta, openSource, staleSourceIds]);
+  }, [meta, openSource, staleSourceIds, targetForSource]);
 
   if (loading && meta === null) {
     return (

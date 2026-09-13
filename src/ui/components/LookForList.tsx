@@ -1,14 +1,17 @@
-import { useEffect, useId, useRef } from "react";
-import { Button } from "@/components/ui/button.tsx";
+import { useEffect, useId, useState } from "react";
+import { ChevronRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
 import {
   lookForBuckets,
   lookForOwnerLabel,
+  selectionForLookFor,
   type LookForClaim,
   type LookForTag,
 } from "../lib/look-for.ts";
+import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import styles from "./LookForList.module.css";
 
 export function LookForList(props: {
   claims: readonly LookForClaim[];
@@ -77,14 +80,14 @@ export function LookForIndex(props: {
 }) {
   const { claims, focusKey, onOpen, className } = props;
   const headingId = useId();
-  const documentRef = useRef<HTMLDetailsElement>(null);
+  const [documentOpen, setDocumentOpen] = useState(true);
   const buckets = lookForBuckets(claims);
   const documentBucket = buckets.find((bucket) => bucket.owner.kind === "document");
   const documentFocus = documentBucket?.claims.some((claim) => claim.key === focusKey) ?? false;
 
   useEffect(() => {
-    if (documentFocus && documentRef.current !== null) {
-      documentRef.current.open = true;
+    if (documentFocus) {
+      setDocumentOpen(true);
     }
   }, [documentFocus]);
 
@@ -106,8 +109,16 @@ export function LookForIndex(props: {
           if (bucket.owner.kind === "document") {
             return (
               <li key="document">
-                <details ref={documentRef}>
-                  <summary className="flex cursor-pointer items-baseline gap-2 py-1.5">
+                <details
+                  className={styles.disclosure}
+                  open={documentOpen}
+                  onToggle={(event) => setDocumentOpen(event.currentTarget.open)}
+                >
+                  <summary className={cn(styles.summary, "flex cursor-pointer items-baseline gap-2 py-1.5")}>
+                    <ChevronRightIcon
+                      aria-hidden
+                      className={cn(styles.chevron, "size-3 shrink-0 translate-y-[0.15em] text-muted-foreground")}
+                    />
                     <BucketLabel bucket={bucket} />
                   </summary>
                   <LookForList
@@ -122,15 +133,14 @@ export function LookForIndex(props: {
           }
           return (
             <li key={bucket.owner.id}>
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto w-full min-w-0 items-baseline justify-start gap-2 py-1.5 pr-0 pl-0 font-normal whitespace-normal hover:bg-transparent"
-                onClick={() => onOpen?.(first)}
-                aria-label={`Open ${lookForOwnerLabel(bucket.owner)}, ${bucket.claims.length} look for`}
+              <HashLink
+                selection={selectionForLookFor(bucket.owner)}
+                onSelect={() => onOpen?.(first)}
+                className="flex w-full min-w-0 items-baseline gap-2 py-1.5 underline-offset-2 hover:underline"
+                ariaLabel={`Open ${lookForOwnerLabel(bucket.owner)}, ${bucket.claims.length} look for`}
               >
                 <BucketLabel bucket={bucket} />
-              </Button>
+              </HashLink>
             </li>
           );
         })}

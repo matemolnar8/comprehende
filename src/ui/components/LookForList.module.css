@@ -1,0 +1,19 @@
+.summary {
+  list-style: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary::marker {
+  content: none;
+}
+
+.chevron {
+  transition: transform var(--motion) var(--motion-ease);
+}
+
+.disclosure[open] .chevron {
+  transform: rotate(90deg);
+}
