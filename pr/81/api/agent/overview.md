@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 848fd7cfc96849c782d9f9a095d504ab415c240f` and `git rev-parse --verify 3c8e33f62350320f6b48720fdc97aa8199010aa2` in this repository.
+   Run `git rev-parse --verify 371b8bda48b97150464e654926c3e84ca29bfdad` and `git rev-parse --verify c14a89b5503d1688c9ba6902e74ff4abb6bafd51` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,18 +22,18 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  848fd7cfc96849c782d9f9a095d504ab415c240f
+base (merge-base)  371b8bda48b97150464e654926c3e84ca29bfdad
 
-head               3c8e33f62350320f6b48720fdc97aa8199010aa2
+head               c14a89b5503d1688c9ba6902e74ff4abb6bafd51
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 848fd7cfc96849c782d9f9a095d504ab415c240f 3c8e33f62350320f6b48720fdc97aa8199010aa2
+git diff --find-renames 371b8bda48b97150464e654926c3e84ca29bfdad c14a89b5503d1688c9ba6902e74ff4abb6bafd51
 
 Commits:
-- 3c8e33f Prefer the current group when opening a shared source
+- c14a89b Prefer the current group when opening a shared source
 
 Sources:
 - transcript Cursor session · Sep 13 Clicking a source from a group's Sources list jumped to Overview when document lookFor also cited that source.
