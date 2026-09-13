@@ -1,6 +1,8 @@
 import type { Source } from "../../schema/types.ts";
+import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
+import { useSources } from "../lib/sources-context.tsx";
 import { Kicker } from "./Kicker.tsx";
 
 export function SourceList(props: {
@@ -11,6 +13,7 @@ export function SourceList(props: {
   className?: string;
 }) {
   const { ids, sources, mixed = false, parts = [], className } = props;
+  const onOpenSource = useSources()?.onOpenSource;
   if (ids.length === 0) {
     return null;
   }
@@ -23,14 +26,16 @@ export function SourceList(props: {
     return null;
   }
   return (
-    <div className={cn("mb-5", className)}>
+    <section className={cn("mb-5", className)} aria-label="Sources">
       <Kicker className="mb-2">Sources</Kicker>
-      <ul className="space-y-1 font-mono text-[11px] tracking-wide text-muted-foreground">
+      <ul className="m-0 list-none divide-y divide-border border-y border-border p-0 font-mono text-[11px] tracking-wide text-muted-foreground">
         {rows.map((source) => {
           const strand = mixed ? parts.find((part) => part.title === source.part) : undefined;
           const labelClass = "shrink-0 text-foreground";
+          const detail = source.gist ?? source.title;
+          const canJump = onOpenSource !== undefined && (source.url === undefined || detail !== undefined);
           return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2">
+            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1.5">
               {strand !== undefined ? (
                 <span
                   aria-hidden
@@ -47,18 +52,31 @@ export function SourceList(props: {
                 >
                   {source.label}
                 </a>
-              ) : (
+              ) : canJump ? null : (
                 <span className={labelClass}>{source.label}</span>
               )}
-              {source.gist !== undefined ? (
-                <span className="min-w-0 truncate font-sans text-xs tracking-normal">{source.gist}</span>
-              ) : source.title !== undefined ? (
-                <span className="min-w-0 truncate font-sans text-xs tracking-normal">{source.title}</span>
+              {canJump ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto min-w-0 flex-1 items-baseline justify-start gap-2 p-0 font-normal whitespace-normal hover:bg-transparent"
+                  onClick={() => onOpenSource?.(source)}
+                  aria-label={`Open ${source.label} in the review`}
+                >
+                  {source.url === undefined ? <span className={labelClass}>{source.label}</span> : null}
+                  {detail !== undefined ? (
+                    <span className="min-w-0 truncate font-sans text-xs font-normal tracking-normal text-muted-foreground">
+                      {detail}
+                    </span>
+                  ) : null}
+                </Button>
+              ) : detail !== undefined ? (
+                <span className="min-w-0 truncate font-sans text-xs tracking-normal">{detail}</span>
               ) : null}
             </li>
           );
         })}
       </ul>
-    </div>
+    </section>
   );
 }

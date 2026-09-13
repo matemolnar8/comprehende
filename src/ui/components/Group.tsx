@@ -31,6 +31,7 @@ export function Group(props: {
   document: ReviewMeta["document"];
   comments?: FileComment[];
   focusCommentId?: string;
+  focusLookForKey?: string;
 }) {
   const { group, bucket, groups, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
@@ -95,6 +96,7 @@ export function Group(props: {
               groups={groups}
               document={props.document}
               onOpenGroup={props.onOpenGroup}
+              focusLookForKey={props.focusLookForKey}
             />
           ) : lockfiles ? (
             <Brief kicker="Lockfiles" title="Generated lockfiles" />

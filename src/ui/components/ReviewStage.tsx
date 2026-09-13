@@ -8,6 +8,7 @@ import { Inspector } from "./Inspector.tsx";
 import { Overview } from "./Overview.tsx";
 import { Group } from "./Group.tsx";
 import { cn } from "@/lib/utils.ts";
+import type { LookForClaim } from "../lib/look-for.ts";
 import type { Selection } from "../lib/selection.ts";
 import type { Part } from "../lib/parts.ts";
 
@@ -38,6 +39,8 @@ export function ReviewStage(props: {
   onViewed: (path: string, viewed: boolean) => void;
   comments: FileComment[];
   focusCommentId?: string;
+  focusLookForKey?: string;
+  onOpenLookFor: (claim: LookForClaim) => void;
 }) {
   const pad = props.compact === true ? "px-4 py-4" : "px-10 py-8";
   if (props.inspector !== null) {
@@ -57,7 +60,13 @@ export function ReviewStage(props: {
       aria-busy={props.hunksLoading}
     >
       {props.selection?.kind === "overview" ? (
-        <Overview meta={props.meta} parts={props.parts} onOpenGroup={(id) => props.onSelect({ kind: "group", id })} />
+        <Overview
+          meta={props.meta}
+          parts={props.parts}
+          onOpenGroup={(id) => props.onSelect({ kind: "group", id })}
+          onOpenLookFor={props.onOpenLookFor}
+          focusLookForKey={props.focusLookForKey}
+        />
       ) : (
         <Group
           group={props.selectedGroup}
@@ -86,6 +95,7 @@ export function ReviewStage(props: {
           document={props.meta.document}
           comments={props.comments}
           focusCommentId={props.focusCommentId}
+          focusLookForKey={props.focusLookForKey}
         />
       )}
     </main>
