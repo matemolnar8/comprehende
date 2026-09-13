@@ -65,7 +65,6 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     cases: [],
   };
   for (const item of selected) {
-    const started = Date.now();
     const result = await evalOneCase({
       packageRoot,
       runDir,
@@ -77,7 +76,6 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       sandbox: request.sandbox,
       apiKey,
     });
-    result.durationMs = Date.now() - started;
     summary.cases.push(result);
     console.log(formatCaseLine(result));
   }
@@ -103,6 +101,7 @@ async function evalOneCase(opts: {
   sandbox: boolean;
   apiKey: string;
 }): Promise<CaseResult> {
+  const started = Date.now();
   const result: CaseResult = { id: opts.spec.id, ok: true, durationMs: 0, tokens: 0 };
   const caseOut = join(opts.runDir, opts.spec.id);
   await mkdir(caseOut, { recursive: true });
@@ -216,6 +215,7 @@ async function evalOneCase(opts: {
   }
   result.ok = !caseFailed(result);
   result.tokens = (result.producer?.tokens ?? 0) + (result.grouping?.run.tokens ?? 0) + (result.prose?.run.tokens ?? 0);
+  result.durationMs = Date.now() - started;
   await writeCaseArtifacts(caseOut, result, {});
   return result;
 }

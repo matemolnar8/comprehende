@@ -9,7 +9,7 @@
     "why": "present",
     "parts": { "min": 1, "max": 2 },
     "size": ["small", "medium", "large"],
-    "together": [["src/schema/review.ts", "src/schema/parse.ts"]],
+    "together": [["src/schema/parse.ts", "src/schema/parse.test.ts"]],
     "mechanicalPaths": [
       "skills-next/comprehende/references/review.schema.json",
       ".agents/skills/comprehende/references/review.schema.json"
