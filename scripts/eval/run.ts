@@ -161,10 +161,12 @@ async function evalOneCase(opts: {
       } catch (error) {
         result.validateError = error instanceof Error ? error.message : String(error);
       }
+      let document: Awaited<ReturnType<typeof loadDocument>> | undefined;
+      let frozen: unknown[] = [];
       try {
-        const document = await loadDocument(reviewPath);
+        document = await loadDocument(reviewPath);
         result.document = { title: document.title, size: document.size, why: document.why };
-        const frozen = await loadFrozenSourceValues(sourcesDir);
+        frozen = await loadFrozenSourceValues(sourcesDir);
         result.checks = await runDeterministicChecks({
           cwd: repoCwd,
           document,
@@ -172,39 +174,45 @@ async function evalOneCase(opts: {
           frozen,
           repo: parseGithubRepoRemote(opts.spec.repo),
         });
-        const ctx = await openReview(repoCwd, document);
-        const packetPath = join(caseOut, "packet.md");
-        await writeGradingPacket(ctx, frozen, packetPath);
-        const [grouping, prose] = await Promise.all([
-          runGrader({
-            repoCwd,
-            model: opts.graderModel,
-            apiKey: opts.apiKey,
-            sandbox: opts.sandbox,
-            prompt: groupingPrompt({ skillMd: opts.skillMd, packetPath }),
-          }),
-          runGrader({
-            repoCwd,
-            model: opts.graderModel,
-            apiKey: opts.apiKey,
-            sandbox: opts.sandbox,
-            prompt: prosePrompt({
-              skillMd: opts.skillMd,
-              packetPath,
-              claims: opts.spec.expect?.claims ?? [],
-            }),
-          }),
-        ]);
-        result.grouping = grouping;
-        result.prose = prose;
-        await writeFile(join(caseOut, "grouping.json"), `${JSON.stringify(grouping, null, 2)}\n`);
-        await writeFile(join(caseOut, "prose.json"), `${JSON.stringify(prose, null, 2)}\n`);
-        result.claims = claimsFromGrader(opts.spec.expect?.claims, prose);
-        const site = join(caseOut, "site");
-        await exportStaticSite({ cwd: repoCwd, dataPath: reviewPath, outDir: site, ctx });
-        result.site = site;
       } catch (error) {
         result.validateError ??= error instanceof Error ? error.message : String(error);
+      }
+      if (document !== undefined) {
+        try {
+          const ctx = await openReview(repoCwd, document);
+          const packetPath = join(caseOut, "packet.md");
+          await writeGradingPacket(ctx, frozen, packetPath);
+          const [grouping, prose] = await Promise.all([
+            runGrader({
+              repoCwd,
+              model: opts.graderModel,
+              apiKey: opts.apiKey,
+              sandbox: opts.sandbox,
+              prompt: groupingPrompt({ skillMd: opts.skillMd, packetPath }),
+            }),
+            runGrader({
+              repoCwd,
+              model: opts.graderModel,
+              apiKey: opts.apiKey,
+              sandbox: opts.sandbox,
+              prompt: prosePrompt({
+                skillMd: opts.skillMd,
+                packetPath,
+                claims: opts.spec.expect?.claims ?? [],
+              }),
+            }),
+          ]);
+          result.grouping = grouping;
+          result.prose = prose;
+          await writeFile(join(caseOut, "grouping.json"), `${JSON.stringify(grouping, null, 2)}\n`);
+          await writeFile(join(caseOut, "prose.json"), `${JSON.stringify(prose, null, 2)}\n`);
+          result.claims = claimsFromGrader(opts.spec.expect?.claims, prose);
+          const site = join(caseOut, "site");
+          await exportStaticSite({ cwd: repoCwd, dataPath: reviewPath, outDir: site, ctx });
+          result.site = site;
+        } catch (error) {
+          result.artifactError = error instanceof Error ? error.message : String(error);
+        }
       }
     }
   } catch (error) {

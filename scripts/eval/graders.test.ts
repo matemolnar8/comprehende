@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { parseGraderJson } from "./graders.ts";
-import { formatCaseLine, formatDuration, formatTokens, type CaseResult } from "./result.ts";
+import { caseFailed, formatCaseLine, formatDuration, formatTokens, type CaseResult } from "./result.ts";
 
 describe("grader JSON", () => {
   it("parses fenced objects", () => {
@@ -49,5 +49,28 @@ describe("eval result line", () => {
     assert.match(line, /claims 4\/5/);
     assert.match(line, /grouping 1M 0m/);
     assert.match(line, /4m12s/);
+  });
+
+  it("does not fail the case when only an artifact step throws", () => {
+    const result: CaseResult = {
+      id: "comprehende-47",
+      ok: true,
+      durationMs: 1,
+      tokens: 1,
+      artifactError: "grader timed out",
+      checks: {
+        failures: [],
+        dirtyWorktree: false,
+        why: "present",
+        parts: 1,
+        size: "small",
+        togetherOk: 0,
+        togetherTotal: 0,
+        apartOk: 0,
+        apartTotal: 0,
+      },
+    };
+    assert.equal(caseFailed(result), false);
+    assert.match(formatCaseLine(result), /artifact FAIL/);
   });
 });

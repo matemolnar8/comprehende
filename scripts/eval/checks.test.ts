@@ -212,4 +212,70 @@ describe("eval deterministic checks", () => {
     });
     assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
   });
+
+  it("rejects a commit that only sits on the base side of the fork", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-commit-base-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    await writeFile(join(root, "README.md"), "x\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "init"]);
+    await git(root, ["checkout", "-b", "feature"]);
+    await writeFile(join(root, "README.md"), "y\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "feature change"]);
+    const head = (await git(root, ["rev-parse", "HEAD"])).trim();
+    await git(root, ["checkout", "main"]);
+    await writeFile(join(root, "other.md"), "main only\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "main only"]);
+    const base = (await git(root, ["rev-parse", "HEAD"])).trim();
+    const document = doc({
+      source: { baseRef: base, headRef: head, range: `${base}...${head}` },
+      sources: [
+        {
+          id: "s1",
+          kind: "commit",
+          label: base.slice(0, 8),
+          url: `https://github.com/matemolnar8/comprehende/commit/${base}`,
+        },
+      ],
+      groups: [
+        {
+          id: "core",
+          title: "Parser",
+          why: "The schema is the boundary.",
+          summary: "review.ts and parse.ts share one Zod schema.",
+          part: "schema",
+          suggestedOrder: 0,
+          hunkRefs: [hunk("src/schema/review.ts")],
+        },
+      ],
+    });
+    const report = await runDeterministicChecks({
+      cwd: root,
+      document,
+      frozen: [],
+      repo: { owner: "matemolnar8", repo: "comprehende" },
+    });
+    assert.ok(report.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
+
+    const onHead = await runDeterministicChecks({
+      cwd: root,
+      document: {
+        ...document,
+        sources: [
+          {
+            id: "s1",
+            kind: "commit",
+            label: head.slice(0, 8),
+            url: `https://github.com/matemolnar8/comprehende/commit/${head}`,
+          },
+        ],
+      },
+      frozen: [],
+      repo: { owner: "matemolnar8", repo: "comprehende" },
+    });
+    assert.deepEqual(onHead.failures, []);
+  });
 });

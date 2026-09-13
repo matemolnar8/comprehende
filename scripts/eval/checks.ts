@@ -185,7 +185,7 @@ async function commitSourceFailures(
   if (commits.length === 0) {
     return [];
   }
-  const range = `${document.source.baseRef}...${document.source.headRef}`;
+  const range = `${document.source.baseRef}..${document.source.headRef}`;
   const shas = (await git(cwd, ["log", "--format=%H", "--end-of-options", range])).trim().split("\n").filter(Boolean);
   const subjects = (await git(cwd, ["log", "--format=%s", "--end-of-options", range])).trim().split("\n");
   const shaSet = new Set(shas);

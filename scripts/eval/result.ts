@@ -13,6 +13,7 @@ export type CaseResult = {
   producer?: AgentRunResult;
   producerError?: string;
   validateError?: string;
+  artifactError?: string;
   document?: Pick<ReviewDocument, "title" | "size" | "why">;
   checks?: DeterministicReport;
   grouping?: GraderResult;
@@ -64,6 +65,9 @@ export function formatCaseLine(result: CaseResult): string {
   }
   bits.push(findingCounts("grouping", result.grouping));
   bits.push(findingCounts("prose", result.prose));
+  if (result.artifactError !== undefined) {
+    bits.push("artifact FAIL");
+  }
   bits.push(formatDuration(result.durationMs));
   bits.push(formatTokens(result.tokens));
   return bits.join("  ");
