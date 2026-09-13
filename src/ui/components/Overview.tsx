@@ -7,7 +7,7 @@ import { lookForClaims, type LookForClaim } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { LookForIndex } from "./LookForList.tsx";
@@ -98,11 +98,11 @@ function PartColumn(props: {
         <HashLink
           selection={{ kind: "group", id: firstId }}
           onSelect={() => onOpenGroup(firstId)}
-          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground underline-offset-2 hover:underline"
+          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
           ariaLabel={`Open part ${part.title}`}
         >
           <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-          {part.title}
+          <span className={hashLinkText}>{part.title}</span>
         </HashLink>
       ) : null}
       <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
@@ -135,7 +135,8 @@ function PartColumn(props: {
                 <span className="min-w-0 flex-1">
                   <strong
                     className={cn(
-                      "block text-foreground underline-offset-2 group-hover:underline",
+                      "block text-foreground",
+                      hashLinkText,
                       mixed ? "font-medium" : "font-display text-lg leading-snug font-normal min-[800px]:text-xl",
                     )}
                   >

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { colorIndexByGroupId, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { FilePeek } from "./FilePeek.tsx";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar(props: {
@@ -48,7 +48,7 @@ export function Sidebar(props: {
                   <HashLink
                     selection={{ kind: "group", id: firstId }}
                     onSelect={onSelect}
-                    className="mx-2 mb-1 flex w-[calc(100%-16px)] items-center gap-2 px-2.5 py-1 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground underline-offset-2 hover:underline min-[800px]:mx-3 min-[800px]:w-[calc(100%-24px)] min-[800px]:px-3"
+                    className="mx-2 mb-1 flex w-[calc(100%-16px)] items-center gap-2 px-2.5 py-1 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground min-[800px]:mx-3 min-[800px]:w-[calc(100%-24px)] min-[800px]:px-3"
                     ariaLabel={`Open part ${part.title}`}
                   >
                     <span
@@ -56,7 +56,7 @@ export function Sidebar(props: {
                       className="size-2 shrink-0 rounded-full"
                       style={{ backgroundColor: partColor(part.colorIndex) }}
                     />
-                    {part.title}
+                    <span className={hashLinkText}>{part.title}</span>
                   </HashLink>
                 ) : null}
                 <ul className="m-0 list-none p-0">
@@ -174,7 +174,7 @@ function StackItem(props: {
       ) : null}
       <span className="min-w-0 flex-1 text-left leading-snug">
         <span className="flex min-w-0 items-start gap-2.5">
-          <span className="min-w-0 flex-1 underline-offset-2 group-hover:underline">{props.title}</span>
+          <span className={cn("min-w-0 flex-1", hashLinkText)}>{props.title}</span>
           {props.count !== undefined ? (
             <span className={cn("mt-px shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
               {props.count}

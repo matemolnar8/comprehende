@@ -6,7 +6,7 @@ import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type Part } from "../lib/parts.ts";
 import { storyNav, type StoryHop } from "../lib/story-nav.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { claimsFromLookFor } from "../lib/look-for.ts";
@@ -113,7 +113,7 @@ function HopList(props: {
             <HashLink
               selection={{ kind: "group", id: hop.id }}
               onSelect={() => props.onOpenGroup(hop.id)}
-              className="text-primary underline-offset-2 hover:underline"
+              className={`text-primary ${hashLinkText}`}
             >
               {label}
             </HashLink>

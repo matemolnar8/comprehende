@@ -3,6 +3,9 @@ import { isPlainLeftClick } from "../lib/plain-click.ts";
 import { serializeHash, type Selection } from "../lib/selection.ts";
 import { cn } from "../lib/utils.ts";
 
+/** Underline lives on the text node. A flex `HashLink` does not paint `hover:underline` on its children. */
+export const hashLinkText = "underline underline-offset-2";
+
 export function HashLink(props: {
   selection: Selection;
   onSelect: (selection: Selection) => void;

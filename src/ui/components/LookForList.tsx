@@ -8,7 +8,7 @@ import {
   type LookForClaim,
   type LookForTag,
 } from "../lib/look-for.ts";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import styles from "./LookForList.module.css";
@@ -136,10 +136,10 @@ export function LookForIndex(props: {
               <HashLink
                 selection={selectionForLookFor(bucket.owner)}
                 onSelect={() => onOpen?.(first)}
-                className="flex w-full min-w-0 items-baseline gap-2 py-1.5 underline-offset-2 hover:underline"
+                className="flex w-full min-w-0 items-baseline gap-2 py-1.5"
                 ariaLabel={`Open ${lookForOwnerLabel(bucket.owner)}, ${bucket.claims.length} look for`}
               >
-                <BucketLabel bucket={bucket} />
+                <BucketLabel bucket={bucket} link />
               </HashLink>
             </li>
           );
@@ -149,11 +149,19 @@ export function LookForIndex(props: {
   );
 }
 
-function BucketLabel(props: { bucket: { owner: LookForClaim["owner"]; claims: readonly LookForClaim[]; tags: readonly LookForTag[] } }) {
-  const { bucket } = props;
+function BucketLabel(props: {
+  bucket: { owner: LookForClaim["owner"]; claims: readonly LookForClaim[]; tags: readonly LookForTag[] };
+  link?: boolean;
+}) {
+  const { bucket, link = false } = props;
   return (
     <>
-      <span className="min-w-0 flex-1 truncate text-left font-mono text-[11px] tracking-wide text-foreground">
+      <span
+        className={cn(
+          "min-w-0 flex-1 truncate text-left font-mono text-[11px] tracking-wide text-foreground",
+          link && hashLinkText,
+        )}
+      >
         {lookForOwnerLabel(bucket.owner)}
       </span>
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">{bucket.claims.length}</span>

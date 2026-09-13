@@ -2,7 +2,7 @@ import type { Source } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
 import { useSources } from "../lib/sources-context.tsx";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { Kicker } from "./Kicker.tsx";
 
 export function SourceList(props: {
@@ -49,7 +49,7 @@ export function SourceList(props: {
               ) : null}
               {source.url !== undefined ? (
                 <a
-                  className="shrink-0 text-foreground underline-offset-2 hover:underline"
+                  className={cn("shrink-0 text-foreground", hashLinkText)}
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
@@ -63,10 +63,12 @@ export function SourceList(props: {
                 <HashLink
                   selection={selectionForSource(source)}
                   onSelect={() => onOpenSource(source)}
-                  className="flex min-w-0 flex-1 items-baseline gap-2 underline-offset-2 hover:underline"
+                  className="flex min-w-0 flex-1 items-baseline gap-2"
                   ariaLabel={`Open ${source.label} in the review`}
                 >
-                  {source.url === undefined ? <span className="shrink-0 text-foreground">{source.label}</span> : null}
+                  {source.url === undefined ? (
+                    <span className={cn("shrink-0 text-foreground", hashLinkText)}>{source.label}</span>
+                  ) : null}
                   {detail !== undefined ? (
                     <span className="min-w-0 truncate font-normal text-muted-foreground">{detail}</span>
                   ) : null}
