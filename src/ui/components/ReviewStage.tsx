@@ -7,6 +7,7 @@ import type { InspectorState } from "./Inspector.tsx";
 import { Inspector } from "./Inspector.tsx";
 import { Overview } from "./Overview.tsx";
 import { Group } from "./Group.tsx";
+import { GroupNav } from "./GroupNav.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import type { Part } from "../lib/parts.ts";
@@ -52,44 +53,49 @@ export function ReviewStage(props: {
     );
   }
   return (
-    <main
-      ref={props.mainRef}
-      className={cn("h-full overflow-auto", pad, props.className)}
-      aria-busy={props.hunksLoading}
-    >
-      {props.selection?.kind === "overview" ? (
-        <Overview meta={props.meta} parts={props.parts} onOpenGroup={(id) => props.onSelect({ kind: "group", id })} />
-      ) : (
-        <Group
-          group={props.selectedGroup}
-          bucket={
-            props.selection?.kind === REVIEW_BUCKETS.lockfiles
-              ? REVIEW_BUCKETS.lockfiles
-              : props.selection?.kind === REVIEW_BUCKETS.unassigned
-                ? REVIEW_BUCKETS.unassigned
-                : undefined
-          }
-          groups={props.meta.groups}
-          mixed={props.mixed}
-          strandColor={props.strandColor}
-          loading={props.hunksLoading}
-          hunkError={props.hunkError}
-          files={props.hunksLoading ? [] : props.files}
-          activeHunk={props.activeHunk}
-          split={props.split}
-          splitRatio={props.splitRatio}
-          wrap={props.wrap}
-          viewedPaths={props.viewedPaths}
-          onScrollToHunk={props.onScrollToHunk}
-          onOpenGroup={(id) => props.onSelect({ kind: "group", id })}
-          onOpenFile={props.onOpenFile}
-          onSplitRatio={props.onSplitRatio}
-          onViewed={props.onViewed}
-          document={props.meta.document}
-          comments={props.comments}
-          focusCommentId={props.focusCommentId}
-        />
+    <div className={cn("flex h-full min-h-0 flex-col", props.className)}>
+      <main
+        ref={props.mainRef}
+        className={cn("min-h-0 flex-1 overflow-auto", pad)}
+        aria-busy={props.hunksLoading}
+      >
+        {props.selection?.kind === "overview" ? (
+          <Overview meta={props.meta} parts={props.parts} onOpenGroup={(id) => props.onSelect({ kind: "group", id })} />
+        ) : (
+          <Group
+            group={props.selectedGroup}
+            bucket={
+              props.selection?.kind === REVIEW_BUCKETS.lockfiles
+                ? REVIEW_BUCKETS.lockfiles
+                : props.selection?.kind === REVIEW_BUCKETS.unassigned
+                  ? REVIEW_BUCKETS.unassigned
+                  : undefined
+            }
+            groups={props.meta.groups}
+            mixed={props.mixed}
+            strandColor={props.strandColor}
+            loading={props.hunksLoading}
+            hunkError={props.hunkError}
+            files={props.hunksLoading ? [] : props.files}
+            activeHunk={props.activeHunk}
+            split={props.split}
+            splitRatio={props.splitRatio}
+            wrap={props.wrap}
+            viewedPaths={props.viewedPaths}
+            onScrollToHunk={props.onScrollToHunk}
+            onOpenGroup={(id) => props.onSelect({ kind: "group", id })}
+            onOpenFile={props.onOpenFile}
+            onSplitRatio={props.onSplitRatio}
+            onViewed={props.onViewed}
+            document={props.meta.document}
+            comments={props.comments}
+            focusCommentId={props.focusCommentId}
+          />
+        )}
+      </main>
+      {props.compact === true ? null : (
+        <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} variant="bar" />
       )}
-    </main>
+    </div>
   );
 }
