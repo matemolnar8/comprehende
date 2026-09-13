@@ -14,12 +14,13 @@ import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition } from "./lib/motion.ts";
 import {
-  readStoredSelection,
-  restoreSelection,
+  hashWriteMode,
   sameSelection,
+  selectionFromHash,
+  serializeHash,
   shiftPartSelection,
   shiftSelection,
-  writeStoredSelection,
+  urlWithSelection,
   type Selection,
 } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
@@ -50,6 +51,8 @@ export function App() {
   const [inspector, setInspector] = useState<InspectorState | null>(null);
   const [loading, setLoading] = useState(true);
   const mainRef = useRef<HTMLElement>(null);
+  const hashReady = useRef(false);
+  const appliedHash = useRef<string | null>(null);
   const narrow = useNarrow();
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell-overlay",
@@ -63,7 +66,7 @@ export function App() {
     try {
       const next = await fetchReview();
       setMeta(next);
-      setSelection((current) => current ?? restoreSelection(next, readStoredSelection(next.resolved.baseSha, next.resolved.headSha)));
+      setSelection((current) => current ?? selectionFromHash(next, window.location.hash));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     } finally {
@@ -79,7 +82,18 @@ export function App() {
     if (meta === null || selection === null) {
       return;
     }
-    writeStoredSelection(meta.resolved.baseSha, meta.resolved.headSha, selection);
+    const mode = hashWriteMode(meta, window.location.hash, selection, hashReady.current);
+    appliedHash.current = serializeHash(selection);
+    hashReady.current = true;
+    if (mode === "skip") {
+      return;
+    }
+    const url = urlWithSelection(window.location.href, selection);
+    if (mode === "replace") {
+      history.replaceState(null, "", url);
+      return;
+    }
+    history.pushState(null, "", url);
   }, [meta, selection]);
 
   const selectedKey =
@@ -151,6 +165,27 @@ export function App() {
     },
     [selectWithMotion],
   );
+
+  useEffect(() => {
+    const applyHash = () => {
+      if (meta === null) {
+        return;
+      }
+      const restored = selectionFromHash(meta, window.location.hash);
+      const canonical = serializeHash(restored);
+      if (appliedHash.current === canonical) {
+        return;
+      }
+      appliedHash.current = canonical;
+      selectFromNav(restored);
+    };
+    window.addEventListener("hashchange", applyHash);
+    window.addEventListener("popstate", applyHash);
+    return () => {
+      window.removeEventListener("hashchange", applyHash);
+      window.removeEventListener("popstate", applyHash);
+    };
+  }, [meta, selectFromNav]);
 
   const openInspector = useCallback((path: string) => {
     runViewTransition(() => {

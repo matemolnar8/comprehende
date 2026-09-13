@@ -58,6 +58,12 @@ describe("export static site", () => {
     const frozen = await startStaticSite(outDir, 0);
     servers.push(frozen.server);
 
+    const liveShell = await fetch(`${live.url}/`);
+    const frozenShell = await fetch(`${frozen.url}/`);
+    assert.equal(liveShell.status, 200);
+    assert.equal(frozenShell.status, 200);
+    assert.equal(await liveShell.text(), await frozenShell.text());
+
     const resources = listResources(ctx);
     assert.ok(resources.length > 4);
 

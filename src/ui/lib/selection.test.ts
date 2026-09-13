@@ -2,16 +2,18 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   groupWalk,
+  hashWriteMode,
   neighborSelection,
-  parseSelection,
+  parseHash,
   restoreSelection,
   selectionCaption,
+  selectionFromHash,
   selectionNavLabel,
   selectionStack,
-  selectionStorageKey,
-  serializeSelection,
+  serializeHash,
   shiftPartSelection,
   shiftSelection,
+  urlWithSelection,
   type Selection,
   type SelectionStackSource,
 } from "./selection.ts";
@@ -21,30 +23,49 @@ const source: SelectionStackSource = {
   unassigned: { hunkCount: 2 },
 };
 
-describe("group selection storage", () => {
-  it("keys storage by the review range", () => {
-    assert.equal(selectionStorageKey("aaa", "bbb"), selectionStorageKey("aaa", "bbb"));
-    assert.notEqual(selectionStorageKey("aaa", "bbb"), selectionStorageKey("aaa", "ccc"));
-    assert.notEqual(selectionStorageKey("aaa", "bbb"), selectionStorageKey("ccc", "bbb"));
-  });
-
-  it("round-trips overview, unassigned, and a group", () => {
+describe("selection hash", () => {
+  it("round-trips overview, buckets, and a group", () => {
     const overview = { kind: "overview" } as const;
     const unassigned = { kind: "unassigned" } as const;
     const lockfiles = { kind: "lockfiles" } as const;
     const group = { kind: "group", id: "auth" } as const;
-    assert.deepEqual(parseSelection(serializeSelection(overview)), overview);
-    assert.deepEqual(parseSelection(serializeSelection(unassigned)), unassigned);
-    assert.deepEqual(parseSelection(serializeSelection(lockfiles)), lockfiles);
-    assert.deepEqual(parseSelection(serializeSelection(group)), group);
+    assert.equal(serializeHash(overview), "#overview");
+    assert.equal(serializeHash(unassigned), "#unassigned");
+    assert.equal(serializeHash(lockfiles), "#lockfiles");
+    assert.equal(serializeHash(group), "#group/auth");
+    assert.deepEqual(parseHash(serializeHash(overview)), overview);
+    assert.deepEqual(parseHash(serializeHash(unassigned)), unassigned);
+    assert.deepEqual(parseHash(serializeHash(lockfiles)), lockfiles);
+    assert.deepEqual(parseHash(serializeHash(group)), group);
   });
 
-  it("treats missing or invalid payloads as empty", () => {
-    assert.equal(parseSelection(null), null);
-    assert.equal(parseSelection(""), null);
-    assert.equal(parseSelection("{"), null);
-    assert.equal(parseSelection("{\"kind\":\"group\"}"), null);
-    assert.equal(parseSelection("{\"kind\":\"other\"}"), null);
+  it("reads hashes with or without a leading slash", () => {
+    assert.deepEqual(parseHash("overview"), { kind: "overview" });
+    assert.deepEqual(parseHash("#/overview"), { kind: "overview" });
+    assert.deepEqual(parseHash("#group/auth"), { kind: "group", id: "auth" });
+  });
+
+  it("encodes group ids so a slash in the id stays in the id", () => {
+    const group = { kind: "group", id: "auth/login" } as const;
+    assert.equal(serializeHash(group), "#group/auth%2Flogin");
+    assert.deepEqual(parseHash("#group/auth%2Flogin"), group);
+    assert.deepEqual(parseHash("#group/auth/login"), group);
+  });
+
+  it("treats missing or invalid hashes as empty", () => {
+    assert.equal(parseHash(""), null);
+    assert.equal(parseHash("#"), null);
+    assert.equal(parseHash("#group/"), null);
+    assert.equal(parseHash("#group/%"), null);
+    assert.equal(parseHash("#other"), null);
+    assert.equal(parseHash("#Group/auth"), null);
+  });
+
+  it("restores a live group and falls back when the hash is gone", () => {
+    assert.deepEqual(selectionFromHash(source, "#group/ui"), { kind: "group", id: "ui" });
+    assert.deepEqual(selectionFromHash(source, "#group/gone"), { kind: "overview" });
+    assert.deepEqual(selectionFromHash(source, ""), { kind: "overview" });
+    assert.deepEqual(selectionFromHash(source, "#bogus"), { kind: "overview" });
   });
 
   it("restores a stored group when it still exists", () => {
@@ -70,6 +91,29 @@ describe("group selection storage", () => {
       ),
       { kind: "overview" },
     );
+  });
+
+  it("writes the same hash on a serve URL and a GitHub Pages export URL", () => {
+    const serve = "http://127.0.0.1:4310/";
+    const pages = "https://matemolnar8.github.io/comprehende/pr/78/";
+    const group = { kind: "group", id: "auth" } as const;
+    assert.equal(urlWithSelection(serve, { kind: "overview" }), "http://127.0.0.1:4310/#overview");
+    assert.equal(urlWithSelection(pages, group), "https://matemolnar8.github.io/comprehende/pr/78/#group/auth");
+    assert.equal(
+      urlWithSelection(`${pages}#overview`, group),
+      "https://matemolnar8.github.io/comprehende/pr/78/#group/auth",
+    );
+  });
+
+  it("replaces an empty or dead hash, then pushes live hops", () => {
+    const overview = { kind: "overview" } as const;
+    const auth = { kind: "group", id: "auth" } as const;
+    assert.equal(hashWriteMode(source, "", overview, false), "replace");
+    assert.equal(hashWriteMode(source, "#overview", overview, false), "skip");
+    assert.equal(hashWriteMode(source, "#overview", auth, true), "push");
+    assert.equal(hashWriteMode(source, "#group/gone", overview, true), "replace");
+    assert.equal(hashWriteMode(source, "#bogus", overview, true), "replace");
+    assert.equal(hashWriteMode(source, "#group/auth", auth, true), "skip");
   });
 
   it("names the current selection for the mobile chrome", () => {
@@ -213,5 +257,16 @@ describe("story and part selection", () => {
   it("does nothing on unassigned", () => {
     assert.equal(neighborSelection(story, { kind: "unassigned" }, 1), undefined);
     assert.equal(takePartShift({ kind: "unassigned" }, 1), undefined);
+  });
+
+  it("pushes a live hash for [ ] and { } hops", () => {
+    const nextGroup = neighborSelection(story, { kind: "overview" }, 1);
+    assert.deepEqual(nextGroup, { kind: "group", id: "cookie" });
+    assert.equal(serializeHash(nextGroup!), "#group/cookie");
+    assert.equal(hashWriteMode(story, "#overview", nextGroup!, true), "push");
+    const nextPart = takePartShift({ kind: "group", id: "login" }, 1);
+    assert.deepEqual(nextPart, { kind: "group", id: "docs" });
+    assert.equal(serializeHash(nextPart!), "#group/docs");
+    assert.equal(hashWriteMode(story, "#group/login", nextPart!, true), "push");
   });
 });
