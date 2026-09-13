@@ -13,7 +13,15 @@ import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition } from "./lib/motion.ts";
-import { readStoredSelection, restoreSelection, sameSelection, shiftSelection, writeStoredSelection, type Selection } from "./lib/selection.ts";
+import {
+  readStoredSelection,
+  restoreSelection,
+  sameSelection,
+  shiftPartSelection,
+  shiftSelection,
+  writeStoredSelection,
+  type Selection,
+} from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
@@ -199,6 +207,12 @@ export function App() {
       } else if (event.key === "]" && !event.repeat) {
         event.preventDefault();
         shiftSelection(meta, selection, selectWithMotion, 1);
+      } else if (event.key === "{" && !event.repeat) {
+        event.preventDefault();
+        shiftPartSelection(meta, selection, selectWithMotion, -1);
+      } else if (event.key === "}" && !event.repeat) {
+        event.preventDefault();
+        shiftPartSelection(meta, selection, selectWithMotion, 1);
       } else if (inspector !== null) {
         return;
       } else if (event.key === "j") {
@@ -304,7 +318,6 @@ export function App() {
       meta={meta}
       parts={parts}
       selectedGroup={selectedGroup}
-      mixed={mixed}
       strandColor={strandColor !== undefined ? partColor(strandColor) : undefined}
       hunkError={hunkError}
       files={groupFiles}

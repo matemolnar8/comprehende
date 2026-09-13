@@ -1,14 +1,17 @@
 import type { ReactNode } from "react";
-import { groupIndex, type ReviewMeta } from "../api.ts";
+import { type ReviewMeta } from "../api.ts";
 import { padIndex } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
+import { groupOrderIndex, groupParts, isMixedReview, type Part } from "../lib/parts.ts";
+import { storyNavFromParts, type StoryHop } from "../lib/story-nav.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
+import { StoryNav } from "./StoryNav.tsx";
 
 export function Brief(props: {
   kicker?: string;
@@ -39,15 +42,18 @@ export function Brief(props: {
 
 export function GroupBrief(props: {
   group: ReviewMeta["groups"][number];
-  index: number;
   groups: ReviewMeta["groups"];
   document: ReviewMeta["document"];
-  partTitle?: string;
   onOpenGroup: (id: string) => void;
 }) {
-  const { group, index, groups, document, partTitle, onOpenGroup } = props;
+  const { group, groups, document, onOpenGroup } = props;
+  const parts = groupParts(groups);
+  const mixed = isMixedReview(parts);
+  const index = groupOrderIndex(parts, group.id);
+  const nav = storyNavFromParts(groups, parts, group.id);
   const listed = document.groups.find((item) => item.id === group.id);
   const sourceIds = listed !== undefined ? groupSourceIds(listed) : group.sources;
+  const partTitle = mixed ? group.part : undefined;
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
@@ -64,23 +70,8 @@ export function GroupBrief(props: {
           <InlineMd text={group.summary} />
         </p>
         <SourceList ids={sourceIds} sources={document.sources ?? []} />
-        {group.dependsOn.length > 0 ? (
-          <p className="mb-5 text-muted-foreground">
-            Depends on{" "}
-            {group.dependsOn.map((id, i) => {
-              const dep = groups.find((item) => item.id === id);
-              const label = dep !== undefined ? `${padIndex(groupIndex(groups, id))} ${dep.title}` : id;
-              return (
-                <span key={id}>
-                  {i > 0 ? ", " : ""}
-                  <Button type="button" variant="link" className="h-auto p-0" onClick={() => onOpenGroup(id)}>
-                    {label}
-                  </Button>
-                </span>
-              );
-            })}
-          </p>
-        ) : null}
+        <HopList label="Depends on" hops={nav.dependsOn} parts={parts} onOpenGroup={onOpenGroup} />
+        <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />
         <LookForList items={group.lookFor} />
         {group.staleCount > 0 ? (
           <p className="mt-4 text-warn">
@@ -88,7 +79,36 @@ export function GroupBrief(props: {
             pointer is flagged, not replaced.
           </p>
         ) : null}
+        <StoryNav nav={nav} onOpenGroup={onOpenGroup} />
       </div>
     </Brief>
+  );
+}
+
+function HopList(props: {
+  label: string;
+  hops: StoryHop[];
+  parts: Part[];
+  onOpenGroup: (id: string) => void;
+}) {
+  if (props.hops.length === 0) {
+    return null;
+  }
+  return (
+    <p className="mb-5 text-muted-foreground">
+      {props.label}{" "}
+      {props.hops.map((hop, i) => {
+        const index = groupOrderIndex(props.parts, hop.id);
+        const label = index > 0 ? `${padIndex(index)} ${hop.title}` : hop.title;
+        return (
+          <span key={hop.id}>
+            {i > 0 ? ", " : ""}
+            <Button type="button" variant="link" className="h-auto p-0" onClick={() => props.onOpenGroup(hop.id)}>
+              {label}
+            </Button>
+          </span>
+        );
+      })}
+    </p>
   );
 }

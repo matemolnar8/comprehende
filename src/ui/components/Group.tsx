@@ -1,4 +1,4 @@
-import { groupIndex, type ReviewMeta } from "../api.ts";
+import { type ReviewMeta } from "../api.ts";
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import type { FileComment } from "../lib/source-display.ts";
@@ -14,7 +14,6 @@ export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
   bucket?: ReviewBucket;
   groups: ReviewMeta["groups"];
-  mixed: boolean;
   strandColor?: string;
   loading: boolean;
   hunkError: string | null;
@@ -33,7 +32,7 @@ export function Group(props: {
   comments?: FileComment[];
   focusCommentId?: string;
 }) {
-  const { group, bucket, groups, mixed, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
+  const { group, bucket, groups, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
     props;
   const lockfiles = bucket === REVIEW_BUCKETS.lockfiles;
   const strand =
@@ -93,10 +92,8 @@ export function Group(props: {
           {group !== null ? (
             <GroupBrief
               group={group}
-              index={groupIndex(groups, group.id)}
               groups={groups}
               document={props.document}
-              partTitle={mixed ? group.part : undefined}
               onOpenGroup={props.onOpenGroup}
             />
           ) : lockfiles ? (

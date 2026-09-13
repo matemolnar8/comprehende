@@ -5,7 +5,7 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
-import { colorIndexByGroupId, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { colorIndexByGroupId, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { FilePeek } from "./FilePeek.tsx";
 import styles from "./Sidebar.module.css";
 
@@ -20,6 +20,7 @@ export function Sidebar(props: {
   const { meta, selection, parts, onSelect } = props;
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
+  const byId = new Map(meta.groups.map((group) => [group.id, group]));
   return (
     <nav className={cn("h-full overflow-auto bg-card", props.compact === true ? "py-3" : "py-6", props.className)}>
       <div className="relative">
@@ -35,19 +36,49 @@ export function Sidebar(props: {
           </li>
         </ul>
         <ul className="mb-6 list-none p-0">
-          {meta.groups.map((group, index) => (
-            <li key={group.id}>
-              <StackItem
-                active={selection?.kind === "group" && selection.id === group.id}
-                onClick={() => onSelect({ kind: "group", id: group.id })}
-                index={padIndex(index + 1)}
-                title={group.title}
-                files={group.files}
-                count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
-                colorIndex={colors.get(group.id)}
-              />
-            </li>
-          ))}
+          {parts.map((part) => {
+            const firstId = part.groupIds[0];
+            return (
+              <li key={part.groupIds.join("\0")} className={mixed ? "mb-3 last:mb-0" : undefined}>
+                {mixed && part.title !== undefined && firstId !== undefined ? (
+                  <button
+                    type="button"
+                    className="mx-2 mb-1 flex w-[calc(100%-16px)] items-center gap-2 px-2.5 py-1 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground min-[800px]:mx-3 min-[800px]:w-[calc(100%-24px)] min-[800px]:px-3"
+                    onClick={() => onSelect({ kind: "group", id: firstId })}
+                    aria-label={`Open part ${part.title}`}
+                  >
+                    <span
+                      aria-hidden
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ backgroundColor: partColor(part.colorIndex) }}
+                    />
+                    {part.title}
+                  </button>
+                ) : null}
+                <ul className="m-0 list-none p-0">
+                  {part.groupIds.map((id) => {
+                    const group = byId.get(id);
+                    if (group === undefined) {
+                      return null;
+                    }
+                    return (
+                      <li key={group.id}>
+                        <StackItem
+                          active={selection?.kind === "group" && selection.id === group.id}
+                          onClick={() => onSelect({ kind: "group", id: group.id })}
+                          index={padIndex(groupOrderIndex(parts, group.id))}
+                          title={group.title}
+                          files={group.files}
+                          count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
+                          colorIndex={colors.get(group.id)}
+                        />
+                      </li>
+                    );
+                  })}
+                </ul>
+              </li>
+            );
+          })}
           {meta.unassigned.hunkCount > 0 ? (
             <li>
               <StackItem
