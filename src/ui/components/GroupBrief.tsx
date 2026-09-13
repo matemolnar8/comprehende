@@ -71,7 +71,7 @@ export function GroupBrief(props: {
         </p>
         <SourceList ids={sourceIds} sources={document.sources ?? []} />
         <HopList label="Depends on" hops={nav.dependsOn} parts={parts} onOpenGroup={onOpenGroup} />
-        <HopList label="Then" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />
+        <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />
         <LookForList items={group.lookFor} />
         {group.staleCount > 0 ? (
           <p className="mt-4 text-warn">
