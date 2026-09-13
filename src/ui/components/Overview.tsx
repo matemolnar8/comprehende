@@ -52,8 +52,6 @@ export function Overview(props: {
         <LookForList
           claims={lookForClaims(meta.document, meta.groups)}
           showOwner
-          mixed={mixed}
-          parts={parts}
           focusKey={focusLookForKey}
           onOpen={onOpenLookFor}
         />

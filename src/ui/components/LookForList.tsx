@@ -1,7 +1,6 @@
 import { useEffect, useId } from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
-import { partColor, type Part } from "../lib/parts.ts";
 import { lookForOwnerLabel, type LookForClaim, type LookForTag } from "../lib/look-for.ts";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
@@ -9,13 +8,11 @@ import { Kicker } from "./Kicker.tsx";
 export function LookForList(props: {
   claims: readonly LookForClaim[];
   showOwner?: boolean;
-  mixed?: boolean;
-  parts?: readonly Part[];
   focusKey?: string;
   onOpen?: (claim: LookForClaim) => void;
   className?: string;
 }) {
-  const { claims, showOwner = false, mixed = false, parts = [], focusKey, onOpen, className } = props;
+  const { claims, showOwner = false, focusKey, onOpen, className } = props;
   const headingId = useId();
   useEffect(() => {
     if (focusKey === undefined) {
@@ -41,9 +38,6 @@ export function LookForList(props: {
       <ol className="m-0 list-none divide-y divide-border border-y border-border p-0">
         {claims.map((claim) => {
           const focused = claim.key === focusKey;
-          const owner = claim.owner;
-          const strand =
-            mixed && owner.kind === "group" ? parts.find((part) => part.title === owner.part) : undefined;
           return (
             <li
               key={claim.key}
@@ -54,23 +48,12 @@ export function LookForList(props: {
               {showOwner ? (
                 <Button
                   type="button"
-                  variant="link"
-                  className="mb-1 flex h-auto w-full min-w-0 items-baseline justify-between gap-3 p-0 font-normal whitespace-normal text-muted-foreground hover:text-foreground hover:no-underline"
+                  variant="ghost"
+                  className="mb-1 flex h-auto w-full min-w-0 items-baseline justify-between gap-3 p-0 font-normal whitespace-normal text-muted-foreground hover:bg-transparent hover:text-foreground"
                   onClick={() => onOpen?.(claim)}
                   aria-label={`Open ${lookForOwnerLabel(claim.owner)}`}
                 >
-                  <span className="flex min-w-0 items-baseline gap-2">
-                    {strand !== undefined ? (
-                      <span
-                        aria-hidden
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: partColor(strand.colorIndex) }}
-                      />
-                    ) : null}
-                    <span className="truncate font-mono text-[11px] tracking-wide">
-                      {lookForOwnerLabel(claim.owner)}
-                    </span>
-                  </span>
+                  <span className="truncate font-mono text-[11px] tracking-wide">{lookForOwnerLabel(claim.owner)}</span>
                   <LookForTag tag={claim.tag} />
                 </Button>
               ) : (
