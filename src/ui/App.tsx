@@ -24,7 +24,7 @@ import {
   type Selection,
 } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
-import { lookForClaims, openTargetForSource, selectionForLookFor, type LookForClaim } from "./lib/look-for.ts";
+import { lookForClaims, openTargetForSource } from "./lib/look-for.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { useNarrow } from "./lib/narrow.ts";
@@ -153,15 +153,6 @@ export function App() {
     (next: Selection) => {
       setFocusLookForKey(null);
       selectWithMotion(next);
-    },
-    [selectWithMotion],
-  );
-
-  const openLookFor = useCallback(
-    (claim: LookForClaim) => {
-      setFocusCommentId(null);
-      setFocusLookForKey(claim.key);
-      selectWithMotion(selectionForLookFor(claim.owner));
     },
     [selectWithMotion],
   );
@@ -406,7 +397,6 @@ export function App() {
       viewedPaths={viewedPaths}
       onScrollToHunk={scrollToHunk}
       onSelect={selectFromNav}
-      onOpenLookFor={openLookFor}
       onOpenFile={openInspector}
       onSplitRatio={setSplitRatio}
       onViewed={setFileViewed}

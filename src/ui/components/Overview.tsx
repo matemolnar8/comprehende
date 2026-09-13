@@ -3,24 +3,23 @@ import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
-import { lookForClaims, type LookForClaim } from "../lib/look-for.ts";
+import { claimsFromLookFor } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse } from "./Kicker.tsx";
-import { LookForIndex } from "./LookForList.tsx";
+import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
   onOpenGroup: (id: string) => void;
-  onOpenLookFor: (claim: LookForClaim) => void;
   focusLookForKey?: string;
 }) {
-  const { meta, parts, onOpenGroup, onOpenLookFor, focusLookForKey } = props;
+  const { meta, parts, onOpenGroup, focusLookForKey } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
@@ -45,10 +44,9 @@ export function Overview(props: {
             <InlineMd text={meta.document.summary} />
           </p>
         </BriefField>
-        <LookForIndex
-          claims={lookForClaims(meta.document, meta.groups)}
+        <LookForList
+          claims={claimsFromLookFor({ kind: "document" }, meta.document.lookFor)}
           focusKey={focusLookForKey}
-          onOpen={onOpenLookFor}
         />
         <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
       </Brief>

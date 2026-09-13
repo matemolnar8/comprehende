@@ -22,7 +22,6 @@ export function Sidebar(props: {
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const documentLookFor = meta.document.lookFor?.length ?? 0;
-  const totalLookFor = documentLookFor + meta.groups.reduce((sum, group) => sum + group.lookFor.length, 0);
   return (
     <nav className={cn("h-full overflow-auto bg-card", props.compact === true ? "py-3" : "py-6", props.className)}>
       <div className="relative">
@@ -35,7 +34,7 @@ export function Sidebar(props: {
               onSelect={onSelect}
               title="Overview"
               count={sizeLabel(meta.document.size)}
-              lookForCount={totalLookFor}
+              lookForCount={documentLookFor}
             />
           </li>
         </ul>
