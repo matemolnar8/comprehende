@@ -93,6 +93,36 @@ export function lookForClaims(document: { lookFor?: readonly string[] }, groups:
   return claims;
 }
 
+export type LookForBucket = {
+  owner: LookForOwner;
+  claims: LookForClaim[];
+  tags: LookForTag[];
+};
+
+export function lookForBuckets(claims: readonly LookForClaim[]): LookForBucket[] {
+  const buckets: LookForBucket[] = [];
+  for (const claim of claims) {
+    const last = buckets[buckets.length - 1];
+    const sameOwner =
+      last !== undefined &&
+      ((claim.owner.kind === "document" && last.owner.kind === "document") ||
+        (claim.owner.kind === "group" && last.owner.kind === "group" && last.owner.id === claim.owner.id));
+    if (sameOwner && last !== undefined) {
+      last.claims.push(claim);
+      if (claim.tag !== undefined && !last.tags.includes(claim.tag)) {
+        last.tags.push(claim.tag);
+      }
+      continue;
+    }
+    buckets.push({
+      owner: claim.owner,
+      claims: [claim],
+      tags: claim.tag !== undefined ? [claim.tag] : [],
+    });
+  }
+  return buckets;
+}
+
 export type SourceOpenTarget = {
   selection: Selection;
   lookForKey?: string;

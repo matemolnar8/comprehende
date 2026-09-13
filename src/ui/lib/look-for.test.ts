@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
 import {
   claimsFromLookFor,
+  lookForBuckets,
   lookForClaims,
   lookForKey,
   lookForOwnerLabel,
@@ -114,6 +115,30 @@ describe("lookForClaims", () => {
   it("omits empty lookFor", () => {
     assert.deepEqual(lookForClaims({}, [docs]), []);
     assert.deepEqual(claimsFromLookFor({ kind: "document" }, []), []);
+  });
+
+  it("buckets claims by owner with counts and tags", () => {
+    const claims = lookForClaims(
+      {
+        lookFor: [
+          "[#12](source:s1) also asks logout to clear the session cookie.",
+          "Subtle. [#12](source:s1) wants sessions that client scripts cannot read.",
+        ],
+      },
+      [cookie, login, docs],
+    );
+    assert.deepEqual(
+      lookForBuckets(claims).map((bucket) => ({
+        owner: lookForOwnerLabel(bucket.owner),
+        count: bucket.claims.length,
+        tags: bucket.tags,
+      })),
+      [
+        { owner: "Overview", count: 2, tags: ["Subtle"] },
+        { owner: "01 Session cookie helper", count: 1, tags: ["Breaking"] },
+        { owner: "02 Login route", count: 1, tags: [] },
+      ],
+    );
   });
 
   it("builds keys and selections from the owner", () => {

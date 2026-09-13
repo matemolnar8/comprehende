@@ -10,7 +10,7 @@ import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
-import { LookForList } from "./LookForList.tsx";
+import { LookForIndex } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
@@ -49,9 +49,8 @@ export function Overview(props: {
         <p className="mb-4 leading-relaxed text-pretty text-foreground min-[800px]:mb-5">
           <InlineMd text={meta.document.summary} />
         </p>
-        <LookForList
+        <LookForIndex
           claims={lookForClaims(meta.document, meta.groups)}
-          showOwner
           focusKey={focusLookForKey}
           onOpen={onOpenLookFor}
         />
