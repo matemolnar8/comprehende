@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { selectionCaption, type Selection } from "../lib/selection.ts";
 import type { Part } from "../lib/parts.ts";
 import { ThemeToggle } from "./Header.tsx";
+import { GroupNav } from "./GroupNav.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 
 export function MobileShell(props: {
@@ -44,6 +45,7 @@ export function MobileShell(props: {
           ) : null}
           <span className="truncate text-sm font-medium">{caption.title}</span>
         </p>
+        <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} />
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button
             type="button"

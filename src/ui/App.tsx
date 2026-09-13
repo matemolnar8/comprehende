@@ -193,9 +193,11 @@ export function App() {
         selectWithMotion({ kind: REVIEW_BUCKETS.unassigned });
       } else if (event.key === "Escape") {
         closeInspector();
-      } else if (event.key === "[") {
+      } else if (event.key === "[" && !event.repeat) {
+        event.preventDefault();
         shiftSelection(meta, selection, selectWithMotion, -1);
-      } else if (event.key === "]") {
+      } else if (event.key === "]" && !event.repeat) {
+        event.preventDefault();
         shiftSelection(meta, selection, selectWithMotion, 1);
       } else if (inspector !== null) {
         return;
@@ -341,6 +343,8 @@ export function App() {
           <>
             <Header
               meta={meta}
+              selection={selection}
+              onSelect={selectWithMotion}
               wrap={wrap}
               split={split}
               onWrap={() => setWrap((value) => !value)}

@@ -89,18 +89,37 @@ export function selectionStack(source: SelectionStackSource): Selection[] {
   return ids;
 }
 
+/** Overview, then groups in document order. Unassigned and lockfiles stay off this walk. */
+export function groupWalk(source: SelectionStackSource): Selection[] {
+  return [{ kind: "overview" }, ...source.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
+}
+
+export function neighborSelection(
+  source: SelectionStackSource | null,
+  selection: Selection | null,
+  delta: number,
+): Selection | undefined {
+  if (source === null || delta === 0) {
+    return undefined;
+  }
+  const walk = groupWalk(source);
+  const current = walk.findIndex((item) => sameSelection(item, selection));
+  if (current >= 0) {
+    return walk[current + delta];
+  }
+  if (delta < 0) {
+    return walk[walk.length - 1];
+  }
+  return undefined;
+}
+
 export function shiftSelection(
-  meta: ReviewMeta | null,
+  source: SelectionStackSource | null,
   selection: Selection | null,
   setSelection: (selection: Selection) => void,
   delta: number,
 ): void {
-  if (meta === null) {
-    return;
-  }
-  const ids = selectionStack(meta);
-  const current = ids.findIndex((item) => sameSelection(item, selection));
-  const next = ids[(current + delta + ids.length) % ids.length];
+  const next = neighborSelection(source, selection, delta);
   if (next !== undefined) {
     setSelection(next);
   }
@@ -120,6 +139,14 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
     return b.kind === REVIEW_BUCKETS.lockfiles;
   }
   return a.kind === "group" && b.kind === "group" && b.id === a.id;
+}
+
+export function selectionNavLabel(
+  meta: Pick<ReviewMeta, "document" | "groups">,
+  selection: Selection,
+): string {
+  const caption = selectionCaption(meta, selection);
+  return caption.index !== undefined ? `${caption.index} ${caption.title}` : caption.title;
 }
 
 export function selectionCaption(

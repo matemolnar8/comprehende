@@ -8,12 +8,16 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
+import type { Selection } from "../lib/selection.ts";
+import { GroupNav } from "./GroupNav.tsx";
 import { Kbd } from "./Kbd.tsx";
 import { Logo } from "./Logo.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
 export function Header(props: {
   meta: ReviewMeta;
+  selection: Selection | null;
+  onSelect: (selection: Selection) => void;
   wrap: boolean;
   split: boolean;
   onWrap: () => void;
@@ -31,6 +35,15 @@ export function Header(props: {
         <Logo />
         <Range resolved={meta.resolved} />
         <Coverage meta={meta} />
+        {meta.groups.length > 0 ? (
+          <div className="flex items-center gap-1">
+            <GroupNav meta={meta} selection={props.selection} onSelect={props.onSelect} />
+            <span className="flex gap-0.5">
+              <Kbd>[</Kbd>
+              <Kbd>]</Kbd>
+            </span>
+          </div>
+        ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
         <Tooltip>
