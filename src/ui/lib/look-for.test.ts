@@ -4,7 +4,6 @@ import type { ReviewDocument, Source } from "../../schema/types.ts";
 import { hashWriteMode, serializeHash } from "./selection.ts";
 import {
   claimsFromLookFor,
-  lookForBuckets,
   lookForClaims,
   lookForKey,
   lookForOwnerLabel,
@@ -142,30 +141,6 @@ describe("lookForClaims", () => {
     assert.deepEqual(claimsFromLookFor({ kind: "document" }, []), []);
   });
 
-  it("buckets claims by owner with counts and tags", () => {
-    const claims = lookForClaims(
-      {
-        lookFor: [
-          "[#12](source:s1) also asks logout to clear the session cookie.",
-          "Subtle. [#12](source:s1) wants sessions that client scripts cannot read.",
-        ],
-      },
-      [cookie, login, docs],
-    );
-    assert.deepEqual(
-      lookForBuckets(claims).map((bucket) => ({
-        owner: lookForOwnerLabel(bucket.owner),
-        count: bucket.claims.length,
-        tags: bucket.tags,
-      })),
-      [
-        { owner: "Overview", count: 2, tags: ["Subtle"] },
-        { owner: "01 Session cookie helper", count: 1, tags: ["Breaking"] },
-        { owner: "02 Login route", count: 1, tags: [] },
-      ],
-    );
-  });
-
   it("builds keys and selections from the owner", () => {
     const owner = { kind: "group" as const, id: "login", title: "Login route", index: 2 };
     assert.equal(lookForKey(owner, 0), "group:login:0");
@@ -230,6 +205,17 @@ describe("openTargetForSource", () => {
   };
   const claims = lookForClaims(document, document.groups);
 
+  function withLoginLookFor(base: ReviewDocument): ReviewDocument {
+    return {
+      ...base,
+      groups: base.groups.map((group) =>
+        group.id === "login"
+          ? { ...group, lookFor: ["[#12](source:s1) wants HttpOnly cookies."] }
+          : group,
+      ),
+    };
+  }
+
   it("opens a line pin on the group that covers the path", () => {
     assert.deepEqual(openTargetForSource(pin, claims, document), {
       selection: { kind: "group", id: "cookie" },
@@ -237,10 +223,41 @@ describe("openTargetForSource", () => {
     });
   });
 
-  it("opens the first lookFor that cites the source", () => {
-    assert.deepEqual(openTargetForSource(ticket, claims, document), {
+  it("stays on the current group when that group and document lookFor both cite the source", () => {
+    const withGroupLookFor = withLoginLookFor(document);
+    const nextClaims = lookForClaims(withGroupLookFor, withGroupLookFor.groups);
+    assert.deepEqual(openTargetForSource(ticket, nextClaims, withGroupLookFor, "login"), {
+      selection: { kind: "group", id: "login" },
+      lookForKey: "group:login:0",
+    });
+  });
+
+  it("opens document lookFor when no group cites or lists the source", () => {
+    const only: Source = { id: "s-doc", kind: "ticket", label: "#99" };
+    const withOnly = {
+      ...document,
+      sources: [...(document.sources ?? []), only],
+      lookFor: [...(document.lookFor ?? []), "[#99](source:s-doc) is document-only work."],
+    };
+    const nextClaims = lookForClaims(withOnly, withOnly.groups);
+    assert.deepEqual(openTargetForSource(only, nextClaims, withOnly), {
       selection: { kind: "overview" },
-      lookForKey: "document:0",
+      lookForKey: "document:1",
+    });
+  });
+
+  it("opens a group lookFor before document lookFor", () => {
+    const withGroupLookFor = withLoginLookFor(document);
+    const nextClaims = lookForClaims(withGroupLookFor, withGroupLookFor.groups);
+    assert.deepEqual(openTargetForSource(ticket, nextClaims, withGroupLookFor), {
+      selection: { kind: "group", id: "login" },
+      lookForKey: "group:login:0",
+    });
+  });
+
+  it("stays on the current group that lists the source without a lookFor cite", () => {
+    assert.deepEqual(openTargetForSource(ticket, claims, document, "login"), {
+      selection: { kind: "group", id: "login" },
     });
   });
 

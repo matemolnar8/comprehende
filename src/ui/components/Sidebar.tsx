@@ -2,11 +2,11 @@ import type { CSSProperties } from "react";
 import { type ReviewMeta } from "../api.ts";
 import { REVIEW_BUCKETS } from "../../api/types.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
-import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { colorIndexByGroupId, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { FilePeek } from "./FilePeek.tsx";
+import { HashLink } from "./HashLink.tsx";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar(props: {
@@ -22,7 +22,6 @@ export function Sidebar(props: {
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const documentLookFor = meta.document.lookFor?.length ?? 0;
-  const totalLookFor = documentLookFor + meta.groups.reduce((sum, group) => sum + group.lookFor.length, 0);
   return (
     <nav className={cn("h-full overflow-auto bg-card", props.compact === true ? "py-3" : "py-6", props.className)}>
       <div className="relative">
@@ -31,10 +30,11 @@ export function Sidebar(props: {
           <li>
             <StackItem
               active={selection?.kind === "overview"}
-              onClick={() => onSelect({ kind: "overview" })}
+              selection={{ kind: "overview" }}
+              onSelect={onSelect}
               title="Overview"
               count={sizeLabel(meta.document.size)}
-              lookForCount={totalLookFor}
+              lookForCount={documentLookFor}
             />
           </li>
         </ul>
@@ -44,19 +44,19 @@ export function Sidebar(props: {
             return (
               <li key={part.groupIds.join("\0")} className={mixed ? "mb-3 last:mb-0" : undefined}>
                 {mixed && part.title !== undefined && firstId !== undefined ? (
-                  <button
-                    type="button"
+                  <HashLink
+                    selection={{ kind: "group", id: firstId }}
+                    onSelect={onSelect}
                     className="mx-2 mb-1 flex w-[calc(100%-16px)] items-center gap-2 px-2.5 py-1 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground min-[800px]:mx-3 min-[800px]:w-[calc(100%-24px)] min-[800px]:px-3"
-                    onClick={() => onSelect({ kind: "group", id: firstId })}
-                    aria-label={`Open part ${part.title}`}
+                    ariaLabel={`Open part ${part.title}`}
                   >
                     <span
                       aria-hidden
                       className="size-2 shrink-0 rounded-full"
                       style={{ backgroundColor: partColor(part.colorIndex) }}
                     />
-                    {part.title}
-                  </button>
+                    <span>{part.title}</span>
+                  </HashLink>
                 ) : null}
                 <ul className="m-0 list-none p-0">
                   {part.groupIds.map((id) => {
@@ -68,7 +68,8 @@ export function Sidebar(props: {
                       <li key={group.id}>
                         <StackItem
                           active={selection?.kind === "group" && selection.id === group.id}
-                          onClick={() => onSelect({ kind: "group", id: group.id })}
+                          selection={{ kind: "group", id: group.id }}
+                          onSelect={onSelect}
                           index={padIndex(groupOrderIndex(parts, group.id))}
                           title={group.title}
                           files={group.files}
@@ -87,7 +88,8 @@ export function Sidebar(props: {
             <li>
               <StackItem
                 active={selection?.kind === REVIEW_BUCKETS.unassigned}
-                onClick={() => onSelect({ kind: REVIEW_BUCKETS.unassigned })}
+                selection={{ kind: REVIEW_BUCKETS.unassigned }}
+                onSelect={onSelect}
                 title="Unassigned"
                 files={meta.unassigned.files}
                 count={String(meta.unassigned.hunkCount)}
@@ -99,7 +101,8 @@ export function Sidebar(props: {
             <li>
               <StackItem
                 active={selection?.kind === REVIEW_BUCKETS.lockfiles}
-                onClick={() => onSelect({ kind: REVIEW_BUCKETS.lockfiles })}
+                selection={{ kind: REVIEW_BUCKETS.lockfiles }}
+                onSelect={onSelect}
                 title="Lockfiles"
                 files={meta.lockfiles.files}
                 count={String(meta.lockfiles.fileCount)}
@@ -115,7 +118,8 @@ export function Sidebar(props: {
 
 function StackItem(props: {
   active: boolean;
-  onClick: () => void;
+  selection: Selection;
+  onSelect: (selection: Selection) => void;
   title: string;
   files?: readonly string[];
   count?: string;
@@ -142,14 +146,13 @@ function StackItem(props: {
         ? `${props.title}, ${lookForCount} look for`
         : undefined;
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      onClick={props.onClick}
-      aria-label={label}
-      style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
+    <HashLink
+      selection={props.selection}
+      onSelect={props.onSelect}
+      ariaLabel={label}
+      ariaCurrent={props.active ? "page" : undefined}
       className={cn(
-        "relative z-1 mx-2 mb-0.5 h-auto w-[calc(100%-16px)] min-w-0 items-start justify-start gap-2 rounded-md px-2.5 py-1.5 text-left font-normal whitespace-normal hover:bg-transparent min-[800px]:mx-3 min-[800px]:mb-1 min-[800px]:w-[calc(100%-24px)] min-[800px]:gap-2.5 min-[800px]:px-3 min-[800px]:py-2",
+        "group relative z-1 mx-2 mb-0.5 flex h-auto w-[calc(100%-16px)] min-w-0 items-start justify-start gap-2 rounded-md px-2.5 py-1.5 text-left font-normal whitespace-normal no-underline min-[800px]:mx-3 min-[800px]:mb-1 min-[800px]:w-[calc(100%-24px)] min-[800px]:gap-2.5 min-[800px]:px-3 min-[800px]:py-2",
         !props.active && "hover:bg-accent",
         props.active && cn(styles.itemActive, "text-foreground"),
         props.warn && "text-warn hover:text-warn",
@@ -161,6 +164,7 @@ function StackItem(props: {
             "pointer-events-none absolute inset-y-1.5 left-0 z-1 w-0.5 rounded-full bg-[var(--strand,var(--primary))] transition-opacity duration-[var(--motion)] ease-[var(--motion-ease)]",
             colorIndex !== undefined && !props.active && "opacity-45",
           )}
+          style={strand !== undefined ? ({ "--strand": strand } as CSSProperties) : undefined}
           aria-hidden
         />
       ) : null}
@@ -183,6 +187,6 @@ function StackItem(props: {
           </span>
         ) : null}
       </span>
-    </Button>
+    </HashLink>
   );
 }

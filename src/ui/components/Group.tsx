@@ -83,7 +83,7 @@ export function Group(props: {
 
   return (
     <>
-      <div className="mb-5 flex items-stretch gap-3 min-[800px]:mb-8 min-[800px]:gap-4">
+      <div className="mb-4 flex items-stretch gap-3 min-[800px]:mb-5 min-[800px]:gap-4">
         <span
           className="w-[3px] flex-none rounded-px [[data-motion=group]_&]:[view-transition-name:review-strand]"
           style={{ backgroundColor: strand }}
@@ -102,7 +102,7 @@ export function Group(props: {
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any group">
-              <p className="font-display text-lg leading-relaxed text-foreground">
+              <p className="leading-[1.45] text-foreground">
                 These hunks are in git and in no group. Fix the review document. Never the diff.
               </p>
             </Brief>
@@ -120,7 +120,7 @@ export function Group(props: {
       ) : null}
 
       {!loading && files.length > 0 && !narrow ? (
-        <p className="mt-8 font-mono text-xs tabular-nums text-muted-foreground">
+        <p className="mt-4 font-mono text-[11px] tabular-nums text-muted-foreground">
           {viewedCount} of {files.length} files viewed
           <span className="hidden sm:inline"> · j/k to move, v to toggle</span>
         </p>

@@ -1,9 +1,9 @@
 import type { Source } from "../../schema/types.ts";
-import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
 import { useSources } from "../lib/sources-context.tsx";
-import { Kicker } from "./Kicker.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
+import { BriefField, briefRows } from "./Kicker.tsx";
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -13,7 +13,9 @@ export function SourceList(props: {
   className?: string;
 }) {
   const { ids, sources, mixed = false, parts = [], className } = props;
-  const onOpenSource = useSources()?.onOpenSource;
+  const handle = useSources();
+  const onOpenSource = handle?.onOpenSource;
+  const selectionForSource = handle?.selectionForSource;
   if (ids.length === 0) {
     return null;
   }
@@ -26,16 +28,17 @@ export function SourceList(props: {
     return null;
   }
   return (
-    <section className={cn("mb-5", className)} aria-label="Sources">
-      <Kicker className="mb-2">Sources</Kicker>
-      <ul className="m-0 list-none divide-y divide-border border-y border-border p-0 font-mono text-[11px] tracking-wide text-muted-foreground">
+    <BriefField kicker="Sources" className={className}>
+      <ul className={briefRows}>
         {rows.map((source) => {
           const strand = mixed ? parts.find((part) => part.title === source.part) : undefined;
-          const labelClass = "shrink-0 text-foreground";
           const detail = source.gist ?? source.title;
-          const canJump = onOpenSource !== undefined && (source.url === undefined || detail !== undefined);
+          const jump =
+            onOpenSource !== undefined &&
+            selectionForSource !== undefined &&
+            (source.url === undefined || detail !== undefined);
           return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1.5">
+            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1 leading-[1.45]">
               {strand !== undefined ? (
                 <span
                   aria-hidden
@@ -45,38 +48,37 @@ export function SourceList(props: {
               ) : null}
               {source.url !== undefined ? (
                 <a
-                  className={cn(labelClass, "hover:text-primary hover:underline")}
+                  className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
                 >
                   {source.label}
                 </a>
-              ) : canJump ? null : (
-                <span className={labelClass}>{source.label}</span>
+              ) : jump ? null : (
+                <span className="max-w-[40%] shrink-0 truncate text-foreground">{source.label}</span>
               )}
-              {canJump ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-auto min-w-0 flex-1 items-baseline justify-start gap-2 p-0 font-normal whitespace-normal hover:bg-transparent"
-                  onClick={() => onOpenSource?.(source)}
-                  aria-label={`Open ${source.label} in the review`}
+              {jump ? (
+                <HashLink
+                  selection={selectionForSource(source)}
+                  onSelect={() => onOpenSource(source)}
+                  className="flex min-w-0 flex-1 items-baseline gap-2"
+                  ariaLabel={`Open ${source.label} in the review`}
                 >
-                  {source.url === undefined ? <span className={labelClass}>{source.label}</span> : null}
-                  {detail !== undefined ? (
-                    <span className="min-w-0 truncate font-sans text-xs font-normal tracking-normal text-muted-foreground">
-                      {detail}
-                    </span>
+                  {source.url === undefined ? (
+                    <span className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}>{source.label}</span>
                   ) : null}
-                </Button>
+                  {detail !== undefined ? (
+                    <span className="min-w-0 flex-1 text-pretty font-normal text-muted-foreground">{detail}</span>
+                  ) : null}
+                </HashLink>
               ) : detail !== undefined ? (
-                <span className="min-w-0 truncate font-sans text-xs tracking-normal">{detail}</span>
+                <span className="min-w-0 flex-1 text-pretty text-muted-foreground">{detail}</span>
               ) : null}
             </li>
           );
         })}
       </ul>
-    </section>
+    </BriefField>
   );
 }

@@ -24,7 +24,7 @@ import {
   type Selection,
 } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
-import { lookForClaims, openTargetForSource, selectionForLookFor, type LookForClaim } from "./lib/look-for.ts";
+import { lookForClaims, openTargetForSource } from "./lib/look-for.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { useNarrow } from "./lib/narrow.ts";
@@ -153,15 +153,6 @@ export function App() {
     (next: Selection) => {
       setFocusLookForKey(null);
       selectWithMotion(next);
-    },
-    [selectWithMotion],
-  );
-
-  const openLookFor = useCallback(
-    (claim: LookForClaim) => {
-      setFocusCommentId(null);
-      setFocusLookForKey(claim.key);
-      selectWithMotion(selectionForLookFor(claim.owner));
     },
     [selectWithMotion],
   );
@@ -328,12 +319,22 @@ export function App() {
     () => (meta === null ? [] : lookForClaims(meta.document, meta.groups)),
     [meta],
   );
-  const openSource = useCallback(
+  const targetForSource = useCallback(
     (source: Source) => {
       if (meta === null) {
+        return undefined;
+      }
+      const currentGroupId = selection?.kind === "group" ? selection.id : undefined;
+      return openTargetForSource(source, claims, meta.document, currentGroupId);
+    },
+    [claims, meta, selection],
+  );
+  const openSource = useCallback(
+    (source: Source) => {
+      const target = targetForSource(source);
+      if (target === undefined) {
         return;
       }
-      const target = openTargetForSource(source, claims, meta.document);
       setFocusLookForKey(target.lookForKey ?? null);
       if (target.commentId !== undefined) {
         setShowComments(true);
@@ -343,7 +344,7 @@ export function App() {
       }
       selectWithMotion(target.selection);
     },
-    [claims, meta, selectWithMotion],
+    [selectWithMotion, targetForSource],
   );
   const sourcesHandle = useMemo(() => {
     const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
@@ -352,8 +353,9 @@ export function App() {
       staleIds: staleSourceIds,
       onCite: openSource,
       onOpenSource: openSource,
+      selectionForSource: (source: Source) => targetForSource(source)?.selection ?? { kind: "overview" as const },
     };
-  }, [meta, openSource, staleSourceIds]);
+  }, [meta, openSource, staleSourceIds, targetForSource]);
 
   if (loading && meta === null) {
     return (
@@ -395,7 +397,6 @@ export function App() {
       viewedPaths={viewedPaths}
       onScrollToHunk={scrollToHunk}
       onSelect={selectFromNav}
-      onOpenLookFor={openLookFor}
       onOpenFile={openInspector}
       onSplitRatio={setSplitRatio}
       onViewed={setFileViewed}
