@@ -5,16 +5,17 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdIndex, cmdValidate, resolveOutPath } from "./commands.ts";
-import { loadDocument, resolveDataPath } from "../review/load.ts";
+import { cmdCompare, cmdIndex, cmdValidate, resolveOutPath } from "./commands.ts";
+import { loadDocument, resolveCliPath, resolveDataPath } from "../review/load.ts";
+import { formatCompare } from "../review/compare-format.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
 import { assertWorkTree } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
-import { startServer } from "../server/http.ts";
+import { startCompareServer, startServer } from "../server/http.ts";
 
-export async function run(argv: string[]): Promise<number> {
-  const request = parseArgv(argv);
+export async function run(argv: string[], cwd = process.cwd()): Promise<number> {
+  const request = parseArgv(argv, cwd);
   if (request.kind === "help") {
     console.log(USAGE);
     return 0;
@@ -29,7 +30,9 @@ export async function run(argv: string[]): Promise<number> {
   }
 
   try {
-    await assertWorkTree(request.cwd);
+    if (request.command !== "compare") {
+      await assertWorkTree(request.cwd);
+    }
     switch (request.command) {
       case "index": {
         const index = await cmdIndex(request.cwd, request.base, request.head);
@@ -67,6 +70,28 @@ export async function run(argv: string[]): Promise<number> {
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);
         console.error(`exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`);
+        return 0;
+      }
+      case "compare": {
+        if (request.json && request.open) {
+          throw new Error("compare: use --json or --open, not both");
+        }
+        const fromPath = resolveCliPath(request.from, request.cwd, "--from <review.json>");
+        const toPath = resolveCliPath(request.to, request.cwd, "--to <review.json>");
+        const payload = await cmdCompare(fromPath, toPath);
+        if (request.open) {
+          const running = await startCompareServer({ payload, port: request.port });
+          console.log(running.url);
+          console.error(`compare ${fromPath}  ${toPath}  localhost only`);
+          openUrl(running.url);
+          await waitForClose(running.server);
+          return 0;
+        }
+        if (request.json) {
+          console.log(JSON.stringify(payload, null, 2));
+          return 0;
+        }
+        console.log(formatCompare(payload));
         return 0;
       }
     }

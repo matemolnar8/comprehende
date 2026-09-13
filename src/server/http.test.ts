@@ -6,11 +6,13 @@ import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { writeCoveringDocument } from "../test/covering-document.ts";
-import { startServer } from "./http.ts";
+import { startCompareServer, startServer } from "./http.ts";
 import { apiHref } from "../api/paths.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import { git } from "../git/exec.ts";
 import { showFile } from "../git/show.ts";
+import { buildComparePayload } from "../review/compare.ts";
+import type { ReviewDocument } from "../schema/types.ts";
 
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
@@ -208,3 +210,53 @@ describe("serve API", () => {
     assert.equal(restPayload.files.find((file) => file.path === "src/app.ts")?.complete, false);
   });
 });
+
+describe("compare API", () => {
+  it("serves interpretation compare without live git payloads", async () => {
+    const from = compareDoc("Cookie helper");
+    const to = compareDoc("Session cookie");
+    to.groups[0]!.lookFor = ["Check the helper throws."];
+    const running = await startCompareServer({
+      payload: buildComparePayload("/tmp/from.json", from, "/tmp/to.json", to),
+      port: 0,
+    });
+    servers.push(running.server);
+
+    const health = await fetch(`${running.url}/api/health`);
+    assert.equal(health.status, 200);
+
+    const compareRes = await fetch(`${running.url}/api/compare.json`);
+    assert.equal(compareRes.status, 200);
+    const body = (await compareRes.json()) as {
+      comparison: { identical: boolean; groups: { changed: { retitled: boolean; regrouped: boolean }[] } };
+    };
+    assert.equal(body.comparison.identical, false);
+    assert.equal(body.comparison.groups.changed[0]?.retitled, true);
+    assert.equal(body.comparison.groups.changed[0]?.regrouped, false);
+
+    const reviewRes = await fetch(`${running.url}/api/review.json`);
+    assert.equal(reviewRes.status, 404);
+    const hunksRes = await fetch(`${running.url}/api/hunks/g.json`);
+    assert.equal(hunksRes.status, 404);
+  });
+});
+
+function compareDoc(title: string): ReviewDocument {
+  return {
+    version: 1,
+    source: { baseRef: "main", headRef: "HEAD" },
+    size: "small",
+    title,
+    summary: "A change.",
+    groups: [
+      {
+        id: "g",
+        title,
+        why: "Why this group exists.",
+        summary: "What this group is.",
+        suggestedOrder: 0,
+        hunkRefs: [{ path: "a.ts", oldStart: 1, oldLines: 1, newStart: 1, newLines: 2 }],
+      },
+    ],
+  };
+}

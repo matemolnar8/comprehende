@@ -7,6 +7,7 @@ import { isSafePath, parseApiPath } from "../api/paths.ts";
 import { GitError } from "../git/exec.ts";
 import { resolveInsideRoot, type PinnedRange } from "../git/repo.ts";
 import { findPackageRoot } from "../package-root.ts";
+import type { ComparePayload } from "../review/compare.ts";
 
 export type ServeOptions = {
   cwd: string;
@@ -43,6 +44,12 @@ export type RunningServer = {
   url: string;
 };
 
+export type CompareServeOptions = {
+  payload: ComparePayload;
+  port: number;
+  uiRoot?: string;
+};
+
 export async function startServer(opts: ServeOptions): Promise<RunningServer> {
   const uiRoot = opts.uiRoot ?? join(findPackageRoot(), "dist/ui");
   const pin = opts.pin ?? (await pinReviewSource(opts.cwd, opts.dataPath));
@@ -50,18 +57,15 @@ export async function startServer(opts: ServeOptions): Promise<RunningServer> {
   const server = createServer((req, res) => {
     void handle(req, res, bound, uiRoot);
   });
+  return listenLoopback(server, opts.port, "server");
+}
 
-  await new Promise<void>((resolveListen, reject) => {
-    server.listen(opts.port, LOOPBACK_HOST, () => resolveListen());
-    server.once("error", reject);
+export async function startCompareServer(opts: CompareServeOptions): Promise<RunningServer> {
+  const uiRoot = opts.uiRoot ?? join(findPackageRoot(), "dist/ui");
+  const server = createServer((req, res) => {
+    void handleCompare(req, res, opts.payload, uiRoot);
   });
-
-  const address = server.address();
-  if (address === null || typeof address === "string") {
-    throw new Error(`server failed to bind ${LOOPBACK_HOST}`);
-  }
-  const url = `http://${LOOPBACK_HOST}:${address.port}`;
-  return { server, port: address.port, url };
+  return listenLoopback(server, opts.port, "compare server");
 }
 
 async function handle(
@@ -93,6 +97,38 @@ async function handle(
     const message = error instanceof Error ? error.message : String(error);
     const extra = error instanceof GitError ? { stderr: error.stderr } : {};
     json(res, status, { error: message, ...extra });
+  }
+}
+
+async function handleCompare(
+  req: IncomingMessage,
+  res: ServerResponse,
+  payload: ComparePayload,
+  uiRoot: string,
+): Promise<void> {
+  try {
+    const host = req.headers.host ?? LOOPBACK_HOST;
+    const url = new URL(req.url ?? "/", `http://${host}`);
+    if (req.method !== "GET") {
+      json(res, 405, { error: "method not allowed" });
+      return;
+    }
+    if (url.pathname === "/api/health") {
+      json(res, 200, { ok: true });
+      return;
+    }
+    if (url.pathname === "/api/compare.json") {
+      json(res, 200, payload);
+      return;
+    }
+    if (url.pathname.startsWith("/api/")) {
+      throw new ApiError(404, "not found");
+    }
+    await serveStatic(res, uiRoot, url.pathname);
+  } catch (error) {
+    const status = error instanceof ApiError ? error.status : 500;
+    const message = error instanceof Error ? error.message : String(error);
+    json(res, status, { error: message });
   }
 }
 
@@ -180,14 +216,17 @@ export async function startStaticSite(root: string, port = 0): Promise<RunningSe
       }
     })();
   });
+  return listenLoopback(server, port, "static site");
+}
 
+async function listenLoopback(server: Server, port: number, label: string): Promise<RunningServer> {
   await new Promise<void>((resolveListen, reject) => {
     server.listen(port, LOOPBACK_HOST, () => resolveListen());
     server.once("error", reject);
   });
   const address = server.address();
   if (address === null || typeof address === "string") {
-    throw new Error(`static site failed to bind ${LOOPBACK_HOST}`);
+    throw new Error(`${label} failed to bind ${LOOPBACK_HOST}`);
   }
   return { server, port: address.port, url: `http://${LOOPBACK_HOST}:${address.port}` };
 }

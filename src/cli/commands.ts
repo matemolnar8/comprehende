@@ -1,5 +1,6 @@
 import { readHunkIndex, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
+import { buildComparePayload, type ComparePayload } from "../review/compare.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
@@ -27,4 +28,10 @@ export async function cmdValidate(cwd: string, dataPath: string): Promise<{ docu
     throw new Error(errors.join("\n\n"));
   }
   return { document, warnings: [] };
+}
+
+export async function cmdCompare(fromPath: string, toPath: string): Promise<ComparePayload> {
+  const from = await loadDocument(fromPath);
+  const to = await loadDocument(toPath);
+  return buildComparePayload(fromPath, from, toPath, to);
 }

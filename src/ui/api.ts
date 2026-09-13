@@ -1,5 +1,6 @@
 import { apiHref, type ApiResource } from "../api/paths.ts";
 import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileKind, FileSide } from "../api/types.ts";
+import type { ComparePayload } from "../review/compare.ts";
 import type { FileStatus } from "../schema/types.ts";
 
 // UI LiveHunk is ApiHunk (adds language, omits patch), not schema LiveHunk (adds patch, omits language).
@@ -48,6 +49,17 @@ export function fetchFile(path: string, side: FileSide): Promise<ApiFile> {
 
 export function fetchBlame(path: string, side: FileSide): Promise<ApiBlame> {
   return getJson<ApiBlame>({ kind: "blame", path, side });
+}
+
+export async function fetchCompare(): Promise<ComparePayload | null> {
+  const path = new URL("./api/compare.json", new URL("./", document.baseURI)).href;
+  const response = await fetch(path);
+  if (!response.ok) {
+    return null;
+  }
+  const text = await response.text();
+  const data: unknown = JSON.parse(text);
+  return data as ComparePayload;
 }
 
 export function groupIndex(groups: { id: string }[], id: string): number {

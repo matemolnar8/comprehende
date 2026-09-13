@@ -81,3 +81,15 @@ python3 -m http.server --directory ../../fixtures/site 8080
 ```
 
 `pnpm fixture` writes a tiny git repo to `fixtures/repo` (gitignored) and a refs-only `fixtures/example/review.json`. Serve or export with cwd set to `fixtures/repo`.
+
+## Compare two reviews
+
+When a review is written again for the same change, compare the two documents:
+
+```sh
+npx comprehende@0.7.0 compare --from old.json --to new.json
+```
+
+The command compares interpretation only: groups, summaries, lookFor, and sources. Live git remains the how. Both documents stay as they are.
+
+`compare --json` prints the structured result. `compare --open` serves a local UI for the same comparison. Run it from any directory.

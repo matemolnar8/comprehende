@@ -1,4 +1,4 @@
-export type CommandName = "index" | "validate" | "serve" | "export";
+export type CommandName = "index" | "validate" | "serve" | "export" | "compare";
 
 export type CliRequest =
   | { kind: "help" }
@@ -12,11 +12,14 @@ export type CliRequest =
       head?: string;
       data?: string;
       out?: string;
+      from?: string;
+      to?: string;
       port: number;
       open: boolean;
+      json: boolean;
     };
 
-const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["index", "validate", "serve", "export"]);
+const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["index", "validate", "serve", "export", "compare"]);
 
 export const DEFAULT_PORT = 4567;
 
@@ -30,6 +33,7 @@ export class ArgError extends Error {
 export const USAGE = `Usage: comprehende <command> [options]
 
 Run inside the git repository under review. Cwd is the repo.
+compare reads two review documents from any directory.
 
 Commands:
   index     [--base <ref>] [--head <ref>]
@@ -45,13 +49,20 @@ Commands:
             Write a static site (same UI + frozen git payloads). Highlighters only
             for languages in the review. No server after that.
 
+  compare   --from <review.json> --to <review.json> [--json]
+            [--open] [--port <n>]
+            Show what changed in the interpretation. Not a code diff.
+
 Options:
   --base <ref>     Base ref (default: origin/HEAD or main/master)
   --head <ref>     Head ref (default: HEAD)
   --data <path>    Review document path
+  --from <path>    First review.json (compare)
+  --to <path>      Second review.json (compare)
   --out <dir>      Output directory for export
   --port <n>       Listen port (default: ${DEFAULT_PORT}, 0 for ephemeral)
   --open           Open the UI in a browser
+  --json           Print compare as JSON
   -h, --help       Show this help
   -v, --version    Show version
 
@@ -90,8 +101,11 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
       head: flag(rest, "--head"),
       data: flag(rest, "--data"),
       out: flag(rest, "--out"),
+      from: flag(rest, "--from"),
+      to: flag(rest, "--to"),
       port,
       open: rest.includes("--open"),
+      json: rest.includes("--json"),
     };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
