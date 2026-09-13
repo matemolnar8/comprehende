@@ -5,6 +5,7 @@ export type SourcesHandle = {
   byId: Map<string, Source>;
   staleIds: Set<string>;
   onCite: (source: Source) => void;
+  onOpenSource: (source: Source) => void;
 };
 
 const SourcesContext = createContext<SourcesHandle | null>(null);

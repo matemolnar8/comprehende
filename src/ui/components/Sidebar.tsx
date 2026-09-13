@@ -21,6 +21,8 @@ export function Sidebar(props: {
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
+  const documentLookFor = meta.document.lookFor?.length ?? 0;
+  const totalLookFor = documentLookFor + meta.groups.reduce((sum, group) => sum + group.lookFor.length, 0);
   return (
     <nav className={cn("h-full overflow-auto bg-card", props.compact === true ? "py-3" : "py-6", props.className)}>
       <div className="relative">
@@ -32,6 +34,7 @@ export function Sidebar(props: {
               onClick={() => onSelect({ kind: "overview" })}
               title="Overview"
               count={sizeLabel(meta.document.size)}
+              lookForCount={totalLookFor}
             />
           </li>
         </ul>
@@ -70,6 +73,7 @@ export function Sidebar(props: {
                           title={group.title}
                           files={group.files}
                           count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
+                          lookForCount={group.lookFor.length}
                           colorIndex={colors.get(group.id)}
                         />
                       </li>
@@ -115,6 +119,7 @@ function StackItem(props: {
   title: string;
   files?: readonly string[];
   count?: string;
+  lookForCount?: number;
   index?: string;
   warn?: boolean;
   muted?: boolean;
@@ -122,6 +127,7 @@ function StackItem(props: {
 }) {
   const colorIndex = props.colorIndex;
   const files = props.files ?? [];
+  const lookForCount = props.lookForCount ?? 0;
   const showStrand = colorIndex !== undefined || props.active;
   const strand =
     colorIndex !== undefined
@@ -131,8 +137,10 @@ function StackItem(props: {
         : undefined;
   const label =
     files.length > 0
-      ? `${props.title}, ${files.length} files${props.count !== undefined ? `, ${props.count}` : ""}`
-      : undefined;
+      ? `${props.title}, ${files.length} files${props.count !== undefined ? `, ${props.count}` : ""}${lookForCount > 0 ? `, ${lookForCount} look for` : ""}`
+      : lookForCount > 0
+        ? `${props.title}, ${lookForCount} look for`
+        : undefined;
   return (
     <Button
       type="button"
@@ -169,6 +177,11 @@ function StackItem(props: {
           ) : null}
         </span>
         <FilePeek paths={files} />
+        {lookForCount > 0 ? (
+          <span className="mt-1 block font-mono text-[11px] leading-snug text-muted-foreground">
+            Look for · {lookForCount}
+          </span>
+        ) : null}
       </span>
     </Button>
   );

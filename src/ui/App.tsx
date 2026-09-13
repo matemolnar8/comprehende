@@ -23,10 +23,11 @@ import {
   type Selection,
 } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
+import { lookForClaims, openTargetForSource, selectionForLookFor, type LookForClaim } from "./lib/look-for.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { useNarrow } from "./lib/narrow.ts";
-import { groupIdForPinnedSource, isLinePinned, linePinnedSources } from "../schema/source.ts";
+import { linePinnedSources } from "../schema/source.ts";
 import type { Source } from "../schema/types.ts";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
@@ -44,6 +45,7 @@ export function App() {
   const [splitRatio, setSplitRatio] = useState(0.5);
   const [showComments, setShowComments] = useState(true);
   const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
+  const [focusLookForKey, setFocusLookForKey] = useState<string | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<InspectorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,6 +135,23 @@ export function App() {
     [inspector, selection],
   );
 
+  const selectFromNav = useCallback(
+    (next: Selection) => {
+      setFocusLookForKey(null);
+      selectWithMotion(next);
+    },
+    [selectWithMotion],
+  );
+
+  const openLookFor = useCallback(
+    (claim: LookForClaim) => {
+      setFocusCommentId(null);
+      setFocusLookForKey(claim.key);
+      selectWithMotion(selectionForLookFor(claim.owner));
+    },
+    [selectWithMotion],
+  );
+
   const openInspector = useCallback((path: string) => {
     runViewTransition(() => {
       setInspector({ path, mode: "file", side: "new" });
@@ -196,23 +215,23 @@ export function App() {
       } else if (event.key === "r") {
         void load();
       } else if (event.key === "o") {
-        selectWithMotion({ kind: "overview" });
+        selectFromNav({ kind: "overview" });
       } else if (event.key === "u") {
-        selectWithMotion({ kind: REVIEW_BUCKETS.unassigned });
+        selectFromNav({ kind: REVIEW_BUCKETS.unassigned });
       } else if (event.key === "Escape") {
         closeInspector();
       } else if (event.key === "[" && !event.repeat) {
         event.preventDefault();
-        shiftSelection(meta, selection, selectWithMotion, -1);
+        shiftSelection(meta, selection, selectFromNav, -1);
       } else if (event.key === "]" && !event.repeat) {
         event.preventDefault();
-        shiftSelection(meta, selection, selectWithMotion, 1);
+        shiftSelection(meta, selection, selectFromNav, 1);
       } else if (event.key === "{" && !event.repeat) {
         event.preventDefault();
-        shiftPartSelection(meta, selection, selectWithMotion, -1);
+        shiftPartSelection(meta, selection, selectFromNav, -1);
       } else if (event.key === "}" && !event.repeat) {
         event.preventDefault();
-        shiftPartSelection(meta, selection, selectWithMotion, 1);
+        shiftPartSelection(meta, selection, selectFromNav, 1);
       } else if (inspector !== null) {
         return;
       } else if (event.key === "j") {
@@ -239,11 +258,14 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, closeInspector, inspector, payloadFiles, load, meta, scrollToHunk, selectWithMotion, selection, setFileViewed, viewedPaths]);
+  }, [activeHunk, closeInspector, inspector, payloadFiles, load, meta, scrollToHunk, selectFromNav, selection, setFileViewed, viewedPaths]);
 
   useEffect(() => {
+    if (focusLookForKey !== null) {
+      return;
+    }
     mainRef.current?.scrollTo({ top: 0 });
-  }, [selection]);
+  }, [focusLookForKey, selection]);
 
   const selectedGroup = useMemo(() => {
     if (meta === null || selection?.kind !== "group") {
@@ -267,25 +289,36 @@ export function App() {
     () => visibleFileComments(pinnedComments, showComments, staleSourceIds),
     [pinnedComments, showComments, staleSourceIds],
   );
+  const claims = useMemo(
+    () => (meta === null ? [] : lookForClaims(meta.document, meta.groups)),
+    [meta],
+  );
+  const openSource = useCallback(
+    (source: Source) => {
+      if (meta === null) {
+        return;
+      }
+      const target = openTargetForSource(source, claims, meta.document);
+      setFocusLookForKey(target.lookForKey ?? null);
+      if (target.commentId !== undefined) {
+        setShowComments(true);
+        setFocusCommentId(target.commentId);
+      } else {
+        setFocusCommentId(null);
+      }
+      selectWithMotion(target.selection);
+    },
+    [claims, meta, selectWithMotion],
+  );
   const sourcesHandle = useMemo(() => {
     const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
     return {
       byId,
       staleIds: staleSourceIds,
-      onCite: (source: Source) => {
-        if (meta === null || !isLinePinned(source)) {
-          return;
-        }
-        const groupId = groupIdForPinnedSource(meta.document, source);
-        if (groupId === undefined) {
-          return;
-        }
-        setShowComments(true);
-        setFocusCommentId(source.id);
-        selectWithMotion({ kind: "group", id: groupId });
-      },
+      onCite: openSource,
+      onOpenSource: openSource,
     };
-  }, [meta, selectWithMotion, staleSourceIds]);
+  }, [meta, openSource, staleSourceIds]);
 
   if (loading && meta === null) {
     return (
@@ -326,12 +359,14 @@ export function App() {
       splitRatio={splitRatio}
       viewedPaths={viewedPaths}
       onScrollToHunk={scrollToHunk}
-      onSelect={selectWithMotion}
+      onSelect={selectFromNav}
+      onOpenLookFor={openLookFor}
       onOpenFile={openInspector}
       onSplitRatio={setSplitRatio}
       onViewed={setFileViewed}
       comments={visibleComments}
       focusCommentId={focusCommentId ?? undefined}
+      focusLookForKey={focusLookForKey ?? undefined}
     />
   );
 
@@ -344,7 +379,7 @@ export function App() {
             meta={meta}
             selection={selection}
             parts={parts}
-            onSelect={selectWithMotion}
+            onSelect={selectFromNav}
             wrap={wrap}
             onWrap={() => setWrap((value) => !value)}
             comments={showComments}
@@ -357,7 +392,7 @@ export function App() {
             <Header
               meta={meta}
               selection={selection}
-              onSelect={selectWithMotion}
+              onSelect={selectFromNav}
               wrap={wrap}
               split={split}
               onWrap={() => setWrap((value) => !value)}
@@ -380,7 +415,7 @@ export function App() {
               onLayoutChanged={onLayoutChanged}
             >
               <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-                <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectWithMotion} />
+                <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectFromNav} />
               </ResizablePanel>
               <ResizableHandle withHandle />
               <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">

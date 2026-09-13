@@ -4,20 +4,23 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
+import { lookForClaims, type LookForClaim } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
-import { LookForList } from "./LookForList.tsx";
+import { LookForIndex } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
   onOpenGroup: (id: string) => void;
+  onOpenLookFor: (claim: LookForClaim) => void;
+  focusLookForKey?: string;
 }) {
-  const { meta, parts, onOpenGroup } = props;
+  const { meta, parts, onOpenGroup, onOpenLookFor, focusLookForKey } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
@@ -46,8 +49,12 @@ export function Overview(props: {
         <p className="mb-4 leading-relaxed text-pretty text-foreground min-[800px]:mb-5">
           <InlineMd text={meta.document.summary} />
         </p>
+        <LookForIndex
+          claims={lookForClaims(meta.document, meta.groups)}
+          focusKey={focusLookForKey}
+          onOpen={onOpenLookFor}
+        />
         <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
-        <LookForList items={meta.document.lookFor} />
       </Brief>
       <div
         className={

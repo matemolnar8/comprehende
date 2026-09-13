@@ -9,6 +9,7 @@ import { storyNavFromParts, type StoryHop } from "../lib/story-nav.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
+import { claimsFromLookFor } from "../lib/look-for.ts";
 import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 import { StoryNav } from "./StoryNav.tsx";
@@ -45,8 +46,9 @@ export function GroupBrief(props: {
   groups: ReviewMeta["groups"];
   document: ReviewMeta["document"];
   onOpenGroup: (id: string) => void;
+  focusLookForKey?: string;
 }) {
-  const { group, groups, document, onOpenGroup } = props;
+  const { group, groups, document, onOpenGroup, focusLookForKey } = props;
   const parts = groupParts(groups);
   const mixed = isMixedReview(parts);
   const index = groupOrderIndex(parts, group.id);
@@ -54,6 +56,13 @@ export function GroupBrief(props: {
   const listed = document.groups.find((item) => item.id === group.id);
   const sourceIds = listed !== undefined ? groupSourceIds(listed) : group.sources;
   const partTitle = mixed ? group.part : undefined;
+  const owner = {
+    kind: "group" as const,
+    id: group.id,
+    title: group.title,
+    index,
+    ...(group.part !== undefined ? { part: group.part } : {}),
+  };
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
@@ -72,7 +81,7 @@ export function GroupBrief(props: {
         <SourceList ids={sourceIds} sources={document.sources ?? []} />
         <HopList label="Depends on" hops={nav.dependsOn} parts={parts} onOpenGroup={onOpenGroup} />
         <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />
-        <LookForList items={group.lookFor} />
+        <LookForList claims={claimsFromLookFor(owner, group.lookFor)} focusKey={focusLookForKey} />
         {group.staleCount > 0 ? (
           <p className="mt-4 text-warn">
             {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the
