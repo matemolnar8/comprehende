@@ -1,7 +1,7 @@
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import { padIndex } from "../../schema/types.ts";
 import type { ReviewMeta } from "../api.ts";
-import { groupOrderIndex, groupParts, isMixedReview, type PartGroup } from "./parts.ts";
+import { groupOrderIndex, groupParts, isMixedReview, type Part, type PartGroup } from "./parts.ts";
 import { readKey, writeKey } from "./storage.ts";
 
 export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: ReviewBucket };
@@ -111,7 +111,7 @@ export function neighborSelection(
   if (source === null || delta === 0) {
     return undefined;
   }
-  const walk = groupWalk(source);
+  const walk = partWalk(source, selection);
   const current = walk.findIndex((item) => sameSelection(item, selection));
   if (current >= 0) {
     return walk[current + delta];
@@ -120,6 +120,26 @@ export function neighborSelection(
     return walk[walk.length - 1];
   }
   return undefined;
+}
+
+/** Overview, then the current part in dependsOn order. From overview, that is the first part. */
+function partWalk(source: SelectionStackSource, selection: Selection | null): Selection[] {
+  const parts = groupParts(source.groups);
+  const part = partForWalk(parts, selection);
+  return [
+    { kind: "overview" },
+    ...(part?.groupIds ?? []).map((id) => ({ kind: "group" as const, id })),
+  ];
+}
+
+function partForWalk(parts: readonly Part[], selection: Selection | null): Part | undefined {
+  if (selection?.kind === "group") {
+    return parts.find((item) => item.groupIds.includes(selection.id)) ?? parts[0];
+  }
+  if (selection?.kind === REVIEW_BUCKETS.unassigned || selection?.kind === REVIEW_BUCKETS.lockfiles) {
+    return parts[parts.length - 1];
+  }
+  return parts[0];
 }
 
 export function shiftSelection(

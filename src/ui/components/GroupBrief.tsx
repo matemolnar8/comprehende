@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button.tsx";
 import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type Part } from "../lib/parts.ts";
-import { storyNavFromParts, type StoryHop } from "../lib/story-nav.ts";
+import { storyNav, type StoryHop } from "../lib/story-nav.ts";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
-import { StoryNav } from "./StoryNav.tsx";
 
 export function Brief(props: {
   kicker?: string;
@@ -50,7 +49,7 @@ export function GroupBrief(props: {
   const parts = groupParts(groups);
   const mixed = isMixedReview(parts);
   const index = groupOrderIndex(parts, group.id);
-  const nav = storyNavFromParts(groups, parts, group.id);
+  const nav = storyNav(groups, group.id);
   const listed = document.groups.find((item) => item.id === group.id);
   const sourceIds = listed !== undefined ? groupSourceIds(listed) : group.sources;
   const partTitle = mixed ? group.part : undefined;
@@ -79,7 +78,6 @@ export function GroupBrief(props: {
             pointer is flagged, not replaced.
           </p>
         ) : null}
-        <StoryNav nav={nav} onOpenGroup={onOpenGroup} />
       </div>
     </Brief>
   );
