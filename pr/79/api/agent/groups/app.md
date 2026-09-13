@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 30060c417b8961cba2924a994cf9b6a07213c674` and `git rev-parse --verify 4779db00491f81c01848be0c1a452efe167232e8` in this repository.
+   Run `git rev-parse --verify 8344a4a460d19d8216fedc94ac71f5c1866aa1a1` and `git rev-parse --verify 975dd4ec32ab0bb3bfd68cc753683e2cefa04430` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 30060c417b8961cba2924a994cf9b6a07213c674 4779db00491f81c01848be0c1a452efe167232e8 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 8344a4a460d19d8216fedc94ac71f5c1866aa1a1 975dd4ec32ab0bb3bfd68cc753683e2cefa04430 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -23,37 +23,38 @@ When no question follows this paste, explain this review concern.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  30060c417b8961cba2924a994cf9b6a07213c674
+base (merge-base)  8344a4a460d19d8216fedc94ac71f5c1866aa1a1
 
-head               4779db00491f81c01848be0c1a452efe167232e8
+head               975dd4ec32ab0bb3bfd68cc753683e2cefa04430
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 30060c417b8961cba2924a994cf9b6a07213c674 4779db00491f81c01848be0c1a452efe167232e8
+git diff --find-renames 8344a4a460d19d8216fedc94ac71f5c1866aa1a1 975dd4ec32ab0bb3bfd68cc753683e2cefa04430
 
-Review concern 02 of 03: Hash is the route in App (`app`)
+Review concern 02 of 03: App reads and writes the hash (`app`)
 
 Part: Hash route
 
 The why:
 
-[#78](source:s1) makes the hash the source of truth. This group is the only place that talks to `window.location`.
+The hash helpers do not talk to the window. The app must load from the hash, write on selection change, and apply Back.
 
 The what:
 
-`App` restores from `location.hash` on load, writes with `replaceState` or `pushState`, and listens for `hashchange` and `popstate`.
+`restoreSelection` now takes `window.location.hash`. A layout effect writes the hash with `history.replaceState` or `history.pushState`. `hashchange` and `popstate` call `selectFromNav`, so Back also clears lookFor highlight. `openLookFor` and `openSource` still call `selectWithMotion`, so lookFor, source, header pager, story Depends on, and `[` / `]` all write the hash.
 
 Look for:
-- Opening a live `#group/<id>` skips the write. An empty hash `replaceState`s `#overview`.
+- First paint must not add a history entry. Later hops must. [#78](source:s1).
+- Back from a lookFor jump must clear the highlighted claim. The hash apply uses `selectFromNav`. [#78](source:s1).
 
 Depends on:
-- 01 Hash scheme (`hash`)
+- 01 Hash is the stored place (`hash`)
 
 Hunk refs for this concern:
 - src/ui/App.tsx @@ -14,12 +14,13 @@
-- src/ui/App.tsx @@ -48,6 +49,8 @@
-- src/ui/App.tsx @@ -61,7 +64,7 @@
-- src/ui/App.tsx @@ -77,7 +80,18 @@
-- src/ui/App.tsx @@ -133,6 +147,27 @@
+- src/ui/App.tsx @@ -50,6 +51,8 @@
+- src/ui/App.tsx @@ -63,7 +66,7 @@
+- src/ui/App.tsx @@ -79,7 +82,18 @@
+- src/ui/App.tsx @@ -152,6 +166,27 @@
