@@ -54,7 +54,7 @@ export function Overview(props: {
       </Brief>
       <div
         className={
-          mixed ? "mt-4 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-4"
+          mixed ? "mt-8 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-8"
         }
       >
         {parts.map((part) => (
@@ -126,7 +126,7 @@ function PartColumn(props: {
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong className="block font-medium text-foreground">{group.title}</strong>
-                  <span className="mt-0.5 block leading-[1.45] text-muted-foreground">
+                  <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
                     <InlineMd text={group.summary} />
                   </span>
                 </span>

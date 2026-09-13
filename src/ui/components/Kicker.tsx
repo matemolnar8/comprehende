@@ -2,6 +2,7 @@ import { useId, type ReactNode } from "react";
 import { cn } from "@/lib/utils.ts";
 
 export const briefProse = "m-0 leading-[1.45] text-pretty text-foreground";
+export const briefRows = "m-0 list-none divide-y divide-border p-0";
 
 export function Kicker(props: { children: ReactNode; id?: string; className?: string }) {
   return (
@@ -22,7 +23,7 @@ export function BriefField(props: {
   return (
     <section
       className={cn(
-        "mb-3 grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-x-4 last:mb-0 max-[799px]:grid-cols-1 max-[799px]:gap-y-1",
+        "mb-4 grid grid-cols-[5.75rem_minmax(0,1fr)] items-baseline gap-x-4 last:mb-0 max-[799px]:grid-cols-1 max-[799px]:gap-y-1",
         props.className,
       )}
       aria-labelledby={id}

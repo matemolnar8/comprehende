@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
-import { BriefField } from "./Kicker.tsx";
+import { BriefField, briefRows } from "./Kicker.tsx";
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -29,7 +29,7 @@ export function SourceList(props: {
   }
   return (
     <BriefField kicker="Sources" className={className}>
-      <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
+      <ul className={briefRows}>
         {rows.map((source) => {
           const strand = mixed ? parts.find((part) => part.title === source.part) : undefined;
           const detail = source.gist ?? source.title;
@@ -38,7 +38,7 @@ export function SourceList(props: {
             selectionForSource !== undefined &&
             (source.url === undefined || detail !== undefined);
           return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1 leading-[1.45]">
+            <li key={source.id} className="flex min-w-0 items-baseline gap-2 overflow-hidden py-1 leading-[1.45]">
               {strand !== undefined ? (
                 <span
                   aria-hidden
@@ -48,7 +48,7 @@ export function SourceList(props: {
               ) : null}
               {source.url !== undefined ? (
                 <a
-                  className={cn("shrink-0 text-foreground", hashLinkText)}
+                  className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
@@ -56,24 +56,24 @@ export function SourceList(props: {
                   {source.label}
                 </a>
               ) : jump ? null : (
-                <span className="shrink-0 text-foreground">{source.label}</span>
+                <span className="max-w-[40%] shrink-0 truncate text-foreground">{source.label}</span>
               )}
               {jump ? (
                 <HashLink
                   selection={selectionForSource(source)}
                   onSelect={() => onOpenSource(source)}
-                  className="flex min-w-0 flex-1 items-baseline gap-2"
+                  className="flex min-w-0 flex-1 items-baseline gap-2 overflow-hidden"
                   ariaLabel={`Open ${source.label} in the review`}
                 >
                   {source.url === undefined ? (
-                    <span className={cn("shrink-0 text-foreground", hashLinkText)}>{source.label}</span>
+                    <span className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}>{source.label}</span>
                   ) : null}
                   {detail !== undefined ? (
-                    <span className="min-w-0 truncate font-normal text-muted-foreground">{detail}</span>
+                    <span className="min-w-0 flex-1 truncate font-normal text-muted-foreground">{detail}</span>
                   ) : null}
                 </HashLink>
               ) : detail !== undefined ? (
-                <span className="min-w-0 truncate text-muted-foreground">{detail}</span>
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">{detail}</span>
               ) : null}
             </li>
           );

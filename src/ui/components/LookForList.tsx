@@ -10,7 +10,7 @@ import {
 } from "../lib/look-for.ts";
 import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
-import { BriefField, briefProse } from "./Kicker.tsx";
+import { BriefField, briefProse, briefRows } from "./Kicker.tsx";
 import styles from "./LookForList.module.css";
 
 const indexRowClass =
@@ -42,7 +42,7 @@ export function LookForList(props: {
 
   const tagged = claims.some((claim) => claim.tag !== undefined);
   const list = (
-    <ol className="m-0 list-none divide-y divide-border border-y border-border p-0">
+    <ol className={briefRows}>
       {claims.map((claim) => {
         const focused = claim.key === focusKey;
         return (
@@ -85,10 +85,10 @@ export function LookForIndex(props: {
 }) {
   const { claims, focusKey, onOpen, className } = props;
   const headingId = useId();
-  const [documentOpen, setDocumentOpen] = useState(true);
   const buckets = lookForBuckets(claims);
   const documentBucket = buckets.find((bucket) => bucket.owner.kind === "document");
   const documentFocus = documentBucket?.claims.some((claim) => claim.key === focusKey) ?? false;
+  const [documentOpen, setDocumentOpen] = useState(documentFocus);
 
   useEffect(() => {
     if (documentFocus) {
@@ -102,7 +102,7 @@ export function LookForIndex(props: {
 
   return (
     <BriefField kicker="Look for" kickerId={headingId} className={className}>
-      <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
+      <ul className={briefRows}>
         {buckets.map((bucket) => {
           const first = bucket.claims[0];
           if (first === undefined) {
@@ -127,7 +127,7 @@ export function LookForIndex(props: {
                     claims={bucket.claims}
                     heading={false}
                     focusKey={focusKey}
-                    className="pb-2"
+                    className="pl-5"
                   />
                 </details>
               </li>
