@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 95879630ef53ba6bd6da25c6958a19fe06786fe0` and `git rev-parse --verify e55fb2c9294ff84b08f0e0d1b0aa7f5c158f0e06` in this repository.
+   Run `git rev-parse --verify 95879630ef53ba6bd6da25c6958a19fe06786fe0` and `git rev-parse --verify e91cd52b349b2a9d148910cbd0b57f1145d4e2a0` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  95879630ef53ba6bd6da25c6958a19fe06786fe0
 
-head               e55fb2c9294ff84b08f0e0d1b0aa7f5c158f0e06
+head               e91cd52b349b2a9d148910cbd0b57f1145d4e2a0
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 95879630ef53ba6bd6da25c6958a19fe06786fe0 e55fb2c9294ff84b08f0e0d1b0aa7f5c158f0e06
+git diff --find-renames 95879630ef53ba6bd6da25c6958a19fe06786fe0 e91cd52b349b2a9d148910cbd0b57f1145d4e2a0
 
 Commits:
+- e91cd52 Label dependents as Needed by
 - 9587963 Merge pull request #74 from matemolnar8/cursor/writing-for-agents-skill-763a
 - e55fb2c Navigate parts and dependsOn in the review UI
 - 98d61ee Require writing-for-agents when editing the comprehende skill
@@ -86,9 +87,9 @@ Depends on:
 
 [groups/keys.md](groups/keys.md)
 
-### 04 Group pager and Then links (`pager`)
+### 04 Group pager and Needed by links (`pager`)
 
-`StoryNav` is the prev/next row. `GroupBrief` links Depends on and Then, then renders that pager.
+`StoryNav` is the prev/next row. `GroupBrief` links Depends on and Needed by, then renders that pager.
 
 Depends on:
 - 02 Previous, next, and next part (`hops`)
