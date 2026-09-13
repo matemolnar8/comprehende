@@ -24,7 +24,6 @@ export function ReviewStage(props: {
   meta: ReviewMeta;
   parts: Part[];
   selectedGroup: ReviewMeta["groups"][number] | null;
-  mixed: boolean;
   strandColor?: string;
   hunkError: string | null;
   files: GroupFile[];
@@ -70,7 +69,6 @@ export function ReviewStage(props: {
                 : undefined
           }
           groups={props.meta.groups}
-          mixed={props.mixed}
           strandColor={props.strandColor}
           loading={props.hunksLoading}
           hunkError={props.hunkError}

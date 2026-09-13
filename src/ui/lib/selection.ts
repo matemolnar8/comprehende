@@ -1,14 +1,19 @@
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import { padIndex } from "../../schema/types.ts";
 import type { ReviewMeta } from "../api.ts";
+import { groupOrderIndex, groupParts, isMixedReview, type PartGroup } from "./parts.ts";
 import { readKey, writeKey } from "./storage.ts";
 
 export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: ReviewBucket };
 
 export type SelectionStackSource = {
-  groups: { id: string }[];
+  groups: PartGroup[];
   unassigned: { hunkCount: number };
   lockfiles?: { fileCount: number };
+};
+
+export type PartShiftSource = {
+  groups: PartGroup[];
 };
 
 export function defaultSelection(source: SelectionStackSource): Selection {
@@ -78,8 +83,17 @@ export function writeStoredSelection(baseSha: string, headSha: string, selection
   writeKey(sessionStorage, selectionStorageKey(baseSha, headSha), serializeSelection(selection));
 }
 
+/** Overview, then groups in part / dependsOn order. Unassigned and lockfiles stay off this walk. */
+export function groupWalk(source: SelectionStackSource): Selection[] {
+  const parts = groupParts(source.groups);
+  return [
+    { kind: "overview" },
+    ...parts.flatMap((part) => part.groupIds.map((id) => ({ kind: "group" as const, id }))),
+  ];
+}
+
 export function selectionStack(source: SelectionStackSource): Selection[] {
-  const ids: Selection[] = [{ kind: "overview" }, ...source.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
+  const ids = groupWalk(source);
   if (source.unassigned.hunkCount > 0) {
     ids.push({ kind: REVIEW_BUCKETS.unassigned });
   }
@@ -87,11 +101,6 @@ export function selectionStack(source: SelectionStackSource): Selection[] {
     ids.push({ kind: REVIEW_BUCKETS.lockfiles });
   }
   return ids;
-}
-
-/** Overview, then groups in document order. Unassigned and lockfiles stay off this walk. */
-export function groupWalk(source: SelectionStackSource): Selection[] {
-  return [{ kind: "overview" }, ...source.groups.map((group) => ({ kind: "group" as const, id: group.id }))];
 }
 
 export function neighborSelection(
@@ -122,6 +131,31 @@ export function shiftSelection(
   const next = neighborSelection(source, selection, delta);
   if (next !== undefined) {
     setSelection(next);
+  }
+}
+
+export function shiftPartSelection(
+  meta: PartShiftSource | null,
+  selection: Selection | null,
+  setSelection: (selection: Selection) => void,
+  delta: number,
+): void {
+  if (meta === null || selection === null || selection.kind === REVIEW_BUCKETS.unassigned || selection.kind === REVIEW_BUCKETS.lockfiles) {
+    return;
+  }
+  const parts = groupParts(meta.groups);
+  if (!isMixedReview(parts)) {
+    return;
+  }
+  const current =
+    selection.kind === "group" ? parts.findIndex((part) => part.groupIds.includes(selection.id)) : delta > 0 ? -1 : parts.length;
+  if (selection.kind === "group" && current < 0) {
+    return;
+  }
+  const next = parts[(current + delta + parts.length) % parts.length];
+  const id = next?.groupIds[0];
+  if (id !== undefined && (selection.kind !== "group" || id !== selection.id)) {
+    setSelection({ kind: "group", id });
   }
 }
 
@@ -157,10 +191,11 @@ export function selectionCaption(
     return { title: "Overview" };
   }
   if (selection.kind === "group") {
-    const index = meta.groups.findIndex((group) => group.id === selection.id);
-    const group = index >= 0 ? meta.groups[index] : undefined;
+    const parts = groupParts(meta.groups);
+    const index = groupOrderIndex(parts, selection.id);
+    const group = meta.groups.find((item) => item.id === selection.id);
     return {
-      index: index >= 0 ? padIndex(index + 1) : undefined,
+      index: index > 0 ? padIndex(index) : undefined,
       title: group?.title ?? "Group",
     };
   }

@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { colorIndexByGroupId, groupParts, isMixedReview, PART_PALETTE_SIZE, partColor } from "./parts.ts";
+import {
+  colorIndexByGroupId,
+  dependsOnDepth,
+  groupOrderIndex,
+  groupParts,
+  isMixedReview,
+  PART_PALETTE_SIZE,
+  partColor,
+} from "./parts.ts";
 
 describe("groupParts", () => {
   it("keeps one unlabeled stack when no group has a part name", () => {
@@ -29,6 +37,19 @@ describe("groupParts", () => {
     assert.equal(parts[1]?.title, "README");
   });
 
+  it("ranks parts by the earliest suggestedOrder, not the first group in dependsOn order", () => {
+    const parts = groupParts([
+      { id: "child", part: "Auth", suggestedOrder: 0, dependsOn: ["parent"] },
+      { id: "parent", part: "Auth", suggestedOrder: 8 },
+      { id: "docs", part: "README", suggestedOrder: 3 },
+    ]);
+    assert.deepEqual(
+      parts.map((part) => part.title),
+      ["Auth", "README"],
+    );
+    assert.deepEqual(parts[0]?.groupIds, ["parent", "child"]);
+  });
+
   it("orders parts by the earliest suggestedOrder in each part", () => {
     const parts = groupParts([
       { id: "late", part: "Chore", suggestedOrder: 10 },
@@ -39,6 +60,35 @@ describe("groupParts", () => {
       parts.map((part) => part.title),
       ["Contract", "Chore"],
     );
+  });
+
+  it("reads a part in dependsOn order when that disagrees with suggestedOrder", () => {
+    const parts = groupParts([
+      { id: "login", part: "Session cookie", suggestedOrder: 0, dependsOn: ["cookie"] },
+      { id: "cookie", part: "Session cookie", suggestedOrder: 1 },
+      { id: "docs", part: "README", suggestedOrder: 2 },
+    ]);
+    assert.deepEqual(parts[0]?.groupIds, ["cookie", "login"]);
+    assert.equal(groupOrderIndex(parts, "cookie"), 1);
+    assert.equal(groupOrderIndex(parts, "login"), 2);
+    assert.equal(groupOrderIndex(parts, "docs"), 3);
+  });
+
+  it("ignores dependsOn that points at another part", () => {
+    const parts = groupParts([
+      { id: "cookie", part: "Session cookie", suggestedOrder: 0 },
+      { id: "docs", part: "README", suggestedOrder: 1, dependsOn: ["cookie"] },
+    ]);
+    assert.deepEqual(parts[0]?.groupIds, ["cookie"]);
+    assert.deepEqual(parts[1]?.groupIds, ["docs"]);
+  });
+
+  it("breaks a dependsOn cycle with suggestedOrder", () => {
+    const parts = groupParts([
+      { id: "a", suggestedOrder: 1, dependsOn: ["b"] },
+      { id: "b", suggestedOrder: 0, dependsOn: ["a"] },
+    ]);
+    assert.deepEqual(parts[0]?.groupIds, ["b", "a"]);
   });
 
   it("treats a group with no part as its own column when others are named", () => {
@@ -72,5 +122,17 @@ describe("groupParts", () => {
     const colors = colorIndexByGroupId(parts);
     assert.equal(colors.get("a"), 0);
     assert.equal(colors.get("b"), 1);
+  });
+
+  it("counts dependsOn depth inside one part", () => {
+    const groups = [
+      { id: "cookie", part: "Session cookie", suggestedOrder: 0 },
+      { id: "login", part: "Session cookie", suggestedOrder: 1, dependsOn: ["cookie"] },
+      { id: "tests", part: "Session cookie", suggestedOrder: 2, dependsOn: ["login"] },
+    ];
+    const ids = new Set(["cookie", "login", "tests"]);
+    assert.equal(dependsOnDepth(groups, "cookie", ids), 0);
+    assert.equal(dependsOnDepth(groups, "login", ids), 1);
+    assert.equal(dependsOnDepth(groups, "tests", ids), 2);
   });
 });

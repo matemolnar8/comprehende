@@ -4,7 +4,7 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
-import { isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { InlineMd } from "./InlineMd.tsx";
@@ -58,6 +58,7 @@ export function Overview(props: {
           <PartColumn
             key={part.groupIds.join("\0")}
             part={part}
+            parts={parts}
             mixed={mixed}
             groups={meta.groups}
             byId={byId}
@@ -71,6 +72,7 @@ export function Overview(props: {
 
 function PartColumn(props: {
   part: Part;
+  parts: Part[];
   mixed: boolean;
   groups: ReviewMeta["groups"];
   byId: Map<string, ReviewMeta["groups"][number]>;
@@ -78,17 +80,23 @@ function PartColumn(props: {
 }) {
   const { part, mixed, groups, byId, onOpenGroup } = props;
   const color = partColor(part.colorIndex);
+  const firstId = part.groupIds[0];
   return (
     <section
       className={cn("min-w-0", mixed && "rounded-md border border-border py-2")}
       style={mixed ? partStyle(color) : undefined}
       aria-label={part.title}
     >
-      {mixed && part.title !== undefined ? (
-        <Kicker className="mb-1 flex items-center gap-2 px-4 pt-2">
+      {mixed && part.title !== undefined && firstId !== undefined ? (
+        <button
+          type="button"
+          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
+          onClick={() => onOpenGroup(firstId)}
+          aria-label={`Open part ${part.title}`}
+        >
           <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           {part.title}
-        </Kicker>
+        </button>
       ) : null}
       <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
         {part.groupIds.map((id) => {
@@ -96,7 +104,8 @@ function PartColumn(props: {
           if (group === undefined) {
             return null;
           }
-          const index = groups.findIndex((item) => item.id === id) + 1;
+          const index = groupOrderIndex(props.parts, id);
+          const depth = dependsOnDepth(groups, id, new Set(part.groupIds));
           return (
             <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
               <Button
@@ -106,6 +115,7 @@ function PartColumn(props: {
                   "h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal",
                   mixed ? "gap-3 py-3 min-[800px]:gap-4 min-[800px]:py-4" : "gap-3 rounded-none py-3 min-[800px]:gap-6 min-[800px]:py-5",
                 )}
+                style={depth > 0 ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` } : undefined}
                 onClick={() => onOpenGroup(group.id)}
               >
                 <span
