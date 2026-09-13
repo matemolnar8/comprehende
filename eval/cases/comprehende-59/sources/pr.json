@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/matemolnar8/comprehende/pull/59",
+  "number": 59,
+  "title": "Mobile layout",
+  "body": "<!-- CURSOR_AGENT_PR_BODY_BEGIN -->\nBelow 800px the groups list is a left sheet over the review, not a permanent column. No resize handle. Type, padding, and chrome are tighter. Wrap, comments, and theme stay as icons. Split view is off. Desktop is unchanged.\n\nPreview: [g48h4ca9.vibedrop.site](https://g48h4ca9.vibedrop.site)\n\n[Mobile overview](https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Foverlay-overview.png)\n[Groups sheet over the review](https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Foverlay-nav.png)\n[Group with horizontal file strip](https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Foverlay-group.png)\n[Desktop sidebar unchanged](https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Fdesktop-sidebar.png)\n\n[overlay-mobile-and-desktop.mp4](https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7/artifacts?path=%2Fopt%2Fcursor%2Fartifacts%2Foverlay-mobile-and-desktop.mp4)\n\nPosted by Cursor [grok-4.6]\n\n<sub>To show artifacts inline, <a href=\"https://cursor.com/dashboard/cloud-agents#my-pull-requests\">enable</a> in settings.</sub>\n<!-- CURSOR_AGENT_PR_BODY_END -->\n\n<div><a href=\"https://cursor.com/agents/bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7?cursor_ref=pr_footer&cursor_cta=open_in_web\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://cursor.com/assets/images/open-in-web-dark.png\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://cursor.com/assets/images/open-in-web-light.png\"><img alt=\"Open in Web\" width=\"114\" height=\"28\" src=\"https://cursor.com/assets/images/open-in-web-dark.png\"></picture></a>&nbsp;<a href=\"https://cursor.com/background-agent?bcId=bc-5d5ddaf4-4785-4395-aab0-58982edbd7b7&cursor_ref=pr_footer&cursor_cta=open_in_cursor\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://cursor.com/assets/images/open-in-cursor-dark.png\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://cursor.com/assets/images/open-in-cursor-light.png\"><img alt=\"Open in Cursor\" width=\"131\" height=\"28\" src=\"https://cursor.com/assets/images/open-in-cursor-dark.png\"></picture></a>&nbsp;</div>\n\n",
+  "user": {
+    "login": "matemolnar8"
+  },
+  "merged_at": "2026-09-06T19:49:53Z",
+  "merge_commit_sha": "a14e6dd4008c3601cc591c90dd64660f18b0a10b",
+  "base": {
+    "ref": "main",
+    "sha": "ee0c6c0d32a18ee271d9a1947d5d21a2fc71cd7b"
+  },
+  "head": {
+    "ref": "cursor/mobile-layout-designs-d7b7",
+    "sha": "75c9b51c279610d6940509e54678c11276ca7431"
+  }
+}

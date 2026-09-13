@@ -90,6 +90,8 @@ Releases happen manually. Do not change `package.json` version unless the user a
 
 When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
 
+After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke` and put the summary lines in the PR body. `pnpm eval` needs `CURSOR_API_KEY`. LLM findings do not change the exit code.
+
 ## Notes from Máté, the repo owner
 
 I love to see simple code solving real, complex problems. Make every change, design, and text in that spirit. The skill is reviewed and adjusted by me manually, but write it with these principles in mind too.

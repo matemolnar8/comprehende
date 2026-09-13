@@ -1,0 +1,18 @@
+{
+  "id": "comprehende-57",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 57,
+  "base": "878b3d266c10e65fcd8fe44cb62689657a56ea12",
+  "head": "df9f4fc837692205fb26708debf5e200bc27113f",
+  "tags": ["smoke", "schema"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 1, "max": 2 },
+    "size": ["small", "medium", "large"],
+    "together": [["src/schema/parse.ts", "src/schema/parse.test.ts"]],
+    "mechanicalPaths": [
+      "skills-next/comprehende/references/review.schema.json",
+      ".agents/skills/comprehende/references/review.schema.json"
+    ]
+  }
+}

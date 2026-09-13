@@ -1,0 +1,41 @@
+[
+  {
+    "html_url": "https://github.com/matemolnar8/comprehende/pull/47#discussion_r3888153831",
+    "user": {
+      "login": "matemolnar8"
+    },
+    "body": "I don't really like this being on the right, maybe the source label should be clickable instead ",
+    "path": "src/ui/components/SourceList.tsx",
+    "side": "RIGHT",
+    "line": 42,
+    "original_line": 48,
+    "original_commit_id": "b4dfb7a02ced97c58faff529d5b4ac9469bafb95",
+    "commit_id": "00fb5fde78f6fded87d6bd217b425e7cc978455c"
+  },
+  {
+    "html_url": "https://github.com/matemolnar8/comprehende/pull/47#discussion_r3888159918",
+    "user": {
+      "login": "matemolnar8"
+    },
+    "body": "This should have some sort of a drop shadow or edge that separates it from the content behind",
+    "path": "src/ui/components/SourceCite.tsx",
+    "side": "RIGHT",
+    "line": 35,
+    "original_line": 35,
+    "original_commit_id": "b4dfb7a02ced97c58faff529d5b4ac9469bafb95",
+    "commit_id": "00fb5fde78f6fded87d6bd217b425e7cc978455c"
+  },
+  {
+    "html_url": "https://github.com/matemolnar8/comprehende/pull/47#discussion_r3888177219",
+    "user": {
+      "login": "matemolnar8"
+    },
+    "body": "Don't update this yet",
+    "path": "package.json",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 3,
+    "original_commit_id": "4b0300d9dfa6d0f3aa4085ebd0c8906300ea5fca",
+    "commit_id": "4b0300d9dfa6d0f3aa4085ebd0c8906300ea5fca"
+  }
+]

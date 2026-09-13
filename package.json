@@ -14,8 +14,10 @@
     "build": "tsc -p tsconfig.build.json && vite build",
     "prepack": "pnpm run build",
     "dev": "tsx src/cli/main.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
     "test": "tsx --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\"",
+    "eval": "pnpm build && tsx scripts/eval/run.ts",
+    "eval:add": "tsx scripts/eval/add-case.ts",
     "fixture": "tsx scripts/build-fixture.ts",
     "generate:schema": "tsx scripts/generate-review-schema.ts",
     "sync:skill": "tsx scripts/sync-skill.ts",
@@ -50,6 +52,7 @@
     "provenance": true
   },
   "devDependencies": {
+    "@cursor/sdk": "^1.0.31",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",

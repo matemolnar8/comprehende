@@ -12,6 +12,11 @@ export function applyCliPin(markdown: string, version: string): string {
   return markdown.replace(PIN, cliPin(version));
 }
 
+/** Rewrite every `npx comprehende@…` invocation to `command`. */
+export function replaceCliPin(markdown: string, command: string): string {
+  return markdown.replace(PIN, command);
+}
+
 export function cliPinErrors(markdown: string, version: string): string[] {
   const expected = cliPin(version);
   const pins = listedCliPins(markdown);
