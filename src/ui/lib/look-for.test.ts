@@ -112,6 +112,30 @@ describe("lookForClaims", () => {
     );
   });
 
+  it("numbers owners in part / dependsOn order", () => {
+    const claims = lookForClaims({}, [
+      {
+        id: "login",
+        title: "Login route",
+        lookFor: ["For rememberMe = false, compare the cookie."],
+        part: "Session cookie",
+        suggestedOrder: 0,
+        dependsOn: ["cookie"],
+      },
+      {
+        id: "cookie",
+        title: "Session cookie helper",
+        lookFor: ["Breaking. Throws when httpOnly is false."],
+        part: "Session cookie",
+        suggestedOrder: 1,
+      },
+    ]);
+    assert.deepEqual(
+      claims.map((claim) => lookForOwnerLabel(claim.owner)),
+      ["01 Session cookie helper", "02 Login route"],
+    );
+  });
+
   it("omits empty lookFor", () => {
     assert.deepEqual(lookForClaims({}, [docs]), []);
     assert.deepEqual(claimsFromLookFor({ kind: "document" }, []), []);

@@ -1,6 +1,7 @@
 import { padIndex } from "../../schema/types.ts";
 import { citationIds, groupIdForPinnedSource, isLinePinned } from "../../schema/source.ts";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
+import { groupOrderIndex, groupParts, type PartGroup } from "./parts.ts";
 import type { Selection } from "./selection.ts";
 
 export const LOOK_FOR_TAGS = ["Subtle", "Breaking", "Race", "Perf"] as const;
@@ -23,11 +24,9 @@ export type LookForClaim = {
   sourceIds: string[];
 };
 
-export type LookForGroup = {
-  id: string;
+export type LookForGroup = PartGroup & {
   title: string;
   lookFor?: readonly string[];
-  part?: string;
 };
 
 export function parseLookForBullet(text: string): { tag?: LookForTag; body: string } {
@@ -78,18 +77,26 @@ export function claimsFromLookFor(owner: LookForOwner, items: readonly string[] 
 
 export function lookForClaims(document: { lookFor?: readonly string[] }, groups: readonly LookForGroup[]): LookForClaim[] {
   const claims = claimsFromLookFor({ kind: "document" }, document.lookFor);
-  groups.forEach((group, i) => {
-    const owner: LookForOwner = {
-      kind: "group",
-      id: group.id,
-      title: group.title,
-      index: i + 1,
-    };
-    if (group.part !== undefined) {
-      owner.part = group.part;
+  const parts = groupParts(groups);
+  const byId = new Map(groups.map((group) => [group.id, group]));
+  for (const part of parts) {
+    for (const id of part.groupIds) {
+      const group = byId.get(id);
+      if (group === undefined) {
+        continue;
+      }
+      const owner: LookForOwner = {
+        kind: "group",
+        id: group.id,
+        title: group.title,
+        index: groupOrderIndex(parts, group.id),
+      };
+      if (group.part !== undefined) {
+        owner.part = group.part;
+      }
+      claims.push(...claimsFromLookFor(owner, group.lookFor));
     }
-    claims.push(...claimsFromLookFor(owner, group.lookFor));
-  });
+  }
   return claims;
 }
 
