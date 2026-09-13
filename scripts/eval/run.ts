@@ -17,6 +17,7 @@ import { listEvalCases, selectEvalCases, type EvalCase } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
 import { addDetachedWorktree, ensureBareClone, fetchCaseRefs, removeWorktree, thisRepoMirror } from "./clone.ts";
 import { groupingPrompt, prosePrompt, runGrader } from "./graders.ts";
+import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
 import { producerPrompt, runProducer } from "./producer.ts";
 import {
@@ -169,6 +170,7 @@ async function evalOneCase(opts: {
           document,
           expect: opts.spec.expect,
           frozen,
+          repo: parseGithubRepoRemote(opts.spec.repo),
         });
         const ctx = await openReview(repoCwd, document);
         const packetPath = join(caseOut, "packet.md");

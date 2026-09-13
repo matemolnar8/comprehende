@@ -141,4 +141,75 @@ describe("eval deterministic checks", () => {
     assert.equal(report.apartOk, 1);
     assert.equal(proseLints(document).length, 0);
   });
+
+  it("allows a GitHub commit URL when the SHA is in the reviewed range", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-commit-url-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    await writeFile(join(root, "README.md"), "x\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "init"]);
+    const base = (await git(root, ["rev-parse", "HEAD"])).trim();
+    await writeFile(join(root, "README.md"), "y\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "change readme"]);
+    const head = (await git(root, ["rev-parse", "HEAD"])).trim();
+    const document = doc({
+      source: { baseRef: base, headRef: head, range: `${base}...${head}` },
+      sources: [
+        {
+          id: "s1",
+          kind: "commit",
+          label: head.slice(0, 8),
+          url: `https://github.com/matemolnar8/comprehende/commit/${head}`,
+          title: "change readme",
+          gist: "Edits the readme.",
+        },
+      ],
+      groups: [
+        {
+          id: "core",
+          title: "Parser",
+          why: "The schema is the boundary.",
+          summary: "review.ts and parse.ts share one Zod schema.",
+          part: "schema",
+          suggestedOrder: 0,
+          hunkRefs: [hunk("src/schema/review.ts")],
+        },
+      ],
+    });
+    const ok = await runDeterministicChecks({
+      cwd: root,
+      document,
+      frozen: [],
+      repo: { owner: "matemolnar8", repo: "comprehende" },
+    });
+    assert.deepEqual(ok.failures, []);
+
+    const otherRepo = await runDeterministicChecks({
+      cwd: root,
+      document,
+      frozen: [],
+      repo: { owner: "other", repo: "place" },
+    });
+    assert.ok(otherRepo.failures.some((item) => item.check === "sources" && item.message.includes("not this repo")));
+
+    const invented = await runDeterministicChecks({
+      cwd: root,
+      document: {
+        ...document,
+        sources: [
+          {
+            id: "s1",
+            kind: "commit",
+            label: "deadbeef",
+            url: "https://github.com/matemolnar8/comprehende/commit/deadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+          },
+        ],
+      },
+      frozen: [],
+      repo: { owner: "matemolnar8", repo: "comprehende" },
+    });
+    assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
+  });
 });

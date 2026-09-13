@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { git, gitOk } from "../../src/git/exec.ts";
 import type { ReviewDocument, ReviewGroup, Source } from "../../src/schema/types.ts";
 import type { EvalExpect } from "./case.ts";
-import { collectFrozenUrls, normalizeUrl } from "./github.ts";
+import { collectFrozenUrls, normalizeUrl, parseGithubCommitUrl, shaInRange, type GithubRepo } from "./github.ts";
 
 export type CheckFailure = {
   check: string;
@@ -46,6 +46,7 @@ export async function runDeterministicChecks(opts: {
   document: ReviewDocument;
   expect?: EvalExpect;
   frozen: unknown[];
+  repo?: GithubRepo;
 }): Promise<DeterministicReport> {
   const failures: CheckFailure[] = [];
   const dirtyWorktree = await worktreeDirty(opts.cwd);
@@ -91,7 +92,7 @@ export async function runDeterministicChecks(opts: {
   for (const source of opts.document.sources ?? []) {
     failures.push(...sourceFailures(source, allowed));
   }
-  failures.push(...(await commitSourceFailures(opts.cwd, opts.document)));
+  failures.push(...(await commitSourceFailures(opts.cwd, opts.document, opts.repo)));
 
   const together = expect.together ?? [];
   let togetherOk = 0;
@@ -166,13 +167,20 @@ function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
   if (source.url === undefined) {
     return [];
   }
+  if (source.kind === "commit" && parseGithubCommitUrl(source.url) !== undefined) {
+    return [];
+  }
   if (!allowed.has(normalizeUrl(source.url))) {
     return [{ check: "sources", message: `source "${source.id}" url is not in the frozen set: ${source.url}` }];
   }
   return [];
 }
 
-async function commitSourceFailures(cwd: string, document: ReviewDocument): Promise<CheckFailure[]> {
+async function commitSourceFailures(
+  cwd: string,
+  document: ReviewDocument,
+  repo: GithubRepo | undefined,
+): Promise<CheckFailure[]> {
   const commits = (document.sources ?? []).filter((source) => source.kind === "commit");
   if (commits.length === 0) {
     return [];
@@ -184,6 +192,25 @@ async function commitSourceFailures(cwd: string, document: ReviewDocument): Prom
   const subjectSet = new Set(subjects);
   const failures: CheckFailure[] = [];
   for (const source of commits) {
+    if (source.url !== undefined) {
+      const parsed = parseGithubCommitUrl(source.url);
+      if (parsed !== undefined) {
+        if (repo !== undefined && (parsed.owner !== repo.owner || parsed.repo !== repo.repo)) {
+          failures.push({
+            check: "sources",
+            message: `commit source "${source.id}" url is not this repo: ${source.url}`,
+          });
+          continue;
+        }
+        if (!shaInRange(parsed.sha, shas)) {
+          failures.push({
+            check: "sources",
+            message: `commit source "${source.id}" url sha is not in ${range}: ${source.url}`,
+          });
+          continue;
+        }
+      }
+    }
     if (subjectSet.has(source.label) || shas.some((sha) => sha.startsWith(source.label) || source.label.startsWith(sha.slice(0, 7)))) {
       continue;
     }

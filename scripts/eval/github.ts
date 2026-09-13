@@ -10,6 +10,39 @@ export function parseGithubPrUrl(url: string): GithubRepo & { pr: number } {
   return { owner: match[1], repo: match[2], pr: Number(match[3]) };
 }
 
+const COMMIT_URL = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{7,40})(?:[/?#].*)?$/iu;
+const REPO_HTTPS = /^https:\/\/github\.com\/([^/]+)\/([^/]+)$/u;
+const REPO_SSH = /^git@github\.com:([^/]+)\/([^/]+)$/u;
+
+export function parseGithubCommitUrl(url: string): (GithubRepo & { sha: string }) | undefined {
+  const match = normalizeUrl(url).match(COMMIT_URL);
+  if (match?.[1] === undefined || match[2] === undefined || match[3] === undefined) {
+    return undefined;
+  }
+  return { owner: match[1], repo: match[2], sha: match[3].toLowerCase() };
+}
+
+export function parseGithubRepoRemote(url: string): GithubRepo | undefined {
+  const trimmed = url.trim().replace(/\.git$/u, "");
+  const https = trimmed.match(REPO_HTTPS);
+  if (https?.[1] !== undefined && https[2] !== undefined) {
+    return { owner: https[1], repo: https[2] };
+  }
+  const ssh = trimmed.match(REPO_SSH);
+  if (ssh?.[1] !== undefined && ssh[2] !== undefined) {
+    return { owner: ssh[1], repo: ssh[2] };
+  }
+  return undefined;
+}
+
+export function shaInRange(sha: string, rangeShas: readonly string[]): boolean {
+  const needle = sha.toLowerCase();
+  if (!/^[0-9a-f]{7,40}$/u.test(needle)) {
+    return false;
+  }
+  return rangeShas.some((full) => full.toLowerCase().startsWith(needle));
+}
+
 export function githubRepoUrl(owner: string, repo: string): string {
   return `https://github.com/${owner}/${repo}.git`;
 }
