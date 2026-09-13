@@ -1,1 +1,0 @@
-{"path":".gitignore","ref":"61f79cce8191e348bcd1d72ade335b4c47c18ad9","side":"old","content":"node_modules/\ndist/\n*.log\n.DS_Store\n.env\n.env.*\n!.env.example\nfixtures/repo/\nfixtures/example/review.json\nfixtures/site/\n*.tgz\n","language":"plaintext"}
