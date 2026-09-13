@@ -343,6 +343,8 @@ export function App() {
           <>
             <Header
               meta={meta}
+              selection={selection}
+              onSelect={selectWithMotion}
               wrap={wrap}
               split={split}
               onWrap={() => setWrap((value) => !value)}

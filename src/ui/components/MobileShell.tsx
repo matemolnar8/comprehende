@@ -45,7 +45,7 @@ export function MobileShell(props: {
           ) : null}
           <span className="truncate text-sm font-medium">{caption.title}</span>
         </p>
-        <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} variant="icons" />
+        <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} />
         <div className="ml-auto flex shrink-0 items-center gap-1">
           <Button
             type="button"
