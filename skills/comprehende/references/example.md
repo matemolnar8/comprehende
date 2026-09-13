@@ -6,6 +6,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
+- Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and one claim about the whole change. Both cite `[#12](source:s1)`. Group `lookFor` stays inside its hunks.
 
 ```json
 {
@@ -28,6 +29,10 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
       "gist": "Requires login sessions that client scripts cannot read.",
       "part": "Session cookie"
     }
+  ],
+  "lookFor": [
+    "[#12](source:s1) also asks logout to clear the session cookie. No hunk touches `src/api/logout.ts`.",
+    "Subtle. [#12](source:s1) wants sessions that client scripts cannot read. Sessions issued before this change keep their old cookie until it expires; no hunk rotates them."
   ],
   "groups": [
     {

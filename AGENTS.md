@@ -86,7 +86,7 @@ README is for people using the tool. Change it when a command, install step, or 
 
 Type safety helps humans and agents alike. Parse at the boundary, where the schema is the source of truth, and infer everywhere inside. If a bug could have been a type error, make it one before fixing it.
 
-Releases happen manually. Do not change `package.json` version unless the user asks for a release. When they do, follow the Release section in [README.md](./README.md).
+Releases happen manually. Do not change `package.json` version unless the user asks for a release. When they do, follow the Release section in [README.md](./README.md). The release commit subject is the version. The body is the release notes: every user-visible CLI, UI, and skill change since the previous version, taken from `git log <previous>..HEAD`.
 
 ## Pull requests
 
