@@ -29,6 +29,7 @@ import {
   type CaseResult,
   type RunSummary,
 } from "./result.ts";
+import { writeEvalReport } from "./report.ts";
 import { copySkillForEval, readNextSkillMd } from "./skill.ts";
 
 export async function runEval(argv: string[], packageRoot = findPackageRoot()): Promise<number> {
@@ -81,7 +82,8 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     console.log(formatCaseLine(result));
   }
   await writeFile(join(runDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
-  console.error(`wrote ${runDir}`);
+  const reportPath = await writeEvalReport(runDir, summary);
+  console.error(`wrote ${reportPath}`);
   if (request.baseline !== undefined) {
     await printBaseline(request.baseline, summary);
   }

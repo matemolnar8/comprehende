@@ -14,7 +14,7 @@ Options:
   --sandbox               Enable local sandboxOptions
   -h, --help
 
-Needs CURSOR_API_KEY. Writes eval/runs/<stamp>/. Exit 1 only when a deterministic check fails.
+Needs CURSOR_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 only when a deterministic check fails.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
