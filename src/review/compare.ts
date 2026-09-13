@@ -142,7 +142,7 @@ export function compareReviews(from: ReviewDocument, to: ReviewDocument): Review
     .map(groupSide)
     .sort((a, b) => a.suggestedOrder - b.suggestedOrder || a.id.localeCompare(b.id));
 
-  const document = diffDocument(from, to, sourceMatches);
+  const document = diffDocument(from, to, sourceMatches, fromToSourceId);
   const identical =
     !documentHasChanges(document) && addedGroups.length === 0 && removedGroups.length === 0 && changed.length === 0;
 
@@ -168,7 +168,12 @@ function compareSide(path: string, document: ReviewDocument): CompareSide {
   };
 }
 
-function diffDocument(from: ReviewDocument, to: ReviewDocument, sourceMatches: IndexPair[]): DocumentDiff {
+function diffDocument(
+  from: ReviewDocument,
+  to: ReviewDocument,
+  sourceMatches: IndexPair[],
+  sourceIdMap: ReadonlyMap<string, string>,
+): DocumentDiff {
   const fromSources = from.sources ?? [];
   const toSources = to.sources ?? [];
   const matchedFrom = new Set(sourceMatches.map((match) => match.fromIndex));
@@ -182,12 +187,12 @@ function diffDocument(from: ReviewDocument, to: ReviewDocument, sourceMatches: I
     }
   }
   return {
-    title: stringChange(from.title, to.title),
-    summary: stringChange(from.summary, to.summary),
-    why: optionalStringChange(from.why, to.why),
+    title: mappedStringChange(from.title, to.title, sourceIdMap),
+    summary: mappedStringChange(from.summary, to.summary, sourceIdMap),
+    why: mappedOptionalChange(from.why, to.why, sourceIdMap),
     size: from.size === to.size ? undefined : { from: from.size, to: to.size },
     range: stringChange(formatReviewRange(from.source), formatReviewRange(to.source)),
-    lookFor: listDiff(from.lookFor, to.lookFor),
+    lookFor: mappedListDiff(from.lookFor, to.lookFor, sourceIdMap),
     sources: {
       added: toSources.filter((_, index) => !matchedTo.has(index)),
       removed: fromSources.filter((_, index) => !matchedFrom.has(index)),
@@ -212,12 +217,12 @@ function diffMatchedGroup(
     retitled: title !== undefined,
     regrouped: hunks.added.length > 0 || hunks.removed.length > 0,
     title,
-    why: stringChange(from.why, to.why),
-    summary: stringChange(from.summary, to.summary),
+    why: mappedStringChange(from.why, to.why, sourceIdMap),
+    summary: mappedStringChange(from.summary, to.summary, sourceIdMap),
     part: optionalStringChange(from.part, to.part),
     suggestedOrder:
       from.suggestedOrder === to.suggestedOrder ? undefined : { from: from.suggestedOrder, to: to.suggestedOrder },
-    lookFor: listDiff(from.lookFor, to.lookFor),
+    lookFor: mappedListDiff(from.lookFor, to.lookFor, sourceIdMap),
     sources: listDiff(remapIds(from.sources ?? [], sourceIdMap), to.sources ?? []),
     dependsOn: listDiff(remapIds(from.dependsOn ?? [], groupIdMap), to.dependsOn ?? []),
     hunks,
@@ -463,8 +468,60 @@ function remapIds(ids: readonly string[], map: ReadonlyMap<string, string>): str
   return ids.map((id) => map.get(id) ?? id);
 }
 
+function rewriteCitations(text: string, map: ReadonlyMap<string, string>): string {
+  if (map.size === 0) {
+    return text;
+  }
+  return text.replace(/\]\(\s*source:([^)\s]+)(?:\s+"[^"]*")?\s*\)/g, (full, id: string) => {
+    const next = map.get(id);
+    if (next === undefined || next === id) {
+      return full;
+    }
+    return full.replace(`source:${id}`, `source:${next}`);
+  });
+}
+
 function stringChange(from: string, to: string): { from: string; to: string } | undefined {
   return from === to ? undefined : { from, to };
+}
+
+function mappedStringChange(
+  from: string,
+  to: string,
+  sourceIdMap: ReadonlyMap<string, string>,
+): { from: string; to: string } | undefined {
+  return rewriteCitations(from, sourceIdMap) === to ? undefined : { from, to };
+}
+
+function mappedOptionalChange(
+  from: string | undefined,
+  to: string | undefined,
+  sourceIdMap: ReadonlyMap<string, string>,
+): TextChange | undefined {
+  const fromMapped = from === undefined ? undefined : rewriteCitations(from, sourceIdMap);
+  if (fromMapped === to) {
+    return undefined;
+  }
+  return optionalStringChange(from, to);
+}
+
+function mappedListDiff(
+  from: readonly string[] | undefined,
+  to: readonly string[] | undefined,
+  sourceIdMap: ReadonlyMap<string, string>,
+): ListDiff {
+  const fromList = from ?? [];
+  const toList = to ?? [];
+  const rewritten = fromList.map((item) => rewriteCitations(item, sourceIdMap));
+  const toSet = new Set(toList);
+  const rewrittenSet = new Set(rewritten);
+  return {
+    added: toList.filter((item) => !rewrittenSet.has(item)),
+    removed: fromList.filter((_, index) => {
+      const mapped = rewritten[index];
+      return mapped === undefined || !toSet.has(mapped);
+    }),
+  };
 }
 
 function optionalStringChange(from: string | undefined, to: string | undefined): TextChange | undefined {

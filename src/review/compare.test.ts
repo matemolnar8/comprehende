@@ -178,6 +178,57 @@ describe("compareReviews", () => {
     assert.equal(comparison.groups.unchangedCount, 1);
   });
 
+  it("ignores source href remaps when comparing prose", () => {
+    const refs = [hunk("a.ts", 1)];
+    const from = sample({
+      why: "[#12](source:s1) requires HttpOnly cookies.",
+      lookFor: ["[#12](source:s1) wants logout."],
+      sources: [{ id: "s1", kind: "ticket", label: "#12" }],
+      groups: [
+        group("g", {
+          why: "[#12](source:s1) requires HttpOnly cookies.",
+          summary: "What g.",
+          sources: ["s1"],
+          hunkRefs: refs,
+        }),
+      ],
+    });
+    const to = sample({
+      why: "[#12](source:ticket-12) requires HttpOnly cookies.",
+      lookFor: ["[#12](source:ticket-12) wants logout."],
+      sources: [{ id: "ticket-12", kind: "ticket", label: "#12" }],
+      groups: [
+        group("g", {
+          why: "[#12](source:ticket-12) requires HttpOnly cookies.",
+          summary: "What g.",
+          sources: ["ticket-12"],
+          hunkRefs: refs,
+        }),
+      ],
+    });
+    const comparison = compareReviews(from, to);
+    assert.equal(comparison.document.why, undefined);
+    assert.deepEqual(comparison.document.lookFor, { added: [], removed: [] });
+    assert.equal(comparison.groups.changed.length, 0);
+    assert.equal(comparison.groups.unchangedCount, 1);
+    assert.match(from.why ?? "", /source:s1/);
+    assert.match(to.why ?? "", /source:ticket-12/);
+  });
+
+  it("keeps original from citations when prose also changed", () => {
+    const from = sample({
+      why: "[#12](source:s1) requires cookies.",
+      sources: [{ id: "s1", kind: "ticket", label: "#12" }],
+    });
+    const to = sample({
+      why: "[#12](source:ticket-12) requires cookies, including logout.",
+      sources: [{ id: "ticket-12", kind: "ticket", label: "#12" }],
+    });
+    const comparison = compareReviews(from, to);
+    assert.equal(comparison.document.why?.from, "[#12](source:s1) requires cookies.");
+    assert.equal(comparison.document.why?.to, "[#12](source:ticket-12) requires cookies, including logout.");
+  });
+
   it("treats remapped dependsOn as unchanged", () => {
     const cookie = hunk("cookie.ts", 1);
     const login = hunk("login.ts", 1);
