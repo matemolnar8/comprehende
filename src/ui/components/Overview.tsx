@@ -9,7 +9,7 @@ import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
-import { Kicker } from "./Kicker.tsx";
+import { BriefField, briefProse } from "./Kicker.tsx";
 import { LookForIndex } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
@@ -27,28 +27,24 @@ export function Overview(props: {
   const sources = meta.document.sources ?? [];
 
   return (
-    <div className="mb-8 [[data-motion=group]_&]:[view-transition-name:review-overview]">
+    <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       <Brief
         kicker={`${sizeLabel(meta.document.size)} · ${meta.files.length} files`}
         title={meta.document.title}
         kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
       >
         {why !== undefined ? (
-          <>
-            <Kicker id="review-why" className="mb-2">
-              Why
-            </Kicker>
-            <p className="mb-4 font-display text-base leading-relaxed text-pretty text-foreground min-[800px]:mb-6 min-[800px]:text-lg">
+          <BriefField kicker="Why" kickerId="review-why">
+            <p className={briefProse}>
               <InlineMd text={why} />
             </p>
-          </>
+          </BriefField>
         ) : null}
-        <Kicker id="review-what" className="mb-2">
-          What
-        </Kicker>
-        <p className="mb-4 leading-relaxed text-pretty text-foreground min-[800px]:mb-5">
-          <InlineMd text={meta.document.summary} />
-        </p>
+        <BriefField kicker="What" kickerId="review-what">
+          <p className={briefProse}>
+            <InlineMd text={meta.document.summary} />
+          </p>
+        </BriefField>
         <LookForIndex
           claims={lookForClaims(meta.document, meta.groups)}
           focusKey={focusLookForKey}
@@ -58,7 +54,7 @@ export function Overview(props: {
       </Brief>
       <div
         className={
-          mixed ? "mt-6 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-6"
+          mixed ? "mt-4 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-4"
         }
       >
         {parts.map((part) => (
@@ -120,28 +116,17 @@ function PartColumn(props: {
                 onSelect={() => onOpenGroup(group.id)}
                 className={cn(
                   "group flex h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal no-underline",
-                  mixed ? "gap-3 py-3 min-[800px]:gap-4 min-[800px]:py-4" : "gap-3 rounded-none py-3 min-[800px]:gap-6 min-[800px]:py-5",
+                  "gap-3 rounded-none py-2.5 min-[800px]:py-3",
+                  mixed && "rounded-md",
                 )}
                 style={depth > 0 ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` } : undefined}
               >
-                <span
-                  className={cn(
-                    "shrink-0 tabular-nums text-muted-foreground",
-                    mixed ? "mt-0.5 font-mono text-[11px]" : "font-display text-lg leading-none opacity-60 min-[800px]:text-2xl",
-                  )}
-                >
+                <span className="mt-px w-5 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                   {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong
-                    className={cn(
-                      "block text-foreground",
-                      mixed ? "font-medium" : "font-display text-lg leading-snug font-normal min-[800px]:text-xl",
-                    )}
-                  >
-                    {group.title}
-                  </strong>
-                  <span className="mt-1 block leading-relaxed text-muted-foreground">
+                  <strong className="block font-medium text-foreground">{group.title}</strong>
+                  <span className="mt-0.5 block leading-[1.45] text-muted-foreground">
                     <InlineMd text={group.summary} />
                   </span>
                 </span>

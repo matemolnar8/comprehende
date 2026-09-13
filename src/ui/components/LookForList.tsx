@@ -10,11 +10,11 @@ import {
 } from "../lib/look-for.ts";
 import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
-import { Kicker } from "./Kicker.tsx";
+import { BriefField, briefProse } from "./Kicker.tsx";
 import styles from "./LookForList.module.css";
 
 const indexRowClass =
-  "-mx-2 flex w-[calc(100%+1rem)] min-w-0 items-baseline gap-2 rounded-sm px-2 py-1.5 hover:bg-accent";
+  "-mx-2 flex w-[calc(100%+1rem)] min-w-0 items-baseline gap-2 rounded-sm px-2 py-1 hover:bg-accent";
 
 export function LookForList(props: {
   claims: readonly LookForClaim[];
@@ -40,6 +40,7 @@ export function LookForList(props: {
     return null;
   }
 
+  const tagged = claims.some((claim) => claim.tag !== undefined);
   const list = (
     <ol className="m-0 list-none divide-y divide-border border-y border-border p-0">
       {claims.map((claim) => {
@@ -49,10 +50,14 @@ export function LookForList(props: {
             key={claim.key}
             data-lookfor={claim.key}
             aria-current={focused ? "location" : undefined}
-            className={cn("-mx-2 rounded-sm px-2 py-3", focused && "bg-accent")}
+            className={cn(
+              "-mx-2 rounded-sm px-2 py-2",
+              tagged && "grid grid-cols-[4.75rem_minmax(0,1fr)] items-baseline gap-x-2",
+              focused && "bg-accent",
+            )}
           >
-            <LookForTag tag={claim.tag} className="mb-1 block" />
-            <div className="leading-relaxed text-pretty text-foreground">
+            {tagged ? <LookForTag tag={claim.tag} /> : null}
+            <div className={briefProse}>
               <InlineMd text={claim.body} />
             </div>
           </li>
@@ -66,12 +71,9 @@ export function LookForList(props: {
   }
 
   return (
-    <section className={cn("mb-5", className)} aria-labelledby={headingId}>
-      <Kicker id={headingId} className="mb-2">
-        Look for
-      </Kicker>
+    <BriefField kicker="Look for" kickerId={headingId} className={className}>
       {list}
-    </section>
+    </BriefField>
   );
 }
 
@@ -99,10 +101,7 @@ export function LookForIndex(props: {
   }
 
   return (
-    <section className={cn("mb-5", className)} aria-labelledby={headingId}>
-      <Kicker id={headingId} className="mb-2">
-        Look for
-      </Kicker>
+    <BriefField kicker="Look for" kickerId={headingId} className={className}>
       <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
         {buckets.map((bucket) => {
           const first = bucket.claims[0];
@@ -148,7 +147,7 @@ export function LookForIndex(props: {
           );
         })}
       </ul>
-    </section>
+    </BriefField>
   );
 }
 
@@ -158,9 +157,7 @@ function BucketLabel(props: {
   const { bucket } = props;
   return (
     <>
-      <span className="min-w-0 flex-1 truncate text-left font-mono text-[11px] tracking-wide text-foreground">
-        {lookForOwnerLabel(bucket.owner)}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-left text-foreground">{lookForOwnerLabel(bucket.owner)}</span>
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">{bucket.claims.length}</span>
       {bucket.tags.length > 0 ? (
         <span className="flex shrink-0 gap-2">
@@ -175,13 +172,13 @@ function BucketLabel(props: {
 
 function LookForTag(props: { tag: LookForTag | undefined; className?: string }) {
   if (props.tag === undefined) {
-    return null;
+    return <span className={props.className} />;
   }
   const warn = props.tag === "Breaking" || props.tag === "Race";
   return (
     <span
       className={cn(
-        "font-mono text-[11px] tracking-[0.14em] uppercase",
+        "font-mono text-[11px] leading-[1.45] tracking-[0.14em] uppercase",
         warn ? "text-warn" : "text-muted-foreground",
         props.className,
       )}

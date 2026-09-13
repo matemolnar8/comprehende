@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
-import { Kicker } from "./Kicker.tsx";
+import { BriefField } from "./Kicker.tsx";
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -28,8 +28,7 @@ export function SourceList(props: {
     return null;
   }
   return (
-    <section className={cn("mb-5", className)} aria-label="Sources">
-      <Kicker className="mb-2">Sources</Kicker>
+    <BriefField kicker="Sources" className={className}>
       <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
         {rows.map((source) => {
           const strand = mixed ? parts.find((part) => part.title === source.part) : undefined;
@@ -39,7 +38,7 @@ export function SourceList(props: {
             selectionForSource !== undefined &&
             (source.url === undefined || detail !== undefined);
           return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1.5 leading-relaxed">
+            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1 leading-[1.45]">
               {strand !== undefined ? (
                 <span
                   aria-hidden
@@ -80,6 +79,6 @@ export function SourceList(props: {
           );
         })}
       </ul>
-    </section>
+    </BriefField>
   );
 }
