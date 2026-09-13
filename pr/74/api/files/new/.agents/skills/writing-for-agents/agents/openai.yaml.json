@@ -1,0 +1,1 @@
+{"path":".agents/skills/writing-for-agents/agents/openai.yaml","ref":"98d61ee83050a1404d4dc8a583f66ff0ee6b98c2","side":"new","content":"interface:\n  display_name: \"Writing for Agents\"\n  short_description: \"Write documents agents consume\"\n","language":"yaml"}
