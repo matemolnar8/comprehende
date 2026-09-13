@@ -1,5 +1,5 @@
 import { padIndex } from "../../schema/types.ts";
-import { citationIds, groupIdForPinnedSource, isLinePinned } from "../../schema/source.ts";
+import { citationIds, groupIdForPinnedSource, groupSourceIds, isLinePinned } from "../../schema/source.ts";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
 import { groupOrderIndex, groupParts, type PartGroup } from "./parts.ts";
 import type { Selection } from "./selection.ts";
@@ -140,6 +140,7 @@ export function openTargetForSource(
   source: Source,
   claims: readonly LookForClaim[],
   document: ReviewDocument,
+  currentGroupId?: string,
 ): SourceOpenTarget {
   if (isLinePinned(source)) {
     const groupId = groupIdForPinnedSource(document, source);
@@ -147,13 +148,30 @@ export function openTargetForSource(
       return { selection: { kind: "group", id: groupId }, commentId: source.id };
     }
   }
-  const claim = claims.find((item) => item.sourceIds.includes(source.id));
-  if (claim !== undefined) {
-    return { selection: selectionForLookFor(claim.owner), lookForKey: claim.key };
+  const citing = claims.filter((claim) => claim.sourceIds.includes(source.id));
+  const currentClaim = citing.find(
+    (claim) => claim.owner.kind === "group" && claim.owner.id === currentGroupId,
+  );
+  if (currentClaim !== undefined) {
+    return { selection: selectionForLookFor(currentClaim.owner), lookForKey: currentClaim.key };
+  }
+  if (currentGroupId !== undefined) {
+    const current = document.groups.find((group) => group.id === currentGroupId);
+    if (current !== undefined && groupSourceIds(current).includes(source.id)) {
+      return { selection: { kind: "group", id: currentGroupId } };
+    }
+  }
+  const groupClaim = citing.find((claim) => claim.owner.kind === "group");
+  if (groupClaim !== undefined) {
+    return { selection: selectionForLookFor(groupClaim.owner), lookForKey: groupClaim.key };
   }
   const named = document.groups.find((group) => (group.sources ?? []).includes(source.id));
   if (named !== undefined) {
     return { selection: { kind: "group", id: named.id } };
+  }
+  const documentClaim = citing.find((claim) => claim.owner.kind === "document");
+  if (documentClaim !== undefined) {
+    return { selection: selectionForLookFor(documentClaim.owner), lookForKey: documentClaim.key };
   }
   return { selection: { kind: "overview" } };
 }

@@ -333,7 +333,8 @@ export function App() {
       if (meta === null) {
         return;
       }
-      const target = openTargetForSource(source, claims, meta.document);
+      const currentGroupId = selection?.kind === "group" ? selection.id : undefined;
+      const target = openTargetForSource(source, claims, meta.document, currentGroupId);
       setFocusLookForKey(target.lookForKey ?? null);
       if (target.commentId !== undefined) {
         setShowComments(true);
@@ -343,7 +344,7 @@ export function App() {
       }
       selectWithMotion(target.selection);
     },
-    [claims, meta, selectWithMotion],
+    [claims, meta, selectWithMotion, selection],
   );
   const sourcesHandle = useMemo(() => {
     const byId = new Map((meta?.document.sources ?? []).map((source) => [source.id, source]));
