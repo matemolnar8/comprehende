@@ -46,7 +46,7 @@ The what:
 `groupParts` topological-sorts `dependsOn` inside a part, then `suggestedOrder`.
 
 Look for:
-- If `login` lists `dependsOn: ["cookie"]` but has a lower suggestedOrder, the part list is still cookie then login.
+- Subtle. [cursor[bot]](source:s3) says part rank uses the first group after the dependsOn walk. If cookie has suggestedOrder 2 and login depends on cookie with suggestedOrder 0, a later independent part with suggestedOrder 1 can sort before that story.
 
 Hunk refs for this concern:
 - src/ui/lib/parts.ts @@ -3,7 +3,8 @@

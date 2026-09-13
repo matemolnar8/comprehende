@@ -33,13 +33,13 @@ Read the diff:
 
 git diff --find-renames 95879630ef53ba6bd6da25c6958a19fe06786fe0 e91cd52b349b2a9d148910cbd0b57f1145d4e2a0
 
-Review concern 04 of 06: Group pager and Needed by links (`pager`)
+Review concern 04 of 06: Group pager and Needed by (`pager`)
 
 Part: Story navigation
 
 The why:
 
-A human on a group needs a click target for the same hops the keys use.
+A human on a group needs a click target for the same hops the keys use. [The session](source:s4) names the dependents label Needed by.
 
 The what:
 
@@ -47,6 +47,7 @@ The what:
 
 Look for:
 - On the last group of a mixed review, the right control is Next part, not the next group of another story.
+- The dependents HopList label is Needed by, not Then.
 
 Depends on:
 - 02 Previous, next, and next part (`hops`)

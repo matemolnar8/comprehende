@@ -42,8 +42,11 @@ Commits:
 Sources:
 - ticket #69 Make existing part and dependsOn usable for navigation. Stay in a story. Hop independent parts. Keep those words.
   https://github.com/matemolnar8/comprehende/issues/69
-- pr PR #75 Existing fields drive reading order. No new grouping schema.
+- pr PR #75 Existing fields drive reading order. No new grouping schema. Dependents label is Needed by.
   https://github.com/matemolnar8/comprehende/pull/75
+- pr-comment cursor[bot] on PR #75 Part rank may follow the first group after the dependsOn walk, not the earliest suggestedOrder in the part.
+  https://github.com/matemolnar8/comprehende/pull/75#discussion_r3999143775
+- transcript Cursor session · Sep 13 Change the dependents UI label from Then to Needed by. Keep schema field names.
 
 The title:
 
@@ -55,11 +58,12 @@ The why:
 
 The what (small):
 
-`groupParts` reads a story in `dependsOn` order. `[` `]` stay in that part. `{` `}` open the next independent part. The group page and sidebar follow the same graph.
+`groupParts` reads a story in `dependsOn` order. `[` `]` stay in that part. `{` `}` open the next independent part. The group page links Depends on and Needed by, then a prev/next pager. The sidebar lists groups under each part.
 
 Look for:
 - [#69](source:s1) asks to stay inside one story. On the last group of a part, `]` does not open another part.
 - [#69](source:s1) keeps forge stacks and renaming groups to stacks out of scope. No hunk adds those schema fields.
+- [The session](source:s4) asks for Needed by as the dependents label. The live `GroupBrief` hunk uses that wording.
 
 ## Review concerns
 
@@ -87,7 +91,7 @@ Depends on:
 
 [groups/keys.md](groups/keys.md)
 
-### 04 Group pager and Needed by links (`pager`)
+### 04 Group pager and Needed by (`pager`)
 
 `StoryNav` is the prev/next row. `GroupBrief` links Depends on and Needed by, then renders that pager.
 
