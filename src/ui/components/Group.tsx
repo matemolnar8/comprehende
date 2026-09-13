@@ -102,7 +102,7 @@ export function Group(props: {
             <Brief kicker="Lockfiles" title="Generated lockfiles" />
           ) : (
             <Brief kicker="Unassigned" title="Not in any group">
-              <p className="font-display text-xl leading-relaxed text-foreground">
+              <p className="font-display text-lg leading-relaxed text-foreground">
                 These hunks are in git and in no group. Fix the review document. Never the diff.
               </p>
             </Brief>

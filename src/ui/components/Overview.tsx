@@ -38,7 +38,7 @@ export function Overview(props: {
             <Kicker id="review-why" className="mb-2">
               Why
             </Kicker>
-            <p className="mb-4 font-display text-base leading-relaxed text-pretty text-foreground min-[800px]:mb-6 min-[800px]:text-xl">
+            <p className="mb-4 font-display text-base leading-relaxed text-pretty text-foreground min-[800px]:mb-6 min-[800px]:text-lg">
               <InlineMd text={why} />
             </p>
           </>
