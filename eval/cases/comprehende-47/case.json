@@ -1,0 +1,22 @@
+{
+  "id": "comprehende-47",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 47,
+  "base": "0a0145dde8d0b4913e7b5037b9a56e223ca1a180",
+  "head": "00fb5fde78f6fded87d6bd217b425e7cc978455c",
+  "tags": ["schema", "ui", "skill", "comments"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 1, "max": 2 },
+    "size": ["large", "very-large"],
+    "sourceKinds": ["ticket", "pr-comment"],
+    "mechanicalPaths": ["skills-next/comprehende/references/review.schema.json"],
+    "together": [["src/schema/source.ts", "src/schema/parse.ts"]],
+    "apart": [["src/ui/components/SourceCite.tsx", "src/cli/commands.ts"]],
+    "claims": [
+      "validate fails on a source citation whose id is not in sources",
+      "old documents with tickets still parse and become ticket sources",
+      "a pr-comment with path, side, and line is pinned to live git"
+    ]
+  }
+}

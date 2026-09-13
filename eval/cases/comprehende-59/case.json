@@ -1,0 +1,14 @@
+{
+  "id": "comprehende-59",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 59,
+  "base": "ee0c6c0d32a18ee271d9a1947d5d21a2fc71cd7b",
+  "head": "75c9b51c279610d6940509e54678c11276ca7431",
+  "tags": ["ui"],
+  "expect": {
+    "why": "absent",
+    "parts": { "min": 1, "max": 3 },
+    "size": ["medium", "large"],
+    "together": [["src/ui/components/MobileShell.tsx", "src/ui/App.tsx"]]
+  }
+}

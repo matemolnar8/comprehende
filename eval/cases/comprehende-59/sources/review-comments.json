@@ -1,0 +1,15 @@
+[
+  {
+    "html_url": "https://github.com/matemolnar8/comprehende/pull/59#discussion_r3945003938",
+    "user": {
+      "login": "cursor[bot]"
+    },
+    "body": "### Viewed control shrinks on mobile\n\n**Medium Severity**\n\n<!-- DESCRIPTION START -->\nHiding the `Viewed` label with `max-[799px]:hidden` collapses the `<label>` to the `size-3.5` checkbox, so the tap target is only 14px on phones. Marking a file viewed is a primary review action and becomes easy to miss.\n<!-- DESCRIPTION END -->\n\n<!-- BUGBOT_BUG_ID: 9c44d6c8-96a7-452f-95e5-ef80eeb37cde -->\n\n<!-- LOCATIONS START\nsrc/ui/components/HunkView.tsx#L154-L163\nLOCATIONS END -->\n<div><a href=\"https://cursor.com/open?link=eyJ2ZXJzaW9uIjoxLCJ0eXBlIjoiQlVHQk9UX0ZJWF9JTl9DVVJTT1IiLCJkYXRhIjp7InJlZGlzS2V5IjoiYnVnYm90OjVkY2MzMDg0LTExYTUtNDg3ZC05NzVmLWJkM2JkMWIyNmVhYyIsImVuY3J5cHRpb25LZXkiOiJJYl9SWTVwM1VZTzdsc3BsenpmMUlXYWRkbmRrYWZ0d05maDR1YmFEWG1BIiwiYnJhbmNoIjoiY3Vyc29yL21vYmlsZS1sYXlvdXQtZGVzaWducy1kN2I3IiwicmVwb093bmVyIjoibWF0ZW1vbG5hcjgiLCJyZXBvTmFtZSI6ImNvbXByZWhlbmRlIiwicHJvdmlkZXIiOiJnaXRodWIifX0\" target=\"_blank\" rel=\"noopener noreferrer\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://cursor.com/assets/images/fix-in-cursor-dark.png\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://cursor.com/assets/images/fix-in-cursor-light.png\"><img alt=\"Fix in Cursor\" width=\"115\" height=\"28\" src=\"https://cursor.com/assets/images/fix-in-cursor-dark.png\"></picture></a>&nbsp;<a href=\"https://cursor.com/agents?link=eyJ2ZXJzaW9uIjoxLCJ0eXBlIjoiQlVHQk9UX0ZJWF9JTl9XRUIiLCJkYXRhIjp7InJlZGlzS2V5IjoiYnVnYm90OjVkY2MzMDg0LTExYTUtNDg3ZC05NzVmLWJkM2JkMWIyNmVhYyIsImVuY3J5cHRpb25LZXkiOiJJYl9SWTVwM1VZTzdsc3BsenpmMUlXYWRkbmRrYWZ0d05maDR1YmFEWG1BIiwiYnJhbmNoIjoiY3Vyc29yL21vYmlsZS1sYXlvdXQtZGVzaWducy1kN2I3IiwicmVwb093bmVyIjoibWF0ZW1vbG5hcjgiLCJyZXBvTmFtZSI6ImNvbXByZWhlbmRlIiwicHJOdW1iZXIiOjU5LCJjb21taXRTaGEiOiI3NWM5YjUxYzI3OTYxMGQ2OTQwNTA5ZTU0Njc4YzExMjc2Y2E3NDMxIiwicHJvdmlkZXIiOiJnaXRodWIifX0\" target=\"_blank\" rel=\"noopener noreferrer\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://cursor.com/assets/images/fix-in-web-dark.png\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://cursor.com/assets/images/fix-in-web-light.png\"><img alt=\"Fix in Web\" width=\"99\" height=\"28\" src=\"https://cursor.com/assets/images/fix-in-web-dark.png\"></picture></a></div>\n\n\n<sup>Reviewed by [Cursor Bugbot](https://cursor.com/bugbot) for commit 75c9b51c279610d6940509e54678c11276ca7431. Configure [here](https://www.cursor.com/dashboard/bugbot).</sup>\n",
+    "path": "src/ui/components/HunkView.tsx",
+    "side": "RIGHT",
+    "line": 162,
+    "original_line": 162,
+    "original_commit_id": "75c9b51c279610d6940509e54678c11276ca7431",
+    "commit_id": "75c9b51c279610d6940509e54678c11276ca7431"
+  }
+]

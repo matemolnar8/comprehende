@@ -1,0 +1,19 @@
+{
+  "id": "comprehende-67",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 67,
+  "base": "c7978bdc875cecaa6e396c724e48bac751b1e10b",
+  "head": "62f46c7abf557d7bc177a15e400d8f9861e35bd1",
+  "tags": ["pages"],
+  "expect": {
+    "why": "absent",
+    "parts": { "min": 1, "max": 2 },
+    "size": ["small", "medium"],
+    "sourceKinds": ["pr-comment"],
+    "together": [["scripts/pages-review.ts", "scripts/pages-review.test.ts"]],
+    "claims": [
+      "a rejected push retries by resetting to remote gh-pages and re-applying the review",
+      "the hosted URL 404s until GitHub Pages is enabled on the gh-pages branch"
+    ]
+  }
+}

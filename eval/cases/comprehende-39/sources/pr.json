@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/matemolnar8/comprehende/pull/39",
+  "number": 39,
+  "title": "Support linked worktrees in Git operations and hooks",
+  "body": "## Summary\n\n- Ignore inherited Git directory variables when running repository commands.\n- Resolve shared Git directories for linked worktrees and LFS objects.\n- Install hooks through `core.hooksPath` so each worktree uses its tracked hooks.\n- Add linked-worktree and hook behavior tests.\n- Pin package and skill references to version 0.5.2.\n\n## Testing\n\n- Added tests for Git commands with inherited `GIT_DIR` and `GIT_WORK_TREE`.\n- Added tests for linked-worktree indexing, repository naming, and Git LFS reads.\n- Added tests that verify hooks run from the active worktree.\n- Not run",
+  "user": {
+    "login": "matemolnar8"
+  },
+  "merged_at": "2026-08-27T19:53:08Z",
+  "merge_commit_sha": "54e4141743a04dc90bb20d3dd3be24d5895709a2",
+  "base": {
+    "ref": "main",
+    "sha": "c6aa69283f91c476d79ca9d7816dec9169fa0905"
+  },
+  "head": {
+    "ref": "feature/support-linked-worktrees",
+    "sha": "83c2b3f857fbf459921d1a3f57971090b0b9e4a2"
+  }
+}

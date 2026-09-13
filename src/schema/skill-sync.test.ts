@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { applyCliPin, cliPinErrors } from "./cli-pin.ts";
+import { applyCliPin, cliPinErrors, replaceCliPin } from "./cli-pin.ts";
 import { loadWorkingTreeSkillSync, skillSyncErrors, syncNextSkill } from "./skill-sync.ts";
 import { skillPaths } from "./skill-paths.ts";
 import { findPackageRoot } from "../package-root.ts";
@@ -120,6 +120,16 @@ describe("skill schema sync", () => {
         publishedSkillMd: "run the CLI",
       }),
       ["skills/comprehende/SKILL.md must pin npx comprehende@<version>"],
+    );
+  });
+});
+
+describe("replaceCliPin", () => {
+  it("rewrites every npx pin to a local node invocation", () => {
+    const md = "run `npx comprehende@0.7.0 index` then npx comprehende@0.7.0 validate";
+    assert.equal(
+      replaceCliPin(md, "node /tmp/cli/main.js"),
+      "run `node /tmp/cli/main.js index` then node /tmp/cli/main.js validate",
     );
   });
 });
