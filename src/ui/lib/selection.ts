@@ -2,7 +2,6 @@ import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import { padIndex } from "../../schema/types.ts";
 import type { ReviewMeta } from "../api.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type PartGroup } from "./parts.ts";
-import { readKey, writeKey } from "./storage.ts";
 
 export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: ReviewBucket };
 
@@ -23,39 +22,76 @@ export function defaultSelection(source: SelectionStackSource): Selection {
   return { kind: REVIEW_BUCKETS.unassigned };
 }
 
-export function selectionStorageKey(baseSha: string, headSha: string): string {
-  return `comprehende.group.${baseSha}.${headSha}`;
-}
+const GROUP_HASH_PREFIX = "group/";
 
-export function parseSelection(raw: string | null): Selection | null {
-  if (raw === null || raw === "") {
+export function parseHash(hash: string): Selection | null {
+  const trimmed = hash.startsWith("#") ? hash.slice(1) : hash;
+  const path = trimmed.replace(/^\/+/, "");
+  if (path === "") {
+    return null;
+  }
+  if (path === "overview") {
+    return { kind: "overview" };
+  }
+  if (path === REVIEW_BUCKETS.unassigned) {
+    return { kind: REVIEW_BUCKETS.unassigned };
+  }
+  if (path === REVIEW_BUCKETS.lockfiles) {
+    return { kind: REVIEW_BUCKETS.lockfiles };
+  }
+  if (!path.startsWith(GROUP_HASH_PREFIX)) {
+    return null;
+  }
+  const rawId = path.slice(GROUP_HASH_PREFIX.length);
+  if (rawId === "") {
     return null;
   }
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (typeof parsed !== "object" || parsed === null || !("kind" in parsed)) {
+    const id = decodeURIComponent(rawId);
+    if (id === "") {
       return null;
     }
-    if (parsed.kind === "overview") {
-      return { kind: "overview" };
-    }
-    if (parsed.kind === REVIEW_BUCKETS.unassigned) {
-      return { kind: REVIEW_BUCKETS.unassigned };
-    }
-    if (parsed.kind === REVIEW_BUCKETS.lockfiles) {
-      return { kind: REVIEW_BUCKETS.lockfiles };
-    }
-    if (parsed.kind === "group" && "id" in parsed && typeof parsed.id === "string" && parsed.id !== "") {
-      return { kind: "group", id: parsed.id };
-    }
-    return null;
+    return { kind: "group", id };
   } catch {
     return null;
   }
 }
 
-export function serializeSelection(selection: Selection): string {
-  return JSON.stringify(selection);
+export function serializeHash(selection: Selection): string {
+  if (selection.kind === "group") {
+    return `#${GROUP_HASH_PREFIX}${encodeURIComponent(selection.id)}`;
+  }
+  if (selection.kind === "overview") {
+    return "#overview";
+  }
+  return `#${selection.kind}`;
+}
+
+export function selectionFromHash(source: SelectionStackSource, hash: string): Selection {
+  return restoreSelection(source, parseHash(hash));
+}
+
+export function urlWithSelection(href: string, selection: Selection): string {
+  const url = new URL(href);
+  url.hash = serializeHash(selection);
+  return url.href;
+}
+
+export function hashWriteMode(
+  source: SelectionStackSource,
+  currentHash: string,
+  selection: Selection,
+  initialized: boolean,
+): "skip" | "replace" | "push" {
+  const parsed = parseHash(currentHash);
+  if (parsed !== null && sameSelection(parsed, selection)) {
+    return "skip";
+  }
+  const parsedIsLive = parsed !== null && sameSelection(restoreSelection(source, parsed), parsed);
+  if (!initialized || !parsedIsLive) {
+    return "replace";
+  }
+  return "push";
 }
 
 export function restoreSelection(source: SelectionStackSource, stored: Selection | null): Selection {
@@ -73,14 +109,6 @@ export function restoreSelection(source: SelectionStackSource, stored: Selection
     return defaultSelection(source);
   }
   return stored;
-}
-
-export function readStoredSelection(baseSha: string, headSha: string): Selection | null {
-  return parseSelection(readKey(sessionStorage, selectionStorageKey(baseSha, headSha)));
-}
-
-export function writeStoredSelection(baseSha: string, headSha: string, selection: Selection): void {
-  writeKey(sessionStorage, selectionStorageKey(baseSha, headSha), serializeSelection(selection));
 }
 
 /** Overview, then groups in part / dependsOn order. Unassigned and lockfiles stay off this walk. */

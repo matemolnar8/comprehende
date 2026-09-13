@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
+import { hashWriteMode, serializeHash } from "./selection.ts";
 import {
   claimsFromLookFor,
   lookForBuckets,
@@ -170,6 +171,19 @@ describe("lookForClaims", () => {
     assert.equal(lookForKey(owner, 0), "group:login:0");
     assert.deepEqual(selectionForLookFor(owner), { kind: "group", id: "login" });
     assert.deepEqual(selectionForLookFor({ kind: "document" }), { kind: "overview" });
+  });
+
+  it("pushes a live hash when a lookFor owner opens a group", () => {
+    const source = {
+      groups: [cookie, login, docs],
+      unassigned: { hunkCount: 0 },
+    };
+    const next = selectionForLookFor({ kind: "group", id: "login", title: "Login route", index: 2 });
+    assert.equal(serializeHash(next), "#group/login");
+    assert.equal(hashWriteMode(source, "#overview", next, true), "push");
+    const overview = selectionForLookFor({ kind: "document" });
+    assert.equal(serializeHash(overview), "#overview");
+    assert.equal(hashWriteMode(source, "#group/login", overview, true), "push");
   });
 });
 
