@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 95879630ef53ba6bd6da25c6958a19fe06786fe0` and `git rev-parse --verify e8f9455cedd00c1d9849edece23a810faeb25d51` in this repository.
+   Run `git rev-parse --verify 95879630ef53ba6bd6da25c6958a19fe06786fe0` and `git rev-parse --verify e8001407966c147fd9db26c1f4a8db24108c0ee8` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  95879630ef53ba6bd6da25c6958a19fe06786fe0
 
-head               e8f9455cedd00c1d9849edece23a810faeb25d51
+head               e8001407966c147fd9db26c1f4a8db24108c0ee8
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 95879630ef53ba6bd6da25c6958a19fe06786fe0 e8f9455cedd00c1d9849edece23a810faeb25d51
+git diff --find-renames 95879630ef53ba6bd6da25c6958a19fe06786fe0 e8001407966c147fd9db26c1f4a8db24108c0ee8
 
 Commits:
+- e800140 Move group nav into the header
 - 9587963 Merge pull request #74 from matemolnar8/cursor/writing-for-agents-skill-763a
 - 98d61ee Require writing-for-agents when editing the comprehende skill
 - 1f13a23 Install writing-for-agents from mattpocock/skills
@@ -41,11 +42,13 @@ Commits:
 Sources:
 - ticket #70 Add next and previous across existing groups in document order. Keyboard, chrome, or both. No tour type, no walkthrough script, no chat.
   https://github.com/matemolnar8/comprehende/issues/70
-- pr PR #73 Walk overview then groups. Desktop bar and mobile chevrons. Unassigned and lockfiles stay off the path.
+- pr PR #73 Walk overview then groups. Icon chevrons in the existing header. Unassigned and lockfiles stay off the path.
   https://github.com/matemolnar8/comprehende/pull/73
-- transcript Cursor session · Sep 13 Ship a focused first version humans can try. Walk existing groups only. Do not edit the comprehende skill unless required.
+- transcript Cursor session · Sep 13 Ship next and previous on existing groups. After review, drop the bottom bar. Keep keyboard and compact chrome that does not steal a row of the stage.
 - commit e8f9455 Walk overview then groups from keyboard and chrome. Unassigned and lockfiles stay off the path. The walk does not wrap.
   https://github.com/matemolnar8/comprehende/commit/e8f9455cedd00c1d9849edece23a810faeb25d51
+- commit e800140 The bottom bar stole a row of the stage. Previous and next are icon-only controls in the existing header.
+  https://github.com/matemolnar8/comprehende/commit/e8001407966c147fd9db26c1f4a8db24108c0ee8
 
 The title:
 
@@ -57,11 +60,12 @@ The why:
 
 The what (small):
 
-`groupWalk` orders overview then groups. `GroupNav` and `[` `]` step that walk and stop at the ends.
+`groupWalk` orders overview then groups. Header and mobile chevrons, and `[` `]`, step that walk and stop at the ends.
 
 Look for:
 - [#70](source:s1) says walk existing groups only. Overview is on the walk so Next works from the start page. Unassigned and lockfiles are not.
-- [#70](source:s1) allows keyboard, chrome, or both. This diff ships both. It does not add a tour document type.
+- [#70](source:s1) allows keyboard, chrome, or both. This diff ships `[` `]` and header chevrons. It does not add a tour document type.
+- The later request in [this session](source:s3) drops the bottom bar. `ReviewStage.tsx` is unchanged versus main. `GroupNav` mounts in `Header` and `MobileShell`.
 
 ## Review concerns
 
@@ -71,9 +75,9 @@ Look for:
 
 [groups/walk.md](groups/walk.md)
 
-### 02 Previous and next chrome (`chrome`)
+### 02 Header and mobile chevrons (`chrome`)
 
-`GroupNav` shows neighbor titles. `ReviewStage` mounts the bar. `MobileShell` mounts the chevrons.
+`GroupNav` is icon-only. `Header` and `MobileShell` mount it. `App` passes selection into `Header`.
 
 Depends on:
 - 01 Neighbor walk (`walk`)
