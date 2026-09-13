@@ -8,10 +8,13 @@ import {
   type LookForClaim,
   type LookForTag,
 } from "../lib/look-for.ts";
-import { HashLink, hashLinkText } from "./HashLink.tsx";
+import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kicker } from "./Kicker.tsx";
 import styles from "./LookForList.module.css";
+
+const indexRowClass =
+  "-mx-2 flex w-[calc(100%+1rem)] min-w-0 items-baseline gap-2 rounded-sm px-2 py-1.5 hover:bg-accent";
 
 export function LookForList(props: {
   claims: readonly LookForClaim[];
@@ -114,7 +117,7 @@ export function LookForIndex(props: {
                   open={documentOpen}
                   onToggle={(event) => setDocumentOpen(event.currentTarget.open)}
                 >
-                  <summary className={cn(styles.summary, "flex cursor-pointer items-baseline gap-2 py-1.5")}>
+                  <summary className={cn(styles.summary, indexRowClass, "cursor-pointer")}>
                     <ChevronRightIcon
                       aria-hidden
                       className={cn(styles.chevron, "size-3 shrink-0 translate-y-[0.15em] text-muted-foreground")}
@@ -136,10 +139,10 @@ export function LookForIndex(props: {
               <HashLink
                 selection={selectionForLookFor(bucket.owner)}
                 onSelect={() => onOpen?.(first)}
-                className="flex w-full min-w-0 items-baseline gap-2 py-1.5"
+                className={indexRowClass}
                 ariaLabel={`Open ${lookForOwnerLabel(bucket.owner)}, ${bucket.claims.length} look for`}
               >
-                <BucketLabel bucket={bucket} link />
+                <BucketLabel bucket={bucket} />
               </HashLink>
             </li>
           );
@@ -151,17 +154,11 @@ export function LookForIndex(props: {
 
 function BucketLabel(props: {
   bucket: { owner: LookForClaim["owner"]; claims: readonly LookForClaim[]; tags: readonly LookForTag[] };
-  link?: boolean;
 }) {
-  const { bucket, link = false } = props;
+  const { bucket } = props;
   return (
     <>
-      <span
-        className={cn(
-          "min-w-0 flex-1 truncate text-left font-mono text-[11px] tracking-wide text-foreground",
-          link && hashLinkText,
-        )}
-      >
+      <span className="min-w-0 flex-1 truncate text-left font-mono text-[11px] tracking-wide text-foreground">
         {lookForOwnerLabel(bucket.owner)}
       </span>
       <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">{bucket.claims.length}</span>
