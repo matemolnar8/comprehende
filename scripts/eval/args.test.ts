@@ -18,6 +18,17 @@ describe("eval argv", () => {
     });
   });
 
+  it("defaults to composer producer and grok grader", () => {
+    assert.equal(DEFAULT_PRODUCER_MODEL, "composer-2.5");
+    assert.equal(DEFAULT_GRADER_MODEL, "grok-4.6");
+    const req = parseEvalArgv([]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.producerModel, "composer-2.5");
+      assert.equal(req.graderModel, "grok-4.6");
+    }
+  });
+
   it("rejects unknown options", () => {
     assert.equal(parseEvalArgv(["--nope"]).kind, "error");
   });
