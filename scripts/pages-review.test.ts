@@ -298,6 +298,6 @@ async function writeExport(root: string, name: string, body: string): Promise<st
 
 async function checkoutPages(ctx: RemoteRepo): Promise<string> {
   const dest = join(ctx.root, `pages-${crypto.randomUUID()}`);
-  await git(ctx.root, ["clone", "--branch", "gh-pages", "--single-branch", ctx.bare, dest]);
+  await git(ctx.root, ["clone", "--no-local", "--branch", "gh-pages", "--single-branch", ctx.bare, dest]);
   return dest;
 }
