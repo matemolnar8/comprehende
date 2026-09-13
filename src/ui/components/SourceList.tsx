@@ -38,7 +38,7 @@ export function SourceList(props: {
             selectionForSource !== undefined &&
             (source.url === undefined || detail !== undefined);
           return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2 overflow-hidden py-1 leading-[1.45]">
+            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1 leading-[1.45]">
               {strand !== undefined ? (
                 <span
                   aria-hidden
@@ -62,18 +62,18 @@ export function SourceList(props: {
                 <HashLink
                   selection={selectionForSource(source)}
                   onSelect={() => onOpenSource(source)}
-                  className="flex min-w-0 flex-1 items-baseline gap-2 overflow-hidden"
+                  className="flex min-w-0 flex-1 items-baseline gap-2"
                   ariaLabel={`Open ${source.label} in the review`}
                 >
                   {source.url === undefined ? (
                     <span className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}>{source.label}</span>
                   ) : null}
                   {detail !== undefined ? (
-                    <span className="min-w-0 flex-1 truncate font-normal text-muted-foreground">{detail}</span>
+                    <span className="min-w-0 flex-1 text-pretty font-normal text-muted-foreground">{detail}</span>
                   ) : null}
                 </HashLink>
               ) : detail !== undefined ? (
-                <span className="min-w-0 flex-1 truncate text-muted-foreground">{detail}</span>
+                <span className="min-w-0 flex-1 text-pretty text-muted-foreground">{detail}</span>
               ) : null}
             </li>
           );
