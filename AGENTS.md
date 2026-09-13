@@ -76,6 +76,8 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 Skill edits go in `skills-next/comprehende/`. `pnpm release:skill` writes `skills/comprehende/` and `pnpm sync:skill` writes `.agents/skills/comprehende/`. Leave both alone. Edit source under `src/` normally.
 
+Whenever you create or edit `skills-next/comprehende/SKILL.md`, or run `pnpm release:skill` or `pnpm sync:skill`, read and follow the `writing-for-agents` skill first.
+
 Component look lives on the component. Tailwind first. If a bit of CSS is required, colocate it with that component using a CSS module. A component must not import a global stylesheet. Do not add descendant selectors in `styles.css` to style markup a component already owns. `styles.css` holds globals such as variables and themes. Exception: `src/ui/lib/gap-style.ts` may use descendant selectors to style Pierre markup.
 
 If the UI already shows the state, do not add a sentence that narrates it.
