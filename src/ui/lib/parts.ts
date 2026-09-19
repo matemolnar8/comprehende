@@ -13,6 +13,16 @@ export type Part = {
   groupIds: string[];
 };
 
+export function partSummary(
+  listed: readonly { name: string; summary: string }[] | undefined,
+  name: string | undefined,
+): string | undefined {
+  if (name === undefined) {
+    return undefined;
+  }
+  return listed?.find((item) => item.name === name)?.summary;
+}
+
 export function groupParts(groups: readonly PartGroup[]): Part[] {
   const byId = new Map(groups.map((group, index) => [group.id, { group, index }] as const));
   const named = groups.some((group) => group.part !== undefined);

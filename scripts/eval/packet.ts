@@ -17,6 +17,11 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     `Size: ${document.size}`,
     `Why: ${document.why ?? "(omitted)"}`,
     `Summary: ${document.summary}`,
+  ];
+  if (document.parts !== undefined && document.parts.length > 0) {
+    parts.push(`Parts:\n${document.parts.map((part) => `- ${part.name}: ${part.summary}`).join("\n")}`);
+  }
+  parts.push(
     lookForBlock("Document lookFor", document.lookFor),
     "",
     "## Sources in the review document",
@@ -31,7 +36,7 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     "",
     "## Groups",
     "",
-  ];
+  );
   const groups = [...document.groups].sort((a, b) => a.suggestedOrder - b.suggestedOrder || a.id.localeCompare(b.id));
   for (const group of groups) {
     const payload = hunksPayload(ctx, group.id);

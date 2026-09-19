@@ -4,7 +4,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
-- Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. The why cites the ticket with `[#12](source:s1)`.
+- Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and one claim about the whole change. Both cite `[#12](source:s1)`. Group `lookFor` stays inside its hunks.
 
@@ -20,6 +20,16 @@ Pointers and prose only. The `@@` numbers must come from `comprehende index`, no
   "title": "HttpOnly session cookies",
   "why": "[#12](source:s1) requires login sessions that client scripts cannot read.",
   "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it. The README documents this behavior.",
+  "parts": [
+    {
+      "name": "Session cookie",
+      "summary": "`setSessionCookie` applies HttpOnly cookie options, and the login route uses it."
+    },
+    {
+      "name": "README",
+      "summary": "The README documents the new session cookie behavior."
+    }
+  ],
   "sources": [
     {
       "id": "s1",

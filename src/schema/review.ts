@@ -144,6 +144,14 @@ const groupSchema = z.strictObject(
   { error: objectError },
 );
 
+const reviewPartSchema = z.strictObject(
+  {
+    name: nonemptyString("Short name of the independent story. Same string as group part."),
+    summary: nonemptyString("One sentence: what this independent story is."),
+  },
+  { error: objectError },
+);
+
 // TODO: drop legacy tickets support in 0.7.0; use sources instead.
 const legacyTicketSchema = z.strictObject(
   {
@@ -178,6 +186,13 @@ const reviewDocumentObject = z
       lookFor: stringList(
         "Whole-change and missing-work claims. Cite the source. Do not store a pass/fail.",
       ),
+      parts: z
+        .array(reviewPartSchema, { error: "must be an array" })
+        .optional()
+        .meta({
+          description:
+            "One entry per independent story when groups use part. name matches group part. summary is that story's one-sentence what.",
+        }),
       groups: z.array(groupSchema, { error: "must be an array" }),
     },
     { error: objectError },
@@ -254,6 +269,37 @@ function documentRules(ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInp
   for (const error of sourceCitationErrors({ ...rest, sources })) {
     addIssue(ctx, error);
   }
+  collectPartNameErrors(ctx, document);
+}
+
+function collectPartNameErrors(
+  ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInput>>,
+  document: z.infer<typeof reviewDocumentInput>,
+): void {
+  const used = new Set<string>();
+  for (const group of document.groups) {
+    if (group.part !== undefined) {
+      used.add(group.part);
+    }
+  }
+  const listed = document.parts ?? [];
+  const listedNames = new Set<string>();
+  for (const item of listed) {
+    if (listedNames.has(item.name)) {
+      addIssue(ctx, `duplicate parts name "${item.name}"`);
+    }
+    listedNames.add(item.name);
+  }
+  for (const name of used) {
+    if (!listedNames.has(name)) {
+      addIssue(ctx, `part "${name}" has no matching parts[] entry`);
+    }
+  }
+  for (const item of listed) {
+    if (!used.has(item.name)) {
+      addIssue(ctx, `parts name "${item.name}" is not used by any group`);
+    }
+  }
 }
 
 function collectDuplicateIds(ctx: z.core.ParsePayload<unknown>, ids: string[], kind: "source" | "group"): void {
@@ -270,6 +316,7 @@ export type HunkRef = z.infer<typeof hunkRefSchema>;
 export type ReviewSource = z.infer<typeof reviewSourceSchema>;
 export type Source = z.infer<typeof sourceSchema>;
 export type ReviewGroup = z.infer<typeof groupSchema>;
+export type ReviewPart = z.infer<typeof reviewPartSchema>;
 export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
 
 export function reviewJsonSchema(): Record<string, unknown> {

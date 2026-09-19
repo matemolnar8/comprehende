@@ -253,6 +253,9 @@ function documentFields(document: ReviewDocument): { where: string; text: string
   for (const bullet of document.lookFor ?? []) {
     fields.push({ where: "document lookFor", text: bullet });
   }
+  for (const part of document.parts ?? []) {
+    fields.push({ where: `part ${part.name} summary`, text: part.summary });
+  }
   for (const group of document.groups) {
     fields.push({ where: `group ${group.id} title`, text: group.title });
     fields.push({ where: `group ${group.id} why`, text: group.why });

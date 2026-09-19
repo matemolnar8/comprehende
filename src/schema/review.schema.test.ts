@@ -21,6 +21,7 @@ describe("review JSON Schema", () => {
     assert.ok(isRecord(schema.$defs.hunkRef));
     assert.equal(schema.$defs.hunkRef.additionalProperties, false);
     assert.ok(isRecord(schema.properties));
+    assert.ok("parts" in schema.properties);
     assert.equal("tickets" in schema.properties, false);
   });
 });
