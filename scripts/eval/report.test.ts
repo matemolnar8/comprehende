@@ -32,6 +32,7 @@ describe("eval HTML report", () => {
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
       producerModel: "composer-2.5",
       graderModel: "grok-4.6",
+      graders: true,
       cases: [
         caseResult({
           id: "comprehende-50",
@@ -75,6 +76,19 @@ describe("eval HTML report", () => {
     assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.match(html, /Invented &lt;why&gt;\./);
     assert.doesNotMatch(html, /comprehende-57\/site/);
+  });
+
+  it("labels a smoke run with graders off", () => {
+    const html = evalReportHtml({
+      stamp: "2026-09-20T21-00-00-000Z",
+      skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
+      producerModel: "composer-2.5",
+      graderModel: "grok-4.6",
+      graders: false,
+      cases: [caseResult({ id: "comprehende-50" })],
+    });
+    assert.match(html, /graders off/);
+    assert.doesNotMatch(html, /grader grok-4\.6/);
   });
 
   it("escapes HTML characters", () => {

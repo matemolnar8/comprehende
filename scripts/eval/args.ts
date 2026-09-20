@@ -2,7 +2,7 @@ import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
-Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks and two read-only graders then score the result. LLM findings do not change the exit code.
+Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. Two read-only graders also score unless --no-graders. LLM findings do not change the exit code.
 
 Options:
   --case <id>             Run this case (repeatable)
@@ -11,10 +11,11 @@ Options:
   --json                  Also print summary.json to stdout
   --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
+  --no-graders            Skip grouping and prose graders
   --sandbox               Enable local sandboxOptions
   -h, --help
 
-Needs CURSOR_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 only when a deterministic check fails.
+Needs CURSOR_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -38,6 +39,7 @@ export type EvalRunRequest =
       json: boolean;
       producerModel: string;
       graderModel: string;
+      graders: boolean;
       sandbox: boolean;
     };
 
@@ -59,6 +61,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let graderModel = DEFAULT_GRADER_MODEL;
     let json = false;
     let sandbox = false;
+    let graders = true;
     for (let i = 0; i < args.length; i += 1) {
       const arg = args[i];
       if (arg === undefined) {
@@ -70,6 +73,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       if (arg === "--sandbox") {
         sandbox = true;
+        continue;
+      }
+      if (arg === "--no-graders") {
+        graders = false;
         continue;
       }
       if (arg === "--case" || arg === "--tag" || arg === "--baseline" || arg === "--producer-model" || arg === "--grader-model") {
@@ -93,7 +100,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       throw new Error(`Unknown option: ${arg}`);
     }
-    return { kind: "run", ids, tag, baseline, json, producerModel, graderModel, sandbox };
+    return { kind: "run", ids, tag, baseline, json, producerModel, graderModel, graders, sandbox };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }

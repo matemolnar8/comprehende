@@ -27,6 +27,7 @@ export type RunSummary = {
   skillTree: string;
   producerModel: string;
   graderModel: string;
+  graders: boolean;
   cases: CaseResult[];
 };
 
@@ -63,8 +64,12 @@ export function formatCaseLine(result: CaseResult): string {
   if (result.claims !== undefined) {
     bits.push(`claims ${result.claims.stated}/${result.claims.total}`);
   }
-  bits.push(findingCounts("grouping", result.grouping));
-  bits.push(findingCounts("prose", result.prose));
+  if (result.grouping !== undefined) {
+    bits.push(findingCounts("grouping", result.grouping));
+  }
+  if (result.prose !== undefined) {
+    bits.push(findingCounts("prose", result.prose));
+  }
   if (result.artifactError !== undefined) {
     bits.push("artifact FAIL");
   }

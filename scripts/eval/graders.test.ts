@@ -51,6 +51,30 @@ describe("eval result line", () => {
     assert.match(line, /4m12s/);
   });
 
+  it("omits grader counts when graders did not run", () => {
+    const line = formatCaseLine({
+      id: "comprehende-50",
+      ok: true,
+      durationMs: 12_000,
+      tokens: 800,
+      checks: {
+        failures: [],
+        dirtyWorktree: false,
+        why: "present",
+        parts: 2,
+        size: "small",
+        togetherOk: 0,
+        togetherTotal: 0,
+        apartOk: 0,
+        apartTotal: 0,
+      },
+    });
+    assert.match(line, /comprehende-50/);
+    assert.match(line, /validate ok/);
+    assert.doesNotMatch(line, /grouping/);
+    assert.doesNotMatch(line, /prose/);
+  });
+
   it("does not fail the case when only an artifact step throws", () => {
     const result: CaseResult = {
       id: "comprehende-47",

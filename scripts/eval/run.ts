@@ -64,6 +64,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     skillTree,
     producerModel: request.producerModel,
     graderModel: request.graderModel,
+    graders: request.graders,
     cases: [],
   };
   for (const item of selected) {
@@ -75,6 +76,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       skillMd,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
+      graders: request.graders,
       sandbox: request.sandbox,
       apiKey,
     });
@@ -101,6 +103,7 @@ async function evalOneCase(opts: {
   skillMd: string;
   producerModel: string;
   graderModel: string;
+  graders: boolean;
   sandbox: boolean;
   apiKey: string;
 }): Promise<CaseResult> {
@@ -179,7 +182,7 @@ async function evalOneCase(opts: {
       } catch (error) {
         result.validateError ??= error instanceof Error ? error.message : String(error);
       }
-      if (document !== undefined) {
+      if (document !== undefined && opts.graders) {
         try {
           const ctx = await openReview(repoCwd, document);
           const packetPath = join(caseOut, "packet.md");

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseAddCaseArgv, parseEvalArgv } from "./args.ts";
+import { EVAL_USAGE, parseAddCaseArgv, parseEvalArgv } from "./args.ts";
 import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 describe("eval argv", () => {
@@ -14,6 +14,7 @@ describe("eval argv", () => {
       json: true,
       producerModel: DEFAULT_PRODUCER_MODEL,
       graderModel: DEFAULT_GRADER_MODEL,
+      graders: true,
       sandbox: true,
     });
   });
@@ -26,11 +27,26 @@ describe("eval argv", () => {
     if (req.kind === "run") {
       assert.equal(req.producerModel, "composer-2.5");
       assert.equal(req.graderModel, "grok-4.6");
+      assert.equal(req.graders, true);
+    }
+  });
+
+  it("parses --no-graders", () => {
+    const req = parseEvalArgv(["--tag", "smoke", "--no-graders"]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.tag, "smoke");
+      assert.equal(req.graders, false);
+      assert.equal(req.graderModel, DEFAULT_GRADER_MODEL);
     }
   });
 
   it("rejects unknown options", () => {
     assert.equal(parseEvalArgv(["--nope"]).kind, "error");
+  });
+
+  it("documents --no-graders in usage", () => {
+    assert.match(EVAL_USAGE, /--no-graders/);
   });
 
   it("parses add-case --pr", () => {
