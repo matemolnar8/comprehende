@@ -19,6 +19,7 @@
     "eval": "pnpm build && tsx scripts/eval/run.ts",
     "eval:add": "tsx scripts/eval/add-case.ts",
     "fixture": "tsx scripts/build-fixture.ts",
+    "fixture:smoke": "tsx scripts/fixture-smoke.ts",
     "generate:schema": "tsx scripts/generate-review-schema.ts",
     "sync:skill": "tsx scripts/sync-skill.ts",
     "release:skill": "tsx scripts/sync-skill.ts --release",
