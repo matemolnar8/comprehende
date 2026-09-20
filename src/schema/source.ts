@@ -50,6 +50,9 @@ export function documentCitationRefs(document: ReviewDocument): CitationRef[] {
   (document.lookFor ?? []).forEach((item, j) => {
     add(`lookFor[${j}]`, item);
   });
+  (document.parts ?? []).forEach((part, i) => {
+    add(`parts[${i}].summary`, part.summary);
+  });
   document.groups.forEach((group, i) => {
     add(`groups[${i}].why`, group.why);
     add(`groups[${i}].summary`, group.summary);

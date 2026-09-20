@@ -8,6 +8,7 @@ import {
   isMixedReview,
   PART_PALETTE_SIZE,
   partColor,
+  partSummary,
 } from "./parts.ts";
 
 describe("groupParts", () => {
@@ -134,5 +135,18 @@ describe("groupParts", () => {
     assert.equal(dependsOnDepth(groups, "cookie", ids), 0);
     assert.equal(dependsOnDepth(groups, "login", ids), 1);
     assert.equal(dependsOnDepth(groups, "tests", ids), 2);
+  });
+});
+
+describe("partSummary", () => {
+  it("returns the listed summary for a titled part and nothing when the name is missing", () => {
+    const listed = [
+      { name: "Session cookie", summary: "`setSessionCookie` applies HttpOnly options, and login uses it." },
+      { name: "README", summary: "The README documents the new cookie behavior." },
+    ];
+    assert.equal(partSummary(listed, "README"), "The README documents the new cookie behavior.");
+    assert.equal(partSummary(listed, "Auth"), undefined);
+    assert.equal(partSummary(listed, undefined), undefined);
+    assert.equal(partSummary(undefined, "README"), undefined);
   });
 });

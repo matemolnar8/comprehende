@@ -90,12 +90,13 @@ describe("documentCitationRefs", () => {
         why: "[one](source:s1)",
         summary: "[two](source:s2)",
         lookFor: ["[four](source:s4)"],
+        parts: [{ name: "Flags", summary: "[five](source:s5)" }],
         groups: [{ ...group, why: "[three](source:s3)", summary: "plain" }],
       }),
     );
     assert.deepEqual(
       refs.map((ref) => `${ref.where}:${ref.id}`),
-      ["why:s1", "summary:s2", "lookFor[0]:s4", "groups[0].why:s3"],
+      ["why:s1", "summary:s2", "lookFor[0]:s4", "parts[0].summary:s5", "groups[0].why:s3"],
     );
   });
 });

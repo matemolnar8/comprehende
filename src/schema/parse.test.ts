@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { describe, it } from "node:test";
-import { parseReviewDocument } from "./parse.ts";
+import { parseReviewDocument, parseReviewJson } from "./parse.ts";
+import { skillPaths } from "./skill-paths.ts";
+import { findPackageRoot } from "../package-root.ts";
 import { addedSymbols, hunkRangeLabel } from "./hunk-meta.ts";
 
 describe("parseReviewDocument", () => {
@@ -62,7 +66,43 @@ describe("parseReviewDocument", () => {
     }
   });
 
-  it("accepts a part name on a group", () => {
+  it("accepts a part name on a group when parts[] matches", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      parts: [{ name: "Flags", summary: "Adds CLI flags for the review command." }],
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          part: "Flags",
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+        {
+          id: "g2",
+          title: "Help text",
+          why: "The flag names belong in the help text.",
+          summary: "Documents the new flags.",
+          part: "Flags",
+          suggestedOrder: 1,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.document.groups[0]?.part, "Flags");
+      assert.equal(result.document.parts?.[0]?.summary, "Adds CLI flags for the review command.");
+    }
+  });
+
+  it("rejects a named group part with no parts[] entry", () => {
     const result = parseReviewDocument({
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
@@ -81,9 +121,72 @@ describe("parseReviewDocument", () => {
         },
       ],
     });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /part "Flags" has no matching parts\[\] entry/);
+    }
+  });
+
+  it("rejects an unused parts[] name, a duplicate name, and an empty summary", () => {
+    const group = {
+      id: "g1",
+      title: "CLI",
+      why: "The command is how an agent starts a review.",
+      summary: "Adds a command.",
+      part: "Flags",
+      suggestedOrder: 0,
+      hunkRefs: [],
+    };
+    const base = {
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+    };
+    const unused = parseReviewDocument({
+      ...base,
+      parts: [{ name: "Orphan", summary: "This story is not in any group." }],
+      groups: [{ ...group, part: undefined }],
+    });
+    assert.equal(unused.ok, false);
+    if (!unused.ok) {
+      assert.match(unused.errors.join("\n"), /parts name "Orphan" is not used by any group/);
+    }
+
+    const dup = parseReviewDocument({
+      ...base,
+      parts: [
+        { name: "Flags", summary: "Adds CLI flags." },
+        { name: "Flags", summary: "Adds CLI flags again." },
+      ],
+      groups: [group],
+    });
+    assert.equal(dup.ok, false);
+    if (!dup.ok) {
+      assert.match(dup.errors.join("\n"), /duplicate parts name "Flags"/);
+    }
+
+    const empty = parseReviewDocument({
+      ...base,
+      parts: [{ name: "Flags", summary: "   " }],
+      groups: [group],
+    });
+    assert.equal(empty.ok, false);
+    if (!empty.ok) {
+      assert.match(empty.errors.join("\n"), /parts\[0\]\.summary must be a non-empty string/);
+    }
+  });
+
+  it("accepts the skill example document", async () => {
+    const md = await readFile(join(skillPaths(findPackageRoot()).nextSkill, "references/example.md"), "utf8");
+    const match = md.match(/```json\n([\s\S]*?)\n```/);
+    assert.ok(match?.[1]);
+    const result = parseReviewJson(match[1]);
     assert.equal(result.ok, true);
     if (result.ok) {
-      assert.equal(result.document.groups[0]?.part, "Flags");
+      assert.equal(result.document.parts?.length, 2);
+      assert.equal(result.document.parts?.[0]?.name, "Session cookie");
     }
   });
 

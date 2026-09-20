@@ -4,7 +4,7 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { claimsFromLookFor } from "../lib/look-for.ts";
-import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
@@ -62,6 +62,7 @@ export function Overview(props: {
             parts={parts}
             mixed={mixed}
             groups={meta.groups}
+            listedParts={meta.document.parts}
             byId={byId}
             onOpenGroup={onOpenGroup}
           />
@@ -76,12 +77,14 @@ function PartColumn(props: {
   parts: Part[];
   mixed: boolean;
   groups: ReviewMeta["groups"];
+  listedParts: ReviewMeta["document"]["parts"];
   byId: Map<string, ReviewMeta["groups"][number]>;
   onOpenGroup: (id: string) => void;
 }) {
-  const { part, mixed, groups, byId, onOpenGroup } = props;
+  const { part, mixed, groups, listedParts, byId, onOpenGroup } = props;
   const color = partColor(part.colorIndex);
   const firstId = part.groupIds[0];
+  const summary = partSummary(listedParts, part.title);
   return (
     <section
       className={cn("min-w-0", mixed && "rounded-md border border-border py-2")}
@@ -89,15 +92,22 @@ function PartColumn(props: {
       aria-label={part.title}
     >
       {mixed && part.title !== undefined && firstId !== undefined ? (
-        <HashLink
-          selection={{ kind: "group", id: firstId }}
-          onSelect={() => onOpenGroup(firstId)}
-          className="mb-1 flex w-full items-center gap-2 px-4 pt-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
-          ariaLabel={`Open part ${part.title}`}
-        >
-          <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-          <span>{part.title}</span>
-        </HashLink>
+        <header className="mb-1 px-4 pt-2">
+          <HashLink
+            selection={{ kind: "group", id: firstId }}
+            onSelect={() => onOpenGroup(firstId)}
+            className="flex w-full items-center gap-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
+            ariaLabel={`Open part ${part.title}`}
+          >
+            <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            <span>{part.title}</span>
+          </HashLink>
+          {summary !== undefined ? (
+            <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
+              <InlineMd text={summary} />
+            </span>
+          ) : null}
+        </header>
       ) : null}
       <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
         {part.groupIds.map((id) => {
