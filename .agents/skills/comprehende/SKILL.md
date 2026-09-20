@@ -27,12 +27,11 @@ The review document is interpretation only. It holds a title, groups, summaries,
 
    Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
 2. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-3. Run `npx comprehende@0.8.0 index [--base <ref>] [--head <ref>]` and keep the JSON outside the work tree (stdout or a temp file). Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The index lists hunk refs (path plus `@@` ranges), image files (`oldStart` and `newStart` 0), and `skipped` (lockfiles and non-image binaries). It carries no line content.
-4. Recover the why, write the title, write the what, and compare the sources with the diff. Read the sources listed under The why and The title, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when a source names work to check against the diff; see lookFor). Summaries come from the code, not the log. Done when every piece of work a source names is either in the diff or in a document `lookFor` bullet.
-5. Group the hunks by review concern, following the Grouping rules. Done when every hunk ref from the index appears in at least one group, every group has its `why`, and every named `part` has a matching document `parts[]` entry.
-6. Write `review.json` in a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Copy hunk objects verbatim from the index. Set document `size` from review burden, not `git diff --stat`.
-7. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
-8. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.8.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+3. Write a covering skeleton. `$REVIEW_DIR` is a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Run `npx comprehende@0.8.0 review [--base <ref>] [--head <ref>] --data "$REVIEW_DIR/review.json"`. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The command indexes live git and writes every hunk ref into one group, with stub prose. It does not invent a review. Done when that file exists. Keep those hunk refs; do not invent replacements.
+4. Recover the why, write the title, write the what, and compare the sources with the diff. Read the sources listed under The why and The title, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when a source names work to check against the diff; see lookFor). Summaries come from the code, not the log. Replace the stub title and summary. Done when every piece of work a source names is either in the diff or in a document `lookFor` bullet.
+5. Group the hunks by review concern, following the Grouping rules. Split the covering group. Copy hunk objects from the skeleton; do not invent refs. Set document `size` from review burden, not `git diff --stat`. Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Done when every hunk ref from the skeleton appears in at least one group, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry.
+6. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
+7. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.8.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 ## Export
 
@@ -42,7 +41,7 @@ Write a static site and put that folder where they asked.
 npx comprehende@0.8.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
 ```
 
-`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is not written yet, finish the Workflow through validate, then export.
+`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is still a skeleton, finish the Workflow through validate, then export.
 
 ## The title
 
@@ -85,11 +84,11 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Mechanical work (import reordering, identifier-only renames, generated code, formatting, type re-exports) is its own group that keeps every hunk as refs, risk visible rather than folded into a file list. When it exists only because of a story, it is that part's last group with nothing depending on it. When it could have been its own PR, it is its own part.
 - `suggestedOrder` walks the whole review, independent parts included. Mechanical parts, independent documentation, and test-only cleanup go last.
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`; three files rewriting a contract the rest of the system hangs on can be `large`.
-- Coverage: every hunk from the index sits in at least one group; duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI.
-- Lockfiles stay in `skipped`; the UI gives them their own closed bucket. Hunk refs exist only for hunks the index lists.
-- Stale refs (rebase of the pinned commits) fail `validate`; `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `index` and copy fresh refs. A dirty work tree does not make refs stale.
+- Coverage: every hunk from the skeleton sits in at least one group; duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI.
+- Lockfiles stay in `skipped`; the UI gives them their own closed bucket. Hunk refs exist only for hunks the skeleton lists.
+- Stale refs (rebase of the pinned commits) fail `validate`; `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `review` and copy fresh refs. A dirty work tree does not make refs stale.
 
-Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the index. Image files are hunks; copy their refs into groups. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
+Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the skeleton. Image files are hunks; copy their refs into groups. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
 
 ## lookFor
 

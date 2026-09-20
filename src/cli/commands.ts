@@ -1,8 +1,11 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { readHunkIndex, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
+import { skeletonDocument } from "../review/skeleton.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
 
@@ -15,6 +18,20 @@ export async function cmdIndex(cwd: string, base: string | undefined, head: stri
 
 export function resolveOutPath(out: string | undefined, cwd: string): string {
   return resolveCliPath(out, cwd, "--out <dir>");
+}
+
+export async function cmdReview(
+  cwd: string,
+  dataPath: string,
+  base: string | undefined,
+  head: string | undefined,
+): Promise<{ document: ReviewDocument; index: HunkIndex }> {
+  const index = await cmdIndex(cwd, base, head);
+  const document = skeletonDocument(index);
+  await mkdir(dirname(dataPath), { recursive: true });
+  await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+  await cmdValidate(cwd, dataPath);
+  return { document, index };
 }
 
 export async function cmdValidate(cwd: string, dataPath: string): Promise<{ document: ReviewDocument; warnings: string[] }> {
