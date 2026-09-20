@@ -75,6 +75,27 @@ describe("eval result line", () => {
     assert.doesNotMatch(line, /prose/);
   });
 
+  it("fails the case when a deterministic expect misses", () => {
+    const result: CaseResult = {
+      id: "comprehende-50",
+      ok: true,
+      durationMs: 1,
+      tokens: 1,
+      checks: {
+        failures: [{ check: "why", message: "expected why absent, got present" }],
+        dirtyWorktree: false,
+        why: "present",
+        parts: 2,
+        size: "small",
+        togetherOk: 0,
+        togetherTotal: 0,
+        apartOk: 0,
+        apartTotal: 0,
+      },
+    };
+    assert.equal(caseFailed(result), true);
+  });
+
   it("does not fail the case when only an artifact step throws", () => {
     const result: CaseResult = {
       id: "comprehende-47",

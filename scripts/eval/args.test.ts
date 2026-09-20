@@ -31,6 +31,17 @@ describe("eval argv", () => {
     }
   });
 
+  it("parses --json with no tag as the full graded suite", () => {
+    const req = parseEvalArgv(["--json"]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.deepEqual(req.ids, []);
+      assert.equal(req.tag, undefined);
+      assert.equal(req.json, true);
+      assert.equal(req.graders, true);
+    }
+  });
+
   it("parses --no-graders", () => {
     const req = parseEvalArgv(["--tag", "smoke", "--no-graders"]);
     assert.equal(req.kind, "run");

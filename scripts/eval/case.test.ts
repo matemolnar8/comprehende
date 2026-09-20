@@ -72,6 +72,9 @@ describe("eval case schema", () => {
     assert.ok(ids.includes("vitadeck-24"));
     const smoke = selectEvalCases(listed, { tag: "smoke" }).map((item) => item.spec.id);
     assert.deepEqual(smoke, ["comprehende-50", "comprehende-57"]);
+    const full = selectEvalCases(listed, {}).map((item) => item.spec.id);
+    assert.deepEqual(full, ids);
+    assert.equal(full.includes("vitadeck-24"), true);
     const fifty = listed.find((item) => item.spec.id === "comprehende-50")?.spec.expect;
     const fiftySeven = listed.find((item) => item.spec.id === "comprehende-57")?.spec.expect;
     assert.equal(fifty?.why, "present");

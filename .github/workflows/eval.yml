@@ -29,6 +29,9 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - uses: pnpm/setup@v2
         with:
           runtime: node@24
@@ -46,6 +49,7 @@ jobs:
             echo "::warning::CURSOR_API_KEY secret missing; full eval skipped"
             exit 0
           fi
+          unset GITHUB_TOKEN GH_TOKEN
           pnpm eval -- --json
       - name: Upload eval run
         if: always()
