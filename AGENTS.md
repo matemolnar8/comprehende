@@ -101,3 +101,7 @@ I love to see simple code solving real, complex problems. Make every change, des
 I don't want this project to get overly complicated. In practice this means I want to keep the code focusing on the universal Git part, not specifics of any Git forge or issue tracker - those must be handled at the skill level.
 
 Watch out for small, quick neat wins and the attention to detail that makes people say wow, that's cool.
+
+## Cursor Cloud specific instructions
+
+To open the mixed fixture UI (colored Overview stories and lookFor) without writing `review.json`: run `pnpm fixture`, then the printed serve command from that cwd. The process prints the URL (`http://127.0.0.1:<port>`).

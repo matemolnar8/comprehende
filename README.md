@@ -80,4 +80,4 @@ The folder has the UI plus frozen `api/*.json` payloads and image bytes. There i
 python3 -m http.server --directory ../../fixtures/site 8080
 ```
 
-`pnpm fixture` writes a tiny git repo to `fixtures/repo` (gitignored) and a refs-only `fixtures/example/review.json`. Serve or export with cwd set to `fixtures/repo`.
+`pnpm fixture` writes a tiny git repo to `fixtures/repo` (gitignored) and a mixed, refs-only `fixtures/example/review.json` (stories, lookFor, sources). Serve or export with cwd set to `fixtures/repo`.
