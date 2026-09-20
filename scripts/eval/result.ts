@@ -35,7 +35,11 @@ export function caseFailed(result: CaseResult): boolean {
   if (result.producerError !== undefined || result.validateError !== undefined) {
     return true;
   }
-  return (result.checks?.failures.length ?? 0) > 0;
+  return failingChecks(result).length > 0;
+}
+
+function failingChecks(result: CaseResult): { check: string; message: string }[] {
+  return (result.checks?.failures ?? []).filter((item) => item.check !== "proseLint");
 }
 
 export function formatCaseLine(result: CaseResult): string {

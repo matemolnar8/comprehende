@@ -75,6 +75,28 @@ describe("eval result line", () => {
     assert.doesNotMatch(line, /prose/);
   });
 
+  it("does not fail the case on prose lint alone", () => {
+    const result: CaseResult = {
+      id: "vitadeck-24",
+      ok: true,
+      durationMs: 1,
+      tokens: 1,
+      checks: {
+        failures: [{ check: "proseLint", message: "summary has a 32-word sentence" }],
+        dirtyWorktree: false,
+        why: "present",
+        parts: 2,
+        size: "small",
+        togetherOk: 0,
+        togetherTotal: 0,
+        apartOk: 0,
+        apartTotal: 0,
+      },
+    };
+    assert.equal(caseFailed(result), false);
+    assert.match(formatCaseLine(result), /lint 1/);
+  });
+
   it("fails the case when a deterministic expect misses", () => {
     const result: CaseResult = {
       id: "comprehende-50",

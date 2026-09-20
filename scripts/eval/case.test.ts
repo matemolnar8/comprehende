@@ -75,11 +75,9 @@ describe("eval case schema", () => {
     const full = selectEvalCases(listed, {}).map((item) => item.spec.id);
     assert.deepEqual(full, ids);
     assert.equal(full.includes("vitadeck-24"), true);
-    const fifty = listed.find((item) => item.spec.id === "comprehende-50")?.spec.expect;
-    const fiftySeven = listed.find((item) => item.spec.id === "comprehende-57")?.spec.expect;
-    assert.equal(fifty?.why, "present");
-    assert.equal(fiftySeven?.why, "present");
-    assert.equal(fiftySeven?.parts?.min, 0);
-    assert.equal(fiftySeven?.together, undefined);
+    for (const item of listed) {
+      assert.equal(item.spec.expect?.why, "present", item.spec.id);
+      assert.equal(item.spec.expect?.together, undefined, item.spec.id);
+    }
   });
 });

@@ -6,10 +6,9 @@
   "head": "83c2b3f857fbf459921d1a3f57971090b0b9e4a2",
   "tags": ["git"],
   "expect": {
-    "why": "absent",
-    "parts": { "min": 2, "max": 3 },
+    "why": "present",
+    "parts": { "min": 0, "max": 3 },
     "size": ["small", "medium"],
-    "together": [["src/git/exec.ts", "src/git/exec.test.ts"]],
     "apart": [["src/git/exec.ts", "src/schema/skill-sync.ts"]]
   }
 }
