@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 18bd5cba8d77a1b2d462b98aece1d90746049f97` and `git rev-parse --verify 1eea21a29c94171869da0b89506e39b231b60999` in this repository.
+   Run `git rev-parse --verify 18bd5cba8d77a1b2d462b98aece1d90746049f97` and `git rev-parse --verify 5e2acf536edc85c4c7dd4cfbb5f986ad40b49b98` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  18bd5cba8d77a1b2d462b98aece1d90746049f97
 
-head               1eea21a29c94171869da0b89506e39b231b60999
+head               5e2acf536edc85c4c7dd4cfbb5f986ad40b49b98
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 18bd5cba8d77a1b2d462b98aece1d90746049f97 1eea21a29c94171869da0b89506e39b231b60999
+git diff --find-renames 18bd5cba8d77a1b2d462b98aece1d90746049f97 5e2acf536edc85c4c7dd4cfbb5f986ad40b49b98
 
 Commits:
+- 5e2acf5 Narrow pack-smoke groupId before using it in export paths.
 - 1eea21a Fix pack-smoke export asserts for the review skeleton.
 - 5645b4d Remove the public index CLI command.
 
