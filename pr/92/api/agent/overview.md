@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify f946e0a84958f6078394b553747632125fb0695e` in this repository.
+   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify 23401b7d0aefafe407ecf4fd414d2a95bd4a24d7` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  da6ebeb0cacab7e988d44fe1b22f2cfda32b7747
 
-head               f946e0a84958f6078394b553747632125fb0695e
+head               23401b7d0aefafe407ecf4fd414d2a95bd4a24d7
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 f946e0a84958f6078394b553747632125fb0695e
+git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 23401b7d0aefafe407ecf4fd414d2a95bd4a24d7
 
 Commits:
+- 23401b7 Drop mechanicalPaths on comprehende-50.
 - f946e0a Drop the parts expect on comprehende-47.
 - 7bf8232 Allow three parts on comprehende-47.
 - 3330419 Allow three parts on comprehende-67.
@@ -50,6 +51,8 @@ Sources:
   https://github.com/matemolnar8/comprehende/commit/7bf8232178589054ec0dcfe2ea5cf4eb85c423eb
 - commit f946e0a Part count on that mixed PR is not stable. Keep apart, size, sourceKinds, mechanicalPaths, and claims.
   https://github.com/matemolnar8/comprehende/commit/f946e0a84958f6078394b553747632125fb0695e
+- commit 23401b7 Producers split the two SKILL.md copies by tree. Keep why, parts, and size.
+  https://github.com/matemolnar8/comprehende/commit/23401b7d0aefafe407ecf4fd414d2a95bd4a24d7
 
 The title:
 
@@ -61,7 +64,7 @@ After pull request 91, the graded suite failed on `comprehende-67`. [This sessio
 
 The what (small):
 
-`runDeterministicChecks` puts wording issues on `lints`, and `caseFailed` reads only `failures`. `comprehende-67` allows three parts, and `comprehende-47` no longer scores part count.
+`runDeterministicChecks` puts wording issues on `lints`, and `caseFailed` reads only `failures`. `comprehende-67` allows three parts, and `comprehende-47` plus `comprehende-50` drop unstable expects.
 
 Look for:
 - [This session](source:s1) asks for a full graded suite with exit 0. No hunk runs `pnpm eval`.
@@ -83,8 +86,8 @@ Depends on:
 
 [groups/tests.md](groups/tests.md)
 
-### 03 Parts expects for 67 and 47 (`expect`)
+### 03 Refresh unstable eval expects (`expect`)
 
-`comprehende-67` sets `expect.parts.max` to 3, and `comprehende-47` drops `parts` because that mixed PR is not a stable count.
+`comprehende-67` allows three parts, `comprehende-47` drops `parts`, and `comprehende-50` drops `mechanicalPaths`.
 
 [groups/expect.md](groups/expect.md)

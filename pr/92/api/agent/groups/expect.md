@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify f946e0a84958f6078394b553747632125fb0695e` in this repository.
+   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify 23401b7d0aefafe407ecf4fd414d2a95bd4a24d7` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 f946e0a84958f6078394b553747632125fb0695e -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 23401b7d0aefafe407ecf4fd414d2a95bd4a24d7 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,26 +25,27 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  da6ebeb0cacab7e988d44fe1b22f2cfda32b7747
 
-head               f946e0a84958f6078394b553747632125fb0695e
+head               23401b7d0aefafe407ecf4fd414d2a95bd4a24d7
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 f946e0a84958f6078394b553747632125fb0695e
+git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 23401b7d0aefafe407ecf4fd414d2a95bd4a24d7
 
-Review concern 03 of 03: Parts expects for 67 and 47 (`expect`)
+Review concern 03 of 03: Refresh unstable eval expects (`expect`)
 
-Part: Parts expects
+Part: Eval expects
 
 The why:
 
-[This session](source:s1) asks to allow skill-aligned splits instead of failing a moving part count.
+[This session](source:s1) asks to refresh expects so skill-aligned producer output stays green.
 
 The what:
 
-`comprehende-67` sets `expect.parts.max` to 3, and `comprehende-47` drops `parts` because that mixed PR is not a stable count.
+`comprehende-67` allows three parts, `comprehende-47` drops `parts`, and `comprehende-50` drops `mechanicalPaths`.
 
 Hunk refs for this concern:
 - eval/cases/comprehende-67/case.json @@ -7,7 +7,7 @@
 - eval/cases/comprehende-47/case.json @@ -7,7 +7,6 @@
+- eval/cases/comprehende-50/case.json @@ -8,7 +8,6 @@
