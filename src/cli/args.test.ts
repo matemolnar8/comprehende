@@ -35,6 +35,21 @@ describe("parseArgv", () => {
     });
   });
 
+  it("parses review flags", () => {
+    const req = parseArgv(["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"], "/repo");
+    assert.deepEqual(req, {
+      kind: "command",
+      command: "review",
+      cwd: "/repo",
+      base: "origin/main",
+      head: "HEAD",
+      data: "review.json",
+      out: undefined,
+      port: DEFAULT_PORT,
+      open: false,
+    });
+  });
+
   it("rejects unknown commands", () => {
     const req = parseArgv(["frobnicate"]);
     assert.equal(req.kind, "error");
@@ -56,11 +71,14 @@ describe("run", () => {
       assert.equal(await run(["--help"]), 0);
       assert.equal(await run(["--version"]), 0);
       assert.equal(await run(["nope"]), 1);
+      assert.equal(await run(["review"]), 1);
       const text = lines.join("\n");
       assert.match(text, /Usage: comprehende/);
       assert.match(text, /export/);
+      assert.match(text, /review\s+\[--base/);
       assert.ok(text.includes(readPackageVersion()));
       assert.match(text, /Unknown command: nope/);
+      assert.match(text, /missing --data <review.json>/);
     } finally {
       console.log = log;
       console.error = err;

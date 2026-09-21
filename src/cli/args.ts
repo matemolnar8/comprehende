@@ -1,4 +1,4 @@
-export type CommandName = "index" | "validate" | "serve" | "export";
+export type CommandName = "index" | "review" | "validate" | "serve" | "export";
 
 export type CliRequest =
   | { kind: "help" }
@@ -16,7 +16,7 @@ export type CliRequest =
       open: boolean;
     };
 
-const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["index", "validate", "serve", "export"]);
+const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["index", "review", "validate", "serve", "export"]);
 
 export const DEFAULT_PORT = 4567;
 
@@ -34,6 +34,10 @@ Run inside the git repository under review. Cwd is the repo.
 Commands:
   index     [--base <ref>] [--head <ref>]
             List hunk refs from live git (no patch text)
+
+  review    [--base <ref>] [--head <ref>] --data <review.json>
+            Write a covering skeleton (every hunk ref, stub prose). Does not
+            invent a review. Fill title, groups, and summaries, then validate.
 
   validate  --data <review.json>
             Check schema, ref resolution, hunk coverage, and source citations

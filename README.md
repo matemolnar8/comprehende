@@ -48,6 +48,24 @@ This repository publishes those exports to GitHub Pages. A pull request review l
 
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.8.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
 
+## CLI
+
+Run inside the git repository under review. Cwd is the repo.
+
+```sh
+comprehende review [--base <ref>] [--head <ref>] --data review.json
+```
+
+Indexes `base...head` (default: `origin/HEAD` or `main`/`master` … `HEAD`) and writes a covering skeleton: every hunk ref, stub prose. The command does not invent a review. Fill title, groups, summaries, and lookFor (the skill does this), then:
+
+```sh
+comprehende validate --data review.json
+comprehende serve --data review.json
+comprehende export --data review.json --out <dir>
+```
+
+`index` still prints the hunk list with no patch text. `--help` lists every command.
+
 ## Release
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.

@@ -79,6 +79,24 @@ async function run(): Promise<void> {
     "index from packed bin returned no hunks",
   );
   const index = parsedIndex as HunkIndex;
+
+  const skeletonPath = join(work, "skeleton.json");
+  const reviewOut = execFileSync(bin, ["review", "--base", repo.base, "--head", repo.head, "--data", skeletonPath], {
+    cwd: repo.root,
+    encoding: "utf8",
+  });
+  assert.equal(reviewOut.trim(), skeletonPath);
+  const skeletonRaw: unknown = JSON.parse(await readFile(skeletonPath, "utf8"));
+  assert.ok(isRecord(skeletonRaw), "review skeleton must be a JSON object");
+  assert.equal(skeletonRaw.title, "Untitled");
+  assert.equal(skeletonRaw.why, undefined);
+  assert.equal(skeletonRaw.lookFor, undefined);
+  const skeletonGroups = skeletonRaw.groups;
+  assert.ok(Array.isArray(skeletonGroups) && isRecord(skeletonGroups[0]));
+  const skeletonHunks = skeletonGroups[0]?.hunkRefs;
+  assert.ok(Array.isArray(skeletonHunks));
+  assert.equal(skeletonHunks.length, index.hunks.length, "skeleton must list every index hunk ref");
+
   await writeCoveringDocument(dataPath, index);
 
   const validateOut = execFileSync(bin, ["validate", "--data", dataPath], {

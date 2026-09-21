@@ -1,6 +1,6 @@
 # Example review.json
 
-Pointers and prose only. The `@@` numbers must come from `comprehende index`, not from reading the patch. Shape: [review.schema.json](./review.schema.json).
+Pointers and prose only. The `@@` numbers must come from `comprehende review` (or `comprehende index`), not from reading the patch. Shape: [review.schema.json](./review.schema.json).
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.

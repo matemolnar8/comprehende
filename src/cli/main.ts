@@ -5,7 +5,7 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdIndex, cmdValidate, resolveOutPath } from "./commands.ts";
+import { cmdIndex, cmdReview, cmdValidate, resolveOutPath } from "./commands.ts";
 import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
@@ -34,6 +34,20 @@ export async function run(argv: string[]): Promise<number> {
       case "index": {
         const index = await cmdIndex(request.cwd, request.base, request.head);
         console.log(JSON.stringify(index, null, 2));
+        return 0;
+      }
+      case "review": {
+        const dataPath = resolveDataPath(request.data, request.cwd);
+        const { document, index } = await cmdReview(request.cwd, dataPath, request.base, request.head);
+        const hunks = document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0);
+        console.log(dataPath);
+        console.error(`wrote skeleton  ${hunks} hunk refs  stub prose`);
+        if (index.skipped.length > 0) {
+          console.error(`skipped ${index.skipped.length}`);
+        }
+        console.error(
+          `Fill title, summary, groups, and lookFor. Then:\n  comprehende validate --data ${dataPath}\n  comprehende serve --data ${dataPath}\n  comprehende export --data ${dataPath} --out <dir>`,
+        );
         return 0;
       }
       case "validate": {

@@ -56,9 +56,9 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Size.** Review burden. Not file or hunk count.
 
-**Hunk ref.** Pointer into live git. Copy from `index`. Never invent.
+**Hunk ref.** Pointer into live git. Copy from the `review` skeleton (or `index`). Never invent.
 
-**Index.** Hunk list for the agent. No line content. Not stored in the UI.
+**Index.** Hunk list for the agent. No line content. Not stored in the UI. `review` writes those refs into a covering skeleton.
 
 **Live git.** `git` in cwd at serve time. Git wins.
 
@@ -70,7 +70,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Skill.** Grouping instructions. Does not talk to git.
 
-**CLI.** Git, validate, serve. Cwd is the repo.
+**CLI.** Index, review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
 
 ## Project rules
 
@@ -90,7 +90,7 @@ Releases happen manually. Do not change `package.json` version unless the user a
 
 ## Pull requests
 
-When opening a pull request, run the comprehende skill from skills-next on that PR using the local built CLI, export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
+When opening a pull request, run the local built CLI `comprehende review --data <path>` to write the covering skeleton (every hunk ref, stub prose). Fill interpretation with the comprehende skill from skills-next. Do not paste hunk refs by hand. Export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
 
 After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `CURSOR_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
