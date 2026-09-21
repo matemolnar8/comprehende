@@ -5,7 +5,7 @@ Where the tokens go when the skill writes a review, and what to change so it use
 ## Method
 
 - Instrumented the eval producer with the Cursor SDK stream (`run.stream()`): every tool call, per-run usage split into input, cache read, and output. Same prompt, same 7 eval cases, same model (`composer-2.5`) as `pnpm eval`. Script lived outside the repo.
-- Two baseline runs with `skills-next/comprehende` as it is. Two runs with a skill-only variant (section 3). Static token counts use the `o200k_base` tokenizer.
+- Two baseline runs with `skills-next/comprehende` as it is. Two runs with a skill-only variant (section 2C). Static token counts use the `o200k_base` tokenizer.
 - Independent reference: CI run [35552579760](https://github.com/matemolnar8/comprehende/actions/runs/35552579760) (`eval-run` artifact), used for hunk-ref share and grader cost.
 - Caveats. `composer-2.5` is not deterministic: the same case varied 1.6x to 3x between runs, so read per-case numbers as a range and totals as the signal. Wall time depended on backend load more than on the skill (one 15-tool run took 256 s, another 29 s), so time is reported as LLM round trips ("steps"), not seconds. `totalTokens` is input + cache read + output, summed over every step, which is why one run is hundreds of thousands of tokens.
 
@@ -68,7 +68,7 @@ On the 109-hunk case, in 3 of 3 runs the agent gave up copying refs by hand and 
 | Write | 19 | 18 | `edit` of `review.json`; each `edit` result echoes a 3k to 6k token diff back into context |
 | Validate | 22 | 22 | 1 to 4 per case |
 
-"Looking for the CLI" is caused by the eval prompt sentence "The CLI named in the skill is the local build", which makes the agent verify the path. It is eval overhead, not user overhead, and it is the largest single bucket (section 4). In one run it made the agent build the reviewed repo's own, older CLI and use that; `validate` failed on `parts`.
+"Looking for the CLI" is caused by the eval prompt sentence "The CLI named in the skill is the local build", which makes the agent verify the path. It is eval overhead, not user overhead, and it is the largest single bucket (section 3). In one run it made the agent build the reviewed repo's own, older CLI and use that; `validate` failed on `parts`.
 
 The `skipped` hunt is a skill bug: "Lockfiles stay in `skipped`" names a field of the index, and the agent looks for it in the document.
 
