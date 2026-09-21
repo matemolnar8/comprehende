@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify 3330419327abfbea02e46e52df9da5a6bccc8649` in this repository.
+   Run `git rev-parse --verify da6ebeb0cacab7e988d44fe1b22f2cfda32b7747` and `git rev-parse --verify 7bf8232178589054ec0dcfe2ea5cf4eb85c423eb` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  da6ebeb0cacab7e988d44fe1b22f2cfda32b7747
 
-head               3330419327abfbea02e46e52df9da5a6bccc8649
+head               7bf8232178589054ec0dcfe2ea5cf4eb85c423eb
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 3330419327abfbea02e46e52df9da5a6bccc8649
+git diff --find-renames da6ebeb0cacab7e988d44fe1b22f2cfda32b7747 7bf8232178589054ec0dcfe2ea5cf4eb85c423eb
 
 Commits:
+- 7bf8232 Allow three parts on comprehende-47.
 - 3330419 Allow three parts on comprehende-67.
 - 869f580 Keep prose lint off the eval exit path.
 
@@ -44,6 +45,8 @@ Sources:
   https://github.com/matemolnar8/comprehende/commit/869f58048a62fdab48067f8e45fe6ff46917efaf
 - commit 3330419 Producer split Pages, hosting, and README. expect.parts.max is 3.
   https://github.com/matemolnar8/comprehende/commit/3330419327abfbea02e46e52df9da5a6bccc8649
+- commit 7bf8232 Producer split Sources model, Sources UI, and Skill sync. expect.parts.max is 3.
+  https://github.com/matemolnar8/comprehende/commit/7bf8232178589054ec0dcfe2ea5cf4eb85c423eb
 
 The title:
 
@@ -55,7 +58,7 @@ After pull request 91, the graded suite failed on `comprehende-67`. [This sessio
 
 The what (small):
 
-`runDeterministicChecks` puts wording issues on `lints`, and `caseFailed` reads only `failures`. `comprehende-67` allows three parts.
+`runDeterministicChecks` puts wording issues on `lints`, and `caseFailed` reads only `failures`. `comprehende-67` and `comprehende-47` allow three parts.
 
 Look for:
 - [This session](source:s1) asks for a full graded suite with exit 0. No hunk runs `pnpm eval`.
@@ -77,8 +80,8 @@ Depends on:
 
 [groups/tests.md](groups/tests.md)
 
-### 03 Three parts on comprehende-67 (`expect`)
+### 03 Three parts on 67 and 47 (`expect`)
 
-`eval/cases/comprehende-67/case.json` sets `expect.parts.max` to 3.
+`comprehende-67` and `comprehende-47` set `expect.parts.max` to 3.
 
 [groups/expect.md](groups/expect.md)
