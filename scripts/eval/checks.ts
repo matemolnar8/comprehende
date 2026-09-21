@@ -12,6 +12,7 @@ export type CheckFailure = {
 
 export type DeterministicReport = {
   failures: CheckFailure[];
+  lints: string[];
   dirtyWorktree: boolean;
   why: "present" | "absent";
   parts: number;
@@ -121,12 +122,9 @@ export async function runDeterministicChecks(opts: {
     });
   }
 
-  for (const lint of proseLints(opts.document)) {
-    failures.push({ check: "proseLint", message: lint });
-  }
-
   return {
     failures,
+    lints: proseLints(opts.document),
     dirtyWorktree,
     why,
     parts,

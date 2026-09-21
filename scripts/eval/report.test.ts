@@ -5,6 +5,7 @@ import type { CaseResult, RunSummary } from "./result.ts";
 
 const checksOk = {
   failures: [] as { check: string; message: string }[],
+  lints: [] as string[],
   dirtyWorktree: false,
   why: "present" as const,
   parts: 1,
@@ -76,6 +77,29 @@ describe("eval HTML report", () => {
     assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.match(html, /Invented &lt;why&gt;\./);
     assert.doesNotMatch(html, /comprehende-57\/site/);
+  });
+
+  it("reports prose lint without failing the case", () => {
+    const html = evalReportHtml({
+      stamp: "2026-09-21T02-00-00-000Z",
+      skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
+      producerModel: "composer-2.5",
+      graderModel: "grok-4.6",
+      graders: true,
+      cases: [
+        caseResult({
+          id: "comprehende-67",
+          checks: {
+            ...checksOk,
+            lints: ["document lookFor has a 28-word sentence"],
+          },
+        }),
+      ],
+    });
+    assert.match(html, /All 1 case passed deterministic checks/);
+    assert.match(html, />ok<\/span> comprehende-67/);
+    assert.match(html, /document lookFor has a 28-word sentence/);
+    assert.doesNotMatch(html, /class="case fail"/);
   });
 
   it("labels a smoke run with graders off", () => {
