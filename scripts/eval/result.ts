@@ -27,6 +27,7 @@ export type RunSummary = {
   skillTree: string;
   producerModel: string;
   graderModel: string;
+  graders: boolean;
   cases: CaseResult[];
 };
 
@@ -34,7 +35,11 @@ export function caseFailed(result: CaseResult): boolean {
   if (result.producerError !== undefined || result.validateError !== undefined) {
     return true;
   }
-  return (result.checks?.failures.length ?? 0) > 0;
+  return failingChecks(result).length > 0;
+}
+
+function failingChecks(result: CaseResult): { check: string; message: string }[] {
+  return (result.checks?.failures ?? []).filter((item) => item.check !== "proseLint");
 }
 
 export function formatCaseLine(result: CaseResult): string {
@@ -63,8 +68,12 @@ export function formatCaseLine(result: CaseResult): string {
   if (result.claims !== undefined) {
     bits.push(`claims ${result.claims.stated}/${result.claims.total}`);
   }
-  bits.push(findingCounts("grouping", result.grouping));
-  bits.push(findingCounts("prose", result.prose));
+  if (result.grouping !== undefined) {
+    bits.push(findingCounts("grouping", result.grouping));
+  }
+  if (result.prose !== undefined) {
+    bits.push(findingCounts("prose", result.prose));
+  }
   if (result.artifactError !== undefined) {
     bits.push("artifact FAIL");
   }

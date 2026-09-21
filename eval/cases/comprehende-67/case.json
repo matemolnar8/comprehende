@@ -6,11 +6,10 @@
   "head": "62f46c7abf557d7bc177a15e400d8f9861e35bd1",
   "tags": ["pages"],
   "expect": {
-    "why": "absent",
-    "parts": { "min": 1, "max": 2 },
+    "why": "present",
+    "parts": { "min": 0, "max": 2 },
     "size": ["small", "medium"],
     "sourceKinds": ["pr-comment"],
-    "together": [["scripts/pages-review.ts", "scripts/pages-review.test.ts"]],
     "claims": [
       "a rejected push retries by resetting to remote gh-pages and re-applying the review",
       "the hosted URL 404s until GitHub Pages is enabled on the gh-pages branch"

@@ -1,0 +1,60 @@
+# Full graded eval after skill, schema, review, or harness land on main.
+# Needs repo secret CURSOR_API_KEY. Skips (does not fail) when that secret is unset.
+# Event-driven: path filter on main, plus workflow_dispatch. Not a cron.
+
+name: Eval suite
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills-next/comprehende/**"
+      - "src/schema/**"
+      - "src/review/**"
+      - "scripts/eval/**"
+      - "eval/cases/**"
+      - ".github/workflows/eval.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: eval-suite
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Full graded eval
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CURSOR_API_KEY}" ]; then
+            echo "Repo secret CURSOR_API_KEY is not set. Skipping the full graded suite."
+            echo "Add it under Settings → Secrets and variables → Actions."
+            echo "::warning::CURSOR_API_KEY secret missing; full eval skipped"
+            exit 0
+          fi
+          unset GITHUB_TOKEN GH_TOKEN
+          pnpm eval -- --json
+      - name: Upload eval run
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-run
+          path: eval/runs
+          if-no-files-found: ignore

@@ -6,7 +6,7 @@
   "head": "c38caa05ee383413bd6c90a425fc2da8d6156b9d",
   "tags": ["smoke", "skill"],
   "expect": {
-    "why": "absent",
+    "why": "present",
     "parts": { "min": 0, "max": 2 },
     "size": ["trivial", "small"],
     "mechanicalPaths": [".agents/skills/comprehende/SKILL.md", "skills-next/comprehende/SKILL.md"]
