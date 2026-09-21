@@ -15,6 +15,9 @@ describe("skill schema sync", () => {
     assert.match(nextSkillMd, /npx skills update/);
     assert.match(nextSkillMd, /Do not run that command/);
     assert.match(nextSkillMd, /review \[--base <ref>\] \[--head <ref>\] --data/);
+    assert.match(nextSkillMd, /Re-run `review`/);
+    assert.doesNotMatch(nextSkillMd, /Re-run `index`/);
+    assert.doesNotMatch(nextSkillMd, /comprehende@[^\s`]+ index /);
     const root = findPackageRoot();
     const paths = skillPaths(root);
     assert.equal(paths.nextSkill, join(root, "skills-next/comprehende"));

@@ -5,7 +5,7 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdIndex, cmdReview, cmdValidate, resolveOutPath } from "./commands.ts";
+import { cmdReview, cmdValidate, resolveOutPath } from "./commands.ts";
 import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
@@ -31,11 +31,6 @@ export async function run(argv: string[]): Promise<number> {
   try {
     await assertWorkTree(request.cwd);
     switch (request.command) {
-      case "index": {
-        const index = await cmdIndex(request.cwd, request.base, request.head);
-        console.log(JSON.stringify(index, null, 2));
-        return 0;
-      }
       case "review": {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const { document, index } = await cmdReview(request.cwd, dataPath, request.base, request.head);
