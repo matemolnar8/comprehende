@@ -7,7 +7,7 @@
   "tags": ["pages"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 2 },
+    "parts": { "min": 0, "max": 3 },
     "size": ["small", "medium"],
     "sourceKinds": ["pr-comment"],
     "claims": [

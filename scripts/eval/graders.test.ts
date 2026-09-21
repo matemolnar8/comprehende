@@ -30,6 +30,7 @@ describe("eval result line", () => {
       tokens: 212_000,
       checks: {
         failures: [],
+        lints: [],
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -59,6 +60,7 @@ describe("eval result line", () => {
       tokens: 800,
       checks: {
         failures: [],
+        lints: [],
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -82,7 +84,8 @@ describe("eval result line", () => {
       durationMs: 1,
       tokens: 1,
       checks: {
-        failures: [{ check: "proseLint", message: "summary has a 32-word sentence" }],
+        failures: [],
+        lints: ["summary has a 32-word sentence"],
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -105,6 +108,7 @@ describe("eval result line", () => {
       tokens: 1,
       checks: {
         failures: [{ check: "why", message: "expected why absent, got present" }],
+        lints: [],
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -127,6 +131,7 @@ describe("eval result line", () => {
       artifactError: "grader timed out",
       checks: {
         failures: [],
+        lints: [],
         dirtyWorktree: false,
         why: "present",
         parts: 1,

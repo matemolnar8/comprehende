@@ -152,6 +152,10 @@ function caseHtml(result: CaseResult): string {
       ),
     );
   }
+  const lints = result.checks?.lints ?? [];
+  if (lints.length > 0) {
+    parts.push(block("Lint", `<ul>${lints.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`));
+  }
   if (result.claims !== undefined) {
     const missing =
       result.claims.missing.length === 0

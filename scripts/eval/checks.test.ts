@@ -89,7 +89,9 @@ describe("eval deterministic checks", () => {
     assert.ok(checks.has("sources"));
     assert.ok(checks.has("sourceKinds"));
     assert.ok(checks.has("mechanical"));
-    assert.ok(checks.has("proseLint"));
+    assert.equal(checks.has("proseLint"), false);
+    assert.ok(report.lints.some((item) => item.includes("em dash") || item.includes("en dash")));
+    assert.ok(report.lints.some((item) => item.includes("word sentence")));
     assert.equal(report.apartOk, 0);
     assert.equal(report.togetherOk, 0);
   });
@@ -137,9 +139,39 @@ describe("eval deterministic checks", () => {
       frozen: [],
     });
     assert.deepEqual(report.failures, []);
+    assert.deepEqual(report.lints, []);
     assert.equal(report.togetherOk, 1);
     assert.equal(report.apartOk, 1);
     assert.equal(proseLints(document).length, 0);
+  });
+
+  it("keeps long-sentence prose lint off the fatal failures list", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-lint-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    await writeFile(join(root, "README.md"), "x\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "init"]);
+    const long =
+      "This sentence has way more than twenty five words in it and that is enough to trip the lint because the skill asked for a split.";
+    const document = doc({
+      lookFor: [long],
+      groups: [
+        {
+          id: "core",
+          title: "Parser",
+          why: "The schema is the boundary.",
+          summary: "review.ts and parse.ts share one Zod schema.",
+          part: "schema",
+          suggestedOrder: 0,
+          hunkRefs: [hunk("src/schema/review.ts")],
+        },
+      ],
+    });
+    const report = await runDeterministicChecks({ cwd: root, document, frozen: [] });
+    assert.deepEqual(report.failures, []);
+    assert.equal(report.lints.length, 1);
+    assert.match(report.lints[0] ?? "", /document lookFor has a \d+-word sentence/);
   });
 
   it("allows a GitHub commit URL when the SHA is in the reviewed range", async () => {
