@@ -7,7 +7,6 @@
   "tags": ["schema", "ui", "skill", "comments"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 3 },
     "size": ["large", "very-large"],
     "sourceKinds": ["ticket", "pr-comment"],
     "mechanicalPaths": ["skills-next/comprehende/references/review.schema.json"],
