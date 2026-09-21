@@ -92,7 +92,9 @@ async function run(): Promise<void> {
   const skeletonHunks = skeletonGroups[0]?.hunkRefs;
   assert.ok(Array.isArray(skeletonHunks) && skeletonHunks.length > 0, "review skeleton must list hunk refs");
   const groupId = skeletonGroups[0]?.id;
-  assert.equal(typeof groupId, "string");
+  if (typeof groupId !== "string") {
+    throw new Error("review skeleton group is missing id");
+  }
 
   const validateOut = execFileSync(bin, ["validate", "--data", dataPath], {
     cwd: repo.root,
