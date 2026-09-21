@@ -91,6 +91,8 @@ async function run(): Promise<void> {
   assert.ok(Array.isArray(skeletonGroups) && isRecord(skeletonGroups[0]));
   const skeletonHunks = skeletonGroups[0]?.hunkRefs;
   assert.ok(Array.isArray(skeletonHunks) && skeletonHunks.length > 0, "review skeleton must list hunk refs");
+  const groupId = skeletonGroups[0]?.id;
+  assert.equal(typeof groupId, "string");
 
   const validateOut = execFileSync(bin, ["validate", "--data", dataPath], {
     cwd: repo.root,
@@ -123,10 +125,10 @@ async function run(): Promise<void> {
   assert.equal(existsSync(join(outDir, "index.html")), true, "export must copy the UI");
   assert.equal(existsSync(join(outDir, "api/review.json")), true, "export must write frozen review JSON");
   assert.equal(existsSync(join(outDir, "api/agent/overview.md")), true, "export must write overview agent markdown");
-  assert.equal(existsSync(join(outDir, "api/agent/groups/all.md")), true, "export must write group agent markdown");
+  assert.equal(existsSync(join(outDir, `api/agent/groups/${groupId}.md`)), true, "export must write group agent markdown");
   const overviewMd = await readFile(join(outDir, "api/agent/overview.md"), "utf8");
   assert.match(overviewMd, /git diff --find-renames/);
-  assert.match(overviewMd, /\[groups\/all\.md\]\(groups\/all\.md\)/);
+  assert.match(overviewMd, new RegExp(`\\[groups/${groupId}\\.md\\]\\(groups/${groupId}\\.md\\)`));
   assert.doesNotMatch(overviewMd, /@@ -/);
   assert.equal(overviewMd.includes("+++"), false, "agent markdown must not include patch text");
   assert.equal(existsSync(join(outDir, ".git")), false, "export must not copy git");
