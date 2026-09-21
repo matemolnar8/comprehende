@@ -56,9 +56,9 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Size.** Review burden. Not file or hunk count.
 
-**Hunk ref.** Pointer into live git. Copy from the `review` skeleton (or `index`). Never invent.
+**Hunk ref.** Pointer into live git. Copy from the `review` skeleton. Never invent.
 
-**Index.** Hunk list for the agent. No line content. Not stored in the UI. `review` writes those refs into a covering skeleton.
+**Index.** Internal hunk list. No line content. Not stored in the UI. `review` writes those refs into a covering skeleton.
 
 **Live git.** `git` in cwd at serve time. Git wins.
 
@@ -70,7 +70,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 **Skill.** Grouping instructions. Does not talk to git.
 
-**CLI.** Index, review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
+**CLI.** review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
 
 ## Project rules
 

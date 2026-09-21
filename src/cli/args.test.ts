@@ -54,6 +54,14 @@ describe("parseArgv", () => {
     const req = parseArgv(["frobnicate"]);
     assert.equal(req.kind, "error");
   });
+
+  it("rejects the retired index command", () => {
+    const req = parseArgv(["index"]);
+    assert.equal(req.kind, "error");
+    if (req.kind === "error") {
+      assert.match(req.message, /Unknown command: index/);
+    }
+  });
 });
 
 describe("run", () => {
@@ -71,13 +79,16 @@ describe("run", () => {
       assert.equal(await run(["--help"]), 0);
       assert.equal(await run(["--version"]), 0);
       assert.equal(await run(["nope"]), 1);
+      assert.equal(await run(["index"]), 1);
       assert.equal(await run(["review"]), 1);
       const text = lines.join("\n");
       assert.match(text, /Usage: comprehende/);
       assert.match(text, /export/);
       assert.match(text, /review\s+\[--base/);
+      assert.doesNotMatch(text, /^\s+index\s/m);
       assert.ok(text.includes(readPackageVersion()));
       assert.match(text, /Unknown command: nope/);
+      assert.match(text, /Unknown command: index/);
       assert.match(text, /missing --data <review.json>/);
     } finally {
       console.log = log;

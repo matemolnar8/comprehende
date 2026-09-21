@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { HunkIndex } from "../src/schema/types.ts";
 import { readPackageVersionFromDir } from "../src/package-root.ts";
-import { writeCoveringDocument } from "../src/test/covering-document.ts";
 import { createExampleRepo } from "../src/test/example-repo.ts";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -69,24 +67,22 @@ async function run(): Promise<void> {
   const repo = await createExampleRepo(work);
   const dataPath = join(work, "review.json");
 
-  const indexRaw = execFileSync(bin, ["index", "--base", repo.base, "--head", repo.head], {
+  const helpOut = execFileSync(bin, ["--help"], { encoding: "utf8" });
+  assert.match(helpOut, /review\s+\[--base/);
+  assert.doesNotMatch(helpOut, /^\s+index\s/m);
+  const indexOut = spawnSync(bin, ["index", "--base", repo.base, "--head", repo.head], {
     cwd: repo.root,
     encoding: "utf8",
   });
-  const parsedIndex: unknown = JSON.parse(indexRaw);
-  assert.ok(
-    isRecord(parsedIndex) && Array.isArray(parsedIndex.hunks) && parsedIndex.hunks.length > 0,
-    "index from packed bin returned no hunks",
-  );
-  const index = parsedIndex as HunkIndex;
+  assert.equal(indexOut.status, 1, "packed bin must reject index");
+  assert.match(indexOut.stderr, /Unknown command: index/);
 
-  const skeletonPath = join(work, "skeleton.json");
-  const reviewOut = execFileSync(bin, ["review", "--base", repo.base, "--head", repo.head, "--data", skeletonPath], {
+  const reviewOut = execFileSync(bin, ["review", "--base", repo.base, "--head", repo.head, "--data", dataPath], {
     cwd: repo.root,
     encoding: "utf8",
   });
-  assert.equal(reviewOut.trim(), skeletonPath);
-  const skeletonRaw: unknown = JSON.parse(await readFile(skeletonPath, "utf8"));
+  assert.equal(reviewOut.trim(), dataPath);
+  const skeletonRaw: unknown = JSON.parse(await readFile(dataPath, "utf8"));
   assert.ok(isRecord(skeletonRaw), "review skeleton must be a JSON object");
   assert.equal(skeletonRaw.title, "Untitled");
   assert.equal(skeletonRaw.why, undefined);
@@ -94,10 +90,11 @@ async function run(): Promise<void> {
   const skeletonGroups = skeletonRaw.groups;
   assert.ok(Array.isArray(skeletonGroups) && isRecord(skeletonGroups[0]));
   const skeletonHunks = skeletonGroups[0]?.hunkRefs;
-  assert.ok(Array.isArray(skeletonHunks));
-  assert.equal(skeletonHunks.length, index.hunks.length, "skeleton must list every index hunk ref");
-
-  await writeCoveringDocument(dataPath, index);
+  assert.ok(Array.isArray(skeletonHunks) && skeletonHunks.length > 0, "review skeleton must list hunk refs");
+  const groupId = skeletonGroups[0]?.id;
+  if (typeof groupId !== "string") {
+    throw new Error("review skeleton group is missing id");
+  }
 
   const validateOut = execFileSync(bin, ["validate", "--data", dataPath], {
     cwd: repo.root,
@@ -130,10 +127,10 @@ async function run(): Promise<void> {
   assert.equal(existsSync(join(outDir, "index.html")), true, "export must copy the UI");
   assert.equal(existsSync(join(outDir, "api/review.json")), true, "export must write frozen review JSON");
   assert.equal(existsSync(join(outDir, "api/agent/overview.md")), true, "export must write overview agent markdown");
-  assert.equal(existsSync(join(outDir, "api/agent/groups/all.md")), true, "export must write group agent markdown");
+  assert.equal(existsSync(join(outDir, `api/agent/groups/${groupId}.md`)), true, "export must write group agent markdown");
   const overviewMd = await readFile(join(outDir, "api/agent/overview.md"), "utf8");
   assert.match(overviewMd, /git diff --find-renames/);
-  assert.match(overviewMd, /\[groups\/all\.md\]\(groups\/all\.md\)/);
+  assert.match(overviewMd, new RegExp(`\\[groups/${groupId}\\.md\\]\\(groups/${groupId}\\.md\\)`));
   assert.doesNotMatch(overviewMd, /@@ -/);
   assert.equal(overviewMd.includes("+++"), false, "agent markdown must not include patch text");
   assert.equal(existsSync(join(outDir, ".git")), false, "export must not copy git");

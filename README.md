@@ -64,8 +64,6 @@ comprehende serve --data review.json
 comprehende export --data review.json --out <dir>
 ```
 
-`index` still prints the hunk list with no patch text. `--help` lists every command.
-
 ## Release
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.
