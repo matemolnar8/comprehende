@@ -33,10 +33,10 @@ export async function run(argv: string[]): Promise<number> {
     switch (request.command) {
       case "review": {
         const dataPath = resolveDataPath(request.data, request.cwd);
-        const { document, index } = await cmdReview(request.cwd, dataPath, request.base, request.head);
-        const hunks = document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0);
+        const { index } = await cmdReview(request.cwd, dataPath, request.base, request.head);
+        const paths = new Set(index.hunks.map((hunk) => hunk.path)).size;
         console.log(dataPath);
-        console.error(`wrote skeleton  ${hunks} hunk refs  stub prose`);
+        console.error(`wrote skeleton  ${paths} paths  ${index.hunks.length} hunks  stub prose`);
         if (index.skipped.length > 0) {
           console.error(`skipped ${index.skipped.length}`);
         }
@@ -47,9 +47,8 @@ export async function run(argv: string[]): Promise<number> {
       }
       case "validate": {
         const dataPath = resolveDataPath(request.data, request.cwd);
-        const { document } = await cmdValidate(request.cwd, dataPath);
-        const hunks = document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0);
-        console.log(`ok  ${document.groups.length} groups  ${hunks} hunk refs  ${dataPath}`);
+        const { document, assignedHunks } = await cmdValidate(request.cwd, dataPath);
+        console.log(`ok  ${document.groups.length} groups  ${assignedHunks} hunk refs  ${dataPath}`);
         return 0;
       }
       case "serve": {

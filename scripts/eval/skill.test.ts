@@ -37,6 +37,8 @@ describe("next skill workflow", () => {
     assert.doesNotMatch(md, /poetry\.lock/);
     assert.doesNotMatch(md, /go\.sum/);
     assert.match(grouping, /Lockfiles have no hunk refs/);
+    assert.match(grouping, /path@oldStart\+newStart/);
+    assert.match(grouping, /A path covers every live hunk of that file/);
     assert.doesNotMatch(grouping, /Lockfiles stay in `skipped`/);
     const example = await readFile(join(findPackageRoot(), "skills-next/comprehende/references/example.md"), "utf8");
     assert.doesNotMatch(example, /review\.schema\.json/);

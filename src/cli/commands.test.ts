@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { after, describe, it } from "node:test";
 import { cmdIndex, cmdReview, cmdValidate } from "./commands.ts";
+import { skeletonPaths } from "../review/skeleton.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
@@ -41,7 +42,10 @@ describe("cmdReview git work", { concurrency: false }, () => {
       assert.equal(document.source.range, `${repo.base}...main`);
       assert.deepEqual(reviewed.hunks, index.hunks);
       assert.deepEqual(reviewed.skipped, index.skipped);
-      assert.deepEqual(document.groups[0]?.hunkRefs, index.hunks);
+      assert.deepEqual(
+        document.groups[0]?.hunkRefs,
+        skeletonPaths(index).map((path) => ({ path })),
+      );
       assert.ok(reviewed.skipped.some((item) => item.path === "assets/dot.bin" && item.reason === "binary"));
 
       await log.clear();

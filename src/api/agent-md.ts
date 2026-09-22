@@ -1,6 +1,6 @@
-import { formatHunkRef } from "../schema/identity.ts";
+import { formatHunkRef, formatStoredHunkRef, isLocatedHunkRef } from "../schema/identity.ts";
 import { padIndex, sizeLabel } from "../schema/types.ts";
-import type { HunkRef } from "../schema/types.ts";
+import type { HunkRef, ReviewHunkRef } from "../schema/types.ts";
 import { agentMdGroupHref } from "./paths.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiReview } from "./types.ts";
@@ -154,15 +154,29 @@ function dependsOnBlock(review: ApiReview, dependsOn: string[]): string | null {
   return ["Depends on:", ...lines].join("\n");
 }
 
-function hunkList(heading: string, hunks: HunkRef[]): string {
+function hunkList(heading: string, hunks: ReviewHunkRef[]): string {
   if (hunks.length === 0) {
     return `${heading}\n(none)`;
   }
-  return [heading, ...hunks.map((hunk) => `- ${formatHunkRef(hunk)}`)].join("\n");
+  return [heading, ...hunks.map((hunk) => `- ${formatStoredHunkRef(hunk)}`)].join("\n");
 }
 
-function imageNote(hunks: HunkRef[]): string | null {
-  if (!hunks.some(isImageSlot)) {
+function imageNote(hunks: ReviewHunkRef[]): string | null {
+  const image = hunks.some(
+    (hunk) =>
+      isLocatedHunkRef(hunk) &&
+      hunk.oldLines !== undefined &&
+      hunk.newLines !== undefined &&
+      isImageSlot({
+        path: hunk.path,
+        ...(hunk.oldPath !== undefined ? { oldPath: hunk.oldPath } : {}),
+        oldStart: hunk.oldStart,
+        oldLines: hunk.oldLines,
+        newStart: hunk.newStart,
+        newLines: hunk.newLines,
+      }),
+  );
+  if (!image) {
     return null;
   }
   return "Hunk refs with @@ -0,0 +0,0 @@ are image or binary slots. Identify those by path.";

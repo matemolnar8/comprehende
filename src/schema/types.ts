@@ -1,6 +1,6 @@
 import type { HunkRef, ReviewSource, Source } from "./review.ts";
 
-export type { HunkRef, ReviewDocument, ReviewGroup, ReviewPart, ReviewSource, Source } from "./review.ts";
+export type { HunkRef, ReviewDocument, ReviewGroup, ReviewHunkRef, ReviewPart, ReviewSource, Source } from "./review.ts";
 
 export const REVIEW_SIZES = ["trivial", "small", "medium", "large", "very-large"] as const;
 

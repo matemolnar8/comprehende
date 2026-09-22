@@ -151,8 +151,18 @@
           "hunkRefs": {
             "type": "array",
             "items": {
-              "$ref": "#/$defs/hunkRef"
-            }
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/hunkRef"
+                },
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart."
+                }
+              ]
+            },
+            "description": "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk. An object is one hunk."
           }
         },
         "required": [
@@ -291,7 +301,7 @@
         "newLines"
       ],
       "additionalProperties": false,
-      "description": "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed."
+      "description": "One hunk. Identity is (path, oldStart, newStart), plus oldPath when renamed."
     }
   }
 }

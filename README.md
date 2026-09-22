@@ -56,7 +56,7 @@ Run inside the git repository under review. Cwd is the repo.
 comprehende review [--base <ref>] [--head <ref>] --data review.json
 ```
 
-Indexes `base...head` (default: `origin/HEAD` or `main`/`master` … `HEAD`) and writes a covering skeleton: every hunk ref, stub prose. The command does not invent a review. Fill title, groups, summaries, and lookFor (the skill does this), then:
+Indexes `base...head` (default: `origin/HEAD` or `main`/`master` … `HEAD`) and writes a covering skeleton: one path per changed file, stub prose. A path covers every live hunk of that file. The command does not invent a review. Fill title, groups, summaries, and lookFor (the skill does this), then:
 
 ```sh
 comprehende validate --data review.json

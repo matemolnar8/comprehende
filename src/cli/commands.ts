@@ -26,13 +26,17 @@ export async function cmdReview(
   head: string | undefined,
 ): Promise<{ document: ReviewDocument; index: HunkIndex }> {
   const index = await cmdIndex(cwd, base, head);
-  const document = skeletonDocument(index);
+  const skeleton = skeletonDocument(index);
   await mkdir(dirname(dataPath), { recursive: true });
-  await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+  await writeFile(dataPath, `${JSON.stringify(skeleton, null, 2)}\n`);
+  const document = await loadDocument(dataPath);
   return { document, index };
 }
 
-export async function cmdValidate(cwd: string, dataPath: string): Promise<{ document: ReviewDocument; warnings: string[] }> {
+export async function cmdValidate(
+  cwd: string,
+  dataPath: string,
+): Promise<{ document: ReviewDocument; warnings: string[]; assignedHunks: number }> {
   const document = await loadDocument(dataPath);
   const resolved = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
   const { coverage } = await coverReview(cwd, document);
@@ -41,5 +45,5 @@ export async function cmdValidate(cwd: string, dataPath: string): Promise<{ docu
   if (errors.length > 0) {
     throw new Error(errors.join("\n\n"));
   }
-  return { document, warnings: [] };
+  return { document, warnings: [], assignedHunks: coverage.assignedHunks };
 }

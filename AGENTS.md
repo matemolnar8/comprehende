@@ -90,7 +90,7 @@ Releases happen manually. Do not change `package.json` version unless the user a
 
 ## Pull requests
 
-When opening a pull request, run the local built CLI `comprehende review --data <path>` to write the covering skeleton (every hunk ref, stub prose). Fill interpretation with the comprehende skill from skills-next. Do not paste hunk refs by hand. Export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
+When opening a pull request, run the local built CLI `comprehende review --data <path>` to write the covering skeleton (one path per changed file, stub prose). Fill interpretation with the comprehende skill from skills-next. Do not paste hunk refs by hand. Export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
 
 After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `CURSOR_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 

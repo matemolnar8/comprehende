@@ -1,19 +1,19 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
 import { pinRange, type PinnedRange } from "../git/repo.ts";
-import { formatHunkRef, hunkKey } from "../schema/identity.ts";
+import { formatStoredHunkRef, hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
-import type { HunkRef, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
+import type { LiveHunk, ReviewDocument, ReviewGroup, ReviewHunkRef } from "../schema/types.ts";
 
 export type GroupCoverage = {
   group: ReviewGroup;
   hunks: LiveHunk[];
-  stale: HunkRef[];
+  stale: ReviewHunkRef[];
 };
 
 export type ReviewCoverage = {
   groups: GroupCoverage[];
   unassigned: LiveHunk[];
-  stale: HunkRef[];
+  stale: ReviewHunkRef[];
   totalHunks: number;
   assignedHunks: number;
 };
@@ -31,29 +31,43 @@ export async function coverReview(
 
 export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): ReviewCoverage {
   const liveByKey = new Map<string, LiveHunk>();
+  const liveByPath = new Map<string, LiveHunk[]>();
   for (const hunk of live) {
     const key = hunkKey(hunk);
     liveByKey.set(key, hunk);
+    const atPath = liveByPath.get(hunk.path);
+    if (atPath === undefined) {
+      liveByPath.set(hunk.path, [hunk]);
+    } else {
+      atPath.push(hunk);
+    }
   }
 
   const assignedKeys = new Set<string>();
-  const allStale: HunkRef[] = [];
+  const allStale: ReviewHunkRef[] = [];
   const groups: GroupCoverage[] = document.groups.map((group) => {
     const hunks: LiveHunk[] = [];
-    const stale: HunkRef[] = [];
+    const seen = new Set<string>();
+    const stale: ReviewHunkRef[] = [];
     for (const ref of group.hunkRefs) {
       if (isLockfilePath(ref.path)) {
         continue;
       }
-      const key = hunkKey(ref);
-      const match = liveByKey.get(key);
-      if (match === undefined) {
+      const matches = isLocatedHunkRef(ref) ? matchLocated(ref, liveByKey) : (liveByPath.get(ref.path) ?? []);
+      if (matches.length === 0) {
         stale.push(ref);
         allStale.push(ref);
         continue;
       }
-      hunks.push(match);
-      assignedKeys.add(key);
+      for (const match of matches) {
+        const key = hunkKey(match);
+        assignedKeys.add(key);
+        if (seen.has(key)) {
+          continue;
+        }
+        seen.add(key);
+        hunks.push(match);
+      }
     }
     return { group, hunks, stale };
   });
@@ -82,12 +96,20 @@ export function coverageErrors(coverage: ReviewCoverage): string[] {
   }
   if (coverage.stale.length > 0) {
     errors.push(
-      `stale: ${coverage.stale.length} hunk ref(s) do not match the live git diff:\n${formatRefs(coverage.stale)}`,
+      `stale: ${coverage.stale.length} ref(s) do not match the live git diff:\n${formatRefs(coverage.stale)}`,
     );
   }
   return errors;
 }
 
-function formatRefs(refs: HunkRef[]): string {
-  return refs.map((ref) => `  ${formatHunkRef(ref)}`).join("\n");
+function matchLocated(ref: ReviewHunkRef, liveByKey: Map<string, LiveHunk>): LiveHunk[] {
+  if (!isLocatedHunkRef(ref)) {
+    return [];
+  }
+  const match = liveByKey.get(hunkKey(ref));
+  return match === undefined ? [] : [match];
+}
+
+function formatRefs(refs: ReviewHunkRef[]): string {
+  return refs.map((ref) => `  ${formatStoredHunkRef(ref)}`).join("\n");
 }

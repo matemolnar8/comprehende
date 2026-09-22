@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { toHunkRef } from "../git/diff.ts";
-import { hunkKey } from "../schema/identity.ts";
+import { hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
 import type { HunkIndex, HunkRef, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 
 export const MIXED_PART_APP = "App name";
@@ -172,7 +172,18 @@ function hunksAt(index: HunkIndex, path: string): HunkRef[] {
 }
 
 function assertFullCoverage(index: HunkIndex, document: ReviewDocument): void {
-  const assigned = new Set(document.groups.flatMap((group) => group.hunkRefs).map(hunkKey));
+  const assigned = new Set<string>();
+  for (const ref of document.groups.flatMap((group) => group.hunkRefs)) {
+    if (!isLocatedHunkRef(ref)) {
+      for (const hunk of index.hunks) {
+        if (hunk.path === ref.path) {
+          assigned.add(hunkKey(hunk));
+        }
+      }
+      continue;
+    }
+    assigned.add(hunkKey(ref));
+  }
   const missed = index.hunks.filter((hunk) => !assigned.has(hunkKey(hunk)));
   if (missed.length > 0) {
     throw new Error(`mixed covering document missed ${missed.map((hunk) => hunk.path).join(", ")}`);
