@@ -25,6 +25,7 @@ import {
   claimsFromGrader,
   formatBaselineDelta,
   formatCaseLine,
+  formatRunTotals,
   writeCaseArtifacts,
   type CaseResult,
   type RunSummary,
@@ -83,6 +84,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     summary.cases.push(result);
     console.log(formatCaseLine(result));
   }
+  console.log(formatRunTotals(summary));
   await writeFile(join(runDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
   const reportPath = await writeEvalReport(runDir, summary);
   console.error(`wrote ${reportPath}`);
@@ -123,7 +125,7 @@ async function evalOneCase(opts: {
     });
     await fetchCaseRefs(bare, opts.spec.pr, opts.spec.base, opts.spec.head);
     await addDetachedWorktree(bare, repoCwd, opts.spec.head);
-    const cliPath = join(opts.packageRoot, "dist/cli/main.js");
+    const cliPath = resolve(opts.packageRoot, "dist/cli/main.js");
     if (!existsSync(cliPath)) {
       throw new Error("dist/cli/main.js is missing. pnpm eval runs the build first.");
     }
@@ -149,6 +151,7 @@ async function evalOneCase(opts: {
         outPath: reviewPath,
         base: opts.spec.base,
         head: opts.spec.head,
+        cliPath,
       }),
     });
     result.producer = producer;
@@ -186,14 +189,14 @@ async function evalOneCase(opts: {
         try {
           const ctx = await openReview(repoCwd, document);
           const packetPath = join(caseOut, "packet.md");
-          await writeGradingPacket(ctx, frozen, packetPath);
+          const packet = await writeGradingPacket(ctx, frozen, packetPath);
           const [grouping, prose] = await Promise.all([
             runGrader({
               repoCwd,
               model: opts.graderModel,
               apiKey: opts.apiKey,
               sandbox: opts.sandbox,
-              prompt: groupingPrompt({ skillMd: opts.skillMd, packetPath }),
+              prompt: groupingPrompt({ skillMd: opts.skillMd, packet }),
             }),
             runGrader({
               repoCwd,
@@ -202,7 +205,7 @@ async function evalOneCase(opts: {
               sandbox: opts.sandbox,
               prompt: prosePrompt({
                 skillMd: opts.skillMd,
-                packetPath,
+                packet,
                 claims: opts.spec.expect?.claims ?? [],
               }),
             }),
