@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d796524f8e3f483ab92925f55f17835b7301a18f` and `git rev-parse --verify f3d996d09cbba208f3f138e7dbf71ed86a0bca0d` in this repository.
+   Run `git rev-parse --verify d796524f8e3f483ab92925f55f17835b7301a18f` and `git rev-parse --verify 6a0cfd928cce208a16889e3a50bc1f9e00e61872` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  d796524f8e3f483ab92925f55f17835b7301a18f
 
-head               f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
+head               6a0cfd928cce208a16889e3a50bc1f9e00e61872
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
+git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f 6a0cfd928cce208a16889e3a50bc1f9e00e61872
 
 Commits:
+- 6a0cfd9 Allow large on the comprehende-67 size expect.
 - f3d996d Drop leftover formatCaseLine statements after the #99 rebase.
 - db8f69e Stop counting eval temp paths as CLI hunts.
 - edf1947 Give graders tools back and keep the packet inline.
@@ -56,11 +57,12 @@ The why:
 
 The what (small):
 
-The producer prompt names the injected `node <abs>/dist/cli/main.js` as a built fact. Graders get the packet inline and keep `read`/`grep`/`glob`/`ls` for targeted work-tree checks. The harness records each tool call so the run line can print cli-hunt and grader-tools.
+The producer prompt names the injected `node <abs>/dist/cli/main.js` as a built fact. Graders get the packet inline and keep `read`/`grep`/`glob`/`ls` for targeted work-tree checks. The harness records each tool call so the run line can print cli-hunt and grader-tools. The comprehende-67 size expect also allows large.
 
 Look for:
 - [#97](source:s1) offered `tools: []` or a small step budget. This diff keeps `GRADER_TOOLS` and has no step cap. The packet is inline; the prompt asks for targeted reads only.
 - The rebase keeps #99's "Skip the npm version check" without pinning it to step 1, and drops "the local build" for the injected CLI path.
+- After #99 the producer labels comprehende-67 large. This diff widens that case expect rather than changing the skill.
 
 ## Review concerns
 
@@ -87,3 +89,9 @@ Depends on:
 - 01 Per-call tool records (`tool-records`)
 
 [groups/grader-packet.md](groups/grader-packet.md)
+
+### 04 comprehende-67 size expect (`size-expect`)
+
+`eval/cases/comprehende-67/case.json` adds `large` to the allowed size list.
+
+[groups/size-expect.md](groups/size-expect.md)

@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d796524f8e3f483ab92925f55f17835b7301a18f` and `git rev-parse --verify f3d996d09cbba208f3f138e7dbf71ed86a0bca0d` in this repository.
+   Run `git rev-parse --verify d796524f8e3f483ab92925f55f17835b7301a18f` and `git rev-parse --verify 6a0cfd928cce208a16889e3a50bc1f9e00e61872` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f f3d996d09cbba208f3f138e7dbf71ed86a0bca0d -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f 6a0cfd928cce208a16889e3a50bc1f9e00e61872 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,15 +25,15 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  d796524f8e3f483ab92925f55f17835b7301a18f
 
-head               f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
+head               6a0cfd928cce208a16889e3a50bc1f9e00e61872
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
+git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f 6a0cfd928cce208a16889e3a50bc1f9e00e61872
 
-Review concern 01 of 03: Per-call tool records (`tool-records`)
+Review concern 01 of 04: Per-call tool records (`tool-records`)
 
 The why:
 
