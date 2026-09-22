@@ -86,14 +86,6 @@ export function formatCaseLine(result: CaseResult): string {
   }
   return bits.join("  ");
 }
-  if (result.grouping !== undefined) {
-    bits.push(`g-tools ${result.grouping.run.toolCalls.length}`);
-  }
-  if (result.prose !== undefined) {
-    bits.push(`p-tools ${result.prose.run.toolCalls.length}`);
-  }
-  return bits.join("  ");
-}
 
 export function formatBaselineDelta(current: CaseResult, previous: CaseResult | undefined): string | undefined {
   if (previous === undefined) {
