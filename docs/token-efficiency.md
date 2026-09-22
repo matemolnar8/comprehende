@@ -80,7 +80,7 @@ Ordered by expected saving. Numbers are measured unless marked estimate.
 
 ### A. Refs by file, hunk refs only when a file splits
 
-Let a `hunkRefs` entry be a path string (every live hunk of that file), or `path@oldStart+newStart` for one hunk (`old -> new@...` when renamed). The object form stays valid. `hunkKey` already ignores `oldLines` and `newLines`, so nothing is lost. Coverage, stale detection, and the UI work on the same live hunks as today; parse expands the strings at the boundary.
+Let a `hunkRefs` entry be a path string (every live hunk of that file), or `path@oldStart+newStart` for one hunk (`old -> new@...` when renamed). Parse accepts only those strings. `hunkKey` already ignores `oldLines` and `newLines`, so nothing is lost. Coverage, stale detection, and the UI work on the same live hunks as today; parse expands the strings at the boundary.
 
 Measured on the 7 CI reviews:
 
@@ -93,7 +93,7 @@ Measured on the 7 CI reviews:
 
 Not measured, expected: no more regrouping scripts and their validate loops on large diffs (the 2.06M run), and a file ref stays valid after a rebase that only shifts line numbers.
 
-Blast radius: `src/schema/review.ts` (union plus normalize), `src/review/coverage.ts` (expand a path to its live hunks), `src/review/skeleton.ts` (paths, not hunks), `src/schema/identity.ts` (format), the skill's hunk-identity paragraph and example. UI untouched. The agent-facing schema JSON changes with it.
+Blast radius: `src/schema/review.ts` (string refs plus normalize), `src/review/coverage.ts` (expand a path to its live hunks), `src/review/skeleton.ts` (paths, not hunks), `src/schema/identity.ts` (format), the skill's hunk-identity paragraph and example. UI untouched. The agent-facing schema JSON changes with it.
 
 ### B. `review` prints the covering diff
 

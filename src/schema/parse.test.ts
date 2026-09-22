@@ -22,12 +22,7 @@ describe("parseReviewDocument", () => {
           why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
           suggestedOrder: 0,
-          hunkRefs: [
-            "src/app.ts",
-            "src/cli/main.ts@1+8",
-            "src/util.ts -> src/helpers.ts@4+4",
-            { path: "README.md", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 },
-          ],
+          hunkRefs: ["src/app.ts", "src/cli/main.ts@1+8", "src/util.ts -> src/helpers.ts@4+4"],
         },
       ],
     });
@@ -37,12 +32,11 @@ describe("parseReviewDocument", () => {
         { path: "src/app.ts" },
         { path: "src/cli/main.ts", oldStart: 1, newStart: 8 },
         { path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 },
-        { path: "README.md", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 },
       ]);
     }
   });
 
-  it("rejects a compact ref with an empty path and a hunk object missing starts", () => {
+  it("rejects a compact ref with an empty path and a hunk object", () => {
     const base = {
       version: 1,
       source: { baseRef: "main", headRef: "HEAD" },
@@ -62,18 +56,18 @@ describe("parseReviewDocument", () => {
     if (!empty.ok) {
       assert.match(empty.errors.join("\n"), /hunkRefs\[0\] must be a path or path@oldStart\+newStart/);
     }
-    const partial = parseReviewDocument({
+    const object = parseReviewDocument({
       ...base,
-      groups: [{ ...group, hunkRefs: [{ path: "src/app.ts" }] }],
+      groups: [{ ...group, hunkRefs: [{ path: "src/app.ts", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 }] }],
     });
-    assert.equal(partial.ok, false);
-    if (!partial.ok) {
-      assert.match(partial.errors.join("\n"), /hunkRefs\[0\]\.oldStart/);
+    assert.equal(object.ok, false);
+    if (!object.ok) {
+      assert.match(object.errors.join("\n"), /hunkRefs\[0\] must be a string/);
     }
     const number = parseReviewDocument({ ...base, groups: [{ ...group, hunkRefs: [1] }] });
     assert.equal(number.ok, false);
     if (!number.ok) {
-      assert.match(number.errors.join("\n"), /must be a hunk object or a path string/);
+      assert.match(number.errors.join("\n"), /hunkRefs\[0\] must be a string/);
     }
   });
 
@@ -93,9 +87,7 @@ describe("parseReviewDocument", () => {
           summary: "Adds a command.",
           lookFor: ["Check the flag parsing."],
           suggestedOrder: 0,
-          hunkRefs: [
-            { path: "src/cli/main.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 },
-          ],
+          hunkRefs: ["src/cli/main.ts@1+8"],
         },
       ],
     });

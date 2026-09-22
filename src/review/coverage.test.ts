@@ -7,7 +7,7 @@ import { rmSync } from "node:fs";
 import { readHunkIndex } from "../git/diff.ts";
 import { coverReview, joinCoverage } from "./coverage.ts";
 import { cmdValidate } from "../cli/commands.ts";
-import { writeCoveringDocument } from "../test/covering-document.ts";
+import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import type { LiveHunk, ReviewDocument, ReviewHunkRef } from "../schema/types.ts";
 
@@ -48,8 +48,8 @@ describe("coverage join", () => {
             summary: "",
             suggestedOrder: 0,
             hunkRefs: [
-              { path: "a.ts", oldStart: 1, oldLines: 1, newStart: 1, newLines: 2 },
-              { path: "missing.ts", oldStart: 4, oldLines: 1, newStart: 4, newLines: 1 },
+              { path: "a.ts", oldStart: 1, newStart: 1 },
+              { path: "missing.ts", oldStart: 4, newStart: 4 },
             ],
           },
         ],
@@ -90,10 +90,7 @@ describe("coverage join", () => {
             why: "Lockfiles stay in skipped.",
             summary: "",
             suggestedOrder: 0,
-            hunkRefs: [
-              { path: "package-lock.json", oldStart: 12, oldLines: 40, newStart: 12, newLines: 44 },
-              { path: "package-lock.json", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 },
-            ],
+            hunkRefs: [{ path: "package-lock.json" }],
           },
         ],
       },
@@ -185,9 +182,9 @@ describe("example repo index/validate", () => {
     const broken = structuredClone(document);
     const first = broken.groups[0];
     assert.ok(first);
-    first.hunkRefs.push({ path: "nope.ts", oldStart: 1, oldLines: 1, newStart: 1, newLines: 1 });
+    first.hunkRefs.push({ path: "nope.ts" });
     const brokenPath = join(root, "broken.json");
-    await writeFile(brokenPath, `${JSON.stringify(broken, null, 2)}\n`);
+    await writeFile(brokenPath, reviewFileBody(broken));
     await assert.rejects(() => cmdValidate(repo.root, brokenPath), /stale/);
 
     const missing = structuredClone(document);

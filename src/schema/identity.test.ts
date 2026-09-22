@@ -45,9 +45,5 @@ describe("parseHunkRefString", () => {
       formatStoredHunkRef({ path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 }),
       "src/util.ts -> src/helpers.ts@4+4",
     );
-    assert.equal(
-      formatStoredHunkRef({ path: "src/app.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 }),
-      "src/app.ts @@ -1,3 +1,8 @@",
-    );
   });
 });

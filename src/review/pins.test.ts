@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { cmdIndex, cmdValidate } from "../cli/commands.ts";
-import { writeCoveringDocument } from "../test/covering-document.ts";
+import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { commentPinErrors, staleCommentPins } from "./pins.ts";
 
@@ -81,7 +81,7 @@ describe("stale comment pins", () => {
     const index = await cmdIndex(repo.root, repo.base, repo.head);
     const document = await writeCoveringDocument(dataPath, index);
     document.why = "See [#24](source:s1).";
-    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+    await writeFile(dataPath, reviewFileBody(document));
     await assert.rejects(() => cmdValidate(repo.root, dataPath), /unknown id "s1"/);
   });
 });

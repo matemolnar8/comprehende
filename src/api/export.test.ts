@@ -7,7 +7,7 @@ import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
-import { writeCoveringDocument } from "../test/covering-document.ts";
+import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import { listResources, openReview } from "./live.ts";
 import { apiHref } from "./paths.ts";
@@ -149,7 +149,7 @@ describe("export static site", () => {
     const index = await cmdIndex(repo.root, repo.base, repo.head);
     const document = await writeCoveringDocument(dataPath, index);
     document.source.baseRef = "no-such-base";
-    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+    await writeFile(dataPath, reviewFileBody(document));
 
     const uiRoot = join(root, "ui");
     await mkdir(uiRoot);

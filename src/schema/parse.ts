@@ -51,25 +51,10 @@ function collectIssues(issues: readonly z.core.$ZodIssue[], prefix: PropertyKey[
       }
       continue;
     }
-    if (issue.code === "invalid_union" && Array.isArray(issue.errors)) {
-      const nested = issue.errors.flat().filter((item) => !isBranchTypeMismatch(item));
-      if (nested.length > 0) {
-        errors.push(...collectIssues(nested, path));
-        continue;
-      }
-      const where = formatPath(path);
-      const message = "must be a hunk object or a path string";
-      errors.push(where === "" ? message : `${where} ${message}`);
-      continue;
-    }
     const where = formatPath(path);
     errors.push(where === "" ? issue.message : `${where} ${issue.message}`);
   }
   return errors;
-}
-
-function isBranchTypeMismatch(issue: z.core.$ZodIssue): boolean {
-  return issue.code === "invalid_type" && issue.path.length === 0;
 }
 
 function formatPath(path: PropertyKey[]): string {

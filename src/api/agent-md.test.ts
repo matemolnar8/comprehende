@@ -83,9 +83,9 @@ describe("agentMd", () => {
     assert.ok(prompt.includes("## Steps"));
     assert.ok(prompt.includes("## Pin"));
     assert.ok(prompt.indexOf("## Steps") < prompt.indexOf("## Pin"));
-    assert.ok(prompt.includes("src/auth/session.ts"));
-    assert.ok(prompt.includes("src/helpers.ts"));
-    assert.ok(prompt.includes("@@"));
+    assert.ok(prompt.includes("src/auth/session.ts@1+1"));
+    assert.ok(prompt.includes("src/util.ts -> src/helpers.ts@4+4"));
+    assert.ok(prompt.includes("assets/dot.png"));
     assert.equal(prompt.includes("src/api/login.ts"), false);
     assert.equal(prompt.includes("groups/login.md"), false);
     assert.equal(prompt.includes("+++"), false);
@@ -155,16 +155,9 @@ function sampleReview(): ApiReview {
           part: "Session cookie",
           suggestedOrder: 0,
           hunkRefs: [
-            { path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 },
-            { path: "assets/dot.png", oldStart: 0, oldLines: 0, newStart: 0, newLines: 0 },
-            {
-              path: "src/helpers.ts",
-              oldPath: "src/util.ts",
-              oldStart: 4,
-              oldLines: 8,
-              newStart: 4,
-              newLines: 12,
-            },
+            { path: "src/auth/session.ts", oldStart: 1, newStart: 1 },
+            { path: "assets/dot.png" },
+            { path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 },
           ],
         },
         {
@@ -174,7 +167,7 @@ function sampleReview(): ApiReview {
           summary: "The login route uses setSessionCookie.",
           dependsOn: ["cookie"],
           suggestedOrder: 1,
-          hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, oldLines: 8, newStart: 10, newLines: 24 }],
+          hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, newStart: 10 }],
         },
       ],
     },

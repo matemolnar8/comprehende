@@ -1,21 +1,27 @@
-import type { HunkRef } from "./types.ts";
-
 const COMPACT_SUFFIX = /@(\d+)\+(\d+)$/;
 const RENAME_MARK = " -> ";
+
+/** Live git hunk. Identity is `(path, oldStart, newStart)`, plus `oldPath` when renamed. */
+export type HunkRef = {
+  path: string;
+  oldPath?: string;
+  oldStart: number;
+  oldLines: number;
+  newStart: number;
+  newLines: number;
+};
 
 /** Every live hunk of `path`. */
 export type FileHunkRef = {
   path: string;
 };
 
-/** One hunk. Line counts are present only when the object form supplied them. */
+/** One hunk, written as `path@oldStart+newStart`. */
 export type LocatedHunkRef = {
   path: string;
   oldPath?: string;
   oldStart: number;
   newStart: number;
-  oldLines?: number;
-  newLines?: number;
 };
 
 export type ReviewHunkRef = FileHunkRef | LocatedHunkRef;
@@ -72,16 +78,6 @@ export function parseHunkRefString(value: string): ParsedHunkString | undefined 
 export function formatStoredHunkRef(ref: ReviewHunkRef): string {
   if (!isLocatedHunkRef(ref)) {
     return ref.path;
-  }
-  if (ref.oldLines !== undefined && ref.newLines !== undefined) {
-    return formatHunkRef({
-      path: ref.path,
-      ...(ref.oldPath !== undefined ? { oldPath: ref.oldPath } : {}),
-      oldStart: ref.oldStart,
-      oldLines: ref.oldLines,
-      newStart: ref.newStart,
-      newLines: ref.newLines,
-    });
   }
   const rename = ref.oldPath !== undefined ? `${ref.oldPath} -> ` : "";
   return `${rename}${ref.path}@${ref.oldStart}+${ref.newStart}`;

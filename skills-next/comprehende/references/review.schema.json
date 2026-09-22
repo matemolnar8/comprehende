@@ -151,18 +151,11 @@
           "hunkRefs": {
             "type": "array",
             "items": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/hunkRef"
-                },
-                {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart."
-                }
-              ]
+              "type": "string",
+              "minLength": 1,
+              "description": "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart."
             },
-            "description": "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk. An object is one hunk."
+            "description": "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk."
           }
         },
         "required": [
@@ -264,44 +257,6 @@
         "label"
       ],
       "additionalProperties": false
-    },
-    "hunkRef": {
-      "type": "object",
-      "properties": {
-        "path": {
-          "type": "string",
-          "minLength": 1
-        },
-        "oldPath": {
-          "type": "string",
-          "minLength": 1
-        },
-        "oldStart": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "oldLines": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "newStart": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "newLines": {
-          "type": "integer",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "path",
-        "oldStart",
-        "oldLines",
-        "newStart",
-        "newLines"
-      ],
-      "additionalProperties": false,
-      "description": "One hunk. Identity is (path, oldStart, newStart), plus oldPath when renamed."
     }
   }
 }

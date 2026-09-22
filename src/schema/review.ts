@@ -23,12 +23,6 @@ function anyString(description?: string) {
   return description === undefined ? schema : schema.meta({ description });
 }
 
-function nonemptyInt() {
-  return z
-    .int({ error: "must be a non-negative integer" })
-    .nonnegative({ error: "must be a non-negative integer" });
-}
-
 function stringList(description?: string) {
   const schema = z.array(nonemptyString(), { error: "must be an array of strings" });
   return description === undefined ? schema.optional() : schema.optional().meta({ description });
@@ -43,23 +37,6 @@ function addIssue(ctx: z.core.ParsePayload<unknown>, message: string, path: Prop
   });
 }
 
-const hunkRefSchema = z
-  .strictObject(
-    {
-      path: nonemptyString(),
-      oldPath: nonemptyString().optional(),
-      oldStart: nonemptyInt(),
-      oldLines: nonemptyInt(),
-      newStart: nonemptyInt(),
-      newLines: nonemptyInt(),
-    },
-    { error: objectError },
-  )
-  .meta({
-    id: "hunkRef",
-    description: "One hunk. Identity is (path, oldStart, newStart), plus oldPath when renamed.",
-  });
-
 const hunkRefStringSchema = nonemptyString(
   "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart.",
 ).check((ctx) => {
@@ -67,8 +44,6 @@ const hunkRefStringSchema = nonemptyString(
     addIssue(ctx, "must be a path or path@oldStart+newStart");
   }
 });
-
-const hunkRefWrittenSchema = z.union([hunkRefSchema, hunkRefStringSchema]);
 
 const reviewSourceSchema = z.strictObject(
   {
@@ -151,10 +126,10 @@ const groupSchema = z.strictObject(
       .number({ error: "must be a finite number" })
       .finite({ error: "must be a finite number" }),
     hunkRefs: z
-      .array(hunkRefWrittenSchema, { error: "must be an array" })
+      .array(hunkRefStringSchema, { error: "must be an array" })
       .meta({
         description:
-          "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk. An object is one hunk.",
+          "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk.",
       }),
   },
   { error: objectError },
@@ -234,10 +209,7 @@ export const reviewDocumentSchema = reviewDocumentInput.check(documentRules).tra
   };
 });
 
-function normalizeWrittenHunkRef(value: z.infer<typeof hunkRefWrittenSchema>): ReviewHunkRef {
-  if (typeof value !== "string") {
-    return value;
-  }
+function normalizeWrittenHunkRef(value: string): ReviewHunkRef {
   const parsed = parseHunkRefString(value);
   if (parsed === undefined) {
     throw new Error(`invalid hunk ref string: ${value}`);
@@ -361,8 +333,7 @@ function collectDuplicateIds(ctx: z.core.ParsePayload<unknown>, ids: string[], k
   }
 }
 
-export type HunkRef = z.infer<typeof hunkRefSchema>;
-export type { ReviewHunkRef } from "./identity.ts";
+export type { HunkRef, ReviewHunkRef } from "./identity.ts";
 export type ReviewSource = z.infer<typeof reviewSourceSchema>;
 export type Source = z.infer<typeof sourceSchema>;
 export type ReviewPart = z.infer<typeof reviewPartSchema>;
