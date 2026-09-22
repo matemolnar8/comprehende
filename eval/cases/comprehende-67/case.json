@@ -8,7 +8,7 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 3 },
-    "size": ["small", "medium"],
+    "size": ["small", "medium", "large"],
     "sourceKinds": ["pr-comment"],
     "claims": [
       "a rejected push retries by resetting to remote gh-pages and re-applying the review",
