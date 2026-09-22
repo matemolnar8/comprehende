@@ -74,10 +74,21 @@ export function formatCaseLine(result: CaseResult): string {
     bits.push("artifact FAIL");
   }
   if (result.producer !== undefined) {
-    bits.push(`${result.producer.steps} steps ${result.producer.toolCalls.length} tools`);
+    bits.push(`${result.producer.steps} steps`);
   }
   bits.push(formatDuration(result.durationMs));
   bits.push(formatTokens(result.tokens));
+  if (result.producer !== undefined) {
+    bits.push(
+      `producer ${formatTokens(result.producer.tokens)}`,
+      ...efficiencyBits(
+        result.producer.toolCalls.length,
+        result.producer.inputTokens ?? 0,
+        result.producer.cacheReadTokens ?? 0,
+        result.producer.outputTokens ?? 0,
+      ),
+    );
+  }
   if (result.grouping !== undefined) {
     bits.push(`g-tools ${result.grouping.run.toolCalls.length}`);
   }
@@ -171,6 +182,9 @@ export function formatRunTotals(summary: RunSummary): string {
   const graderTokens = groupingTokens + proseTokens;
   const producerHunt = sum(summary.cases, (item) => item.producer?.toolCalls.filter(isCliHuntCall).length ?? 0);
   const producerTools = sum(summary.cases, (item) => item.producer?.toolCalls.length ?? 0);
+  const producerInput = sum(summary.cases, (item) => item.producer?.inputTokens ?? 0);
+  const producerCacheRead = sum(summary.cases, (item) => item.producer?.cacheReadTokens ?? 0);
+  const producerOutput = sum(summary.cases, (item) => item.producer?.outputTokens ?? 0);
   const graderTools = sum(
     summary.cases,
     (item) => (item.grouping?.run.toolCalls.length ?? 0) + (item.prose?.run.toolCalls.length ?? 0),
@@ -179,11 +193,21 @@ export function formatRunTotals(summary: RunSummary): string {
     "total",
     formatTokens(producerTokens + graderTokens),
     `producer ${formatTokens(producerTokens)}`,
+    ...efficiencyBits(producerTools, producerInput, producerCacheRead, producerOutput),
     `graders ${formatTokens(graderTokens)}`,
     `cli-hunt ${producerHunt}/${producerTools} producer tools`,
     `grader-tools ${graderTools}`,
   ];
   return bits.join("  ");
+}
+
+function efficiencyBits(tools: number, input: number, cacheRead: number, output: number): string[] {
+  return [
+    `producer-tools ${tools}`,
+    `input ${formatTokens(input)}`,
+    `cache-read ${formatTokens(cacheRead)}`,
+    `output ${formatTokens(output)}`,
+  ];
 }
 
 function sum<T>(items: readonly T[], value: (item: T) => number): number {
