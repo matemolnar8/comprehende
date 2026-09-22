@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify d5c726fc18d330571360e3494af7bdd78ea6e0f3` in this repository.
+   Run `git rev-parse --verify d796524f8e3f483ab92925f55f17835b7301a18f` and `git rev-parse --verify f3d996d09cbba208f3f138e7dbf71ed86a0bca0d` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,60 +22,68 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  a05aef85c489e9ccd5c42f7b3397219b35b95719
+base (merge-base)  d796524f8e3f483ab92925f55f17835b7301a18f
 
-head               d5c726fc18d330571360e3494af7bdd78ea6e0f3
+head               f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 d5c726fc18d330571360e3494af7bdd78ea6e0f3
+git diff --find-renames d796524f8e3f483ab92925f55f17835b7301a18f f3d996d09cbba208f3f138e7dbf71ed86a0bca0d
 
 Commits:
-- d5c726f Stop counting eval temp paths as CLI hunts.
-- d9b391d Give graders tools back and keep the packet inline.
-- 0ff61b3 Keep the prose grader's ask list and tighten CLI-hunt matching.
-- b762397 Stop the eval CLI hunt and run graders with no tools.
+- f3d996d Drop leftover formatCaseLine statements after the #99 rebase.
+- db8f69e Stop counting eval temp paths as CLI hunts.
+- edf1947 Give graders tools back and keep the packet inline.
+- 5d306bf Keep the prose grader's ask list and tighten CLI-hunt matching.
+- 6097a32 Stop the eval CLI hunt and run graders with no tools.
 
 Sources:
-- ticket #97 CI cost, not the user path: state the injected CLI as a fact, and put the grading packet inline so graders waste fewer steps finding it.
+- ticket #97 CI cost, not the user path. State the injected CLI as a built fact. Put the grader packet inline. The ticket offered no tools or a small step budget.
   https://github.com/matemolnar8/comprehende/issues/97
-- pr PR #100 Producer CLI-hunt fix, inline grading packet, graders keep work-tree tools, tool-call telemetry. No tools:[] and no step cap.
+- pr PR #100 Rebased onto #99. Skill files from main win. Producer CLI-as-fact stays. Graders keep tools, packet inline, no tools:[], no step cap.
   https://github.com/matemolnar8/comprehende/pull/100
+- transcript Cursor session · Sep 22 Keep grader tools. Do not use tools:[]. Do not add a hard step cap. Packet stays inline. After #99, rebase onto main; skill files from #99; eval harness from this PR.
 
 The title:
 
-Eval harness: stop the CLI hunt, run graders without tools
+Eval harness: stop the CLI hunt, keep grader tools on targeted reads
 
 The why:
 
-[#97](source:s1) cuts CI eval cost: the producer prompt was sending the agent to verify the CLI path, and graders spent most of their tokens finding the packet and walking the tree.
+[#97](source:s1) wants eval CI cheaper: the producer hunts the CLI, and graders spend most of the tokens walking the work tree to find a packet they already have.
 
 The what (small):
 
-The producer prompt names the injected `node <abs>/dist/cli/main.js` command as the built CLI. Graders get the packet inline, keep `read`/`grep`/`glob`/`ls`, and the prompt tells them to start from the packet and read only the files a check needs. Agent runs record tool calls so the eval line can print CLI-hunt and grader-tool counts.
+The producer prompt names the injected `node <abs>/dist/cli/main.js` as a built fact. Graders get the packet inline and keep `read`/`grep`/`glob`/`ls` for targeted work-tree checks. The harness records each tool call so the run line can print cli-hunt and grader-tools.
 
 Look for:
-- [#97](source:s1) offered a tool-less grader as one option. This change keeps grader tools so they can check the code. There is no step cap.
-- [#97](source:s1) asks for before/after CLI-hunt steps and grader tokens. `formatRunTotals` is the on-branch measurement; it is not a pass/fail.
+- [#97](source:s1) offered `tools: []` or a small step budget. This diff keeps `GRADER_TOOLS` and has no step cap. The packet is inline; the prompt asks for targeted reads only.
+- The rebase keeps #99's "Skip the npm version check" without pinning it to step 1, and drops "the local build" for the injected CLI path.
 
 ## Review concerns
 
-### 01 Record tool calls on each agent run (`traces`)
+### 01 Per-call tool records (`tool-records`)
 
-`runLocalAgent` records assistant steps and tool names plus a short detail, and `isCliHuntCall` classifies dist/CLI hunts.
+`AgentRunResult.toolCalls` is a `ToolCallRecord[]`. `isCliHuntCall` classifies producer hunts. `formatRunTotals` and the case line print those counts.
 
-[groups/traces.md](groups/traces.md)
+[groups/tool-records.md](groups/tool-records.md)
 
-### 02 Name the injected CLI as a built fact (`prompt`)
+### 02 Producer CLI as a built fact (`cli-pin`)
 
-`producerPrompt` takes `cliPath` and tells the agent that `node <abs>/dist/cli/main.js` is the CLI, it is already built, and it must run that command as written.
+`producerPrompt` takes `cliPath` and names `node <abs>/dist/cli/main.js` as the CLI. `run.ts` passes the resolved path. Tests forbid "local build" and "step 1".
 
-[groups/prompt.md](groups/prompt.md)
+Depends on:
+- 01 Per-call tool records (`tool-records`)
 
-### 03 Inline the packet; keep work-tree tools (`graders`)
+[groups/cli-pin.md](groups/cli-pin.md)
 
-`groupingPrompt` and `prosePrompt` embed the packet and tell the grader to start from it, then read only the files a check needs. `GRADER_TOOLS` stays `read`/`grep`/`glob`/`ls`.
+### 03 Inline packet, keep grader tools (`grader-packet`)
 
-[groups/graders.md](groups/graders.md)
+`groupingPrompt` and `prosePrompt` embed the packet. `GRADER_PACKET_INTRO` tells the grader to start there and read only the files a check needs. `runGrader` still passes `GRADER_TOOLS`.
+
+Depends on:
+- 01 Per-call tool records (`tool-records`)
+
+[groups/grader-packet.md](groups/grader-packet.md)
