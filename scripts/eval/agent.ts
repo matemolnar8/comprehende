@@ -6,6 +6,11 @@ export type AgentRunResult = {
   status: "finished" | "error" | "cancelled";
   durationMs: number;
   tokens: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
+  steps?: number;
+  toolCalls?: number;
   error?: string;
 };
 
@@ -32,7 +37,17 @@ export async function runLocalAgent(opts: {
       ...(opts.sandbox ? { sandboxOptions: { enabled: true } } : {}),
     },
   });
-  const run = await agent.send(opts.prompt);
+  let steps = 0;
+  let toolCalls = 0;
+  const run = await agent.send(opts.prompt, {
+    onStep: ({ step }) => {
+      if (step.type === "assistantMessage") {
+        steps += 1;
+      } else if (step.type === "toolCall") {
+        toolCalls += 1;
+      }
+    },
+  });
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const result = await Promise.race([
@@ -49,6 +64,11 @@ export async function runLocalAgent(opts: {
       status: result.status,
       durationMs: result.durationMs ?? 0,
       tokens: result.usage?.totalTokens ?? 0,
+      inputTokens: result.usage?.inputTokens,
+      outputTokens: result.usage?.outputTokens,
+      cacheReadTokens: result.usage?.cacheReadTokens,
+      steps,
+      toolCalls,
       error: result.error?.message,
     };
   } finally {

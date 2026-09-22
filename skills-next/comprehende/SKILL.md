@@ -19,18 +19,29 @@ The review document is interpretation only. It holds a title, groups, summaries,
 
 ## Workflow
 
-1. Check npm for a newer package. Run `npm view comprehende version`. If that version is newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show this command as an option they can run:
+Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context.
+
+1. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
+2. One shell call: version check, covering skeleton, log, and stat. `$REVIEW_DIR` is a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries).
 
    ```sh
-   npx skills update
+   npm view comprehende version
+   npx comprehende@0.8.0 review --base <base> --head <head> --data "$REVIEW_DIR/review.json"
+   git log --format='%s%n%n%b' --end-of-options <base>...<head>
+   git diff --stat <base>...<head>
    ```
 
-   Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
-2. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-3. Write a covering skeleton. `$REVIEW_DIR` is a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries). Run `npx comprehende@0.8.0 review [--base <ref>] [--head <ref>] --data "$REVIEW_DIR/review.json"`. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. The command indexes live git and writes every hunk ref into one group, with stub prose. It does not invent a review. Done when that file exists. Keep those hunk refs; do not invent replacements.
-4. Recover the why, write the title, write the what, and compare the sources with the diff. Read the sources listed under The why and The title, read `git diff --stat <base>...<head>` and the diffs themselves, then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when a source names work to check against the diff; see lookFor). Summaries come from the code, not the log. Replace the stub title and summary. Done when every piece of work a source names is either in the diff or in a document `lookFor` bullet.
-5. Group the hunks by review concern, following the Grouping rules. Split the covering group. Copy hunk objects from the skeleton; do not invent refs. Set document `size` from review burden, not `git diff --stat`. Shape per [references/review.schema.json](./references/review.schema.json); worked example in [references/example.md](./references/example.md). Done when every hunk ref from the skeleton appears in at least one group, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry.
-6. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. On failure, fix groups or coverage; the diff is git's, leave it alone. Done when validate exits 0.
+   If `npm view` reports a version newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes every hunk ref into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those hunk refs; do not invent replacements.
+3. One shell call for the covering diff, lockfiles in that covering change excluded (the skeleton has no hunk refs for them), and read the sources in the same round trip. From the `--stat` in step 2, pass `:(exclude)<path>` for each lockfile in that covering change. Nested paths stay nested. When the covering `--stat` has no lockfile, run `git diff` with no pathspec.
+
+   ```sh
+   git diff <base>...<head> -- . ':(exclude)<path>'
+   ```
+
+   Sources are listed under The why and The title. Done when the diff and those sources are in context.
+4. Read the skeleton once, for its hunk refs. Recover the why, write the title, write the what, and compare the sources with the diff. Then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when a source names work to check against the diff; see lookFor). Summaries come from the code, not the log. Replace the stub title and summary. Done when every piece of work a source names is either in the diff or in a document `lookFor` bullet.
+5. Group the hunks by review concern, following the Grouping rules. Split the covering group. Copy hunk objects from the skeleton; do not invent refs. Set document `size` from review burden, not `git diff --stat`. Shape and field names: [references/example.md](./references/example.md) shows every field. Write the whole `review.json` in one write; the skeleton's `ungrouped` group is replaced, not kept. Done when every hunk ref from the skeleton appears in at least one group, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry.
+6. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks exactly these: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every group `part` has a `parts[]` entry, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
 7. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.8.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 ## Export
@@ -53,14 +64,14 @@ Invent a title when those sources are missing, vague, or name something else. A 
 
 ## The why
 
-Document `why` names why the work exists, in one or two sentences. This should be inferred only from the sources below. If the sources don't tell us why the change exists, or they are missing, omit it, and let the summary be the main source for getting an idea of the changes. If sources are available and they tell the story, don't derive document `why` from the diff, from group structure, or from a motive you infer from the patch. A request naming two unrelated product stories with no unifying source also gets no document `why`; each story keeps its own group `why`s.
+Document `why` names why the work exists, in one or two sentences, inferred only from the sources below. If those sources are silent or mixed, omit it. Do not derive document `why` from the diff, from group structure, or from a motive you infer from the patch. A request naming two unrelated product stories with no unifying source also gets no document `why`; each story keeps its own group `why`s.
 
 Sources are read, never copied into the review document, except PR review comments: copy `author` and `body` so the UI can show the quote. Keep ticket bodies, request descriptions, commit text, and transcript text out of `review.json`. Cite a source in prose with `[text](source:s1)` when that sentence leans on it.
 
 - Tickets and issues. Emit a `sources` item: short `id` (`s1`), `kind` `ticket`, `label` (`#24`), plus `url`, `title`, `gist`, and `part` when you have them. Read the ticket (host CLI, tools or MCP, whichever is available) when document `why` needs it. `part` goes on a ticket that belongs to one story, matching that story's group `part`; omit it only when the request or ticket title says the ticket covers the whole review. Commit count proves nothing about ticket scope. Do not copy the ticket body.
 - Pull request. When the user named a pull request or merge request, emit `kind` `pr` with a label like `PR #32` and a gist from the description. Do not copy the description. PRs can also refer to tickets and issues in their description or branch names.
 - PR comments. Emit `kind` `pr-comment`. Label like `alice on PR #32`. Copy `author` and `body`. For a review comment on a line, also copy `path`, `side` (`old` or `new`, git-shaped, not GitHub LEFT/RIGHT), and `line`. A conversation comment has no pin. Flatten threads: one source per comment.
-- Commit messages. `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. Emit `kind` `commit` when a commit names the motive. They can clarify group `why`; document `why` needs one of the stronger sources above. These can also contain issues and tickets.
+- Commit messages. `git log --format='%s%n%n%b' --end-of-options <base>...<head>`. Emit `kind` `commit` when a commit names the motive. `label` is that subject line, or a SHA from the same log. They can clarify group `why`; document `why` needs one of the stronger sources above. These can also contain issues and tickets.
 - Transcripts. A coding-agent (like Cursor, Claude Code, Codex, etc.) transcript you already have (this session, or a historical one) supplies the human's stated reason. Emit `kind` `transcript`, a label like `Cursor session · Aug 12`, and a gist. Omit `url`. Do not copy transcript text.
 
 Put those ids on the group `sources` array when the group uses them, even if the prose does not cite them inline. `validate` fails on a `source:` href whose id is missing from `sources`.
@@ -85,7 +96,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - `suggestedOrder` walks the whole review, independent parts included. Mechanical parts, independent documentation, and test-only cleanup go last.
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`; three files rewriting a contract the rest of the system hangs on can be `large`.
 - Coverage: every hunk from the skeleton sits in at least one group; duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI.
-- Lockfiles stay in `skipped`; the UI gives them their own closed bucket. Hunk refs exist only for hunks the skeleton lists.
+- Lockfiles have no hunk refs; the CLI leaves them out of the skeleton and the UI gives them their own closed bucket. Hunk refs exist only for hunks the skeleton lists.
 - Stale refs (rebase of the pinned commits) fail `validate`; `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `review` and copy fresh refs. A dirty work tree does not make refs stale.
 
 Hunk identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Copy `oldStart`, `oldLines`, `newStart`, and `newLines` from the skeleton. Image files are hunks; copy their refs into groups. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
