@@ -12,7 +12,6 @@ import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
 export async function cmdIndex(cwd: string, base: string | undefined, head: string | undefined): Promise<HunkIndex> {
   const baseRef = base ?? (await defaultBaseRef(cwd));
   const headRef = head ?? "HEAD";
-  await resolveSource(cwd, baseRef, headRef);
   return readHunkIndex(cwd, baseRef, headRef);
 }
 
@@ -30,7 +29,6 @@ export async function cmdReview(
   const document = skeletonDocument(index);
   await mkdir(dirname(dataPath), { recursive: true });
   await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
-  await cmdValidate(cwd, dataPath);
   return { document, index };
 }
 

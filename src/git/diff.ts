@@ -24,6 +24,11 @@ export async function resolveSource(
 export async function readDiff(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
   await resolveCommit(cwd, baseRef);
   await resolveCommit(cwd, headRef);
+  return readDiffAt(cwd, baseRef, headRef);
+}
+
+/** Diff endpoints the caller already resolved. */
+async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
   const range = `${baseRef}...${headRef}`;
   const entries = parseNameStatus(
     await git(cwd, ["diff", "--find-renames", "--find-copies", "--name-status", "-z", "--end-of-options", range]),
@@ -102,8 +107,8 @@ export async function readPathDiff(
 }
 
 export async function readHunkIndex(cwd: string, baseRef: string, headRef: string): Promise<HunkIndex> {
-  const { source } = await resolveSource(cwd, baseRef, headRef);
-  const files = await readDiff(cwd, baseRef, headRef);
+  const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
+  const files = await readDiffAt(cwd, baseSha, headSha);
   const hunks: HunkRef[] = [];
   const skipped: HunkIndex["skipped"] = [];
   for (const file of files) {

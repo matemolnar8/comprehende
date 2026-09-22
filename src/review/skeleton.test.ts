@@ -4,7 +4,7 @@ import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
-import { cmdIndex, cmdReview } from "../cli/commands.ts";
+import { cmdIndex, cmdReview, cmdValidate } from "../cli/commands.ts";
 import { toHunkRef } from "../git/diff.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { skeletonDocument } from "./skeleton.ts";
@@ -42,7 +42,7 @@ describe("skeletonDocument", () => {
 });
 
 describe("cmdReview", () => {
-  it("writes a covering skeleton, then validate passes", async () => {
+  it("writes a covering skeleton that validate accepts", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-cmd-"));
     roots.push(root);
     const repo = await createExampleRepo(root);
@@ -50,6 +50,7 @@ describe("cmdReview", () => {
     const index = await cmdIndex(repo.root, repo.base, repo.head);
     const { document } = await cmdReview(repo.root, dataPath, repo.base, repo.head);
     const raw: unknown = JSON.parse(await readFile(dataPath, "utf8"));
+    const validated = await cmdValidate(repo.root, dataPath);
 
     assert.ok(isRecord(raw));
     assert.equal(raw.title, "Untitled");
@@ -59,6 +60,7 @@ describe("cmdReview", () => {
     assert.equal(raw.parts, undefined);
     assert.deepEqual(document.groups[0]?.hunkRefs, index.hunks.map(toHunkRef));
     assert.equal(document.groups[0]?.hunkRefs.length, index.hunks.length);
+    assert.deepEqual(validated.document, document);
   });
 });
 
