@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify 0ff61b34155dc82c9265347a7d6464fc0faeaff6` in this repository.
+   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify d5c726fc18d330571360e3494af7bdd78ea6e0f3` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 0ff61b34155dc82c9265347a7d6464fc0faeaff6 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 d5c726fc18d330571360e3494af7bdd78ea6e0f3 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a05aef85c489e9ccd5c42f7b3397219b35b95719
 
-head               0ff61b34155dc82c9265347a7d6464fc0faeaff6
+head               d5c726fc18d330571360e3494af7bdd78ea6e0f3
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 0ff61b34155dc82c9265347a7d6464fc0faeaff6
+git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 d5c726fc18d330571360e3494af7bdd78ea6e0f3
 
 Review concern 02 of 03: Name the injected CLI as a built fact (`prompt`)
 
@@ -48,6 +48,6 @@ Look for:
 
 Hunk refs for this concern:
 - scripts/eval/producer.ts @@ -7,11 +7,13 @@
-- scripts/eval/producer.test.ts @@ -0,0 +1,34 @@
+- scripts/eval/producer.test.ts @@ -0,0 +1,36 @@
 - scripts/eval/run.ts @@ -123,7 +125,7 @@
 - scripts/eval/run.ts @@ -149,6 +151,7 @@

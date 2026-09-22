@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify 0ff61b34155dc82c9265347a7d6464fc0faeaff6` in this repository.
+   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify d5c726fc18d330571360e3494af7bdd78ea6e0f3` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 0ff61b34155dc82c9265347a7d6464fc0faeaff6 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 d5c726fc18d330571360e3494af7bdd78ea6e0f3 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a05aef85c489e9ccd5c42f7b3397219b35b95719
 
-head               0ff61b34155dc82c9265347a7d6464fc0faeaff6
+head               d5c726fc18d330571360e3494af7bdd78ea6e0f3
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 0ff61b34155dc82c9265347a7d6464fc0faeaff6
+git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 d5c726fc18d330571360e3494af7bdd78ea6e0f3
 
 Review concern 01 of 03: Record tool calls on each agent run (`traces`)
 
@@ -58,6 +58,6 @@ Hunk refs for this concern:
 - scripts/eval/run.ts @@ -83,6 +84,7 @@
 - scripts/eval/graders.test.ts @@ -1,7 +1,39 @@
 - scripts/eval/graders.test.ts @@ -40,8 +72,8 @@
-- scripts/eval/graders.test.ts @@ -50,6 +82,47 @@
+- scripts/eval/graders.test.ts @@ -50,6 +82,50 @@
 - scripts/eval/report.test.ts @@ -47,7 +47,7 @@
 - scripts/eval/report.test.ts @@ -60,7 +60,7 @@
