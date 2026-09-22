@@ -121,7 +121,7 @@ export function isCliHuntCall(call: ToolCallRecord): boolean {
     case "ls":
       return /(?:^|\/)dist(?:\/|$)|(?:^|\/)cli(?:\/|$)/.test(detail);
     case "grep":
-      return /dist|cli\/main|comprehende/i.test(detail);
+      return /(?:^|\/)dist(?:\/|$)|cli\/main/.test(detail);
     case "read":
       return /(?:^|\/)dist\/|cli\/main\.js/.test(detail);
     case "shell":

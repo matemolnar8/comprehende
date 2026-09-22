@@ -34,6 +34,8 @@ describe("CLI hunt classifier", () => {
     assert.equal(isCliHuntCall({ name: "read", detail: "dist/cli/main.js" }), true);
     assert.equal(isCliHuntCall({ name: "shell", detail: "pnpm build" }), true);
     assert.equal(isCliHuntCall({ name: "read", detail: "/tmp/skill/SKILL.md" }), false);
+    assert.equal(isCliHuntCall({ name: "grep", detail: "/tmp/comprehende-eval-x/out/review.json" }), false);
+    assert.equal(isCliHuntCall({ name: "grep", detail: "dist/cli" }), true);
     assert.equal(isCliHuntCall({ name: "shell", detail: "node /repo/dist/cli/main.js validate --data /tmp/out/review.json" }), false);
   });
 });
