@@ -15,7 +15,7 @@ after(() => {
 });
 
 describe("next skill workflow", () => {
-  it("batches commands, names validate checks, and drops the schema pointer", async () => {
+  it("batches commands, names validate checks, and leaves the example off the workflow", async () => {
     const md = await readNextSkillMd(findPackageRoot());
     const grouping = skillSection(md, "Grouping rules");
     assert.match(md, /Each step is one tool call where the step says so/);
@@ -26,7 +26,8 @@ describe("next skill workflow", () => {
       md,
       /every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`/,
     );
-    assert.match(md, /references\/example\.md/);
+    assert.match(md, /List fields are the empty arrays in the skeleton/);
+    assert.doesNotMatch(md, /references\/example\.md/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     assert.match(md, /From the `--stat` in step 2/);
     assert.match(md, /:\(exclude\)<path>/);
