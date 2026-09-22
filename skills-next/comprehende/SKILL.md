@@ -21,17 +21,21 @@ The review document is interpretation only. It holds a title, groups, summaries,
 
 Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context.
 
-1. Resolve base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch refs missing from the local clone. Done when both refs resolve in cwd; if one still does not resolve, stop and tell the user rather than guess a ref.
-2. One shell call: version check, covering skeleton, log, and stat. `$REVIEW_DIR` is a fresh temp directory outside the repository (`mktemp -d` or the platform equivalent; the work tree stays untouched, with no new gitignore entries).
+1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch a ref that is missing from the local clone. Done when both ref names are chosen. The next shell call verifies them.
+2. One shell call: verify the refs, check the CLI version, write the covering skeleton, log, and stat. `$REVIEW_DIR` comes from `mktemp -d` in that call (outside the repository; the work tree stays untouched, with no new gitignore entries). `&&` stops the shell before `review` when a ref does not resolve. Stop and tell the user which ref failed, rather than guess a ref.
 
    ```sh
-   npm view comprehende version
-   npx comprehende@0.8.0 review --base <base> --head <head> --data "$REVIEW_DIR/review.json"
-   git log --format='%s%n%n%b' --end-of-options <base>...<head>
-   git diff --stat <base>...<head>
+   REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
+     npm view comprehende version || true
+     npx comprehende@0.8.0 review --base <base> --head <head> --data "$REVIEW_DIR/review.json"
+     git log --format='%s%n%n%b' --end-of-options <base>...<head>
+     git diff --stat <base>...<head>
+   }
    ```
 
-   If `npm view` reports a version newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes one path per changed file into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those paths. A path covers every live hunk of that file.
+   When the user names a local executable, use that command as written in place of `npx comprehende@0.8.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version.
+
+   If that version is newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes one path per changed file into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those paths. A path covers every live hunk of that file.
 3. One shell call for the covering diff, lockfiles in that covering change excluded (the skeleton has no hunk refs for them), and read the sources in the same round trip. From the `--stat` in step 2, pass `:(exclude)<path>` for each lockfile in that covering change. Nested paths stay nested. When the covering `--stat` has no lockfile, run `git diff` with no pathspec.
 
    ```sh
@@ -40,9 +44,35 @@ Each step is one tool call where the step says so. Batch the commands as written
 
    Sources are listed under The why and The title. Done when the diff and those sources are in context.
 4. Read the skeleton once, for its paths. Recover the why, write the title, write the what, and compare the sources with the diff. Then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when a source names work to check against the diff; see lookFor). Summaries come from the code, not the log. Replace the stub title and summary. Done when every piece of work a source names is either in the diff or in a document `lookFor` bullet.
-5. Group the hunks by review concern, following the Grouping rules. Split the covering group. Copy each path from the skeleton into the group that holds that file. When one file's hunks belong in different groups, name each hunk as in the hunk identity paragraph. Set document `size` from review burden, not `git diff --stat`. Shape and field names: [references/example.md](./references/example.md) shows every field. Write the whole `review.json` in one write; the skeleton's `ungrouped` group is replaced, not kept. Done when every path from the skeleton is in at least one group, every live hunk of a split file is named, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry.
+5. Group the hunks by review concern, following the Grouping rules. Split the covering group. Copy each path from the skeleton into the group that holds that file. When one file's hunks belong in different groups, name each hunk as in the hunk identity paragraph. Set document `size` from review burden, not `git diff --stat`. Write the whole `review.json` in one write from the field shape below. Keep `version` and `source` from the skeleton. The skeleton's `ungrouped` group is replaced, not kept. Done when every path from the skeleton is in at least one group, every live hunk of a split file is named, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry.
+
+   Field shape. The words are placeholders. This shape is enough to write a valid document.
+
+   ```json
+   {
+     "version": 1,
+     "source": { "baseRef": "<base>", "headRef": "<head>", "range": "<base>...<head>" },
+     "size": "small",
+     "title": "Short name",
+     "summary": "What the change is.",
+     "groups": [
+       {
+         "id": "helper",
+         "title": "Group title",
+         "why": "Why this group exists.",
+         "summary": "What this group is.",
+         "suggestedOrder": 0,
+         "hunkRefs": ["src/file.ts"]
+       }
+     ]
+   }
+   ```
+
+   Add a field when the section that defines it says to write it: document `why`, `lookFor`, and `parts` (`name`, `summary`); `sources` (`id`, `kind` of `ticket`, `pr`, `pr-comment`, `commit`, or `transcript`, `label`, plus `url`, `title`, `gist`, and `part` when you have them). On a group: `part`, `sources` (those ids), `lookFor`, `dependsOn` (group ids). A `pr-comment` source also has `author` and `body`. A line pin adds `path`, `side` (`old` or `new`), and `line` together. `size` is `trivial`, `small`, `medium`, `large`, or `very-large`.
 6. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks exactly these: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every group `part` has a `parts[]` entry, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
 7. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.8.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+
+`references/example.md` is an optional filled sample of the field shape. The shape in step 5 is enough to write the document.
 
 ## Export
 

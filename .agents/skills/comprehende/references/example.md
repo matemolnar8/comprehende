@@ -1,6 +1,6 @@
 # Example review.json
 
-Pointers and prose only. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
+Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
