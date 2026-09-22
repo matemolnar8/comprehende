@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
-import { writeCoveringDocument } from "../test/covering-document.ts";
+import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
 import { apiHref } from "../api/paths.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
@@ -130,7 +130,7 @@ describe("serve API", () => {
     const index = await cmdIndex(repo.root, repo.base, repo.head);
     const document = await writeCoveringDocument(dataPath, index);
     document.source = { baseRef: repo.base, headRef: "HEAD", range: `${repo.base}...HEAD` };
-    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+    await writeFile(dataPath, reviewFileBody(document));
 
     const original = await showFile(repo.root, repo.head, "src/app.ts");
     const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
@@ -192,7 +192,7 @@ describe("serve API", () => {
         hunkRefs: appHunks.slice(1),
       },
     ];
-    await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+    await writeFile(dataPath, reviewFileBody(document));
 
     const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
     servers.push(running.server);

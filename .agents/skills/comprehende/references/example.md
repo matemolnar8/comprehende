@@ -1,12 +1,13 @@
 # Example review.json
 
-Pointers and prose only. The `@@` numbers must come from `comprehende review`, not from reading the patch.
+Pointers and prose only. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
 
 - `login` depends on `cookie`. Both use `part` "Session cookie".
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and one claim about the whole change. Both cite `[#12](source:s1)`. Group `lookFor` stays inside its hunks.
+- Each group holds every hunk of its file, so each `hunkRefs` entry is that path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed).
 
 ```json
 {
@@ -55,15 +56,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende review`, n
         "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
       ],
       "suggestedOrder": 0,
-      "hunkRefs": [
-        {
-          "path": "src/auth/session.ts",
-          "oldStart": 1,
-          "oldLines": 20,
-          "newStart": 1,
-          "newLines": 40
-        }
-      ]
+      "hunkRefs": ["src/auth/session.ts"]
     },
     {
       "id": "login",
@@ -77,15 +70,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende review`, n
       ],
       "dependsOn": ["cookie"],
       "suggestedOrder": 1,
-      "hunkRefs": [
-        {
-          "path": "src/api/login.ts",
-          "oldStart": 10,
-          "oldLines": 8,
-          "newStart": 10,
-          "newLines": 24
-        }
-      ]
+      "hunkRefs": ["src/api/login.ts"]
     },
     {
       "id": "docs",
@@ -94,15 +79,7 @@ Pointers and prose only. The `@@` numbers must come from `comprehende review`, n
       "summary": "The README section on sessions matches the new cookie behavior.",
       "part": "README",
       "suggestedOrder": 2,
-      "hunkRefs": [
-        {
-          "path": "README.md",
-          "oldStart": 1,
-          "oldLines": 4,
-          "newStart": 1,
-          "newLines": 8
-        }
-      ]
+      "hunkRefs": ["README.md"]
     }
   ]
 }

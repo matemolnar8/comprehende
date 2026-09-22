@@ -1,6 +1,6 @@
-import { formatHunkRef } from "../schema/identity.ts";
+import { formatHunkRef, formatStoredHunkRef } from "../schema/identity.ts";
 import { padIndex, sizeLabel } from "../schema/types.ts";
-import type { HunkRef } from "../schema/types.ts";
+import type { HunkRef, ReviewHunkRef } from "../schema/types.ts";
 import { agentMdGroupHref } from "./paths.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiReview } from "./types.ts";
@@ -64,7 +64,6 @@ function groupAgentMd(review: ApiReview, id: string): string | null {
     lookForBlock(listed.lookFor),
     dependsOnBlock(review, listed.dependsOn),
     hunkList("Hunk refs for this concern:", hunks),
-    imageNote(hunks),
     listed.staleCount > 0
       ? `Stale hunk refs in this concern: ${listed.staleCount}. Live git wins. The pointer is flagged, not replaced.`
       : null,
@@ -154,18 +153,11 @@ function dependsOnBlock(review: ApiReview, dependsOn: string[]): string | null {
   return ["Depends on:", ...lines].join("\n");
 }
 
-function hunkList(heading: string, hunks: HunkRef[]): string {
+function hunkList(heading: string, hunks: ReviewHunkRef[]): string {
   if (hunks.length === 0) {
     return `${heading}\n(none)`;
   }
-  return [heading, ...hunks.map((hunk) => `- ${formatHunkRef(hunk)}`)].join("\n");
-}
-
-function imageNote(hunks: HunkRef[]): string | null {
-  if (!hunks.some(isImageSlot)) {
-    return null;
-  }
-  return "Hunk refs with @@ -0,0 +0,0 @@ are image or binary slots. Identify those by path.";
+  return [heading, ...hunks.map((hunk) => `- ${formatStoredHunkRef(hunk)}`)].join("\n");
 }
 
 function overviewSteps(review: ApiReview): string {

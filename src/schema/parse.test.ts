@@ -8,6 +8,69 @@ import { findPackageRoot } from "../package-root.ts";
 import { addedSymbols, hunkRangeLabel } from "./hunk-meta.ts";
 
 describe("parseReviewDocument", () => {
+  it("normalizes path strings and compact hunk refs", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "The command is how an agent starts a review.",
+          summary: "Adds a command.",
+          suggestedOrder: 0,
+          hunkRefs: ["src/app.ts", "src/cli/main.ts@1+8", "src/util.ts -> src/helpers.ts@4+4"],
+        },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.deepEqual(result.document.groups[0]?.hunkRefs, [
+        { path: "src/app.ts" },
+        { path: "src/cli/main.ts", oldStart: 1, newStart: 8 },
+        { path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 },
+      ]);
+    }
+  });
+
+  it("rejects a compact ref with an empty path and a hunk object", () => {
+    const base = {
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+    };
+    const group = {
+      id: "g1",
+      title: "CLI",
+      why: "The command is how an agent starts a review.",
+      summary: "Adds a command.",
+      suggestedOrder: 0,
+    };
+    const empty = parseReviewDocument({ ...base, groups: [{ ...group, hunkRefs: ["@1+2"] }] });
+    assert.equal(empty.ok, false);
+    if (!empty.ok) {
+      assert.match(empty.errors.join("\n"), /hunkRefs\[0\] must be a path or path@oldStart\+newStart/);
+    }
+    const object = parseReviewDocument({
+      ...base,
+      groups: [{ ...group, hunkRefs: [{ path: "src/app.ts", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 }] }],
+    });
+    assert.equal(object.ok, false);
+    if (!object.ok) {
+      assert.match(object.errors.join("\n"), /hunkRefs\[0\] must be a string/);
+    }
+    const number = parseReviewDocument({ ...base, groups: [{ ...group, hunkRefs: [1] }] });
+    assert.equal(number.ok, false);
+    if (!number.ok) {
+      assert.match(number.errors.join("\n"), /hunkRefs\[0\] must be a string/);
+    }
+  });
+
   it("accepts a minimal valid document", () => {
     const result = parseReviewDocument({
       version: 1,
@@ -24,9 +87,7 @@ describe("parseReviewDocument", () => {
           summary: "Adds a command.",
           lookFor: ["Check the flag parsing."],
           suggestedOrder: 0,
-          hunkRefs: [
-            { path: "src/cli/main.ts", oldStart: 1, oldLines: 3, newStart: 1, newLines: 8 },
-          ],
+          hunkRefs: ["src/cli/main.ts@1+8"],
         },
       ],
     });

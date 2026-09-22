@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { git, gitOk } from "../../src/git/exec.ts";
+import { isLocatedHunkRef } from "../../src/schema/identity.ts";
 import type { ReviewDocument, ReviewGroup, Source } from "../../src/schema/types.ts";
 import type { EvalExpect } from "./case.ts";
 import { collectFrozenUrls, normalizeUrl, parseGithubCommitUrl, shaInRange, type GithubRepo } from "./github.ts";
@@ -144,7 +145,7 @@ function groupPaths(group: ReviewGroup): Set<string> {
   const paths = new Set<string>();
   for (const hunk of group.hunkRefs) {
     paths.add(hunk.path);
-    if (hunk.oldPath !== undefined) {
+    if (isLocatedHunkRef(hunk) && hunk.oldPath !== undefined) {
       paths.add(hunk.oldPath);
     }
   }

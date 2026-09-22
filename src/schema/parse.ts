@@ -37,17 +37,22 @@ export function parseReviewJson(text: string): ParseResult {
 }
 
 function formatZodIssues(error: z.ZodError): string[] {
+  return collectIssues(error.issues, []);
+}
+
+function collectIssues(issues: readonly z.core.$ZodIssue[], prefix: PropertyKey[]): string[] {
   const errors: string[] = [];
-  for (const issue of error.issues) {
+  for (const issue of issues) {
+    const path = [...prefix, ...issue.path];
     if (issue.code === "unrecognized_keys") {
-      const where = formatPath(issue.path) || "document";
+      const where = formatPath(path) || "document";
       for (const key of issue.keys) {
         errors.push(`${where} has unknown field "${key}" (${UNKNOWN_FIELD_NOTE})`);
       }
       continue;
     }
-    const path = formatPath(issue.path);
-    errors.push(path === "" ? issue.message : `${path} ${issue.message}`);
+    const where = formatPath(path);
+    errors.push(where === "" ? issue.message : `${where} ${issue.message}`);
   }
   return errors;
 }

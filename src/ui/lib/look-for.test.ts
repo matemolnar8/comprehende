@@ -190,7 +190,7 @@ describe("openTargetForSource", () => {
         summary: "`setSessionCookie` applies the options.",
         suggestedOrder: 0,
         sources: ["c1"],
-        hunkRefs: [{ path: "src/auth/session.ts", oldStart: 1, oldLines: 20, newStart: 1, newLines: 40 }],
+        hunkRefs: [{ path: "src/auth/session.ts", oldStart: 1, newStart: 1 }],
       },
       {
         id: "login",
@@ -199,7 +199,7 @@ describe("openTargetForSource", () => {
         summary: "The login route uses the helper.",
         suggestedOrder: 1,
         sources: ["s1"],
-        hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, oldLines: 8, newStart: 10, newLines: 24 }],
+        hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, newStart: 10 }],
       },
     ],
   };

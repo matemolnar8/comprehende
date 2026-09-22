@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { cmdIndex, cmdReview, cmdValidate } from "../cli/commands.ts";
-import { toHunkRef } from "../git/diff.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
-import { skeletonDocument } from "./skeleton.ts";
+import { coverReview } from "./coverage.ts";
+import { skeletonDocument, skeletonPaths } from "./skeleton.ts";
 
 const roots: string[] = [];
 
@@ -28,13 +28,18 @@ describe("skeletonDocument", () => {
     assert.ok(index.hunks.length > 0);
     assert.deepEqual(document.source, index.source);
     assert.equal(document.groups.length, 1);
-    assert.deepEqual(document.groups[0]?.hunkRefs, index.hunks.map(toHunkRef));
+    const paths = skeletonPaths(index);
+    assert.deepEqual(document.groups[0]?.hunkRefs, paths);
+    assert.ok(paths.length < index.hunks.length);
+    for (const hunk of index.hunks) {
+      assert.ok(paths.includes(hunk.path));
+    }
     assert.equal(document.title, "Untitled");
     assert.equal(document.summary, "Fill this review.");
-    assert.equal(document.why, undefined);
-    assert.equal(document.lookFor, undefined);
-    assert.equal(document.sources, undefined);
-    assert.equal(document.parts, undefined);
+    assert.equal("why" in document, false);
+    assert.equal("lookFor" in document, false);
+    assert.equal("sources" in document, false);
+    assert.equal("parts" in document, false);
     assert.equal(document.groups[0]?.id, "ungrouped");
     assert.equal(document.groups[0]?.summary, "");
     assert.doesNotMatch(JSON.stringify(document), /All changes/);
@@ -58,9 +63,25 @@ describe("cmdReview", () => {
     assert.equal(raw.lookFor, undefined);
     assert.equal(raw.sources, undefined);
     assert.equal(raw.parts, undefined);
-    assert.deepEqual(document.groups[0]?.hunkRefs, index.hunks.map(toHunkRef));
-    assert.equal(document.groups[0]?.hunkRefs.length, index.hunks.length);
+    const paths = skeletonPaths(index);
+    assert.ok(Array.isArray(raw.groups));
+    const writtenGroup = raw.groups[0];
+    assert.ok(isRecord(writtenGroup));
+    assert.deepEqual(writtenGroup.hunkRefs, paths);
+    assert.ok(paths.every((path) => typeof path === "string"));
+    assert.deepEqual(
+      document.groups[0]?.hunkRefs,
+      paths.map((path) => ({ path })),
+    );
     assert.deepEqual(validated.document, document);
+    assert.equal(validated.assignedHunks, index.hunks.length);
+    const { coverage } = await coverReview(repo.root, document);
+    assert.equal(coverage.unassigned.length, 0);
+    assert.equal(coverage.stale.length, 0);
+    assert.equal(coverage.assignedHunks, index.hunks.length);
+    const app = coverage.groups[0]?.hunks.filter((hunk) => hunk.path === "src/app.ts") ?? [];
+    assert.equal(app.length, index.hunks.filter((hunk) => hunk.path === "src/app.ts").length);
+    assert.ok(app.length >= 2);
   });
 });
 

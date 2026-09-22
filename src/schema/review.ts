@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { parseHunkRefString, type ReviewHunkRef } from "./identity.ts";
 import { sourceCitationErrors } from "./source.ts";
 import { REVIEW_SIZES, SOURCE_KINDS } from "./types.ts";
 
@@ -22,12 +23,6 @@ function anyString(description?: string) {
   return description === undefined ? schema : schema.meta({ description });
 }
 
-function nonemptyInt() {
-  return z
-    .int({ error: "must be a non-negative integer" })
-    .nonnegative({ error: "must be a non-negative integer" });
-}
-
 function stringList(description?: string) {
   const schema = z.array(nonemptyString(), { error: "must be an array of strings" });
   return description === undefined ? schema.optional() : schema.optional().meta({ description });
@@ -42,22 +37,13 @@ function addIssue(ctx: z.core.ParsePayload<unknown>, message: string, path: Prop
   });
 }
 
-const hunkRefSchema = z
-  .strictObject(
-    {
-      path: nonemptyString(),
-      oldPath: nonemptyString().optional(),
-      oldStart: nonemptyInt(),
-      oldLines: nonemptyInt(),
-      newStart: nonemptyInt(),
-      newLines: nonemptyInt(),
-    },
-    { error: objectError },
-  )
-  .meta({
-    id: "hunkRef",
-    description: "Copy from comprehende index. Identity is (path, oldStart, newStart), plus oldPath when renamed.",
-  });
+const hunkRefStringSchema = nonemptyString(
+  "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart.",
+).check((ctx) => {
+  if (parseHunkRefString(ctx.value) === undefined) {
+    addIssue(ctx, "must be a path or path@oldStart+newStart");
+  }
+});
 
 const reviewSourceSchema = z.strictObject(
   {
@@ -139,7 +125,12 @@ const groupSchema = z.strictObject(
     suggestedOrder: z
       .number({ error: "must be a finite number" })
       .finite({ error: "must be a finite number" }),
-    hunkRefs: z.array(hunkRefSchema, { error: "must be an array" }),
+    hunkRefs: z
+      .array(hunkRefStringSchema, { error: "must be an array" })
+      .meta({
+        description:
+          "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk.",
+      }),
   },
   { error: objectError },
 );
@@ -208,11 +199,34 @@ const reviewDocumentInput = reviewDocumentObject.extend({
 
 export const reviewDocumentSchema = reviewDocumentInput.check(documentRules).transform((document) => {
   const { tickets, ...rest } = document;
-  if (tickets === undefined || rest.sources !== undefined) {
-    return rest;
-  }
-  return { ...rest, sources: tickets.map(ticketToSource) };
+  const next = tickets === undefined || rest.sources !== undefined ? rest : { ...rest, sources: tickets.map(ticketToSource) };
+  return {
+    ...next,
+    groups: next.groups.map((group) => ({
+      ...group,
+      hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
+    })),
+  };
 });
+
+function normalizeWrittenHunkRef(value: string): ReviewHunkRef {
+  const parsed = parseHunkRefString(value);
+  if (parsed === undefined) {
+    throw new Error(`invalid hunk ref string: ${value}`);
+  }
+  if (parsed.kind === "file") {
+    return { path: parsed.path };
+  }
+  if (parsed.oldPath === undefined) {
+    return { path: parsed.path, oldStart: parsed.oldStart, newStart: parsed.newStart };
+  }
+  return {
+    path: parsed.path,
+    oldPath: parsed.oldPath,
+    oldStart: parsed.oldStart,
+    newStart: parsed.newStart,
+  };
+}
 
 function ticketToSource(ticket: z.infer<typeof legacyTicketSchema>): Source {
   const source: Source = { id: ticket.id, kind: "ticket", label: ticket.id };
@@ -266,7 +280,14 @@ function documentRules(ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInp
     }
   }
   const { tickets: _tickets, ...rest } = document;
-  for (const error of sourceCitationErrors({ ...rest, sources })) {
+  for (const error of sourceCitationErrors({
+    ...rest,
+    sources,
+    groups: rest.groups.map((group) => ({
+      ...group,
+      hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
+    })),
+  })) {
     addIssue(ctx, error);
   }
   collectPartNameErrors(ctx, document);
@@ -312,12 +333,12 @@ function collectDuplicateIds(ctx: z.core.ParsePayload<unknown>, ids: string[], k
   }
 }
 
-export type HunkRef = z.infer<typeof hunkRefSchema>;
+export type { HunkRef, ReviewHunkRef } from "./identity.ts";
 export type ReviewSource = z.infer<typeof reviewSourceSchema>;
 export type Source = z.infer<typeof sourceSchema>;
-export type ReviewGroup = z.infer<typeof groupSchema>;
 export type ReviewPart = z.infer<typeof reviewPartSchema>;
 export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
+export type ReviewGroup = ReviewDocument["groups"][number];
 
 export function reviewJsonSchema(): Record<string, unknown> {
   const schema = z.toJSONSchema(reviewDocumentObject, {

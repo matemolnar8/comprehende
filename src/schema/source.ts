@@ -1,3 +1,4 @@
+import { isLocatedHunkRef } from "./identity.ts";
 import type { LinePinnedSource, ReviewDocument, Source } from "./types.ts";
 
 export const SOURCE_HREF_PREFIX = "source:";
@@ -98,7 +99,7 @@ export function groupIdForPinnedSource(document: ReviewDocument, source: Source)
   }
   const named = document.groups.filter((group) => (group.sources ?? []).includes(source.id));
   const covering = document.groups.filter((group) =>
-    group.hunkRefs.some((ref) => ref.path === source.path || ref.oldPath === source.path),
+    group.hunkRefs.some((ref) => ref.path === source.path || (isLocatedHunkRef(ref) && ref.oldPath === source.path)),
   );
   const both = covering.filter((group) => named.some((item) => item.id === group.id));
   return (both[0] ?? covering[0] ?? named[0])?.id;

@@ -1,4 +1,4 @@
-import type { DiffLine, FileStatus, HunkRef, ReviewDocument, SkippedFile, SourceSide } from "../schema/types.ts";
+import type { DiffLine, FileStatus, HunkRef, ReviewDocument, ReviewHunkRef, SkippedFile, SourceSide } from "../schema/types.ts";
 
 /** Single home for the git side union. SourceSide in schema is the same fact. */
 export type FileSide = SourceSide;
@@ -90,7 +90,7 @@ export type ApiReview = {
   }[];
   unassigned: { hunkCount: number; files: string[] };
   lockfiles: { fileCount: number; files: string[] };
-  stale: { path: string; oldStart: number; newStart: number }[];
+  stale: ReviewHunkRef[];
   staleSources: { id: string; path: string; side: FileSide; line: number }[];
   files: {
     path: string;

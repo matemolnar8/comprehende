@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
 import { cmdIndex, cmdValidate } from "../cli/commands.ts";
-import { parseReviewDocument } from "../schema/parse.ts";
+import { parseReviewJson } from "../schema/parse.ts";
 import {
   MIXED_GROUP_APP,
   MIXED_GROUP_APP_TEST,
@@ -14,6 +14,7 @@ import {
   MIXED_PART_LIB,
   coveringDocument,
   mixedCoveringDocument,
+  reviewFileBody,
 } from "./covering-document.ts";
 import { createExampleRepo } from "./example-repo.ts";
 import type { ReviewDocument } from "../schema/types.ts";
@@ -44,7 +45,7 @@ describe("covering documents", () => {
     const repo = await createExampleRepo(root);
     const index = await cmdIndex(repo.root, repo.base, repo.head);
     const document = mixedCoveringDocument(index);
-    const parsed = parseReviewDocument(document);
+    const parsed = parseReviewJson(reviewFileBody(document));
     assert.equal(parsed.ok, true, parsed.ok ? "" : parsed.errors.join("\n"));
     await cmdValidate(repo.root, await writeTemp(root, document));
 
@@ -73,6 +74,6 @@ describe("covering documents", () => {
 
 async function writeTemp(root: string, document: ReviewDocument): Promise<string> {
   const dataPath = join(root, "review.json");
-  await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
+  await writeFile(dataPath, reviewFileBody(document));
   return dataPath;
 }
