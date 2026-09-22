@@ -84,6 +84,35 @@ describe("eval result line", () => {
     assert.match(line, /4m12s/);
     assert.match(line, /g-tools 0/);
     assert.match(line, /p-tools 0/);
+    assert.doesNotMatch(line, /producer-tools/);
+  });
+
+  it("prints producer tool calls and the token split next to the total", () => {
+    const line = formatCaseLine({
+      id: "comprehende-47",
+      ok: true,
+      durationMs: 252_000,
+      tokens: 4_100_000,
+      producer: {
+        ...finishedRun,
+        tokens: 2_650_000,
+        steps: 14,
+        inputTokens: 1_200_000,
+        cacheReadTokens: 1_408_000,
+        outputTokens: 42_000,
+        toolCalls: [
+          { name: "read", detail: "SKILL.md" },
+          { name: "shell", detail: "git diff" },
+          { name: "write", detail: "review.json" },
+        ],
+      },
+    });
+    assert.match(line, /14 steps/);
+    assert.match(
+      line,
+      /4100k tok  producer 2650k tok  producer-tools 3  input 1200k tok  cache-read 1408k tok  output 42k tok/,
+    );
+    assert.doesNotMatch(line, /14 steps 3 tools/);
   });
 
   it("inlines the packet and keeps targeted work-tree reads", () => {
@@ -116,14 +145,20 @@ describe("eval result line", () => {
           ok: true,
           durationMs: 1,
           tokens: 3000,
-          producer: { ...finishedRun, tokens: 2000, toolCalls: [{ name: "glob", detail: "**/dist/**" }] },
+          producer: {
+            ...finishedRun,
+            tokens: 2000,
+            inputTokens: 1000,
+            cacheReadTokens: 800,
+            outputTokens: 200,
+            toolCalls: [{ name: "glob", detail: "**/dist/**" }],
+          },
           grouping: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
           prose: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
         },
       ],
     });
-    assert.match(line, /producer 2k tok/);
-    assert.match(line, /graders 1k tok/);
+    assert.match(line, /producer 2k tok  producer-tools 1  input 1k tok  cache-read 800 tok  output 200 tok  graders 1k tok/);
     assert.match(line, /cli-hunt 1\/1 producer tools/);
     assert.match(line, /grader-tools 0/);
   });
