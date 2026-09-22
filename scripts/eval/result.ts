@@ -72,6 +72,10 @@ export function formatCaseLine(result: CaseResult): string {
   if (result.artifactError !== undefined) {
     bits.push("artifact FAIL");
   }
+  const producer = result.producer;
+  if (producer?.steps !== undefined || producer?.toolCalls !== undefined) {
+    bits.push(`${producer.steps ?? 0} steps ${producer.toolCalls ?? 0} tools`);
+  }
   bits.push(formatDuration(result.durationMs));
   bits.push(formatTokens(result.tokens));
   return bits.join("  ");

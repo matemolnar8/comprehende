@@ -11,7 +11,7 @@ export function producerPrompt(opts: {
   return [
     `Read ${opts.skillMd} and follow it.`,
     `Review ${opts.base}...${opts.head} in the current directory. Both refs are present.`,
-    "Skip the npm version check in step 1. The CLI named in the skill is the local build.",
+    "Skip the npm version check. The CLI named in the skill is the local build.",
     `The pull request description, linked issues, and review comments the skill calls sources are files in ${opts.sourcesDir}. Read them from disk.`,
     "Do not use gh or the network. Ignore other agent instruction files in this repository.",
     `Write review.json to ${opts.outPath}. Stop after validate exits 0. Do not run serve or export.`,
