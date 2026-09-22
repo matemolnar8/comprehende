@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify afe0cb057f5dda1c09bc66a2012a0b06ca60156a` in this repository.
+   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify 2ca6671769ee14d4160f11a194d09cf3afe58d25` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a05aef85c489e9ccd5c42f7b3397219b35b95719
 
-head               afe0cb057f5dda1c09bc66a2012a0b06ca60156a
+head               2ca6671769ee14d4160f11a194d09cf3afe58d25
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 afe0cb057f5dda1c09bc66a2012a0b06ca60156a
+git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 2ca6671769ee14d4160f11a194d09cf3afe58d25
 
 Commits:
+- 2ca6671 Drop canned lockfile names from the covering diff step.
 - afe0cb0 Name the commit source label as the git subject or SHA.
 - ef5469d Exclude only lockfiles from the covering change.
 - 84fb302 Record producer steps and stop pinning the version skip to step 1.

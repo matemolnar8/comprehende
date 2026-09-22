@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify afe0cb057f5dda1c09bc66a2012a0b06ca60156a` in this repository.
+   Run `git rev-parse --verify a05aef85c489e9ccd5c42f7b3397219b35b95719` and `git rev-parse --verify 2ca6671769ee14d4160f11a194d09cf3afe58d25` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 afe0cb057f5dda1c09bc66a2012a0b06ca60156a -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 2ca6671769ee14d4160f11a194d09cf3afe58d25 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a05aef85c489e9ccd5c42f7b3397219b35b95719
 
-head               afe0cb057f5dda1c09bc66a2012a0b06ca60156a
+head               2ca6671769ee14d4160f11a194d09cf3afe58d25
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 afe0cb057f5dda1c09bc66a2012a0b06ca60156a
+git diff --find-renames a05aef85c489e9ccd5c42f7b3397219b35b95719 2ca6671769ee14d4160f11a194d09cf3afe58d25
 
 Review concern 02 of 03: Installed skill mirror (`installed`)
 
