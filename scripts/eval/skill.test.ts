@@ -21,6 +21,7 @@ describe("next skill workflow", () => {
     assert.match(md, /Each step is one tool call where the step says so/);
     assert.match(md, /One shell call: version check, covering skeleton, log, and stat/);
     assert.match(md, /Write the whole `review\.json` in one write/);
+    assert.match(md, /`label` is that subject line, or a SHA from the same log/);
     assert.match(
       md,
       /every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`/,
