@@ -47,7 +47,7 @@ describe("eval HTML report", () => {
           },
           document: { title: "Export vs serve", size: "small", why: "Invented <why>." },
           grouping: {
-            run: { text: "", status: "finished", durationMs: 1, tokens: 1 },
+            run: { text: "", status: "finished", durationMs: 1, tokens: 1, steps: 1, toolCalls: [] },
             output: {
               findings: [
                 {
@@ -60,7 +60,7 @@ describe("eval HTML report", () => {
             },
           },
           site: "/tmp/site",
-          producer: { text: "ok", status: "finished", durationMs: 1, tokens: 1 },
+          producer: { text: "ok", status: "finished", durationMs: 1, tokens: 1, steps: 1, toolCalls: [] },
         }),
         caseResult({ id: "comprehende-57" }),
       ],

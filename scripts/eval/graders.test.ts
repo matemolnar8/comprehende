@@ -1,7 +1,39 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { parseGraderJson } from "./graders.ts";
-import { caseFailed, formatCaseLine, formatDuration, formatTokens, type CaseResult } from "./result.ts";
+import { GRADER_TOOLS } from "./constants.ts";
+import { groupingPrompt, parseGraderJson, prosePrompt } from "./graders.ts";
+import { caseFailed, formatCaseLine, formatDuration, formatRunTotals, formatTokens, type CaseResult } from "./result.ts";
+import type { AgentRunResult } from "./agent.ts";
+
+const finishedRun: AgentRunResult = {
+  text: "",
+  status: "finished",
+  durationMs: 1,
+  tokens: 1,
+  steps: 1,
+  toolCalls: [],
+};
+
+const skillStub = `## Grouping rules
+
+Group by review concern.
+
+## The why
+
+Document why.
+
+## The what
+
+Document summary.
+
+## lookFor
+
+Claims the live diff does not make obvious.
+
+## Write the prose
+
+Short sentences.
+`;
 
 describe("grader JSON", () => {
   it("parses fenced objects", () => {
@@ -40,8 +72,8 @@ describe("eval result line", () => {
         apartOk: 1,
         apartTotal: 1,
       },
-      grouping: { run: { text: "", status: "finished", durationMs: 1, tokens: 1 }, output: { findings: [{ check: "x", severity: "major", where: "g", note: "n" }] } },
-      prose: { run: { text: "", status: "finished", durationMs: 1, tokens: 1 }, output: { findings: [] } },
+      grouping: { run: finishedRun, output: { findings: [{ check: "x", severity: "major", where: "g", note: "n" }] } },
+      prose: { run: finishedRun, output: { findings: [] } },
       claims: { stated: 4, total: 5, missing: ["one"] },
     };
     const line = formatCaseLine(result);
@@ -50,6 +82,46 @@ describe("eval result line", () => {
     assert.match(line, /claims 4\/5/);
     assert.match(line, /grouping 1M 0m/);
     assert.match(line, /4m12s/);
+    assert.match(line, /g-tools 0/);
+    assert.match(line, /p-tools 0/);
+  });
+
+  it("inlines the packet and forbids tools", () => {
+    assert.deepEqual([...GRADER_TOOLS], []);
+    const grouping = groupingPrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a" });
+    assert.match(grouping, /PACKET_UNIQUE_7f3a/);
+    assert.match(grouping, /Do not use tools/);
+    assert.doesNotMatch(grouping, /work tree/);
+    assert.doesNotMatch(grouping, /packetPath/);
+    const prose = prosePrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a", claims: ["claim one"] });
+    assert.match(prose, /PACKET_UNIQUE_7f3a/);
+    assert.match(prose, /Do not use tools/);
+    assert.doesNotMatch(prose, /work tree/);
+  });
+
+  it("prints run totals with grader tool counts", () => {
+    const line = formatRunTotals({
+      stamp: "t",
+      skillTree: "abc",
+      producerModel: "composer-2.5",
+      graderModel: "grok-4.6",
+      graders: true,
+      cases: [
+        {
+          id: "comprehende-50",
+          ok: true,
+          durationMs: 1,
+          tokens: 3000,
+          producer: { ...finishedRun, tokens: 2000, toolCalls: [{ name: "glob", detail: "**/*" }] },
+          grouping: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
+          prose: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
+        },
+      ],
+    });
+    assert.match(line, /producer 2k tok/);
+    assert.match(line, /graders 1k tok/);
+    assert.match(line, /cli-hunt 1\/1 producer tools/);
+    assert.match(line, /grader-tools 0/);
   });
 
   it("omits grader counts when graders did not run", () => {

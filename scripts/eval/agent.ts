@@ -1,5 +1,10 @@
-import { Agent, type ToolName } from "@cursor/sdk";
+import { Agent, type ConversationStep, type ToolName } from "@cursor/sdk";
 import { TASK_TIMEOUT_MS } from "./constants.ts";
+
+export type ToolCallRecord = {
+  name: string;
+  detail?: string;
+};
 
 export type AgentRunResult = {
   text: string;
@@ -9,8 +14,8 @@ export type AgentRunResult = {
   inputTokens?: number;
   outputTokens?: number;
   cacheReadTokens?: number;
-  steps?: number;
-  toolCalls?: number;
+  steps: number;
+  toolCalls: ToolCallRecord[];
   error?: string;
 };
 
@@ -37,14 +42,16 @@ export async function runLocalAgent(opts: {
       ...(opts.sandbox ? { sandboxOptions: { enabled: true } } : {}),
     },
   });
+  const toolCalls: ToolCallRecord[] = [];
   let steps = 0;
-  let toolCalls = 0;
   const run = await agent.send(opts.prompt, {
     onStep: ({ step }) => {
       if (step.type === "assistantMessage") {
         steps += 1;
-      } else if (step.type === "toolCall") {
-        toolCalls += 1;
+        return;
+      }
+      if (step.type === "toolCall") {
+        toolCalls.push(toolCallRecord(step));
       }
     },
   });
@@ -75,5 +82,55 @@ export async function runLocalAgent(opts: {
     if (timer !== undefined) {
       clearTimeout(timer);
     }
+  }
+}
+
+export function toolCallRecord(step: Extract<ConversationStep, { type: "toolCall" }>): ToolCallRecord {
+  const msg = step.message;
+  const name = msg.type;
+  if (!("args" in msg)) {
+    return { name };
+  }
+  const args = msg.args;
+  const value =
+    "command" in args && typeof args.command === "string"
+      ? args.command
+      : "path" in args && typeof args.path === "string"
+        ? args.path
+        : "globPattern" in args && typeof args.globPattern === "string"
+          ? args.globPattern
+          : "pattern" in args && typeof args.pattern === "string"
+            ? args.pattern
+            : undefined;
+  const detail = clip(value);
+  return detail === undefined ? { name } : { name, detail };
+}
+
+function clip(value: string | undefined): string | undefined {
+  if (value === undefined || value === "") {
+    return undefined;
+  }
+  return value.length > 200 ? `${value.slice(0, 197)}...` : value;
+}
+
+export function isCliHuntCall(call: ToolCallRecord): boolean {
+  const detail = call.detail ?? "";
+  switch (call.name) {
+    case "glob":
+      return /dist|cli|package\.json|\*\*|comprehende/i.test(detail);
+    case "ls":
+      return /(?:^|\/)dist(?:\/|$)|(?:^|\/)cli(?:\/|$)/.test(detail);
+    case "grep":
+      return /dist|cli\/main|comprehende/i.test(detail);
+    case "read":
+      return /(?:^|\/)dist\/|cli\/main\.js/.test(detail);
+    case "shell":
+      return (
+        /(?:\bls\b|\bfind\b|\bwhich\b|\btype\b|\bglob\b).{0,80}(?:dist|comprehende|cli\/main)/i.test(detail) ||
+        /(?:pnpm|npm)\s+(?:run\s+)?build\b/.test(detail) ||
+        /npm pack/.test(detail)
+      );
+    default:
+      return false;
   }
 }

@@ -46,7 +46,7 @@ export function parseGraderJson(text: string): GraderOutput {
   throw new Error(`grader output is not valid JSON: ${errors[0] ?? "empty"}`);
 }
 
-export function groupingPrompt(opts: { skillMd: string; packetPath: string }): string {
+export function groupingPrompt(opts: { skillMd: string; packet: string }): string {
   const rules = skillSection(opts.skillMd, "Grouping rules");
   return [
     "You grade a Comprehende review document against grouping rules. You do not rewrite the review.",
@@ -54,9 +54,11 @@ export function groupingPrompt(opts: { skillMd: string; packetPath: string }): s
     "Rules:",
     rules,
     "",
-    `Read the grading packet at ${opts.packetPath}. You may read files in the current git work tree to understand surrounding code. Do not run shell commands. Do not write files.`,
-    "",
     "For each group, ask whether each hunk belongs to the concern the title and summary name, whether any group is a directory rather than a concern, whether any dependsOn is a false chain across stories, and whether mechanical work is folded into a story group.",
+    "",
+    "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Grade from this packet only. Do not use tools.",
+    "",
+    opts.packet,
     "",
     "Reply with a JSON object only, no markdown fence:",
     '{"findings":[{"check":"concern|directory|dependsOn|mechanical|other","severity":"major|minor","where":"group id or document","hunk":"optional path","note":"one sentence"}]}',
@@ -64,7 +66,7 @@ export function groupingPrompt(opts: { skillMd: string; packetPath: string }): s
   ].join("\n");
 }
 
-export function prosePrompt(opts: { skillMd: string; packetPath: string; claims: string[] }): string {
+export function prosePrompt(opts: { skillMd: string; packet: string; claims: string[] }): string {
   const why = skillSection(opts.skillMd, "The why");
   const what = skillSection(opts.skillMd, "The what");
   const lookFor = skillSection(opts.skillMd, "lookFor");
@@ -88,11 +90,11 @@ export function prosePrompt(opts: { skillMd: string; packetPath: string; claims:
     "Write the prose:",
     prose,
     "",
-    `Read the grading packet at ${opts.packetPath}. You may read files in the current git work tree. Do not run shell commands. Do not write files.`,
-    "",
-    "Ask whether document why says anything the frozen sources do not say, whether summaries are path lists, whether lookFor is padded or missing, and whether the prose is readable.",
-    "",
     claimBlock,
+    "",
+    "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Grade from this packet only. Do not use tools.",
+    "",
+    opts.packet,
     "",
     "Reply with a JSON object only, no markdown fence:",
     '{"findings":[{"check":"why|summary|lookFor|prose|claim|other","severity":"major|minor","where":"field or group id","note":"one sentence"}],"claims":[{"claim":"exact claim string","stated":true,"where":"optional location"}]}',
@@ -112,7 +114,7 @@ export async function runGrader(opts: {
     model: opts.model,
     prompt: opts.prompt,
     apiKey: opts.apiKey,
-    tools: GRADER_TOOLS,
+    tools: [...GRADER_TOOLS],
     sandbox: opts.sandbox,
   });
   try {
@@ -123,7 +125,7 @@ export async function runGrader(opts: {
       model: opts.model,
       prompt: `${opts.prompt}\n\nYour previous reply was not valid JSON. Return only the JSON object, no markdown.`,
       apiKey: opts.apiKey,
-      tools: GRADER_TOOLS,
+      tools: [...GRADER_TOOLS],
       sandbox: opts.sandbox,
     });
     try {

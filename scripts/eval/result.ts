@@ -4,6 +4,7 @@ import type { ReviewDocument } from "../../src/schema/types.ts";
 import type { DeterministicReport } from "./checks.ts";
 import type { AgentRunResult } from "./agent.ts";
 import type { Finding, GraderResult } from "./graders.ts";
+import { isCliHuntCall } from "./agent.ts";
 
 export type CaseResult = {
   id: string;
@@ -72,12 +73,25 @@ export function formatCaseLine(result: CaseResult): string {
   if (result.artifactError !== undefined) {
     bits.push("artifact FAIL");
   }
-  const producer = result.producer;
-  if (producer?.steps !== undefined || producer?.toolCalls !== undefined) {
-    bits.push(`${producer.steps ?? 0} steps ${producer.toolCalls ?? 0} tools`);
+  if (result.producer !== undefined) {
+    bits.push(`${result.producer.steps} steps ${result.producer.toolCalls.length} tools`);
   }
   bits.push(formatDuration(result.durationMs));
   bits.push(formatTokens(result.tokens));
+  if (result.grouping !== undefined) {
+    bits.push(`g-tools ${result.grouping.run.toolCalls.length}`);
+  }
+  if (result.prose !== undefined) {
+    bits.push(`p-tools ${result.prose.run.toolCalls.length}`);
+  }
+  return bits.join("  ");
+}
+  if (result.grouping !== undefined) {
+    bits.push(`g-tools ${result.grouping.run.toolCalls.length}`);
+  }
+  if (result.prose !== undefined) {
+    bits.push(`p-tools ${result.prose.run.toolCalls.length}`);
+  }
   return bits.join("  ");
 }
 
@@ -156,6 +170,32 @@ export function formatTokens(tokens: number): string {
     return `${tokens} tok`;
   }
   return `${Math.round(tokens / 1000)}k tok`;
+}
+
+export function formatRunTotals(summary: RunSummary): string {
+  const producerTokens = sum(summary.cases, (item) => item.producer?.tokens ?? 0);
+  const groupingTokens = sum(summary.cases, (item) => item.grouping?.run.tokens ?? 0);
+  const proseTokens = sum(summary.cases, (item) => item.prose?.run.tokens ?? 0);
+  const graderTokens = groupingTokens + proseTokens;
+  const producerHunt = sum(summary.cases, (item) => item.producer?.toolCalls.filter(isCliHuntCall).length ?? 0);
+  const producerTools = sum(summary.cases, (item) => item.producer?.toolCalls.length ?? 0);
+  const graderTools = sum(
+    summary.cases,
+    (item) => (item.grouping?.run.toolCalls.length ?? 0) + (item.prose?.run.toolCalls.length ?? 0),
+  );
+  const bits = [
+    "total",
+    formatTokens(producerTokens + graderTokens),
+    `producer ${formatTokens(producerTokens)}`,
+    `graders ${formatTokens(graderTokens)}`,
+    `cli-hunt ${producerHunt}/${producerTools} producer tools`,
+    `grader-tools ${graderTools}`,
+  ];
+  return bits.join("  ");
+}
+
+function sum<T>(items: readonly T[], value: (item: T) => number): number {
+  return items.reduce((total, item) => total + value(item), 0);
 }
 
 export function claimsFromGrader(expected: string[] | undefined, grader: GraderResult | undefined): CaseResult["claims"] {
