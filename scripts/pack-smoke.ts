@@ -86,7 +86,9 @@ async function run(): Promise<void> {
   assert.ok(isRecord(skeletonRaw), "review skeleton must be a JSON object");
   assert.equal(skeletonRaw.title, "Untitled");
   assert.equal(skeletonRaw.why, undefined);
-  assert.equal(skeletonRaw.lookFor, undefined);
+  assert.deepEqual(skeletonRaw.lookFor, []);
+  assert.deepEqual(skeletonRaw.parts, []);
+  assert.deepEqual(skeletonRaw.sources, []);
   const skeletonGroups = skeletonRaw.groups;
   assert.ok(Array.isArray(skeletonGroups) && isRecord(skeletonGroups[0]));
   const skeletonHunks = skeletonGroups[0]?.hunkRefs;
