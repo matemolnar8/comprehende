@@ -32,10 +32,10 @@ Each step is one tool call where the step says so. Batch the commands as written
    ```
 
    If `npm view` reports a version newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes every hunk ref into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those hunk refs; do not invent replacements.
-3. One shell call for the covering diff, lockfiles excluded (the skeleton has no hunk refs for them), and read the sources in the same round trip:
+3. One shell call for the covering diff, lockfiles in that covering change excluded (the skeleton has no hunk refs for them), and read the sources in the same round trip. From the `--stat` in step 2, pass `:(exclude)<path>` for each lockfile in that covering change. Nested paths stay nested. A lockfile is a package-manager lockfile (`pnpm-lock.yaml`, `Cargo.lock`, `poetry.lock`, and the same class). When the covering `--stat` has no lockfile, run `git diff` with no pathspec.
 
    ```sh
-   git diff <base>...<head> -- . ':(exclude)pnpm-lock.yaml' ':(exclude)package-lock.json' ':(exclude)yarn.lock' ':(exclude)Cargo.lock' ':(exclude)go.sum'
+   git diff <base>...<head> -- . ':(exclude)<path>'
    ```
 
    Sources are listed under The why and The title. Done when the diff and those sources are in context.

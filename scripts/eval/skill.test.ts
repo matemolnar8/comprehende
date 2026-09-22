@@ -27,6 +27,13 @@ describe("next skill workflow", () => {
     );
     assert.match(md, /references\/example\.md/);
     assert.doesNotMatch(md, /review\.schema\.json/);
+    assert.match(md, /From the `--stat` in step 2/);
+    assert.match(md, /:\(exclude\)<path>/);
+    assert.doesNotMatch(md, /:\(exclude\)pnpm-lock\.yaml/);
+    assert.doesNotMatch(md, /:\(exclude\)package-lock\.json/);
+    assert.doesNotMatch(md, /:\(exclude\)yarn\.lock/);
+    assert.doesNotMatch(md, /:\(exclude\)Cargo\.lock/);
+    assert.doesNotMatch(md, /:\(exclude\)go\.sum/);
     assert.match(grouping, /Lockfiles have no hunk refs/);
     assert.doesNotMatch(grouping, /Lockfiles stay in `skipped`/);
     const example = await readFile(join(findPackageRoot(), "skills-next/comprehende/references/example.md"), "utf8");
