@@ -22,6 +22,13 @@ const graderOutputSchema = z.object({
   claims: z.array(claimSchema).optional(),
 });
 
+const GRADER_PACKET_INTRO = [
+  "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources.",
+  "Start from this packet. Do not search for the review or the packet.",
+  "You may read files in the current git work tree to check a grouping, a summary, or a claim against the code.",
+  "Read only the files that check needs. Do not wander. Do not run shell commands. Do not write files.",
+].join(" ");
+
 export type Finding = z.infer<typeof findingSchema>;
 export type ClaimVerdict = z.infer<typeof claimSchema>;
 export type GraderOutput = z.infer<typeof graderOutputSchema>;
@@ -56,7 +63,7 @@ export function groupingPrompt(opts: { skillMd: string; packet: string }): strin
     "",
     "For each group, ask whether each hunk belongs to the concern the title and summary name, whether any group is a directory rather than a concern, whether any dependsOn is a false chain across stories, and whether mechanical work is folded into a story group.",
     "",
-    "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Grade from this packet only. Do not use tools.",
+    GRADER_PACKET_INTRO,
     "",
     opts.packet,
     "",
@@ -94,7 +101,7 @@ export function prosePrompt(opts: { skillMd: string; packet: string; claims: str
     "",
     "Ask whether document why says anything the frozen sources do not say, whether summaries are path lists, whether lookFor is padded or missing, and whether the prose is readable.",
     "",
-    "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Grade from this packet only. Do not use tools.",
+    GRADER_PACKET_INTRO,
     "",
     opts.packet,
     "",

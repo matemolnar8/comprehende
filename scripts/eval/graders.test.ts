@@ -86,18 +86,21 @@ describe("eval result line", () => {
     assert.match(line, /p-tools 0/);
   });
 
-  it("inlines the packet and forbids tools", () => {
-    assert.deepEqual([...GRADER_TOOLS], []);
+  it("inlines the packet and keeps targeted work-tree reads", () => {
+    assert.deepEqual([...GRADER_TOOLS], ["read", "grep", "glob", "ls"]);
     const grouping = groupingPrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a" });
     assert.match(grouping, /PACKET_UNIQUE_7f3a/);
-    assert.match(grouping, /Do not use tools/);
-    assert.doesNotMatch(grouping, /work tree/);
+    assert.match(grouping, /Start from this packet/);
+    assert.match(grouping, /Read only the files that check needs/);
+    assert.match(grouping, /git work tree/);
+    assert.doesNotMatch(grouping, /Do not use tools/);
     assert.doesNotMatch(grouping, /packetPath/);
     const prose = prosePrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a", claims: ["claim one"] });
     assert.match(prose, /PACKET_UNIQUE_7f3a/);
-    assert.match(prose, /Do not use tools/);
+    assert.match(prose, /Start from this packet/);
     assert.match(prose, /Ask whether document why/);
-    assert.doesNotMatch(prose, /work tree/);
+    assert.match(prose, /git work tree/);
+    assert.doesNotMatch(prose, /Do not use tools/);
   });
 
   it("prints run totals with grader tool counts", () => {
