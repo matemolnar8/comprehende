@@ -28,7 +28,8 @@ describe("producer prompt", () => {
 
 describe("CLI hunt classifier", () => {
   it("flags path hunts and rebuilds, not review work", () => {
-    assert.equal(isCliHuntCall({ name: "glob", detail: "**/*" }), true);
+    assert.equal(isCliHuntCall({ name: "glob", detail: "**/*" }), false);
+    assert.equal(isCliHuntCall({ name: "glob", detail: "**/dist/**" }), true);
     assert.equal(isCliHuntCall({ name: "ls", detail: "dist" }), true);
     assert.equal(isCliHuntCall({ name: "read", detail: "dist/cli/main.js" }), true);
     assert.equal(isCliHuntCall({ name: "shell", detail: "pnpm build" }), true);

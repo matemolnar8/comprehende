@@ -92,6 +92,8 @@ export function prosePrompt(opts: { skillMd: string; packet: string; claims: str
     "",
     claimBlock,
     "",
+    "Ask whether document why says anything the frozen sources do not say, whether summaries are path lists, whether lookFor is padded or missing, and whether the prose is readable.",
+    "",
     "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Grade from this packet only. Do not use tools.",
     "",
     opts.packet,

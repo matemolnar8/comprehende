@@ -117,7 +117,7 @@ export function isCliHuntCall(call: ToolCallRecord): boolean {
   const detail = call.detail ?? "";
   switch (call.name) {
     case "glob":
-      return /dist|cli|package\.json|\*\*|comprehende/i.test(detail);
+      return /dist|cli\/main|package\.json/i.test(detail);
     case "ls":
       return /(?:^|\/)dist(?:\/|$)|(?:^|\/)cli(?:\/|$)/.test(detail);
     case "grep":

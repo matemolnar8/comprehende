@@ -96,6 +96,7 @@ describe("eval result line", () => {
     const prose = prosePrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a", claims: ["claim one"] });
     assert.match(prose, /PACKET_UNIQUE_7f3a/);
     assert.match(prose, /Do not use tools/);
+    assert.match(prose, /Ask whether document why/);
     assert.doesNotMatch(prose, /work tree/);
   });
 
@@ -112,7 +113,7 @@ describe("eval result line", () => {
           ok: true,
           durationMs: 1,
           tokens: 3000,
-          producer: { ...finishedRun, tokens: 2000, toolCalls: [{ name: "glob", detail: "**/*" }] },
+          producer: { ...finishedRun, tokens: 2000, toolCalls: [{ name: "glob", detail: "**/dist/**" }] },
           grouping: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
           prose: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
         },
