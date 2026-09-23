@@ -25,6 +25,7 @@ Fetch a pull request and write eval/cases/<repo>-<n>/ with frozen sources and em
 Options:
   --pr <url>    GitHub pull request URL
   --id <id>     Case folder name (default: <repo>-<n>)
+  --bundle      Also write repo.bundle (base tree plus base..head) so the run never clones the repo
   -h, --help
 `;
 
@@ -46,7 +47,7 @@ export type EvalRunRequest =
 export type AddCaseRequest =
   | { kind: "help" }
   | { kind: "error"; message: string }
-  | { kind: "add"; prUrl: string; id?: string };
+  | { kind: "add"; prUrl: string; id?: string; bundle: boolean };
 
 export function parseEvalArgv(argv: string[]): EvalRunRequest {
   const args = argv[0] === "--" ? argv.slice(1) : [...argv];
@@ -114,9 +115,14 @@ export function parseAddCaseArgv(argv: string[]): AddCaseRequest {
   try {
     let prUrl: string | undefined;
     let id: string | undefined;
+    let bundle = false;
     for (let i = 0; i < args.length; i += 1) {
       const arg = args[i];
       if (arg === undefined) {
+        continue;
+      }
+      if (arg === "--bundle") {
+        bundle = true;
         continue;
       }
       if (arg === "--pr" || arg === "--id") {
@@ -137,7 +143,7 @@ export function parseAddCaseArgv(argv: string[]): AddCaseRequest {
     if (prUrl === undefined) {
       throw new Error("--pr is required");
     }
-    return { kind: "add", prUrl, id };
+    return { kind: "add", prUrl, id, bundle };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }

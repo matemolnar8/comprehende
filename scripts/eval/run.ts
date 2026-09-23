@@ -15,7 +15,15 @@ import { loadDocument } from "../../src/review/load.ts";
 import { EVAL_USAGE, parseEvalArgv } from "./args.ts";
 import { listEvalCases, selectEvalCases, type EvalCase } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
-import { addDetachedWorktree, ensureBareClone, fetchCaseRefs, removeWorktree, thisRepoMirror } from "./clone.ts";
+import {
+  addDetachedWorktree,
+  CASE_BUNDLE,
+  cloneCaseBundle,
+  ensureBareClone,
+  fetchCaseRefs,
+  removeWorktree,
+  thisRepoMirror,
+} from "./clone.ts";
 import { groupingPrompt, prosePrompt, runGrader } from "./graders.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
@@ -118,12 +126,18 @@ async function evalOneCase(opts: {
   const cacheDir = join(opts.packageRoot, "eval/.cache");
   let bare: string | undefined;
   try {
-    bare = await ensureBareClone({
-      cacheDir,
-      repoUrl: opts.spec.repo,
-      localMirror: await thisRepoMirror(opts.packageRoot, opts.spec.repo),
-    });
-    await fetchCaseRefs(bare, opts.spec.pr, opts.spec.base, opts.spec.head);
+    const bundle = join(opts.caseDir, CASE_BUNDLE);
+    if (existsSync(bundle)) {
+      bare = join(tmp, "repo.git");
+      await cloneCaseBundle({ bundle, dest: bare, base: opts.spec.base, repoUrl: opts.spec.repo });
+    } else {
+      bare = await ensureBareClone({
+        cacheDir,
+        repoUrl: opts.spec.repo,
+        localMirror: await thisRepoMirror(opts.packageRoot, opts.spec.repo),
+      });
+      await fetchCaseRefs(bare, opts.spec.pr, opts.spec.base, opts.spec.head);
+    }
     await addDetachedWorktree(bare, repoCwd, opts.spec.head);
     const cliPath = resolve(opts.packageRoot, "dist/cli/main.js");
     if (!existsSync(cliPath)) {

@@ -1,0 +1,19 @@
+{
+  "id": "cigster-84",
+  "repo": "https://github.com/matemolnar8/cigster.git",
+  "pr": 84,
+  "base": "f4908bd4f3862b63d7cbe5b8a9e7710cc042adc4",
+  "head": "f49bd298aa920cd489aae426079202d6c01403a9",
+  "tags": ["foreign"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 3 },
+    "size": ["medium", "large"],
+    "sourceKinds": ["ticket"],
+    "apart": [["e2e/auth/fixtures.ts", "e2e/snapshots/solo-ready-empty-desktop.png"]],
+    "claims": [
+      "the ticket asks to keep Convex seed reset skippable in Docker and CI, but the change removes shouldResetVisualSeeds so Convex teardown always runs",
+      "anonymous solo, import, and player seeds no longer create Clerk users and use a synthetic identity instead"
+    ]
+  }
+}
