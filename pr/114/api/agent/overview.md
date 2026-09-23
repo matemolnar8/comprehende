@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 4c59452449c16ba800b5753c21f1202692cc242c` and `git rev-parse --verify d5011fce325fb0b8497129914cd9f56404c53218` in this repository.
+   Run `git rev-parse --verify a30dbe06eac9a77ffd91a36be7d25e5cf2e1d2fd` and `git rev-parse --verify a00142284953190a1c5d269f7805cefc09be2995` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,17 +22,18 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  4c59452449c16ba800b5753c21f1202692cc242c
+base (merge-base)  a30dbe06eac9a77ffd91a36be7d25e5cf2e1d2fd
 
-head               d5011fce325fb0b8497129914cd9f56404c53218
+head               a00142284953190a1c5d269f7805cefc09be2995
 
-Named refs at pin: 4c59452449c16ba800b5753c21f1202692cc242c ... d5011fce325fb0b8497129914cd9f56404c53218
+Named refs at pin: a30dbe06eac9a77ffd91a36be7d25e5cf2e1d2fd ... a00142284953190a1c5d269f7805cefc09be2995
 
 Read the diff:
 
-git diff --find-renames 4c59452449c16ba800b5753c21f1202692cc242c d5011fce325fb0b8497129914cd9f56404c53218
+git diff --find-renames a30dbe06eac9a77ffd91a36be7d25e5cf2e1d2fd a00142284953190a1c5d269f7805cefc09be2995
 
 Commits:
+- a001422 Merge remote-tracking branch 'origin/main' into cursor/release-0-9-0-5542
 - d5011fc 0.9.0
 
 Sources:
