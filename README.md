@@ -44,8 +44,6 @@ This tool is for preventing this cognitive surrender while trying to maintain mo
 
 `comprehende serve` and `comprehende export` share one UI and one git payload. Serve resolves refs to commit SHAs when it starts, then computes those payloads from the objects on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review. The URL hash is the UI location (`#overview`, `#group/<id>`, `#unassigned`, `#lockfiles`), so a refresh or a shared link opens the same view in either mode.
 
-A viewed mark on a file stays in that browser session for the base and head commits. Refresh keeps it. The review file does not store it, and the mark is not a verdict on the change. The UI shows how many files are still left to read.
-
 This repository publishes those exports to GitHub Pages. A pull request review lives at `https://matemolnar8.github.io/comprehende/pr/<number>/`. A named site lives at `https://matemolnar8.github.io/comprehende/site/<name>/`. Enable Pages once. In the GitHub repo, open Settings, Pages, Deploy from a branch, branch `gh-pages`, folder `/`. A workflow removes the pull request folder when that pull request closes, and drops sites older than 30 days.
 
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.8.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
