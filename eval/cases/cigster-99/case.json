@@ -1,0 +1,25 @@
+{
+  "id": "cigster-99",
+  "repo": "https://github.com/matemolnar8/cigster.git",
+  "pr": 99,
+  "base": "c8a6ae57e21e1e18d82679c9d359b2f72ef902ad",
+  "head": "0880bab37c3a3afc82e4e877ea9032896005e0fc",
+  "tags": ["foreign"],
+  "expect": {
+    "parts": { "min": 2, "max": 6 },
+    "size": ["large", "very-large"],
+    "sourceKinds": ["ticket"],
+    "mechanicalPaths": [
+      "e2e/snapshots/linux/admin-detail-empty-desktop.png",
+      "e2e/snapshots/linux/admin-detail-populated-desktop.png"
+    ],
+    "apart": [
+      ["e2e/live/living-room.spec.ts", "e2e/snapshots/linux/admin-detail-empty-desktop.png"],
+      ["e2e/live/living-room.spec.ts", "docs/audits/e2e-pageobject-audit.html"]
+    ],
+    "claims": [
+      "useQRCodeSVG is production code and now depends on primitive option values, so a fresh options object each render no longer regenerates the QR code",
+      "pnpm test:e2e:ui sets E2E_UI=1 and skips the Playwright webServer, so the app must already be running"
+    ]
+  }
+}

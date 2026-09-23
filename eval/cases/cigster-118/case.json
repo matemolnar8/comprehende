@@ -1,0 +1,20 @@
+{
+  "id": "cigster-118",
+  "repo": "https://github.com/matemolnar8/cigster.git",
+  "pr": 118,
+  "base": "ffc462577ad058b71969822e1e9bb5fd9a5f4426",
+  "head": "a4f4143110d027c74a159b2bb2fa7750efbd5560",
+  "tags": ["foreign"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 3 },
+    "size": ["medium", "large"],
+    "sourceKinds": ["ticket", "pr-comment"],
+    "together": [["compose.yaml", "e2e/playwright.config.ts"]],
+    "apart": [["src/lib/analytics/routeTemplate.ts", "src/components/landing/LandingHero.tsx"]],
+    "claims": [
+      "the ticket asks to keep product autocapture off, but the change keeps autocapture on",
+      "before_send redacts join codes from event titles and autocapture text, including bare six-character codes on host and TV routes"
+    ]
+  }
+}
