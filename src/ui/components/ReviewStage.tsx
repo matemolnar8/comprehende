@@ -61,6 +61,7 @@ export function ReviewStage(props: {
         <Overview
           meta={props.meta}
           parts={props.parts}
+          viewedPaths={props.viewedPaths}
           onOpenGroup={(id) => props.onSelect({ kind: "group", id })}
           focusLookForKey={props.focusLookForKey}
         />

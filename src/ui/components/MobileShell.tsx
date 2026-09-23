@@ -3,10 +3,12 @@ import { MessageSquareIcon, PanelLeftIcon, SmartphoneIcon, WrapTextIcon } from "
 import type { ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet.tsx";
-import { selectionCaption, type Selection } from "../lib/selection.ts";
 import type { Part } from "../lib/parts.ts";
-import { ThemeToggle } from "./Header.tsx";
+import { reviewReadingPaths } from "../lib/reading-progress.ts";
+import { selectionCaption, type Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
+import { ThemeToggle } from "./Header.tsx";
+import { ReadingMark } from "./ReadingMark.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 
 export function MobileShell(props: {
@@ -16,6 +18,7 @@ export function MobileShell(props: {
   onSelect: (selection: Selection) => void;
   wrap: boolean;
   onWrap: () => void;
+  viewedPaths: ReadonlySet<string>;
   comments?: boolean;
   onComments?: () => void;
   children: ReactNode;
@@ -44,6 +47,7 @@ export function MobileShell(props: {
             <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{caption.index}</span>
           ) : null}
           <span className="truncate text-sm font-medium">{caption.title}</span>
+          <ReadingMark paths={reviewReadingPaths(props.meta)} viewed={props.viewedPaths} noun className="mt-0" />
         </p>
         <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} />
         <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -83,6 +87,7 @@ export function MobileShell(props: {
             meta={props.meta}
             selection={props.selection}
             parts={props.parts}
+            viewedPaths={props.viewedPaths}
             onSelect={pick}
             compact
             className="min-h-0 flex-1"

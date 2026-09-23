@@ -2,13 +2,14 @@ import { type ReviewMeta } from "../api.ts";
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import type { FileComment } from "../lib/source-display.ts";
+import { useNarrow } from "../lib/narrow.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { FileRail, FileStrip } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
+import { ReadingMark } from "./ReadingMark.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { useEffect } from "react";
-import { useNarrow } from "../lib/narrow.ts";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -40,7 +41,7 @@ export function Group(props: {
     strandColor ??
     (lockfiles ? "var(--muted-foreground)" : bucket === REVIEW_BUCKETS.unassigned ? "var(--warn)" : "var(--primary)");
 
-  const viewedCount = files.filter((file) => viewedPaths.has(file.path)).length;
+  const filePaths = files.map((file) => file.path);
   const narrow = useNarrow();
 
   useEffect(() => {
@@ -119,10 +120,10 @@ export function Group(props: {
         <p className="mt-8 text-muted-foreground">No hunks in this group.</p>
       ) : null}
 
-      {!loading && files.length > 0 && !narrow ? (
+      {!loading && files.length > 0 ? (
         <p className="mt-4 font-mono text-[11px] tabular-nums text-muted-foreground">
-          {viewedCount} of {files.length} files viewed
-          <span className="hidden sm:inline"> · j/k to move, v to toggle</span>
+          <ReadingMark paths={filePaths} viewed={viewedPaths} noun className="mt-0" />
+          {!narrow ? <span> · j/k to move, v to toggle</span> : null}
         </p>
       ) : null}
 

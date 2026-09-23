@@ -416,6 +416,7 @@ export function App() {
             selection={selection}
             parts={parts}
             onSelect={selectFromNav}
+            viewedPaths={viewedPaths}
             wrap={wrap}
             onWrap={() => setWrap((value) => !value)}
             comments={showComments}
@@ -440,6 +441,7 @@ export function App() {
                 }
               }}
               onRefresh={() => void load()}
+              viewedPaths={viewedPaths}
               busy={loading}
               comments={showComments}
               onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
@@ -451,7 +453,7 @@ export function App() {
               onLayoutChanged={onLayoutChanged}
             >
               <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-                <Sidebar meta={meta} selection={selection} parts={parts} onSelect={selectFromNav} />
+                <Sidebar meta={meta} selection={selection} parts={parts} viewedPaths={viewedPaths} onSelect={selectFromNav} />
               </ResizablePanel>
               <ResizableHandle withHandle />
               <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">

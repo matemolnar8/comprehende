@@ -5,21 +5,24 @@ import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { claimsFromLookFor } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
+import { readingStatus } from "../lib/reading-progress.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
+import { ReadingMark } from "./ReadingMark.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
+  viewedPaths: ReadonlySet<string>;
   onOpenGroup: (id: string) => void;
   focusLookForKey?: string;
 }) {
-  const { meta, parts, onOpenGroup, focusLookForKey } = props;
+  const { meta, parts, viewedPaths, onOpenGroup, focusLookForKey } = props;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
@@ -64,6 +67,7 @@ export function Overview(props: {
             groups={meta.groups}
             listedParts={meta.document.parts}
             byId={byId}
+            viewedPaths={viewedPaths}
             onOpenGroup={onOpenGroup}
           />
         ))}
@@ -79,9 +83,10 @@ function PartColumn(props: {
   groups: ReviewMeta["groups"];
   listedParts: ReviewMeta["document"]["parts"];
   byId: Map<string, ReviewMeta["groups"][number]>;
+  viewedPaths: ReadonlySet<string>;
   onOpenGroup: (id: string) => void;
 }) {
-  const { part, mixed, groups, listedParts, byId, onOpenGroup } = props;
+  const { part, mixed, groups, listedParts, byId, viewedPaths, onOpenGroup } = props;
   const color = partColor(part.colorIndex);
   const firstId = part.groupIds[0];
   const summary = partSummary(listedParts, part.title);
@@ -117,6 +122,7 @@ function PartColumn(props: {
           }
           const index = groupOrderIndex(props.parts, id);
           const depth = dependsOnDepth(groups, id, new Set(part.groupIds));
+          const reading = readingStatus(group.files, viewedPaths);
           return (
             <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
               <HashLink
@@ -133,11 +139,16 @@ function PartColumn(props: {
                   {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <strong className="block font-medium text-foreground">{group.title}</strong>
+                  <strong
+                    className={cn("block font-medium text-foreground", reading !== null && reading.left === 0 && "opacity-60")}
+                  >
+                    {group.title}
+                  </strong>
                   <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
                     <InlineMd text={group.summary} />
                   </span>
                 </span>
+                {reading !== null ? <ReadingMark paths={group.files} viewed={viewedPaths} /> : null}
               </HashLink>
             </li>
           );

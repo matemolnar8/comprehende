@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils.ts";
 import { fileBasename, fileDirname, readStoredRailCollapsed, writeStoredRailCollapsed } from "../lib/file-nav.ts";
 import { fileIndexAtHunk } from "../lib/group-files.ts";
 import type { GroupFile } from "../lib/group-files.ts";
+import { readingStatus } from "../lib/reading-progress.ts";
+import { ReadingMark } from "./ReadingMark.tsx";
 
 export function FileStrip(props: {
   files: GroupFile[];
@@ -65,6 +67,8 @@ export function FileRail(props: {
 }) {
   const { files, activeHunk, viewedPaths } = props;
   const activeIndex = Math.max(0, fileIndexAtHunk(files, activeHunk));
+  const filePaths = files.map((file) => file.path);
+  const reading = readingStatus(filePaths, viewedPaths);
   const railRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -113,7 +117,9 @@ export function FileRail(props: {
           <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Expand file list" onClick={toggle}>
             <ChevronRightIcon className="size-4 rotate-180" />
           </Button>
-          <div className="font-mono text-[10px] leading-none text-muted-foreground [writing-mode:vertical-lr]">{files.length} files</div>
+          <div className="font-mono text-[10px] leading-none text-muted-foreground [writing-mode:vertical-lr]">
+            {reading === null ? `${files.length} files` : reading.label}
+          </div>
         </div>
       </div>
     );
@@ -124,12 +130,12 @@ export function FileRail(props: {
       <div className="min-w-0 flex-1 space-y-8">{props.children}</div>
       <nav
         ref={railRef}
-        aria-label="Files in group"
+        aria-label={reading === null ? "Files in group" : `Files in group, ${reading.filesLabel}`}
         className="flex h-[calc(100vh-7rem)] w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-card sticky top-4 self-start max-lg:w-[240px] max-sm:w-full max-sm:h-auto max-sm:max-h-[40vh]"
       >
         <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <p className="flex-1 font-mono text-[11px] tabular-nums text-muted-foreground">
-            {files.filter((f) => viewedPaths.has(f.path)).length} of {files.length} viewed
+            {reading === null ? null : <ReadingMark paths={filePaths} viewed={viewedPaths} noun className="mt-0" />}
           </p>
           <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" aria-label="Collapse file list" onClick={toggle}>
             <ChevronRightIcon className="size-4" />

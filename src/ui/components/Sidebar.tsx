@@ -5,19 +5,22 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { colorIndexByGroupId, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import { readingStatus, type ReadingStatus } from "../lib/reading-progress.ts";
 import { FilePeek } from "./FilePeek.tsx";
 import { HashLink } from "./HashLink.tsx";
+import { ReadingMark } from "./ReadingMark.tsx";
 import styles from "./Sidebar.module.css";
 
 export function Sidebar(props: {
   meta: ReviewMeta;
   selection: Selection | null;
   parts: Part[];
+  viewedPaths: ReadonlySet<string>;
   onSelect: (selection: Selection) => void;
   compact?: boolean;
   className?: string;
 }) {
-  const { meta, selection, parts, onSelect } = props;
+  const { meta, selection, parts, viewedPaths, onSelect } = props;
   const mixed = isMixedReview(parts);
   const colors = mixed ? colorIndexByGroupId(parts) : new Map<string, number>();
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
@@ -35,6 +38,7 @@ export function Sidebar(props: {
               title="Overview"
               count={sizeLabel(meta.document.size)}
               lookForCount={documentLookFor}
+              viewedPaths={viewedPaths}
             />
           </li>
         </ul>
@@ -76,6 +80,7 @@ export function Sidebar(props: {
                           count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
                           lookForCount={group.lookFor.length}
                           colorIndex={colors.get(group.id)}
+                          viewedPaths={viewedPaths}
                         />
                       </li>
                     );
@@ -94,6 +99,7 @@ export function Sidebar(props: {
                 files={meta.unassigned.files}
                 count={String(meta.unassigned.hunkCount)}
                 warn
+                viewedPaths={viewedPaths}
               />
             </li>
           ) : null}
@@ -107,6 +113,7 @@ export function Sidebar(props: {
                 files={meta.lockfiles.files}
                 count={String(meta.lockfiles.fileCount)}
                 muted
+                viewedPaths={viewedPaths}
               />
             </li>
           ) : null}
@@ -128,10 +135,12 @@ function StackItem(props: {
   warn?: boolean;
   muted?: boolean;
   colorIndex?: number;
+  viewedPaths: ReadonlySet<string>;
 }) {
   const colorIndex = props.colorIndex;
   const files = props.files ?? [];
   const lookForCount = props.lookForCount ?? 0;
+  const reading = readingStatus(files, props.viewedPaths);
   const showStrand = colorIndex !== undefined || props.active;
   const strand =
     colorIndex !== undefined
@@ -139,12 +148,7 @@ function StackItem(props: {
       : props.muted
         ? "var(--muted-foreground)"
         : undefined;
-  const label =
-    files.length > 0
-      ? `${props.title}, ${files.length} files${props.count !== undefined ? `, ${props.count}` : ""}${lookForCount > 0 ? `, ${lookForCount} look for` : ""}`
-      : lookForCount > 0
-        ? `${props.title}, ${lookForCount} look for`
-        : undefined;
+  const label = stackLabel(props.title, files, props.count, lookForCount, reading);
   return (
     <HashLink
       selection={props.selection}
@@ -173,12 +177,15 @@ function StackItem(props: {
       ) : null}
       <span className="min-w-0 flex-1 text-left leading-snug">
         <span className="flex min-w-0 items-start gap-2.5">
-          <span className="min-w-0 flex-1">{props.title}</span>
+          <span className={cn("min-w-0 flex-1", reading !== null && reading.left === 0 && !props.active && "opacity-60")}>
+            {props.title}
+          </span>
           {props.count !== undefined ? (
             <span className={cn("mt-px shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
               {props.count}
             </span>
           ) : null}
+          {reading !== null ? <ReadingMark paths={files} viewed={props.viewedPaths} /> : null}
         </span>
         <FilePeek paths={files} />
         {lookForCount > 0 ? (
@@ -189,4 +196,29 @@ function StackItem(props: {
       </span>
     </HashLink>
   );
+}
+
+function stackLabel(
+  title: string,
+  files: readonly string[],
+  count: string | undefined,
+  lookForCount: number,
+  reading: ReadingStatus | null,
+): string | undefined {
+  let label: string | undefined;
+  if (files.length > 0) {
+    label = `${title}, ${files.length} files`;
+    if (count !== undefined) {
+      label += `, ${count}`;
+    }
+    if (lookForCount > 0) {
+      label += `, ${lookForCount} look for`;
+    }
+  } else if (lookForCount > 0) {
+    label = `${title}, ${lookForCount} look for`;
+  }
+  if (reading === null) {
+    return label;
+  }
+  return label === undefined ? `${title}, ${reading.filesLabel}` : `${label}, ${reading.filesLabel}`;
 }
