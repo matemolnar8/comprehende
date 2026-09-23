@@ -4,6 +4,10 @@ export type NameStatusEntry = {
   status: FileStatus;
   path: string;
   oldPath?: string;
+  /** Similarity index from `R075` / `C100`. */
+  similarity?: number;
+  /** True when the status letter is `C` (copy), not `R` (rename). */
+  copy?: boolean;
 };
 
 export type NumstatEntry = {
@@ -30,7 +34,15 @@ export function parseNameStatus(stdout: string): NameStatusEntry[] {
       if (oldPath === undefined || path === undefined) {
         break;
       }
-      entries.push({ status: "renamed", path, oldPath });
+      const entry: NameStatusEntry = { status: "renamed", path, oldPath };
+      const score = /^[RC](\d+)/.exec(code);
+      if (score?.[1] !== undefined) {
+        entry.similarity = Number(score[1]);
+      }
+      if (code.startsWith("C")) {
+        entry.copy = true;
+      }
+      entries.push(entry);
       continue;
     }
     const path = parts[index];

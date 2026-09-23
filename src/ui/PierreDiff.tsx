@@ -33,6 +33,8 @@ import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { CommentPin } from "./components/CommentPin.tsx";
+import { MovedChip } from "./components/MovedChip.tsx";
+import { movedMarkLabel, type MovedMark } from "./lib/relocation.ts";
 import type { FileComment } from "./lib/source-display.ts";
 import { commentsByLine } from "./lib/source-display.ts";
 
@@ -156,7 +158,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   wrap: boolean;
   themeType: "light" | "dark";
   loadFiles: boolean;
-  annotations?: DiffLineAnnotation<CommentMeta>[];
+  annotations?: DiffLineAnnotation<RowMeta>[];
   onPostRender?: (node: HTMLElement) => void;
 }) {
   const onPostRenderRef = useRef(props.onPostRender);
@@ -188,7 +190,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       fileDiff={props.fileDiff}
       options={options}
       lineAnnotations={props.annotations}
-      renderAnnotation={props.annotations === undefined ? undefined : renderCommentAnnotation}
+      renderAnnotation={props.annotations === undefined ? undefined : renderRowAnnotation}
     />
   );
 });
@@ -240,31 +242,61 @@ export type FileAnnotation = {
   };
 };
 
-type CommentMeta = {
-  comments: FileComment[];
+type RowMeta = {
+  comments?: FileComment[];
   focusId?: string;
+  movedLabel?: string;
 };
 
-function commentAnnotations(
-  comments: readonly FileComment[],
+function rowAnnotations(
+  comments: readonly FileComment[] | undefined,
+  moves: readonly MovedMark[] | undefined,
+  filePath: string,
   focusId?: string,
-): DiffLineAnnotation<CommentMeta>[] {
-  return [...commentsByLine(comments).values()].flatMap((list) => {
-    const first = list[0];
-    if (first === undefined) {
-      return [];
+): DiffLineAnnotation<RowMeta>[] | undefined {
+  const byKey = new Map<string, DiffLineAnnotation<RowMeta>>();
+  if (comments !== undefined) {
+    for (const list of commentsByLine(comments).values()) {
+      const first = list[0];
+      if (first === undefined) {
+        continue;
+      }
+      const key = `${first.side}:${first.line}`;
+      byKey.set(key, {
+        side: first.side === "old" ? "deletions" : "additions",
+        lineNumber: first.line,
+        metadata: { comments: list, focusId },
+      });
     }
-    const annotation: DiffLineAnnotation<CommentMeta> = {
-      side: first.side === "old" ? "deletions" : "additions",
-      lineNumber: first.line,
-      metadata: { comments: list, focusId },
-    };
-    return [annotation];
-  });
+  }
+  if (moves !== undefined) {
+    for (const mark of moves) {
+      const key = `${mark.side}:${mark.line}`;
+      const existing = byKey.get(key);
+      const movedLabel = movedMarkLabel(filePath, mark);
+      if (existing === undefined) {
+        byKey.set(key, {
+          side: mark.side === "old" ? "deletions" : "additions",
+          lineNumber: mark.line,
+          metadata: { movedLabel },
+        });
+      } else {
+        existing.metadata.movedLabel = movedLabel;
+      }
+    }
+  }
+  const annotations = [...byKey.values()];
+  return annotations.length === 0 ? undefined : annotations;
 }
 
-function renderCommentAnnotation(annotation: DiffLineAnnotation<CommentMeta>): ReactNode {
-  return <CommentPin comments={annotation.metadata.comments} focusId={annotation.metadata.focusId} />;
+function renderRowAnnotation(annotation: DiffLineAnnotation<RowMeta>): ReactNode {
+  const { comments, focusId, movedLabel } = annotation.metadata;
+  return (
+    <>
+      {movedLabel !== undefined ? <MovedChip label={movedLabel} /> : null}
+      {comments !== undefined && comments.length > 0 ? <CommentPin comments={comments} focusId={focusId} /> : null}
+    </>
+  );
 }
 
 function renderBlameAnnotation(annotation: LineAnnotation<FileAnnotation["metadata"]>): ReactNode {
@@ -310,9 +342,10 @@ export function PierreFileDiff(props: {
   /** False for grouped subset patches. Full-file blobs do not match those patches. */
   hydrate?: boolean;
   comments?: FileComment[];
+  moves?: readonly MovedMark[];
   focusCommentId?: string;
 }) {
-  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true, comments, focusCommentId } = props;
+  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true, comments, moves, focusCommentId } = props;
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
@@ -386,8 +419,8 @@ export function PierreFileDiff(props: {
   };
 
   const annotations = useMemo(
-    () => (comments === undefined || comments.length === 0 ? undefined : commentAnnotations(comments, focusCommentId)),
-    [comments, focusCommentId],
+    () => rowAnnotations(comments, moves, path, focusCommentId),
+    [comments, focusCommentId, moves, path],
   );
 
   if (fileDiff === undefined) {

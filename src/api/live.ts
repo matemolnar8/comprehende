@@ -1,7 +1,7 @@
 import { loadDocument } from "../review/load.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
-import { fileLanguage, filePatchFromGit, readPathDiff, toHunkRef } from "../git/diff.ts";
+import { fileLanguage, filePatchFromGit, findDiffFile, readPathDiff, toHunkRef } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
 import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
@@ -301,16 +301,16 @@ async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiGroupF
   if (!isLockfilePath(file.path) || file.binary || file.image) {
     throw new ApiError(404, "path is not a deferred lockfile");
   }
-  const live = await readPathDiffSafe(ctx, file.path);
+  const live = await readPathDiffSafe(ctx, file.path, file.oldPath);
   if (live === undefined) {
     throw new ApiError(404, `no live diff for ${path}`);
   }
   return serializeGroupFile(live, live.hunks, false);
 }
 
-async function readPathDiffSafe(ctx: ReviewContext, path: string): Promise<DiffFile | undefined> {
+async function readPathDiffSafe(ctx: ReviewContext, path: string, oldPath?: string): Promise<DiffFile | undefined> {
   try {
-    return await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, path);
+    return await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, path, oldPath);
   } catch (error) {
     throw new ApiError(404, error instanceof Error ? error.message : "diff not available");
   }
@@ -329,6 +329,9 @@ function serializeGroupFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile
   };
   if (file.oldPath !== undefined) {
     next.oldPath = file.oldPath;
+  }
+  if (file.relocation !== undefined) {
+    next.relocation = file.relocation;
   }
   if (file.added !== undefined) {
     next.added = file.added;
@@ -349,7 +352,7 @@ function serializeHunk(hunk: LiveHunk): ApiHunk {
 }
 
 function findFile(files: DiffFile[], path: string): DiffFile {
-  const file = files.find((item) => item.path === path || item.oldPath === path);
+  const file = findDiffFile(files, path);
   if (file === undefined) {
     throw new ApiError(404, `path is not in the live diff: ${path}`);
   }

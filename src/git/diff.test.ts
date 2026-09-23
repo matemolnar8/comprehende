@@ -5,7 +5,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, describe, it } from "node:test";
 import { rmSync } from "node:fs";
-import { classifyDiffFiles, filePatchFromGit, parseUnifiedDiff, readDiff, readHunkIndex, readPathDiff } from "./diff.ts";
+import {
+  classifyDiffFiles,
+  filePatchFromGit,
+  findDiffFile,
+  parseUnifiedDiff,
+  readDiff,
+  readHunkIndex,
+  readPathDiff,
+} from "./diff.ts";
 import { APP_SECRET, createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
@@ -58,6 +66,7 @@ describe("parseUnifiedDiff", () => {
     assert.equal(renamed.oldPath, "src/util.ts");
     assert.equal(renamed.path, "src/helpers.ts");
     assert.equal(renamed.hunks[0]?.oldPath, "src/util.ts");
+    assert.deepEqual(renamed.relocation, { kind: "rename", similarity: 80 });
 
     const binary = files[2];
     assert.ok(binary);
@@ -73,6 +82,41 @@ describe("parseUnifiedDiff", () => {
     assert.equal(files[0]?.headerPatch.startsWith("diff --git a/src/app.ts b/src/app.ts\n"), true);
     assert.equal(files[0]?.headerPatch.includes("@@"), false);
     assert.equal(files[0]?.hunks[0]?.patch.startsWith("@@ -1,3 +1,4 @@\n"), true);
+
+    const copyAndPure = parseUnifiedDiff(`diff --git a/src/util.ts b/src/util.copy.ts
+similarity index 100%
+copy from src/util.ts
+copy to src/util.copy.ts
+diff --git a/src/keep.ts b/lib/keep.ts
+similarity index 100%
+rename from src/keep.ts
+rename to lib/keep.ts
+diff --git "a/src/old name.ts" "b/src/new name.ts"
+similarity index 90%
+rename from "src/old name.ts"
+rename to "src/new name.ts"
+`);
+    const copied = copyAndPure[0];
+    assert.ok(copied);
+    assert.equal(copied.status, "renamed");
+    assert.deepEqual(copied.relocation, { kind: "copy", similarity: 100 });
+    assert.equal(copied.oldPath, "src/util.ts");
+    assert.equal(copied.path, "src/util.copy.ts");
+    assert.equal(copied.hunks.length, 1);
+    assert.equal(copied.hunks[0]?.header, "relocation");
+    assert.equal(copied.hunks[0]?.lines.length, 0);
+
+    const moved = copyAndPure[1];
+    assert.ok(moved);
+    assert.deepEqual(moved.relocation, { kind: "rename", similarity: 100 });
+    assert.equal(moved.oldPath, "src/keep.ts");
+    assert.equal(moved.path, "lib/keep.ts");
+
+    const quoted = copyAndPure[2];
+    assert.ok(quoted);
+    assert.equal(quoted.oldPath, "src/old name.ts");
+    assert.equal(quoted.path, "src/new name.ts");
+    assert.equal(quoted.relocation?.similarity, 90);
 
     const first = files[0];
     const firstHunk = first?.hunks[0];
@@ -208,5 +252,19 @@ describe("lockfile diffs", () => {
     assert.ok(index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"));
     assert.ok(index.skipped.some((item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile"));
     assert.ok(index.skipped.some((item) => item.path === "bun.lockb"));
+  });
+});
+
+describe("findDiffFile", () => {
+  const copy = { path: "src/beta.copy.ts", oldPath: "src/beta.ts" };
+  const source = { path: "src/beta.ts" };
+
+  it("keeps the source when a copy is listed first", () => {
+    assert.equal(findDiffFile([copy, source], "src/beta.ts"), source);
+    assert.equal(findDiffFile([copy, source], "src/beta.copy.ts"), copy);
+  });
+
+  it("follows a unique old path", () => {
+    assert.equal(findDiffFile([copy], "src/beta.ts"), copy);
   });
 });

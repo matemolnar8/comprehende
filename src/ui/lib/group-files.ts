@@ -1,4 +1,5 @@
 import { lineDelta } from "../../schema/hunk-meta.ts";
+import type { Relocation } from "../../schema/types.ts";
 import type { FileKind, FileStatus, LiveHunk } from "../api.ts";
 
 export type GroupFile = {
@@ -7,6 +8,7 @@ export type GroupFile = {
   kind: FileKind;
   status: FileStatus;
   patch: string;
+  relocation?: Relocation;
   added: number;
   removed: number;
   hunkCount: number;
@@ -25,6 +27,7 @@ export function filesFromPayload(
     added?: number;
     removed?: number;
     complete?: boolean;
+    relocation?: Relocation;
     hunks: LiveHunk[];
   }[],
 ): GroupFile[] {
@@ -45,6 +48,9 @@ export function filesFromPayload(
     };
     if (file.oldPath !== undefined) {
       next.oldPath = file.oldPath;
+    }
+    if (file.relocation !== undefined) {
+      next.relocation = file.relocation;
     }
     firstIndex += next.hunkCount;
     return next;

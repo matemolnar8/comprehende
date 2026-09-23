@@ -67,6 +67,14 @@ export type DiffLine = {
   oldNumber: number | null;
   newNumber: number | null;
   text: string;
+  /** Other side of a block git would mark with `--color-moved`. */
+  moved?: { path: string; line: number };
+};
+
+/** Git rename or copy. `similarity` is the similarity index, 0–100. */
+export type Relocation = {
+  kind: "rename" | "copy";
+  similarity?: number;
 };
 
 export type LiveHunk = HunkRef & {
@@ -86,6 +94,8 @@ export type DiffFile = {
   headerPatch: string;
   patch: string;
   hunks: LiveHunk[];
+  /** Present when git printed `rename from`/`to` or `copy from`/`to`. */
+  relocation?: Relocation;
   /** Present on lockfile stubs that never loaded patch text. */
   added?: number;
   removed?: number;
