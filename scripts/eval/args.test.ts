@@ -66,6 +66,17 @@ describe("eval argv", () => {
       kind: "add",
       prUrl: "https://github.com/matemolnar8/comprehende/pull/47",
       id: undefined,
+      bundle: false,
+    });
+  });
+
+  it("parses add-case --bundle", () => {
+    const req = parseAddCaseArgv(["--pr", "https://github.com/matemolnar8/cigster/pull/84", "--bundle"]);
+    assert.deepEqual(req, {
+      kind: "add",
+      prUrl: "https://github.com/matemolnar8/cigster/pull/84",
+      id: undefined,
+      bundle: true,
     });
   });
 });
