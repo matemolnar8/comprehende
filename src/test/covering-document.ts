@@ -11,6 +11,8 @@ export const MIXED_GROUP_APP_TEST = "app-test";
 export const MIXED_GROUP_HELPERS = "helpers";
 export const MIXED_GROUP_TYPES = "types";
 export const MIXED_GROUP_DOCS = "docs";
+export const MIXED_GROUP_RELOCATIONS = "relocations";
+export const MIXED_GROUP_MOVE = "move-block";
 
 export function coveringDocument(index: HunkIndex): ReviewDocument {
   return {
@@ -38,6 +40,10 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
   const helpers = hunksAt(index, "src/helpers.ts");
   const types = hunksAt(index, "src/types.ts");
   const docs = hunksAt(index, "README.md");
+  const keep = hunksAt(index, "lib/keep.ts");
+  const copy = hunksAt(index, "src/beta.copy.ts");
+  const alpha = hunksAt(index, "src/alpha.ts");
+  const beta = hunksAt(index, "src/beta.ts");
   const groups: ReviewGroup[] = [
     {
       id: MIXED_GROUP_APP,
@@ -93,6 +99,24 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       suggestedOrder: 4,
       hunkRefs: docs,
     },
+    {
+      id: MIXED_GROUP_RELOCATIONS,
+      title: "File move and copy",
+      why: "Git reports a pure move and a pure copy. Those paths are their own concern.",
+      summary: "`src/keep.ts` moves to `lib/keep.ts`. `src/beta.copy.ts` is a copy of `src/beta.ts`.",
+      part: MIXED_PART_LIB,
+      suggestedOrder: 5,
+      hunkRefs: [...keep, ...copy],
+    },
+    {
+      id: MIXED_GROUP_MOVE,
+      title: "Moved block",
+      why: "The same block leaves `src/alpha.ts` and shows up in `src/beta.ts`.",
+      summary: "`movedBlock` leaves `src/alpha.ts` and is added in `src/beta.ts`.",
+      part: MIXED_PART_LIB,
+      suggestedOrder: 6,
+      hunkRefs: [...alpha, ...beta],
+    },
   ];
   const document: ReviewDocument = {
     version: 1,
@@ -108,7 +132,7 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       },
       {
         name: MIXED_PART_LIB,
-        summary: "`util.ts` becomes `helpers.ts`, and `Id` accepts number.",
+        summary: "`util.ts` becomes `helpers.ts`, `keep.ts` moves, and `Id` accepts number.",
       },
       {
         name: MIXED_PART_DOCS,

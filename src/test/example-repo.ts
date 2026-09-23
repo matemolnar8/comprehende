@@ -6,6 +6,25 @@ import { initEmptyRepo } from "./init-repo.ts";
 export const SECRET_ADD = "UNIQUE_ADDED_LINE_CONTENT_7f3a";
 export const SECRET_DEL = "UNIQUE_REMOVED_LINE_CONTENT_9c1b";
 
+const UTIL_BASE = [
+  'export const label = "util";',
+  "export function help(): number {",
+  "  return 1;",
+  "}",
+  "export function keep(): string {",
+  '  return "stable-for-rename-detection";',
+  "}",
+  "",
+].join("\n");
+
+const MOVED_BLOCK = [
+  "export function movedBlock(): number {",
+  "  const value = 42;",
+  '  const label = "relocated-body-text";',
+  "  return value + label.length;",
+  "}",
+].join("\n");
+
 export type ExampleRepo = {
   root: string;
   base: string;
@@ -19,21 +38,15 @@ export async function createExampleRepo(root: string): Promise<ExampleRepo> {
   await mkdir(join(root, "assets"), { recursive: true });
 
   await writeFile(join(root, "src/app.ts"), appFile("alpha", SECRET_DEL), "utf8");
+  await writeFile(join(root, "src/util.ts"), UTIL_BASE, "utf8");
+  await writeFile(join(root, "src/types.ts"), "export type Id = string;\n", "utf8");
+  await writeFile(join(root, "src/keep.ts"), "export const kept = 1;\nexport const still = 2;\n", "utf8");
   await writeFile(
-    join(root, "src/util.ts"),
-    [
-      'export const label = "util";',
-      "export function help(): number {",
-      "  return 1;",
-      "}",
-      "export function keep(): string {",
-      '  return "stable-for-rename-detection";',
-      "}",
-      "",
-    ].join("\n"),
+    join(root, "src/alpha.ts"),
+    `export const stay = 1;\n${MOVED_BLOCK}\nexport const tail = 1;\n`,
     "utf8",
   );
-  await writeFile(join(root, "src/types.ts"), "export type Id = string;\n", "utf8");
+  await writeFile(join(root, "src/beta.ts"), "export const other = 1;\n", "utf8");
   await writeFile(join(root, "README.md"), "# Example\n\nBase readme.\n", "utf8");
   await writeFile(join(root, "assets/dot.bin"), Buffer.from([0x00, 0x01, 0x02, 0x03, 0xff]));
 
@@ -58,6 +71,15 @@ export async function createExampleRepo(root: string): Promise<ExampleRepo> {
     "utf8",
   );
   await writeFile(join(root, "src/types.ts"), "export type Id = string | number;\n", "utf8");
+  await mkdir(join(root, "lib"), { recursive: true });
+  await git(root, ["mv", "src/keep.ts", "lib/keep.ts"]);
+  await writeFile(join(root, "src/beta.copy.ts"), "export const other = 1;\n", "utf8");
+  await writeFile(join(root, "src/alpha.ts"), "export const stay = 1;\nexport const tail = 1;\n", "utf8");
+  await writeFile(
+    join(root, "src/beta.ts"),
+    `export const other = 1;\n${MOVED_BLOCK}\nexport const added = true;\n`,
+    "utf8",
+  );
   await writeFile(
     join(root, "src/app.test.ts"),
     'import { name } from "./app.ts";\n\ntest("name", () => {\n  if (name !== "beta") throw new Error("fail");\n});\n',

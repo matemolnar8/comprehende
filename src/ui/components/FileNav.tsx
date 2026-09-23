@@ -5,8 +5,12 @@ import { cn } from "@/lib/utils.ts";
 import { fileBasename, fileDirname, readStoredRailCollapsed, writeStoredRailCollapsed } from "../lib/file-nav.ts";
 import { fileIndexAtHunk } from "../lib/group-files.ts";
 import type { GroupFile } from "../lib/group-files.ts";
+<<<<<<< HEAD
 import { readingStatus } from "../lib/reading-progress.ts";
 import { ReadingMark } from "./ReadingMark.tsx";
+=======
+import { isPureRelocation, relocationWord } from "../lib/relocation.ts";
+>>>>>>> 1bba6a0 (Show git renames, copies, and moved lines in the diff.)
 
 export function FileStrip(props: {
   files: GroupFile[];
@@ -24,6 +28,7 @@ export function FileStrip(props: {
           {files.map((file, i) => {
             const viewed = viewedPaths.has(file.path);
             const active = i === activeIndex;
+            const word = relocationWord(file);
             return (
               <li key={file.path} className="shrink-0">
                 <button
@@ -35,6 +40,7 @@ export function FileStrip(props: {
                     viewed && !active && "opacity-60",
                   )}
                 >
+                  {word !== undefined ? `${word} ` : null}
                   {fileBasename(file.path)}
                 </button>
               </li>
@@ -49,10 +55,23 @@ export function FileStrip(props: {
 
 function FileCounters(props: { file: GroupFile }) {
   const { file } = props;
-  if (file.kind === "image") return <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>;
+  const word = relocationWord(file);
+  const pure = isPureRelocation(file);
+  if (file.kind === "image" && word === undefined) {
+    return <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>;
+  }
   return (
     <span className="font-mono text-[11px] tabular-nums">
-      <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+      {word !== undefined ? <span className="text-muted-foreground">{word}</span> : null}
+      {pure || file.kind === "image" ? null : (
+        <>
+          {word !== undefined ? " " : null}
+          <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+        </>
+      )}
+      {word !== undefined && file.relocation?.similarity !== undefined ? (
+        <span className="text-muted-foreground"> {file.relocation.similarity}%</span>
+      ) : null}
     </span>
   );
 }
@@ -161,7 +180,11 @@ export function FileRail(props: {
                       <span className={cn("block truncate font-mono text-xs leading-tight", viewed && "opacity-60")}>
                         {fileBasename(file.path)}
                       </span>
-                      {fileDirname(file.path) ? (
+                      {file.oldPath !== undefined ? (
+                        <span className="block truncate font-mono text-[10px] leading-tight opacity-50">
+                          ← {fileBasename(file.oldPath)}
+                        </span>
+                      ) : fileDirname(file.path) ? (
                         <span className="block truncate font-mono text-[10px] leading-tight opacity-50">
                           {fileDirname(file.path)}
                         </span>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { GroupFile } from "../lib/group-files.ts";
+import { isPureRelocation, movedMarks, relocationWord } from "../lib/relocation.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { ChevronDownIcon } from "lucide-react";
@@ -40,6 +41,9 @@ export function HunkView(props: {
     file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
   );
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
+  const word = relocationWord(file);
+  const pure = isPureRelocation(file);
+  const moves = useMemo(() => movedMarks(file.hunks), [file.hunks]);
   const bodyId = useId();
 
   const fileComments = useMemo(
@@ -97,23 +101,26 @@ export function HunkView(props: {
     >
       <header
         className={cn(
-          "sticky top-0 z-10 flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 bg-card px-3 py-2",
-          collapsed ? null : "border-b border-border",
+          "sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 bg-card px-3 py-2",
+          pure ? null : "cursor-pointer",
+          collapsed || pure ? null : "border-b border-border",
         )}
-        onClick={toggleCollapsed}
+        onClick={pure ? undefined : toggleCollapsed}
       >
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="size-6"
-          aria-expanded={!collapsed}
-          aria-controls={bodyId}
-          aria-label={collapsed ? "Expand file" : "Collapse file"}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          <ChevronDownIcon className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")} />
-        </Button>
+        {pure ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="size-6"
+            aria-expanded={!collapsed}
+            aria-controls={bodyId}
+            aria-label={collapsed ? "Expand file" : "Collapse file"}
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            <ChevronDownIcon className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")} />
+          </Button>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -127,18 +134,28 @@ export function HunkView(props: {
           </TooltipTrigger>
           <TooltipContent>Open file</TooltipContent>
         </Tooltip>
-        <code className="font-mono text-xs text-muted-foreground">
-          {file.kind === "image"
-            ? "image"
-            : file.kind === "lockfile"
-              ? "lockfile"
-              : file.hunkCount === 1 && first !== undefined
-                ? hunkRangeLabel(first.header)
-                : `${file.hunkCount} hunks`}
-        </code>
-        {file.kind === "image" ? (
+        {word !== undefined ? (
+          <Badge variant="outline" className="font-normal">
+            {word}
+            {file.relocation?.similarity !== undefined ? (
+              <span className="font-mono font-normal tabular-nums text-muted-foreground">{file.relocation.similarity}%</span>
+            ) : null}
+          </Badge>
+        ) : null}
+        {pure ? null : (
+          <code className="font-mono text-xs text-muted-foreground">
+            {file.kind === "image"
+              ? "image"
+              : file.kind === "lockfile"
+                ? "lockfile"
+                : file.hunkCount === 1 && first !== undefined
+                  ? hunkRangeLabel(first.header)
+                  : `${file.hunkCount} hunks`}
+          </code>
+        )}
+        {file.kind === "image" && word === undefined ? (
           <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
-        ) : (
+        ) : file.kind === "image" || pure ? null : (
           <span className="font-mono text-[11px] tabular-nums">
             <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
           </span>
@@ -165,27 +182,30 @@ export function HunkView(props: {
           <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>
         </Tooltip>
       </header>
-      <div id={bodyId} hidden={collapsed}>
-        {collapsed ? null : file.kind === "image" ? (
-          <ImageDiff path={file.path} status={file.status} />
-        ) : patchError !== null ? (
-          <p className="px-3 py-2 text-sm text-warn">{patchError}</p>
-        ) : deferred && patch === "" ? (
-          <WaitMark label={waitCopy.lockfile} />
-        ) : (
-          <PierreFileDiff
-            path={file.path}
-            patch={patch}
-            split={split}
-            wrap={wrap}
-            splitRatio={splitRatio}
-            onSplitRatio={onSplitRatio}
-            hydrate={file.complete}
-            comments={fileComments}
-            focusCommentId={focusCommentId}
-          />
-        )}
-      </div>
+      {pure ? null : (
+        <div id={bodyId} hidden={collapsed}>
+          {collapsed ? null : file.kind === "image" ? (
+            <ImageDiff path={file.path} status={file.status} />
+          ) : patchError !== null ? (
+            <p className="px-3 py-2 text-sm text-warn">{patchError}</p>
+          ) : deferred && patch === "" ? (
+            <WaitMark label={waitCopy.lockfile} />
+          ) : (
+            <PierreFileDiff
+              path={file.path}
+              patch={patch}
+              split={split}
+              wrap={wrap}
+              splitRatio={splitRatio}
+              onSplitRatio={onSplitRatio}
+              hydrate={file.complete}
+              comments={fileComments}
+              moves={moves}
+              focusCommentId={focusCommentId}
+            />
+          )}
+        </div>
+      )}
     </article>
   );
 }

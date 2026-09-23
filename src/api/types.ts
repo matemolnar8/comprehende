@@ -1,4 +1,13 @@
-import type { DiffLine, FileStatus, HunkRef, ReviewDocument, ReviewHunkRef, SkippedFile, SourceSide } from "../schema/types.ts";
+import type {
+  DiffLine,
+  FileStatus,
+  HunkRef,
+  Relocation,
+  ReviewDocument,
+  ReviewHunkRef,
+  SkippedFile,
+  SourceSide,
+} from "../schema/types.ts";
 
 /** Single home for the git side union. SourceSide in schema is the same fact. */
 export type FileSide = SourceSide;
@@ -25,6 +34,7 @@ export type ApiGroupFile = {
   kind: FileKind;
   status: FileStatus;
   patch: string;
+  relocation?: Relocation;
   added?: number;
   removed?: number;
   /** False when this group holds only some of the file's live hunks. Pierre cannot hydrate those against the full blobs. */

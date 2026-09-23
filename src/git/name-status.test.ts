@@ -8,7 +8,14 @@ describe("parseNameStatus", () => {
     assert.deepEqual(parseNameStatus(stdout), [
       { status: "added", path: "new.txt" },
       { status: "modified", path: "package-lock.json" },
-      { status: "renamed", path: "renamed.txt", oldPath: "old.txt" },
+      { status: "renamed", path: "renamed.txt", oldPath: "old.txt", similarity: 100 },
+    ]);
+  });
+
+  it("reads a copy score separately from a rename", () => {
+    const stdout = "C080\0src/util.ts\0src/util.copy.ts\0";
+    assert.deepEqual(parseNameStatus(stdout), [
+      { status: "renamed", path: "src/util.copy.ts", oldPath: "src/util.ts", similarity: 80, copy: true },
     ]);
   });
 });

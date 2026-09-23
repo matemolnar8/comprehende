@@ -1,7 +1,8 @@
 import { isImagePath } from "../schema/image.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
-import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, ReviewSource } from "../schema/types.ts";
+import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, Relocation, ReviewSource } from "../schema/types.ts";
 import { git } from "./exec.ts";
+import { markMovedLines } from "./moved.ts";
 import { parseNameStatus, parseNumstat, type NameStatusEntry, type NumstatEntry } from "./name-status.ts";
 import { assertSafePath, rangeLabel, resolveCommit } from "./repo.ts";
 
@@ -62,6 +63,7 @@ async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promis
     (file) => !isLockfilePath(file.path),
   );
   if (lockEntries.length === 0) {
+    markMovedLines(files);
     return files;
   }
   const stats = parseNumstat(
@@ -78,7 +80,9 @@ async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promis
     ]),
   );
   const stubs = lockEntries.map((entry) => lockfileDiffFile(entry, stats.get(entry.path)));
-  return mergeDiffFiles(entries, files, stubs);
+  const merged = mergeDiffFiles(entries, files, stubs);
+  markMovedLines(merged);
+  return merged;
 }
 
 export async function readPathDiff(
@@ -86,10 +90,15 @@ export async function readPathDiff(
   baseRef: string,
   headRef: string,
   path: string,
+  oldPath?: string,
 ): Promise<DiffFile | undefined> {
   assertSafePath(path);
+  if (oldPath !== undefined) {
+    assertSafePath(oldPath);
+  }
   await resolveCommit(cwd, baseRef);
   await resolveCommit(cwd, headRef);
+  const paths = oldPath !== undefined && oldPath !== path ? [oldPath, path] : [path];
   const stdout = await git(cwd, [
     "diff",
     "--find-renames",
@@ -100,10 +109,19 @@ export async function readPathDiff(
     "--end-of-options",
     `${baseRef}...${headRef}`,
     "--",
-    path,
+    ...paths,
   ]);
   const files = classifyDiffFiles(parseUnifiedDiff(stdout));
-  return files.find((file) => file.path === path || file.oldPath === path);
+  markMovedLines(files);
+  return findDiffFile(files, path);
+}
+
+/** Exact path wins. A copy's old path is the file it came from, which may still be in the diff. */
+export function findDiffFile<T extends { path: string; oldPath?: string }>(
+  files: readonly T[],
+  path: string,
+): T | undefined {
+  return files.find((file) => file.path === path) ?? files.find((file) => file.oldPath === path);
 }
 
 export async function readHunkIndex(cwd: string, baseRef: string, headRef: string): Promise<HunkIndex> {
@@ -193,6 +211,8 @@ class FileBuilder {
   private newFile: string | undefined;
   private renameFrom: string | undefined;
   private renameTo: string | undefined;
+  private origin: Relocation["kind"] | undefined;
+  private similarity: number | undefined;
   private activeHunk: LiveHunk | undefined;
   private hunkRaw = "";
   private headerPatch: string;
@@ -224,21 +244,32 @@ class FileBuilder {
       return;
     }
     this.headerPatch += rawLine;
+    if (line.startsWith("similarity index ")) {
+      const score = /^similarity index (\d+)%$/.exec(line);
+      if (score?.[1] !== undefined) {
+        this.similarity = Number(score[1]);
+      }
+      return;
+    }
     if (line.startsWith("rename from ")) {
-      this.renameFrom = line.slice("rename from ".length);
+      this.renameFrom = unquoteGitPath(line.slice("rename from ".length));
+      this.origin = "rename";
       return;
     }
     if (line.startsWith("copy from ")) {
-      this.renameFrom = line.slice("copy from ".length);
+      this.renameFrom = unquoteGitPath(line.slice("copy from ".length));
+      this.origin = "copy";
       return;
     }
     if (line.startsWith("rename to ")) {
-      this.renameTo = line.slice("rename to ".length);
+      this.renameTo = unquoteGitPath(line.slice("rename to ".length));
+      this.origin = "rename";
       this.status = "renamed";
       return;
     }
     if (line.startsWith("copy to ")) {
-      this.renameTo = line.slice("copy to ".length);
+      this.renameTo = unquoteGitPath(line.slice("copy to ".length));
+      this.origin = "copy";
       this.status = "renamed";
       return;
     }
@@ -278,7 +309,7 @@ class FileBuilder {
         status = "renamed";
       }
     }
-    const hunks = this.binary
+    let hunks = this.binary
       ? []
       : this.hunks.map((hunk) => {
           const next: LiveHunk = { ...hunk, path };
@@ -287,6 +318,20 @@ class FileBuilder {
           }
           return next;
         });
+    if (!this.binary && hunks.length === 0 && oldPath !== undefined && this.origin !== undefined) {
+      const marker: LiveHunk = {
+        path,
+        oldPath,
+        oldStart: 0,
+        oldLines: 0,
+        newStart: 0,
+        newLines: 0,
+        header: "relocation",
+        lines: [],
+        patch: "",
+      };
+      hunks = [marker];
+    }
     const file: DiffFile = {
       path,
       status,
@@ -298,6 +343,13 @@ class FileBuilder {
     };
     if (oldPath !== undefined) {
       file.oldPath = oldPath;
+    }
+    if (this.origin !== undefined && oldPath !== undefined) {
+      const relocation: Relocation = { kind: this.origin };
+      if (this.similarity !== undefined) {
+        relocation.similarity = this.similarity;
+      }
+      file.relocation = relocation;
     }
     return file;
   }
@@ -370,6 +422,20 @@ function parseDiffGitLine(line: string): { oldPath: string; newPath: string } {
   return { oldPath: match[1], newPath: match[2] };
 }
 
+function unquoteGitPath(raw: string): string {
+  if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed === "string") {
+        return parsed;
+      }
+    } catch {
+      return raw.slice(1, -1);
+    }
+  }
+  return raw;
+}
+
 function stripDiffPath(raw: string): string | undefined {
   const withoutTab = raw.split("\t")[0] ?? raw;
   if (withoutTab === "/dev/null") {
@@ -440,6 +506,13 @@ function lockfileDiffFile(entry: NameStatusEntry, stat: NumstatEntry | undefined
   };
   if (entry.oldPath !== undefined) {
     file.oldPath = entry.oldPath;
+  }
+  if (entry.status === "renamed" && entry.oldPath !== undefined) {
+    const relocation: Relocation = { kind: entry.copy === true ? "copy" : "rename" };
+    if (entry.similarity !== undefined) {
+      relocation.similarity = entry.similarity;
+    }
+    file.relocation = relocation;
   }
   if (!binary && stat !== undefined && stat.added !== null && stat.removed !== null) {
     file.added = stat.added;
