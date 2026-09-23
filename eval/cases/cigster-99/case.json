@@ -19,7 +19,7 @@
     ],
     "claims": [
       "useQRCodeSVG is production code and now depends on primitive option values, so a fresh options object each render no longer regenerates the QR code",
-      "pnpm test:e2e:ui sets E2E_UI=1 and skips the Playwright webServer, so the app must already be running"
+      "the PR says pnpm test:e2e:ui sets E2E_UI=1 and skips the webServer, but at head nothing reads E2E_UI and the webServer still starts unless E2E_HARNESS_ONLY=1"
     ]
   }
 }
