@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { copyText } from "../lib/copy-text.ts";
+import { reviewReadingPaths } from "../lib/reading-progress.ts";
 import { reviewRef } from "../lib/review-ref.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
@@ -10,6 +11,7 @@ import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
+import { ReadingMark } from "./ReadingMark.tsx";
 import { Kbd } from "./Kbd.tsx";
 import { Logo } from "./Logo.tsx";
 import { WaitMark } from "./WaitMark.tsx";
@@ -24,6 +26,7 @@ export function Header(props: {
   onUnified: () => void;
   onSplit: () => void;
   onRefresh: () => void;
+  viewedPaths: ReadonlySet<string>;
   busy?: boolean;
   comments?: boolean;
   onComments?: () => void;
@@ -35,6 +38,7 @@ export function Header(props: {
         <Logo />
         <Range resolved={meta.resolved} />
         <Coverage meta={meta} />
+        <ReadingMark paths={reviewReadingPaths(meta)} viewed={props.viewedPaths} noun className="mt-0" />
         {meta.groups.length > 0 ? (
           <div className="flex items-center gap-1">
             <GroupNav meta={meta} selection={props.selection} onSelect={props.onSelect} />
