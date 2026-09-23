@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 4c59452449c16ba800b5753c21f1202692cc242c` and `git rev-parse --verify 993e40a2b984d0c2f4979f8367190719f4c7b97e` in this repository.
+   Run `git rev-parse --verify a00142284953190a1c5d269f7805cefc09be2995` and `git rev-parse --verify a610a8c226a46a202300b570b1519382fa6a92cd` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,23 +22,22 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  4c59452449c16ba800b5753c21f1202692cc242c
+base (merge-base)  a00142284953190a1c5d269f7805cefc09be2995
 
-head               993e40a2b984d0c2f4979f8367190719f4c7b97e
+head               a610a8c226a46a202300b570b1519382fa6a92cd
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 4c59452449c16ba800b5753c21f1202692cc242c 993e40a2b984d0c2f4979f8367190719f4c7b97e
+git diff --find-renames a00142284953190a1c5d269f7805cefc09be2995 a610a8c226a46a202300b570b1519382fa6a92cd
 
 Commits:
-- 993e40a State the stale E2E_UI note in the cigster-99 claim.
-- 15eef49 Pin comprehende-39 to the gitCommonDir move instead of the gitEnv caller.
-- d3c79e3 Add cigster-84, cigster-99, and cigster-118 eval cases with frozen bundles.
-- a9ed254 Expect exec.ts and skill-sync.ts together on comprehende-39.
-- 76b8f54 Accept a commit source label that drops the subject's final period.
-- 105af69 Let eval cases carry a git bundle so private repos run without a clone.
+- a610a8c State the stale E2E_UI note in the cigster-99 claim.
+- 53ec664 Expect the gitCommonDir move on comprehende-39.
+- 9abe862 Add cigster-84, cigster-99, and cigster-118 eval cases with frozen bundles.
+- 92f6fc9 Stop pinning every eval case to why present and no together.
+- dbc97e9 Let eval cases carry a git bundle so private repos run without a clone.
 
 Sources:
 - transcript Cursor session · Sep 23 Add cigster-84, cigster-99, and cigster-118 as foreign graded cases that run in CI without GitHub auth, and review comprehende-39 and comprehende-47 after main run 35823530539.
@@ -53,11 +52,11 @@ Máté asked for graded eval cases from three private cigster PRs that the publi
 
 The what (medium):
 
-Eval cases can now ship a `repo.bundle` so the runner never clones the repo, and three cigster cases use it. The commit-label check ignores a dropped final period, and comprehende-39 now expects the `gitCommonDir` move instead of the `gitEnv` caller.
+Eval cases can now ship a `repo.bundle` so the runner never clones the repo, and three cigster cases use it. comprehende-39 now expects the `gitCommonDir` move on top of the expects from #115.
 
 Look for:
 - The request asks for private cigster cases that run in the public Eval suite without a token. Each case bundles its own git objects, so `eval.yml` is unchanged ([request](source:s1)).
-- The request names two main failures. comprehende-47 was the harness being too strict, and comprehende-39 had an `apart` pair that contradicts the skill ([request](source:s1)).
+- The request names two main failures. #115 already fixed comprehende-47 and dropped the wrong comprehende-39 pair, so this branch only adds the `gitCommonDir` expects ([request](source:s1)).
 
 ## Review concerns
 
@@ -85,13 +84,7 @@ Depends on:
 
 [groups/cigster-cases.md](groups/cigster-cases.md)
 
-### 04 Commit label without the final period (`commit-label`)
-
-`commitSourceFailures` compares subjects through `subjectKey`, which trims whitespace and trailing periods on both sides.
-
-[groups/commit-label.md](groups/commit-label.md)
-
-### 05 comprehende-39 expects the gitCommonDir move (`case-39`)
+### 04 comprehende-39 expects the gitCommonDir move (`case-39`)
 
 The case now expects `repo.ts` and `lfs.ts` together and `exec.ts` apart from `lfs.ts`, and the case test no longer requires every case to expect `why` present with no `together`.
 
