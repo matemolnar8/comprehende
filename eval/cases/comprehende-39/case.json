@@ -8,12 +8,8 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 3 },
-<<<<<<< HEAD
-    "size": ["small", "medium"]
-=======
     "size": ["small", "medium"],
     "together": [["src/git/repo.ts", "src/git/lfs.ts"]],
     "apart": [["src/git/exec.ts", "src/git/lfs.ts"]]
->>>>>>> 15eef49 (Pin comprehende-39 to the gitCommonDir move instead of the gitEnv caller.)
   }
 }
