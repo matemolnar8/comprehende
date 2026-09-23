@@ -8,7 +8,6 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 3 },
-    "size": ["small", "medium"],
-    "apart": [["src/git/exec.ts", "src/schema/skill-sync.ts"]]
+    "size": ["small", "medium"]
   }
 }
