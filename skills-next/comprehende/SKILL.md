@@ -12,7 +12,7 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Cwd is the repo; there is no `--repo` flag. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.8.0 <command>
+npx comprehende@0.9.0 <command>
 ```
 
 The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. Do not copy patch text into it. `serve` reads the diff from git.
@@ -27,15 +27,15 @@ Each step is one tool call where the step says so. Batch the commands as written
    ```sh
    REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
      npm view comprehende version || true
-     npx comprehende@0.8.0 review --base <base> --head <head> --data "$REVIEW_DIR/review.json"
+     npx comprehende@0.9.0 review --base <base> --head <head> --data "$REVIEW_DIR/review.json"
      git log --format='%s%n%n%b' --end-of-options <base>...<head>
      git diff --stat <base>...<head>
    }
    ```
 
-   When the user names a local executable, use that command as written in place of `npx comprehende@0.8.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version.
+   When the user names a local executable, use that command as written in place of `npx comprehende@0.9.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version.
 
-   If that version is newer than this pin (`npx comprehende@0.8.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes one path per changed file into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those paths. A path covers every live hunk of that file.
+   If that version is newer than this pin (`npx comprehende@0.9.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `review` indexes live git and writes one path per changed file into one group named `ungrouped`, with stub prose. It does not invent a review. Done when that file exists. Keep those paths. A path covers every live hunk of that file.
 3. One shell call for the covering diff, lockfiles in that covering change excluded (the skeleton has no hunk refs for them), and read the sources in the same round trip. From the `--stat` in step 2, pass `:(exclude)<path>` for each lockfile in that covering change. Nested paths stay nested. When the covering `--stat` has no lockfile, run `git diff` with no pathspec.
 
    ```sh
@@ -69,8 +69,8 @@ Each step is one tool call where the step says so. Batch the commands as written
    ```
 
    Add a field when the section that defines it says to write it: document `why`, `lookFor`, and `parts` (`name`, `summary`); `sources` (`id`, `kind` of `ticket`, `pr`, `pr-comment`, `commit`, or `transcript`, `label`, plus `url`, `title`, `gist`, and `part` when you have them). On a group: `part`, `sources` (those ids), `lookFor`, `dependsOn` (group ids). A `pr-comment` source also has `author` and `body`. A line pin adds `path`, `side` (`old` or `new`), and `line` together. `size` is `trivial`, `small`, `medium`, `large`, or `very-large`.
-6. Run `npx comprehende@0.8.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks exactly these: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every group `part` has a `parts[]` entry, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
-7. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.8.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+6. Run `npx comprehende@0.9.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks exactly these: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every group `part` has a `parts[]` entry, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
+7. When they ask to upload the report, follow Export. Otherwise run `npx comprehende@0.9.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 `references/example.md` is an optional filled sample of the field shape. The shape in step 5 is enough to write the document.
 
@@ -79,7 +79,7 @@ Each step is one tool call where the step says so. Batch the commands as written
 Write a static site and put that folder where they asked.
 
 ```sh
-npx comprehende@0.8.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
+npx comprehende@0.9.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
 ```
 
 `$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is still a skeleton, finish the Workflow through validate, then export.
