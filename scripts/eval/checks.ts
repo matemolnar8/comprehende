@@ -175,6 +175,16 @@ function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
   return [];
 }
 
+/** A commit `label` is the subject line. Producers often drop the conventional final period. */
+function commitLabelMatchesSubject(label: string, subjects: readonly string[]): boolean {
+  const bareLabel = stripOneTrailingPeriod(label);
+  return subjects.some((subject) => subject === label || stripOneTrailingPeriod(subject) === bareLabel);
+}
+
+function stripOneTrailingPeriod(text: string): string {
+  return text.endsWith(".") ? text.slice(0, -1) : text;
+}
+
 async function commitSourceFailures(
   cwd: string,
   document: ReviewDocument,
@@ -188,7 +198,6 @@ async function commitSourceFailures(
   const shas = (await git(cwd, ["log", "--format=%H", "--end-of-options", range])).trim().split("\n").filter(Boolean);
   const subjects = (await git(cwd, ["log", "--format=%s", "--end-of-options", range])).trim().split("\n");
   const shaSet = new Set(shas);
-  const subjectSet = new Set(subjects);
   const failures: CheckFailure[] = [];
   for (const source of commits) {
     if (source.url !== undefined) {
@@ -210,7 +219,10 @@ async function commitSourceFailures(
         }
       }
     }
-    if (subjectSet.has(source.label) || shas.some((sha) => sha.startsWith(source.label) || source.label.startsWith(sha.slice(0, 7)))) {
+    if (
+      commitLabelMatchesSubject(source.label, subjects) ||
+      shas.some((sha) => sha.startsWith(source.label) || source.label.startsWith(sha.slice(0, 7)))
+    ) {
       continue;
     }
     const exists = await gitOk(cwd, ["cat-file", "-e", `${source.label}^{commit}`]);

@@ -245,6 +245,49 @@ describe("eval deterministic checks", () => {
     assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
   });
 
+  it("accepts a commit subject label that drops one trailing period", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-commit-period-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    await writeFile(join(root, "README.md"), "x\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "init"]);
+    const base = (await git(root, ["rev-parse", "HEAD"])).trim();
+    await writeFile(join(root, "README.md"), "y\n");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "Replace document tickets with first-class sources."]);
+    const head = (await git(root, ["rev-parse", "HEAD"])).trim();
+    const withLabel = (label: string) =>
+      doc({
+        source: { baseRef: base, headRef: head, range: `${base}...${head}` },
+        sources: [{ id: "s5", kind: "commit", label, gist: "Main feature commit." }],
+        groups: [
+          {
+            id: "core",
+            title: "Parser",
+            why: "The schema is the boundary.",
+            summary: "review.ts and parse.ts share one Zod schema.",
+            part: "schema",
+            suggestedOrder: 0,
+            hunkRefs: [hunk("src/schema/review.ts")],
+          },
+        ],
+      });
+
+    const dropped = await runDeterministicChecks({ cwd: root, document: withLabel("Replace document tickets with first-class sources"), frozen: [] });
+    assert.deepEqual(dropped.failures, []);
+
+    const exact = await runDeterministicChecks({
+      cwd: root,
+      document: withLabel("Replace document tickets with first-class sources."),
+      frozen: [],
+    });
+    assert.deepEqual(exact.failures, []);
+
+    const invented = await runDeterministicChecks({ cwd: root, document: withLabel("Replace tickets with first-class sources"), frozen: [] });
+    assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("label is not in")));
+  });
+
   it("rejects a commit that only sits on the base side of the fork", async () => {
     const root = await mkdtemp(join(tmpdir(), "eval-checks-commit-base-"));
     roots.push(root);
