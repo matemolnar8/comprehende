@@ -5,12 +5,9 @@ import { cn } from "@/lib/utils.ts";
 import { fileBasename, fileDirname, readStoredRailCollapsed, writeStoredRailCollapsed } from "../lib/file-nav.ts";
 import { fileIndexAtHunk } from "../lib/group-files.ts";
 import type { GroupFile } from "../lib/group-files.ts";
-<<<<<<< HEAD
 import { readingStatus } from "../lib/reading-progress.ts";
-import { ReadingMark } from "./ReadingMark.tsx";
-=======
 import { isPureRelocation, relocationWord } from "../lib/relocation.ts";
->>>>>>> 1bba6a0 (Show git renames, copies, and moved lines in the diff.)
+import { ReadingMark } from "./ReadingMark.tsx";
 
 export function FileStrip(props: {
   files: GroupFile[];
