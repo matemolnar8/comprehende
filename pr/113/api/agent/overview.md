@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d68a36eb83b8d412745643c86db7be65851f1c01` and `git rev-parse --verify 1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c` in this repository.
+   Run `git rev-parse --verify 4b954d780efe076b16352c2916c6ec402f9ca743` and `git rev-parse --verify 955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,18 +22,19 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  d68a36eb83b8d412745643c86db7be65851f1c01
+base (merge-base)  4b954d780efe076b16352c2916c6ec402f9ca743
 
-head               1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c
+head               955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames d68a36eb83b8d412745643c86db7be65851f1c01 1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c
+git diff --find-renames 4b954d780efe076b16352c2916c6ec402f9ca743 955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae
 
 Commits:
-- 1bba6a0 Show git renames, copies, and moved lines in the diff.
+- 955f062 Keep the file rail's reading mark and relocation labels.
+- 905f33c Show git renames, copies, and moved lines in the diff.
 
 Sources:
 - ticket #110 Show a copy, move, or rename as relocated content, using git's own detection, without storing patch text.

@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d68a36eb83b8d412745643c86db7be65851f1c01` and `git rev-parse --verify 1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c` in this repository.
+   Run `git rev-parse --verify 4b954d780efe076b16352c2916c6ec402f9ca743` and `git rev-parse --verify 955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames d68a36eb83b8d412745643c86db7be65851f1c01 1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 4b954d780efe076b16352c2916c6ec402f9ca743 955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -23,15 +23,15 @@ When no question follows this paste, explain this review concern.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  d68a36eb83b8d412745643c86db7be65851f1c01
+base (merge-base)  4b954d780efe076b16352c2916c6ec402f9ca743
 
-head               1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c
+head               955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames d68a36eb83b8d412745643c86db7be65851f1c01 1bba6a0cb51530dfa5f8c9f5ee3707bb0a07aa9c
+git diff --find-renames 4b954d780efe076b16352c2916c6ec402f9ca743 955f062a0d58d886e1dd09ce1bcfbb6d9e2857ae
 
 Review concern 02 of 02: The diff shows the relationship (`diff-ui`)
 
@@ -49,7 +49,6 @@ Depends on:
 - 01 Git names the move (`git-relocation`)
 
 Hunk refs for this concern:
-- README.md
 - src/ui/PierreDiff.tsx
 - src/ui/components/FileNav.tsx
 - src/ui/components/HunkView.tsx
