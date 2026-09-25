@@ -5,7 +5,7 @@ PR #50. No ticket, no comments.
 ## Story
 
 - Title: the PR title.
-- Why: present, from the PR. The skill had no path for a user who asks to upload the report. Do not add a motive about sharing outside localhost.
+- Why: either. The PR says the skill now has an Export section. That is a what. A why that restates "for uploading the report" from the title is acceptable. Do not invent a missing upload path or a sharing motive.
 - Size: small.
 - Parts: 1 or 2. Groups: 2.
 
@@ -36,3 +36,4 @@ PR #50. No ticket, no comments.
 - `together`: both `SKILL.md` copies.
 - `apart`: `AGENTS.md` and the skill.
 - Added the VibeDrop claim.
+- `why` ungated. Grok 4.6 high omitted it. The PR body is a changelog, and the skill omits a why when no source sentence states a problem or goal.

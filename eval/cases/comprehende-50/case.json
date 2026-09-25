@@ -6,7 +6,6 @@
   "head": "c38caa05ee383413bd6c90a425fc2da8d6156b9d",
   "tags": ["smoke", "skill"],
   "expect": {
-    "why": "present",
     "parts": { "min": 0, "max": 2 },
     "groups": { "min": 2, "max": 3 },
     "size": ["trivial", "small"],

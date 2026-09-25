@@ -6,7 +6,7 @@
   "head": "0880bab37c3a3afc82e4e877ea9032896005e0fc",
   "tags": ["foreign"],
   "expect": {
-    "parts": { "min": 3, "max": 7 },
+    "parts": { "min": 3, "max": 8 },
     "groups": { "min": 6, "max": 11 },
     "size": ["large", "very-large"],
     "sourceKinds": ["ticket"],

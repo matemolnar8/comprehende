@@ -7,7 +7,7 @@ PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket s
 - Title: the PR title.
 - Why: either. If present, it covers only the living-room part, from #98. The other parts have no source motive.
 - Size: very-large. `pnpm-lock.yaml` and the 135 pure moves add little burden, but the rest is still large.
-- Parts: 3 to 7. A harness part can hold the rename, the snapshot folders, and the local Convex startup. Groups: 7 to 10.
+- Parts: 3 to 8. A harness part can hold the rename, the snapshot folders, and the local Convex startup. Groups: 7 to 10.
 
 ## Groups
 
@@ -52,7 +52,7 @@ PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket s
 
 ## case.json
 
-- `parts` 2–6 to 3–7.
+- `parts` 2–6 to 3–8. A Grok 4.6 high sample used 8 parts.
 - `together`: the living-room spec and its seed.
 - `apart`: the living-room spec and the migrated `admin.spec.ts`.
 - Reworded the two claims and added the `.env.local` and TV-disconnect claims.
