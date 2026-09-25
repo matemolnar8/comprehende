@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify 1a3d9a3a44e69e8cd551a4a1484c447c28db5c3f` in this repository.
+   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify 94cd1a572c9ed6eac83a57aaf14ddcc5ed358947` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 1a3d9a3a44e69e8cd551a4a1484c447c28db5c3f -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 94cd1a572c9ed6eac83a57aaf14ddcc5ed358947 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157
 
-head               1a3d9a3a44e69e8cd551a4a1484c447c28db5c3f
+head               94cd1a572c9ed6eac83a57aaf14ddcc5ed358947
 
-Named refs at pin: a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 ... 1a3d9a3a44e69e8cd551a4a1484c447c28db5c3f
+Named refs at pin: a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 ... 94cd1a572c9ed6eac83a57aaf14ddcc5ed358947
 
 Read the diff:
 
-git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 1a3d9a3a44e69e8cd551a4a1484c447c28db5c3f
+git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 94cd1a572c9ed6eac83a57aaf14ddcc5ed358947
 
 Review concern 02 of 03: Expected outcome per case (`outcomes`)
 
@@ -46,8 +46,8 @@ The what:
 Each `expected.md` names the groups, the must-state and good-to-state claims, the mistakes to avoid, and what the six baseline runs did.
 
 Look for:
-- Every must-state claim was checked against the code at head. The riskiest ones: `server.sh` deleting `.env.local` (cigster-99), what a matching comment pin means (comprehende-47), and the dropped Refresh and coverage on mobile (comprehende-59).
-- comprehende-59 leaves the document why as an open question. The PR says what changes, not why.
+- Every must-state claim was checked against the code at head. The riskiest ones: `server.sh` deleting `.env.local` (cigster-99) and what a matching comment pin means (comprehende-47).
+- comprehende-59 expects no document why. Its ticket, #58, is not linked from the PR, so no available source names the motive.
 
 Depends on:
 - 01 Shared review criteria (`criteria`)
