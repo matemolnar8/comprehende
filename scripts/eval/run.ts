@@ -160,6 +160,7 @@ async function evalOneCase(opts: {
       apiKey: opts.apiKey,
       sandbox: opts.sandbox,
       prompt: producerPrompt({
+        repoCwd,
         skillMd: join(skillDir, "SKILL.md"),
         sourcesDir,
         outPath: reviewPath,
