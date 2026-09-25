@@ -6,7 +6,7 @@ Each case has an `expected.md` next to its `case.json`. It says what a good revi
 
 1. Group by goal. Hunks that work toward the same goal are one group. Work that could have been its own pull request is its own group, and its own `part` when it is a separate story.
 2. Keep the group count low. A small change has one to three groups. Do not make a group per file, per test file, or per one-line call site.
-3. Tests sit in the group of the code they test. A test file is its own group only when the tests are the concern.
+3. A test that checks one group's code sits in that group. Tests are their own group when they are the concern (new harness, test-only refactor) or when one test covers several groups.
 4. Generated output, pure moves, and synced copies sit in one trailing group, or with their source. The summary says what the reader can skip, for example "identical copy" or "same schema, keys reordered".
 5. `dependsOn` only when the reader needs the earlier group to understand this one. Never across parts.
 6. Compare every source item with the diff. Flag each place where the diff does something other than what the ticket, PR, or review comment asks. Say what the source asks, what the diff does, and the reason when a source or the code gives one. Do not list items the diff simply does.
