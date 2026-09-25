@@ -8,6 +8,7 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 2 },
+    "groups": { "min": 3, "max": 6 },
     "size": ["medium", "large"],
     "sourceKinds": ["ticket"],
     "mechanicalPaths": ["e2e/snapshots/solo-ready-empty-desktop.png", "e2e/snapshots/ingest-done-desktop.png"],

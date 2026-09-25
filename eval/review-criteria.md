@@ -26,4 +26,4 @@ Each `expected.md` uses these sections, in this order:
 - **Good to state**: claims that make the review better but do not fail it.
 - **Must not**: mistakes seen in runs or likely for this change.
 - **Baseline**: what the six runs on `main` at `a6c2a1cd` did (issue #117), in a few bullets.
-- **case.json**: what changed in the expects and why.
+- **case.json**: what changed in the expects and why. The `groups` range comes from the Story group count, with some slack.

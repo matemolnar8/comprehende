@@ -8,6 +8,7 @@
   "expect": {
     "why": "present",
     "parts": { "min": 2, "max": 3 },
+    "groups": { "min": 3, "max": 7 },
     "size": ["medium", "large"],
     "sourceKinds": ["ticket", "pr-comment"],
     "together": [["compose.yaml", "e2e/playwright.config.ts"]],

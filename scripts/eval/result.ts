@@ -51,9 +51,13 @@ export function formatCaseLine(result: CaseResult): string {
     bits.push(failed(checks, "sources") ? "sources FAIL" : "sources ok");
     bits.push(failed(checks, "why") ? `why ${checks.why} FAIL` : `why ${checks.why}`);
     bits.push(failed(checks, "parts") ? `parts ${checks.parts} FAIL` : `parts ${checks.parts}`);
+    bits.push(failed(checks, "groups") ? `groups ${checks.groups} FAIL` : `groups ${checks.groups}`);
     bits.push(failed(checks, "size") ? `size ${checks.size} FAIL` : `size ${checks.size}`);
     bits.push(`together ${checks.togetherOk}/${checks.togetherTotal}`);
     bits.push(`apart ${checks.apartOk}/${checks.apartTotal}`);
+    if (failed(checks, "dependsOn")) {
+      bits.push("dependsOn FAIL");
+    }
     if (failed(checks, "worktree")) {
       bits.push("worktree dirty");
     }

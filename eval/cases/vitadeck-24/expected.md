@@ -7,12 +7,12 @@ PR #24. No ticket, no comments.
 - Title: the PR title.
 - Why: present, from the PR. When the Deck App runtime restarts, pending timers must be cancelled before the QuickJS context is freed.
 - Size: small.
-- Parts: one story. Groups: 2.
+- Parts: one story, or two with the CI step as its own part. Groups: 2 or 3.
 
 ## Groups
 
 1. Timer shutdown: `src/jslib/timeout.c`, `src/jslib/jslib.h`, `src/core/js_runtime.c`.
-2. Regression harness in CI: `tests/timer_reload_harness.c`, `CMakeLists.txt`, `.github/workflows/ci.yml`.
+2. Regression harness in CI: `tests/timer_reload_harness.c`, `CMakeLists.txt`, `.github/workflows/ci.yml`. The CI step can be its own group and part; it is a separate commit.
 
 ## Must state
 
@@ -35,6 +35,6 @@ PR #24. No ticket, no comments.
 
 ## case.json
 
-- `parts` max 3 to 1, `size` to small.
+- `parts` max 3 to 2, `size` to small, `groups` 1 to 3.
 - `together`: the three shutdown files, and the harness with `CMakeLists.txt`.
 - Added the timer id claim.

@@ -61,6 +61,16 @@ describe("eval deterministic checks", () => {
           suggestedOrder: 0,
           hunkRefs: [hunk("src/ui/a.ts"), hunk("src/cli/b.ts")],
         },
+        {
+          id: "docs",
+          title: "Docs",
+          why: "Second story.",
+          summary: "The README names the flag.",
+          part: "docs",
+          dependsOn: ["ui"],
+          suggestedOrder: 1,
+          hunkRefs: [hunk("README.md")],
+        },
       ],
     });
     const report = await runDeterministicChecks({
@@ -71,7 +81,8 @@ describe("eval deterministic checks", () => {
       },
       expect: {
         why: "absent",
-        parts: { min: 2, max: 2 },
+        parts: { min: 3, max: 3 },
+        groups: { min: 3, max: 3 },
         size: ["small"],
         together: [["src/schema/a.ts", "src/schema/b.ts"]],
         apart: [["src/ui/a.ts", "src/cli/b.ts"]],
@@ -83,6 +94,8 @@ describe("eval deterministic checks", () => {
     const checks = new Set(report.failures.map((item) => item.check));
     assert.ok(checks.has("why"));
     assert.ok(checks.has("parts"));
+    assert.ok(checks.has("groups"));
+    assert.ok(checks.has("dependsOn"));
     assert.ok(checks.has("size"));
     assert.ok(checks.has("together"));
     assert.ok(checks.has("apart"));
@@ -131,6 +144,7 @@ describe("eval deterministic checks", () => {
       expect: {
         why: "absent",
         parts: { min: 1, max: 1 },
+        groups: { min: 2, max: 2 },
         size: ["small"],
         together: [["src/schema/review.ts", "src/schema/parse.ts"]],
         apart: [["src/schema/review.ts", "README.md"]],

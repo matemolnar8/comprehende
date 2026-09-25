@@ -7,11 +7,11 @@ PR #57. No ticket, no comments.
 - Title: the PR title without the `[Cursor]` tag.
 - Why: present, from the PR. There were three copies of the document shape, and `AGENTS.md` asks to parse at the boundary from one schema.
 - Size: medium. Most lines are deleted code or generated JSON.
-- Parts: one story. Groups: 3 to 4.
+- Parts: one story. Groups: 3 to 5.
 
 ## Groups
 
-1. Zod schema replaces the parser: `src/schema/review.ts`, `src/schema/parse.ts`, `src/schema/types.ts`, `src/schema/parse.test.ts`.
+1. Zod schema replaces the parser: `src/schema/review.ts`, `src/schema/parse.ts`, `src/schema/types.ts`, `src/schema/parse.test.ts`. A split into the schema (with the `types.ts` re-exports), then the parse wrapper with its test, is fine: contract, then call site.
 2. Schema generation and drift test: `scripts/generate-review-schema.ts`, `src/schema/review.schema.test.ts`, the `generate:schema` script.
 3. Zod as a runtime dependency: `package.json` dependencies, `scripts/pack-smoke.ts`. `package.json` has two hunks, so it can be split or named in both groups.
 4. Generated schema (mechanical, last): `src/schema/review.schema.json` and its two copies.
@@ -29,7 +29,7 @@ PR #57. No ticket, no comments.
 ## Must not
 
 - Do not add "confirm nothing out of scope is touched" bullets. The file list shows that.
-- Do not split the Zod schema, the parse wrapper, and the type re-exports into separate groups.
+- Do not give the type re-exports or the parse test their own group.
 - Do not say there is no test for `patch` fields. `parse.test.ts` already has one.
 
 ## Baseline
@@ -42,5 +42,6 @@ PR #57. No ticket, no comments.
 
 - `size` to medium or large.
 - `mechanicalPaths`: all three generated schema files.
-- `together`: `review.ts`, `parse.ts`, `types.ts`.
+- `together`: `parse.ts` with `parse.test.ts`.
+- `groups`: 2 to 5.
 - Added two claims.

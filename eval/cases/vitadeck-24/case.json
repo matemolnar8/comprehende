@@ -7,7 +7,8 @@
   "tags": ["foreign"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 1 },
+    "parts": { "min": 0, "max": 2 },
+    "groups": { "min": 1, "max": 3 },
     "size": ["small"],
     "together": [
       ["src/jslib/timeout.c", "src/jslib/jslib.h", "src/core/js_runtime.c"],

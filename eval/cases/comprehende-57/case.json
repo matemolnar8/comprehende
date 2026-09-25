@@ -8,13 +8,14 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 2 },
+    "groups": { "min": 2, "max": 5 },
     "size": ["medium", "large"],
     "mechanicalPaths": [
       "src/schema/review.schema.json",
       "skills-next/comprehende/references/review.schema.json",
       ".agents/skills/comprehende/references/review.schema.json"
     ],
-    "together": [["src/schema/review.ts", "src/schema/parse.ts", "src/schema/types.ts"]],
+    "together": [["src/schema/parse.ts", "src/schema/parse.test.ts"]],
     "claims": [
       "the generated review.schema.json means the same as the old hand-written file; only key order changes and version gets type number",
       "zod is the CLI's first runtime dependency, and pack-smoke now allows exactly zod"

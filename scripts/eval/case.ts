@@ -7,15 +7,16 @@ const nonemptyString = z.string().min(1);
 
 const pathSet = z.array(nonemptyString).min(1);
 
+const countRange = z.strictObject({
+  min: z.number().int().nonnegative(),
+  max: z.number().int().nonnegative(),
+});
+
 const expectSchema = z
   .strictObject({
     why: z.enum(["present", "absent"]).optional(),
-    parts: z
-      .strictObject({
-        min: z.number().int().nonnegative(),
-        max: z.number().int().nonnegative(),
-      })
-      .optional(),
+    parts: countRange.optional(),
+    groups: countRange.optional(),
     size: z.array(z.enum(REVIEW_SIZES)).min(1).optional(),
     sourceKinds: z.array(z.enum(SOURCE_KINDS)).min(1).optional(),
     mechanicalPaths: pathSet.optional(),
