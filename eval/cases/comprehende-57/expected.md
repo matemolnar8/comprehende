@@ -14,7 +14,7 @@ PR #57. No ticket, no comments.
 1. Zod schema replaces the parser: `src/schema/review.ts`, `src/schema/parse.ts`, `src/schema/types.ts`, `src/schema/parse.test.ts`. A split into the schema (with the `types.ts` re-exports), then the parse wrapper with its test, is fine: contract, then call site.
 2. Schema generation and drift test: `scripts/generate-review-schema.ts`, `src/schema/review.schema.test.ts`, the `generate:schema` script.
 3. Zod as a runtime dependency: `package.json` dependencies, `scripts/pack-smoke.ts`. `package.json` has two hunks, so it can be split or named in both groups.
-4. Generated schema (mechanical, last): `src/schema/review.schema.json` and its two copies.
+4. Schema copies (mechanical, last): the two copies of `review.schema.json` under `skills-next/` and `.agents/`. The canonical `src/schema/review.schema.json` can sit here or with its generator and drift test.
 
 ## Must state
 
@@ -41,7 +41,7 @@ PR #57. No ticket, no comments.
 ## case.json
 
 - `size` to medium or large.
-- `mechanicalPaths`: all three generated schema files.
+- `mechanicalPaths`: the two schema copies. The canonical file may sit with its generator.
 - `together`: `parse.ts` with `parse.test.ts`.
 - `groups`: 2 to 5.
 - Added two claims.
