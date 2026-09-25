@@ -5,7 +5,7 @@ PR #24. No ticket, no comments.
 ## Story
 
 - Title: the PR title.
-- Why: present, from the PR. When the Deck App runtime restarts, pending timers must be cancelled before the QuickJS context is freed.
+- Why: absent. The PR and commits say what changes (cancel timers before the context is freed) but state no problem or goal. The bug it fixes is implied by the harness, not written in a source.
 - Size: small.
 - Parts: one story, or two with the CI step as its own part. Groups: 2 or 3.
 
@@ -35,6 +35,7 @@ PR #24. No ticket, no comments.
 
 ## case.json
 
+- `why` present to absent.
 - `parts` max 3 to 2, `size` to small, `groups` 1 to 3.
 - `together`: the three shutdown files, and the harness with `CMakeLists.txt`.
 - Added the timer id claim.
