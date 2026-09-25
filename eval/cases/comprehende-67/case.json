@@ -7,11 +7,12 @@
   "tags": ["pages"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 3 },
+    "parts": { "min": 0, "max": 2 },
     "size": ["small", "medium", "large"],
     "sourceKinds": ["pr-comment"],
+    "together": [["scripts/pages-review.ts", "scripts/pages-review.test.ts"]],
     "claims": [
-      "a rejected push retries by resetting to remote gh-pages and re-applying the review",
+      "a rejected push retries by resetting to remote gh-pages and re-applying the review, so an index.html conflict no longer uses up the retries",
       "the hosted URL 404s until GitHub Pages is enabled on the gh-pages branch"
     ]
   }

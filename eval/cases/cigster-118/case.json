@@ -7,14 +7,18 @@
   "tags": ["foreign"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 3 },
+    "parts": { "min": 2, "max": 3 },
     "size": ["medium", "large"],
     "sourceKinds": ["ticket", "pr-comment"],
     "together": [["compose.yaml", "e2e/playwright.config.ts"]],
-    "apart": [["src/lib/analytics/routeTemplate.ts", "src/components/landing/LandingHero.tsx"]],
+    "apart": [
+      ["src/lib/analytics/routeTemplate.ts", "src/components/landing/LandingHero.tsx"],
+      ["src/lib/analytics/posthog.ts", "src/components/admin/ImportConsole.tsx"]
+    ],
     "claims": [
       "the ticket asks to keep product autocapture off, but the change keeps autocapture on",
-      "before_send redacts join codes from event titles and autocapture text, including bare six-character codes on host and TV routes"
+      "before_send redacts join codes from event titles and autocapture text, including bare six-character codes on host and TV routes",
+      "the ticket asks to filter or sample so web vitals do not use up the free quota, but the change adds no sampling and adds product events the sources do not ask for"
     ]
   }
 }

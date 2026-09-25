@@ -9,12 +9,17 @@
     "why": "present",
     "size": ["large", "very-large"],
     "sourceKinds": ["ticket", "pr-comment"],
-    "mechanicalPaths": ["skills-next/comprehende/references/review.schema.json"],
+    "mechanicalPaths": [
+      "skills-next/comprehende/references/review.schema.json",
+      ".agents/skills/comprehende/references/review.schema.json"
+    ],
+    "together": [["src/review/pins.ts", "src/review/pins.test.ts"]],
     "apart": [["src/ui/components/SourceCite.tsx", "src/cli/commands.ts"]],
     "claims": [
       "validate fails on a source citation whose id is not in sources",
       "old documents with tickets still parse and become ticket sources",
-      "a pr-comment with path, side, and line is pinned to live git"
+      "a comment pin matches live git when the file exists on that side and the line is inside the file; validate does not check that the line is in a hunk",
+      "the ticket asks for an external-link arrow in the Sources row, but the change makes the label the link, as the review comment on SourceList.tsx asks"
     ]
   }
 }

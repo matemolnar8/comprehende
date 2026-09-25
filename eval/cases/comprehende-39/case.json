@@ -7,9 +7,17 @@
   "tags": ["git"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 3 },
+    "parts": { "min": 0, "max": 2 },
     "size": ["small", "medium"],
-    "together": [["src/git/repo.ts", "src/git/lfs.ts"]],
-    "apart": [["src/git/exec.ts", "src/git/lfs.ts"]]
+    "together": [
+      ["src/git/repo.ts", "src/git/lfs.ts"],
+      ["src/git/exec.ts", "src/git/exec.test.ts"],
+      ["scripts/install-git-hooks.js", "src/git/hooks.test.ts"]
+    ],
+    "apart": [
+      ["src/git/exec.ts", "src/git/lfs.ts"],
+      ["scripts/install-git-hooks.js", "src/git/repo.ts"]
+    ],
+    "claims": ["the PR lists pinning package and skill references to 0.5.2, but no hunk changes a version"]
   }
 }

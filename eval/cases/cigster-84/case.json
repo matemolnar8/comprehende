@@ -7,13 +7,16 @@
   "tags": ["foreign"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 3 },
+    "parts": { "min": 0, "max": 2 },
     "size": ["medium", "large"],
     "sourceKinds": ["ticket"],
+    "mechanicalPaths": ["e2e/snapshots/solo-ready-empty-desktop.png", "e2e/snapshots/ingest-done-desktop.png"],
+    "together": [["e2e/auth/fixtures.ts", "e2e/visual/clerk-fixture.spec.ts"]],
     "apart": [["e2e/auth/fixtures.ts", "e2e/snapshots/solo-ready-empty-desktop.png"]],
     "claims": [
       "the ticket asks to keep Convex seed reset skippable in Docker and CI, but the change removes shouldResetVisualSeeds so Convex teardown always runs",
-      "anonymous solo, import, and player seeds no longer create Clerk users and use a synthetic identity instead"
+      "anonymous solo, import, and player seeds no longer create Clerk users and use a synthetic identity instead",
+      "signed-in chrome tests now fail when a Clerk user cannot be created, where before they were skipped outside CI"
     ]
   }
 }

@@ -8,6 +8,11 @@
   "expect": {
     "why": "present",
     "parts": { "min": 0, "max": 2 },
-    "size": ["trivial", "small"]
+    "size": ["trivial", "small"],
+    "together": [["skills-next/comprehende/SKILL.md", ".agents/skills/comprehende/SKILL.md"]],
+    "apart": [["AGENTS.md", "skills-next/comprehende/SKILL.md"]],
+    "claims": [
+      "the PR says agents publish with VibeDrop, but AGENTS.md at head uses an anonymous Netlify deploy and puts the URL and password in the PR body"
+    ]
   }
 }
