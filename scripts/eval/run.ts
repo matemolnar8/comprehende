@@ -52,8 +52,9 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     console.error(`\n${EVAL_USAGE}`);
     return 1;
   }
+  const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   const apiKey = process.env.CURSOR_API_KEY;
-  if (apiKey === undefined || apiKey === "") {
+  if (rescoreDir === undefined && (apiKey === undefined || apiKey === "")) {
     console.error("CURSOR_API_KEY is not set");
     return 1;
   }
@@ -73,7 +74,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     skillTree,
     producerModel: request.producerModel,
     graderModel: request.graderModel,
-    graders: request.graders,
+    graders: rescoreDir === undefined && request.graders,
     cases: [],
   };
   for (const item of selected) {
@@ -85,9 +86,10 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       skillMd,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
-      graders: request.graders,
+      graders: rescoreDir === undefined && request.graders,
       sandbox: request.sandbox,
-      apiKey,
+      apiKey: apiKey ?? "",
+      rescoreDir,
     });
     summary.cases.push(result);
     console.log(formatCaseLine(result));
@@ -116,6 +118,7 @@ async function evalOneCase(opts: {
   graders: boolean;
   sandbox: boolean;
   apiKey: string;
+  rescoreDir?: string;
 }): Promise<CaseResult> {
   const started = Date.now();
   const result: CaseResult = { id: opts.spec.id, ok: true, durationMs: 0, tokens: 0 };
@@ -139,14 +142,8 @@ async function evalOneCase(opts: {
       await fetchCaseRefs(bare, opts.spec.pr, opts.spec.base, opts.spec.head);
     }
     await addDetachedWorktree(bare, repoCwd, opts.spec.head);
-    const cliPath = resolve(opts.packageRoot, "dist/cli/main.js");
-    if (!existsSync(cliPath)) {
-      throw new Error("dist/cli/main.js is missing. pnpm eval runs the build first.");
-    }
-    const skillDir = join(tmp, "skill");
     const sourcesDir = join(tmp, "sources");
     const reviewPath = join(tmp, "out/review.json");
-    await copySkillForEval(opts.packageRoot, skillDir, cliPath);
     await mkdir(join(tmp, "out"), { recursive: true });
     const caseSources = join(opts.caseDir, "sources");
     if (existsSync(caseSources)) {
@@ -154,27 +151,42 @@ async function evalOneCase(opts: {
     } else {
       await mkdir(sourcesDir);
     }
-    const producer = await runProducer({
-      repoCwd,
-      model: opts.producerModel,
-      apiKey: opts.apiKey,
-      sandbox: opts.sandbox,
-      prompt: producerPrompt({
+    if (opts.rescoreDir !== undefined) {
+      const saved = join(opts.rescoreDir, opts.spec.id, "review.json");
+      if (!existsSync(saved)) {
+        result.producerError = `no saved review at ${saved}`;
+      } else {
+        await cp(saved, reviewPath);
+      }
+    } else {
+      const cliPath = resolve(opts.packageRoot, "dist/cli/main.js");
+      if (!existsSync(cliPath)) {
+        throw new Error("dist/cli/main.js is missing. pnpm eval runs the build first.");
+      }
+      const skillDir = join(tmp, "skill");
+      await copySkillForEval(opts.packageRoot, skillDir, cliPath);
+      const producer = await runProducer({
         repoCwd,
-        skillMd: join(skillDir, "SKILL.md"),
-        sourcesDir,
-        outPath: reviewPath,
-        base: opts.spec.base,
-        head: opts.spec.head,
-        cliPath,
-      }),
-    });
-    result.producer = producer;
-    await writeFile(join(caseOut, "producer.md"), producer.text);
-    if (producer.status !== "finished" || producer.error !== undefined) {
-      result.producerError = producer.error ?? `producer status ${producer.status}`;
-    } else if (!existsSync(reviewPath)) {
-      result.producerError = `producer did not write ${reviewPath}`;
+        model: opts.producerModel,
+        apiKey: opts.apiKey,
+        sandbox: opts.sandbox,
+        prompt: producerPrompt({
+          repoCwd,
+          skillMd: join(skillDir, "SKILL.md"),
+          sourcesDir,
+          outPath: reviewPath,
+          base: opts.spec.base,
+          head: opts.spec.head,
+          cliPath,
+        }),
+      });
+      result.producer = producer;
+      await writeFile(join(caseOut, "producer.md"), producer.text);
+      if (producer.status !== "finished" || producer.error !== undefined) {
+        result.producerError = producer.error ?? `producer status ${producer.status}`;
+      } else if (!existsSync(reviewPath)) {
+        result.producerError = `producer did not write ${reviewPath}`;
+      }
     }
 
     if (existsSync(reviewPath)) {

@@ -16,18 +16,28 @@ describe("eval argv", () => {
       graderModel: DEFAULT_GRADER_MODEL,
       graders: true,
       sandbox: true,
+      rescore: undefined,
     });
   });
 
-  it("defaults to composer producer and grok grader", () => {
-    assert.equal(DEFAULT_PRODUCER_MODEL, "composer-2.5");
+  it("defaults to grok 4.6 high producer and grok grader", () => {
+    assert.equal(DEFAULT_PRODUCER_MODEL, "grok-4.6:effort=high");
     assert.equal(DEFAULT_GRADER_MODEL, "grok-4.6");
     const req = parseEvalArgv([]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
-      assert.equal(req.producerModel, "composer-2.5");
+      assert.equal(req.producerModel, "grok-4.6:effort=high");
       assert.equal(req.graderModel, "grok-4.6");
       assert.equal(req.graders, true);
+    }
+  });
+
+  it("parses --rescore", () => {
+    const req = parseEvalArgv(["--rescore", "eval/runs/stamp", "--case", "comprehende-50"]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.rescore, "eval/runs/stamp");
+      assert.deepEqual(req.ids, ["comprehende-50"]);
     }
   });
 
@@ -56,8 +66,9 @@ describe("eval argv", () => {
     assert.equal(parseEvalArgv(["--nope"]).kind, "error");
   });
 
-  it("documents --no-graders in usage", () => {
+  it("documents --no-graders and --rescore in usage", () => {
     assert.match(EVAL_USAGE, /--no-graders/);
+    assert.match(EVAL_USAGE, /--rescore/);
   });
 
   it("parses add-case --pr", () => {
