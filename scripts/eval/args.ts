@@ -9,8 +9,8 @@ Options:
   --tag <tag>             Run cases with this tag
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
   --json                  Also print summary.json to stdout
-  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
-  --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
+  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. Params: <id>:<param>=<value>,... (grok-4.6:effort=high)
+  --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}. Same param form
   --no-graders            Skip grouping and prose graders
   --sandbox               Enable local sandboxOptions
   -h, --help

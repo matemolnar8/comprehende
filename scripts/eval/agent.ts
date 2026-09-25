@@ -1,4 +1,4 @@
-import { Agent, type ConversationStep, type ToolName } from "@cursor/sdk";
+import { Agent, type ConversationStep, type ModelSelection, type ToolName } from "@cursor/sdk";
 import { TASK_TIMEOUT_MS } from "./constants.ts";
 
 export type ToolCallRecord = {
@@ -19,6 +19,22 @@ export type AgentRunResult = {
   error?: string;
 };
 
+/** `id` or `id:param=value,param=value`, e.g. `grok-4.6:effort=high`. */
+export function parseModelSpec(spec: string): ModelSelection {
+  const [id = "", rest] = spec.split(":", 2);
+  if (rest === undefined || rest === "") {
+    return { id };
+  }
+  const params = rest.split(",").map((pair) => {
+    const [key, value] = pair.split("=", 2);
+    if (key === undefined || key === "" || value === undefined || value === "") {
+      throw new Error(`model param must be key=value, got "${pair}" in "${spec}"`);
+    }
+    return { id: key, value };
+  });
+  return { id, params };
+}
+
 export async function runLocalAgent(opts: {
   cwd: string;
   model: string;
@@ -33,7 +49,7 @@ export async function runLocalAgent(opts: {
   await using agent = await Agent.create({
     apiKey: opts.apiKey,
     name: "comprehende-eval",
-    model: { id: opts.model },
+    model: parseModelSpec(opts.model),
     ...(opts.tools !== undefined ? { tools: [...opts.tools] } : {}),
     ...(opts.disallowedTools !== undefined ? { disallowedTools: [...opts.disallowedTools] } : {}),
     local: {
