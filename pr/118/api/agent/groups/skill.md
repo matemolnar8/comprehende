@@ -46,7 +46,7 @@ The what:
 `skills-next/comprehende/SKILL.md` gives every source item a verdict from head, takes the why from a stated problem or goal, keeps tests and call sites with their code, and adds `lookFor` cases. The `.agents/` files are identical synced copies.
 
 Look for:
-- Step 4 and step 5 get new completion criteria. They carry most of the change, because rules in the reference sections alone were often skipped.
+- Steps 4 and 5 now end on completion criteria that name the new source-check and grouping rules.
 - The graders read their rubric from these sections, so grader findings before and after this change are not strictly comparable.
 
 Hunk refs for this concern:
