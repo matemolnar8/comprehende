@@ -2,12 +2,12 @@
 
 Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
 
-- `login` depends on `cookie`. Both use `part` "Session cookie".
+- `login` depends on `cookie`. Both use `part` "Session cookie". The helper's test sits in `cookie` with the helper it checks.
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and one claim about the whole change. Both cite `[#12](source:s1)`. Group `lookFor` stays inside its hunks.
-- Each group holds every hunk of its file, so each `hunkRefs` entry is that path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed).
+- Each group holds every hunk of its files, so each `hunkRefs` entry is a path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed).
 
 ```json
 {
@@ -50,13 +50,13 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
       "id": "cookie",
       "title": "Session cookie helper",
       "why": "The login route needs one helper to apply the session cookie options.",
-      "summary": "`setSessionCookie` applies the required options to session cookies.",
+      "summary": "`setSessionCookie` applies the required options to session cookies, and its test checks them.",
       "part": "Session cookie",
       "lookFor": [
         "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
       ],
       "suggestedOrder": 0,
-      "hunkRefs": ["src/auth/session.ts"]
+      "hunkRefs": ["src/auth/session.ts", "src/auth/session.test.ts"]
     },
     {
       "id": "login",
