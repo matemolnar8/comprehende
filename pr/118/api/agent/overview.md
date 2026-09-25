@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify 41adb309df1d25389e80787bfcd834719986a4a8` in this repository.
+   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify ef1e688be084667a7f76ce365dfbe44bba1f7f55` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,19 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157
 
-head               41adb309df1d25389e80787bfcd834719986a4a8
+head               ef1e688be084667a7f76ce365dfbe44bba1f7f55
 
-Named refs at pin: a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 ... 41adb309df1d25389e80787bfcd834719986a4a8
+Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 41adb309df1d25389e80787bfcd834719986a4a8
+git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 ef1e688be084667a7f76ce365dfbe44bba1f7f55
 
 Commits:
+- ef1e688 Eval: re-score saved reviews with --rescore
+- 1b139e4 Eval: default producer to Grok 4.6 high
+- e9cd03b Eval: name the case work tree in the producer prompt
+- cd8c738 Eval: accept model params in --producer-model and --grader-model
 - 41adb30 Keep the canonical schema free to sit with its generator on comprehende-57
 - ba86fbe Skill: why in the source's terms, overridden ticket items, manual steps
 - 352dc1e Skill: bullet unmentioned behavior changes and non-obvious review fixes
@@ -46,61 +50,63 @@ Commits:
 - 1e1081c Write expected review outcomes for every eval case
 
 Sources:
-- ticket #117 Write an expected outcome per case, fold it into case.json, then iterate on the skill.
+- ticket #117 Gating checks on main always pass and are too loose. Write expected outcomes, fold them into case.json, iterate the skill until reviews match across repeated runs.
   https://github.com/matemolnar8/comprehende/issues/117
-- pr PR #118 Phase 1 and a first phase 2 pass of #117.
+- pr PR #118 Phase 1 expected outcomes plus a first phase 2 skill pass. Default producer is now grok-4.6 high. Graders stay grok-4.6.
   https://github.com/matemolnar8/comprehende/pull/118
 
 The title:
 
-Expected review outcomes for every eval case, and a skill that meets more of them
+Expected eval outcomes and a skill pass that meets more of them
 
 The why:
 
-[#117](source:s1) asks for a written expected outcome per eval case, then skill changes until the reviews meet those outcomes, because the old gates passed every run.
+[#117](source:s1) says the gating checks on main always pass and are too loose to steer the skill. Write a human expected outcome per case, fold it into expects, and iterate the skill until reviews match.
 
 The what (large):
 
-Adds review criteria and one `expected.md` per eval case, tightens each `case.json` with two new harness gates, and changes the skill to check sources against head and to group by concern.
+Each eval case gets an `expected.md` and tighter `case.json` gates. The skill adds source-vs-head lookFor, a stricter why, and grouping rules the harness can check. The runner takes model params, names the case work tree, defaults the producer to `grok-4.6:effort=high`, and can `--rescore` saved reviews.
 
 Look for:
-- [#117](source:s1) is done when the skill meets the expects consistently across runs. It does not yet: 30 of 59 graded runs pass the gates, against 16 of 60 for the baseline.
-- Breaking: merging runs the graded suite on `main`, and about half the cases still fail a gate, so that job goes red.
+- [#117](source:s1) is done when the skill meets the new expects across repeated graded runs. This branch's Composer rounds were 30/59. One Grok 4.6 high sample was 10/10. The repeated Grok suite is not in this diff.
 
 ## Review concerns
 
-### 01 Shared review criteria (`criteria`)
+### 01 Written expected outcome per case (`expected`)
 
-`eval/review-criteria.md` lists the grouping, source-check, and lookFor rules, and the section template each `expected.md` follows.
+`eval/review-criteria.md` holds the shared criteria and template. Each case adds `expected.md` with story, groups, must-state claims, and baseline.
 
-[groups/criteria.md](groups/criteria.md)
+[groups/expected.md](groups/expected.md)
 
-### 02 Expected outcome per case (`outcomes`)
+### 02 Fold outcomes into case.json gates (`expects`)
 
-Each `expected.md` names the groups, the must-state and good-to-state claims, the mistakes to avoid, and what the six baseline runs did.
-
-Depends on:
-- 01 Shared review criteria (`criteria`)
-
-[groups/outcomes.md](groups/outcomes.md)
-
-### 03 Group count and cross-part dependsOn gates (`harness`)
-
-`checks.ts` adds a `groups` range expect and fails any `dependsOn` that points into another part, with the schema in `case.ts`, the report line in `result.ts`, and tests.
-
-[groups/harness.md](groups/harness.md)
-
-### 04 Tighter case.json expects (`expects`)
-
-Each `case.json` gets `parts` and `groups` ranges, `together` pairs that keep tests with their code, fuller `mechanicalPaths`, and the must-state claims.
+Each `case.json` gets `parts` and `groups` ranges, tests-with-code `together` pairs, `apart` pairs, and the must-state `claims`.
 
 Depends on:
-- 03 Group count and cross-part dependsOn gates (`harness`)
+- 01 Written expected outcome per case (`expected`)
 
 [groups/expects.md](groups/expects.md)
 
-### 05 Skill: sources against head, grouping by concern (`skill`)
+### 03 Skill rules the expects encode (`skill`)
 
-`skills-next/comprehende/SKILL.md` gives every source item a verdict from head, takes the why from a stated problem or goal, keeps tests and call sites with their code, and adds `lookFor` cases. The `.agents/` files are identical synced copies.
+The next skill checks each source against head, writes why only from a stated problem or goal, keeps tests and copies with the code they serve, and bullets hidden behavior and overridden ticket items.
 
 [groups/skill.md](groups/skill.md)
+
+### 04 Harness gates, producer models, and rescore (`harness`)
+
+`checks` gates group count and cross-part `dependsOn`. The runner parses `id:param=value`, names the case work tree, defaults the producer to `grok-4.6:effort=high`, and `--rescore` re-checks saved `review.json` files.
+
+Depends on:
+- 02 Fold outcomes into case.json gates (`expects`)
+
+[groups/harness.md](groups/harness.md)
+
+### 05 Identical agents skill copy (`skill-copy`)
+
+`.agents/skills/comprehende/` is an identical copy of the next skill and example.
+
+Depends on:
+- 03 Skill rules the expects encode (`skill`)
+
+[groups/skill-copy.md](groups/skill-copy.md)
