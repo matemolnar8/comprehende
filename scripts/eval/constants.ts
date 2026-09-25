@@ -1,4 +1,4 @@
-export const DEFAULT_PRODUCER_MODEL = "composer-2.5";
+export const DEFAULT_PRODUCER_MODEL = "grok-4.6:effort=high";
 export const DEFAULT_GRADER_MODEL = "grok-4.6";
 export const TASK_TIMEOUT_MS = 20 * 60 * 1000;
 
