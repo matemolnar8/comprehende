@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify ef1e688be084667a7f76ce365dfbe44bba1f7f55` in this repository.
+   Run `git rev-parse --verify a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157` and `git rev-parse --verify 3bd6567d9534b1e5573a2bb24d8417b2d2770049` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157
 
-head               ef1e688be084667a7f76ce365dfbe44bba1f7f55
+head               3bd6567d9534b1e5573a2bb24d8417b2d2770049
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 ef1e688be084667a7f76ce365dfbe44bba1f7f55
+git diff --find-renames a6c2a1cddfe8c0639336e5a0c5b58ee0fbb6c157 3bd6567d9534b1e5573a2bb24d8417b2d2770049
 
 Commits:
+- 3bd6567 Eval: ungate comprehende-50 why; allow 8 parts on cigster-99
 - ef1e688 Eval: re-score saved reviews with --rescore
 - 1b139e4 Eval: default producer to Grok 4.6 high
 - e9cd03b Eval: name the case work tree in the producer prompt
