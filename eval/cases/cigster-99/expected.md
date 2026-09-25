@@ -7,7 +7,7 @@ PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket s
 - Title: the PR title.
 - Why: either. If present, it covers only the living-room part, from #98. The other parts have no source motive.
 - Size: very-large. `pnpm-lock.yaml` and the 135 pure moves add little burden, but the rest is still large.
-- Parts: 4 to 7. Groups: 7 to 10.
+- Parts: 3 to 7. A harness part can hold the rename, the snapshot folders, and the local Convex startup. Groups: 7 to 10.
 
 ## Groups
 
@@ -38,7 +38,7 @@ PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket s
 ## Must not
 
 - Do not repeat the `E2E_UI` note as what the code does.
-- Do not chain the living-room part to the page-objects or harness parts with `dependsOn`.
+- Do not chain the living-room part to the page-objects or harness parts with `dependsOn`. The living-room spec does build on the page objects, so `suggestedOrder` puts the page-object library before it.
 - Do not fold the dependency refresh into a group titled as a rename without naming it.
 - Do not restate ticket acceptance items that the spec meets.
 
@@ -52,7 +52,7 @@ PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket s
 
 ## case.json
 
-- `parts` 2–6 to 4–7.
+- `parts` 2–6 to 3–7.
 - `together`: the living-room spec and its seed.
 - `apart`: the living-room spec and the migrated `admin.spec.ts`.
 - Reworded the two claims and added the `.env.local` and TV-disconnect claims.

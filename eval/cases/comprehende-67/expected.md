@@ -5,7 +5,7 @@ PR #67. No ticket. A Bugbot comment (fixed) and a conversation about the 404.
 ## Story
 
 - Title: the PR title.
-- Why: absent. The PR says reviews move from VibeDrop to this repo's GitHub Pages, but no source says why VibeDrop is dropped.
+- Why: either. The PR says reviews move from VibeDrop to this repo's GitHub Pages, but no source says why VibeDrop is dropped. A why may restate the move. It must not invent a reason for leaving VibeDrop.
 - Size: medium.
 - Parts: one story. Groups: 3 to 4.
 
@@ -40,7 +40,7 @@ PR #67. No ticket. A Bugbot comment (fixed) and a conversation about the 404.
 
 ## case.json
 
-- `why` present to absent.
+- Removed the `why` expect.
 - `parts` max 3 to 2.
 - `together`: the script and its test.
 - Clarified the retry claim.

@@ -8,7 +8,7 @@
   "expect": {
     "why": "absent",
     "parts": { "min": 0, "max": 1 },
-    "groups": { "min": 2, "max": 4 },
+    "groups": { "min": 2, "max": 5 },
     "size": ["medium", "large"],
     "together": [["src/ui/lib/selection.ts", "src/ui/lib/selection.test.ts"]],
     "claims": ["Bugbot says hiding the Viewed label leaves a 14px tap target on phones, and at head the label is still hidden"]

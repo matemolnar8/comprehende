@@ -5,7 +5,7 @@ PR #24. No ticket, no comments.
 ## Story
 
 - Title: the PR title.
-- Why: absent. The PR and commits say what changes (cancel timers before the context is freed) but state no problem or goal. The bug it fixes is implied by the harness, not written in a source.
+- Why: either. The PR says what changes (cancel timers before the context is freed) more than why. A why that restates that as the need ("pending timers must not survive a restart") is acceptable. Anything beyond it is invented.
 - Size: small.
 - Parts: one story, or two with the CI step as its own part. Groups: 2 or 3.
 
@@ -35,7 +35,7 @@ PR #24. No ticket, no comments.
 
 ## case.json
 
-- `why` present to absent.
+- Removed the `why` expect.
 - `parts` max 3 to 2, `size` to small, `groups` 1 to 3.
 - `together`: the three shutdown files, and the harness with `CMakeLists.txt`.
 - Added the timer id claim.

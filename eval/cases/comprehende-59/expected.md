@@ -7,7 +7,7 @@ PR #59. One Bugbot review comment, not addressed. The source ticket is #58, but 
 - Title: the PR title.
 - Why: absent. The PR says what changes, not why. The motive is only in #58, which nothing links. The case checks that the skill does not invent a motive from the patch.
 - Size: medium.
-- Parts: one story. Groups: 3 to 4.
+- Parts: one story. Groups: 3 to 5. The `App.tsx` routing branch can be its own group.
 
 ## Groups
 
@@ -45,5 +45,5 @@ PR #59. One Bugbot review comment, not addressed. The source ticket is #58, but 
 - `why` present to absent.
 - `parts` max 3 to 1.
 - `together`: `selection.ts` with `selection.test.ts`.
-- `groups`: 2 to 4.
+- `groups`: 2 to 5.
 - Added the Bugbot claim.
