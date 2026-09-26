@@ -1,0 +1,58 @@
+# cigster-99: Multi-browser living-room E2E + rename visual→e2e
+
+PR #99, implements ticket #98. No review comments. The PR is mixed: one ticket story plus several unrelated harness changes.
+
+## Story
+
+- Title: the PR title.
+- Why: either. If present, it covers only the living-room part, from #98. The other parts have no source motive.
+- Size: very-large. `pnpm-lock.yaml` and the 135 pure moves add little burden, but the rest is still large.
+- Parts: 3 to 8. A harness part can hold the rename, the snapshot folders, and the local Convex startup. Groups: 7 to 10.
+
+## Groups
+
+1. Living-room E2E (#98): `e2e/live/living-room.spec.ts`, `e2e/seed/living-room.ts`, `e2e/pages/living-room.ts`, the living-room hunk in `e2e/seed/reset.ts`.
+2. Page objects: `e2e/pages/*` except `living-room.ts`, and the visual specs rewritten on top of them. Two groups are fine: the page-object modules, then the migrated specs.
+3. Rename visual→e2e: `.github/workflows/e2e.yml`, `compose.yaml`, `e2e/docker/*` scripts, `.cursor/CLOUD.md`, `e2e/README.md`, `docs/css-modules-migration-plan.md`, `e2e/auth/global.setup.ts`, `e2e/visual/_helpers.ts`.
+4. Local Convex and webServer startup: `e2e/docker/server.sh`, `e2e/seed/_run.ts`, `e2e/seed/_clerk-auth.ts`, the env loading and `reuseExistingServer` hunks in `e2e/playwright.config.ts`.
+5. Platform snapshot folders (mechanical): the 135 pure moves to `e2e/snapshots/linux/`, `snapshotPathTemplate`, `.gitignore`.
+6. QR readiness fix: `src/lib/shared/useQRCodeSVG.ts`, the QR waits in the page objects, and the three PNGs that are new images, not moves (`tv-lobby-landscape`, `tv-break-landscape`, `remote-break-portrait`).
+7. Dependency refresh (mechanical): `package.json` pins become caret ranges, `pnpm-lock.yaml`, `.nvmrc`, the Playwright pin in `e2e/docker/Dockerfile`, the regenerated `src/routeTree.gen.ts`.
+8. Page-object audit report: `docs/audits/e2e-pageobject-audit.html`. Independent documentation, last.
+
+`package.json` has one hunk that holds both the script rename and the dependency refresh. The group that holds it names both.
+
+## Must state
+
+- `useQRCodeSVG` is production code in a test PR. Its effect now depends on the primitive option values, so a new `options` object on each render no longer makes a new QR code. It also passes only width, margin, and colors to the library.
+- The PR says `pnpm test:e2e:ui` sets `E2E_UI=1` and skips the webServer. At head nothing reads `E2E_UI`, and the webServer still starts unless `E2E_HARNESS_ONLY=1`. If you follow the PR note and start `pnpm dev` first, Playwright fails because port 3000 is in use. `reuseExistingServer` is on only with `E2E_REUSE_SERVER=1`.
+- `e2e/docker/server.sh` deletes `.env.local` when it starts and when it exits. Any local settings in that file are lost when you run the e2e suite.
+- After the TV closes, the host leaves the Remote shell only when something writes to the game. The spec waits 12.5 seconds and then sends a `pause` playback command to force that write. In the app, the shell stays until the next game write, for example the next host action. The ticket asks that sleeps and races be called out in the PR, and the PR body does not do that.
+
+## Good to state
+
+- Three goldens are new images, not moves.
+- All dependency pins become caret ranges. That is a policy change in a PR about tests.
+- The seed variables keep the `VISUAL_` prefix (`VISUAL_SEED_SUBJECT` and others) after the rename.
+
+## Must not
+
+- Do not repeat the `E2E_UI` note as what the code does.
+- Do not chain the living-room part to the page-objects or harness parts with `dependsOn`. The living-room spec does build on the page objects, so `suggestedOrder` puts the page-object library before it.
+- Do not fold the dependency refresh into a group titled as a rename without naming it.
+- Do not restate ticket acceptance items that the spec meets.
+
+## Baseline
+
+- 0 of 6 runs stated the `E2E_UI` claim correctly. Several wrote the stale note as fact.
+- 2 of 6 stated the `useQRCodeSVG` claim.
+- 5 of 6 described the playback-command workaround as test mechanics, but none said the app keeps the Remote shell. One said it "matches TTL semantics in issue #98".
+- 2 of 6 noted the `.env.local` deletion.
+- The grouping grader found 4 to 6 major issues each run, mostly false `dependsOn` chains across parts and the dependency refresh folded into the rename.
+
+## case.json
+
+- `parts` 2–6 to 3–8. A Grok 4.6 high sample used 8 parts.
+- `together`: the living-room spec and its seed.
+- `apart`: the living-room spec and the migrated `admin.spec.ts`.
+- Reworded the two claims and added the `.env.local` and TV-disconnect claims.

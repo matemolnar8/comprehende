@@ -4,6 +4,7 @@ import { isCliHuntCall } from "./agent.ts";
 import { producerPrompt } from "./producer.ts";
 
 const prompt = producerPrompt({
+  repoCwd: "/tmp/case/repo",
   skillMd: "/tmp/skill/SKILL.md",
   sourcesDir: "/tmp/sources",
   outPath: "/tmp/out/review.json",
@@ -18,6 +19,10 @@ describe("producer prompt", () => {
     assert.match(prompt, /It is already built/);
     assert.match(prompt, /Do not search, glob, or rebuild another CLI/);
     assert.doesNotMatch(prompt, /local build/);
+  });
+
+  it("names the work tree the producer must run in", () => {
+    assert.match(prompt, /git work tree at \/tmp\/case\/repo/);
   });
 
   it("skips the npm version check without pinning it to step 1", () => {

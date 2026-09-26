@@ -17,6 +17,7 @@ export type DeterministicReport = {
   dirtyWorktree: boolean;
   why: "present" | "absent";
   parts: number;
+  groups: number;
   size: ReviewDocument["size"];
   togetherOk: number;
   togetherTotal: number;
@@ -58,22 +59,16 @@ export async function runDeterministicChecks(opts: {
 
   const why: "present" | "absent" = opts.document.why !== undefined && opts.document.why.trim() !== "" ? "present" : "absent";
   const parts = distinctParts(opts.document.groups);
+  const groups = opts.document.groups.length;
   const size = opts.document.size;
   const expect = opts.expect ?? {};
 
   if (expect.why !== undefined && expect.why !== why) {
     failures.push({ check: "why", message: `expected why ${expect.why}, got ${why}` });
   }
-  if (expect.parts !== undefined) {
-    if (expect.parts.max < expect.parts.min) {
-      failures.push({ check: "parts", message: `parts.max ${expect.parts.max} is below min ${expect.parts.min}` });
-    } else if (parts < expect.parts.min || parts > expect.parts.max) {
-      failures.push({
-        check: "parts",
-        message: `expected ${expect.parts.min} to ${expect.parts.max} parts, got ${parts}`,
-      });
-    }
-  }
+  failures.push(...rangeFailures("parts", parts, expect.parts));
+  failures.push(...rangeFailures("groups", groups, expect.groups));
+  failures.push(...crossPartDependsOn(opts.document.groups));
   if (expect.size !== undefined && !expect.size.includes(size)) {
     failures.push({ check: "size", message: `expected size ${expect.size.join("|")}, got ${size}` });
   }
@@ -129,12 +124,43 @@ export async function runDeterministicChecks(opts: {
     dirtyWorktree,
     why,
     parts,
+    groups,
     size,
     togetherOk,
     togetherTotal: together.length,
     apartOk,
     apartTotal: apart.length,
   };
+}
+
+function rangeFailures(
+  check: "parts" | "groups",
+  value: number,
+  range: EvalExpect["parts"],
+): CheckFailure[] {
+  if (range === undefined) {
+    return [];
+  }
+  if (range.max < range.min) {
+    return [{ check, message: `${check}.max ${range.max} is below min ${range.min}` }];
+  }
+  if (value < range.min || value > range.max) {
+    return [{ check, message: `expected ${range.min} to ${range.max} ${check}, got ${value}` }];
+  }
+  return [];
+}
+
+/** The skill keeps `dependsOn` inside one story; a cross-part edge is a false chain. */
+function crossPartDependsOn(groups: ReviewGroup[]): CheckFailure[] {
+  const partById = new Map(groups.map((group) => [group.id, group.part]));
+  return groups.flatMap((group) =>
+    (group.dependsOn ?? [])
+      .filter((dep) => partById.has(dep) && partById.get(dep) !== group.part)
+      .map((dep) => ({
+        check: "dependsOn",
+        message: `group ${group.id} (${group.part ?? "no part"}) depends on ${dep} (${partById.get(dep) ?? "no part"})`,
+      })),
+  );
 }
 
 function distinctParts(groups: ReviewGroup[]): number {

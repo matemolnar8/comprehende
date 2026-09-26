@@ -6,8 +6,11 @@
   "head": "75c9b51c279610d6940509e54678c11276ca7431",
   "tags": ["ui"],
   "expect": {
-    "why": "present",
-    "parts": { "min": 0, "max": 3 },
-    "size": ["medium", "large"]
+    "why": "absent",
+    "parts": { "min": 0, "max": 1 },
+    "groups": { "min": 2, "max": 5 },
+    "size": ["medium", "large"],
+    "together": [["src/ui/lib/selection.ts", "src/ui/lib/selection.test.ts"]],
+    "claims": ["Bugbot says hiding the Viewed label leaves a 14px tap target on phones, and at head the label is still hidden"]
   }
 }

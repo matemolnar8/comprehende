@@ -9,6 +9,7 @@ const checksOk = {
   dirtyWorktree: false,
   why: "present" as const,
   parts: 1,
+  groups: 1,
   size: "small" as const,
   togetherOk: 0,
   togetherTotal: 0,

@@ -8,14 +8,15 @@ Options:
   --case <id>             Run this case (repeatable)
   --tag <tag>             Run cases with this tag
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
+  --rescore <dir>         Re-check eval/runs/<stamp> reviews. No producer, no graders, no API key
   --json                  Also print summary.json to stdout
-  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
-  --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
+  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. Params: <id>:<param>=<value>,... (grok-4.6:effort=high)
+  --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}. Same param form
   --no-graders            Skip grouping and prose graders
   --sandbox               Enable local sandboxOptions
   -h, --help
 
-Needs CURSOR_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs CURSOR_API_KEY unless --rescore. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -42,6 +43,7 @@ export type EvalRunRequest =
       graderModel: string;
       graders: boolean;
       sandbox: boolean;
+      rescore?: string;
     };
 
 export type AddCaseRequest =
@@ -63,6 +65,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let json = false;
     let sandbox = false;
     let graders = true;
+    let rescore: string | undefined;
     for (let i = 0; i < args.length; i += 1) {
       const arg = args[i];
       if (arg === undefined) {
@@ -80,7 +83,14 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
         graders = false;
         continue;
       }
-      if (arg === "--case" || arg === "--tag" || arg === "--baseline" || arg === "--producer-model" || arg === "--grader-model") {
+      if (
+        arg === "--case" ||
+        arg === "--tag" ||
+        arg === "--baseline" ||
+        arg === "--rescore" ||
+        arg === "--producer-model" ||
+        arg === "--grader-model"
+      ) {
         const value = args[i + 1];
         if (value === undefined || value.startsWith("-")) {
           throw new Error(`${arg} requires a value`);
@@ -92,6 +102,8 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
           tag = value;
         } else if (arg === "--baseline") {
           baseline = value;
+        } else if (arg === "--rescore") {
+          rescore = value;
         } else if (arg === "--producer-model") {
           producerModel = value;
         } else {
@@ -101,7 +113,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       throw new Error(`Unknown option: ${arg}`);
     }
-    return { kind: "run", ids, tag, baseline, json, producerModel, graderModel, graders, sandbox };
+    return { kind: "run", ids, tag, baseline, json, producerModel, graderModel, graders, sandbox, rescore };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }

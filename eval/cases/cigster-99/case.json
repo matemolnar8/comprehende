@@ -6,20 +6,25 @@
   "head": "0880bab37c3a3afc82e4e877ea9032896005e0fc",
   "tags": ["foreign"],
   "expect": {
-    "parts": { "min": 2, "max": 6 },
+    "parts": { "min": 3, "max": 8 },
+    "groups": { "min": 6, "max": 11 },
     "size": ["large", "very-large"],
     "sourceKinds": ["ticket"],
     "mechanicalPaths": [
       "e2e/snapshots/linux/admin-detail-empty-desktop.png",
       "e2e/snapshots/linux/admin-detail-populated-desktop.png"
     ],
+    "together": [["e2e/live/living-room.spec.ts", "e2e/seed/living-room.ts"]],
     "apart": [
       ["e2e/live/living-room.spec.ts", "e2e/snapshots/linux/admin-detail-empty-desktop.png"],
-      ["e2e/live/living-room.spec.ts", "docs/audits/e2e-pageobject-audit.html"]
+      ["e2e/live/living-room.spec.ts", "docs/audits/e2e-pageobject-audit.html"],
+      ["e2e/live/living-room.spec.ts", "e2e/visual/admin.spec.ts"]
     ],
     "claims": [
       "useQRCodeSVG is production code and now depends on primitive option values, so a fresh options object each render no longer regenerates the QR code",
-      "the PR says pnpm test:e2e:ui sets E2E_UI=1 and skips the webServer, but at head nothing reads E2E_UI and the webServer still starts unless E2E_HARNESS_ONLY=1"
+      "the PR says pnpm test:e2e:ui sets E2E_UI=1 and skips the webServer, but at head nothing reads E2E_UI and the webServer still starts unless E2E_HARNESS_ONLY=1",
+      "e2e/docker/server.sh deletes .env.local when it starts and when it exits",
+      "after the TV closes, the host leaves the Remote shell only after a game write, which the spec forces with a pause playback command after a 12.5 second wait"
     ]
   }
 }
