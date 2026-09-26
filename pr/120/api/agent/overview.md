@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify d8658c1681fc92d4fa0a6d11218095be343f5219` in this repository.
+   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 21d6424b4a7855dfd21641c642d187e3f8b25d43` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  732a01b08eaa2f79562ea4e2ef76e38c9d92eee3
 
-head               d8658c1681fc92d4fa0a6d11218095be343f5219
+head               21d6424b4a7855dfd21641c642d187e3f8b25d43
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 d8658c1681fc92d4fa0a6d11218095be343f5219
+git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 21d6424b4a7855dfd21641c642d187e3f8b25d43
 
 Commits:
+- 21d6424 Hide skipped binaries behind an info card on the overview kicker.
 - d8658c1 Drop the hunk count, give sources the brief width, and round hunk blocks.
 - 857ca7f Tighten review layout around the brief, the file rail, and hunk rows.
 
@@ -49,13 +50,13 @@ The why:
 
 The what (small):
 
-Why, What, and Look for stop near 68 characters. Sources use the full brief width. The header and the overview kicker share one file count. A skipped binary is a grey line on the overview, and only when a file was skipped. A one-file group has no file rail. Hunk blocks are rounded, with no shadow. A multi-file rail is narrower.
+Why, What, and Look for stop near 68 characters. Sources use the full brief width. The header and the overview kicker share one file count. A skipped binary is named in an info card on the overview kicker, and only when a file was skipped. A one-file group has no file rail. Hunk blocks are rounded, with no shadow. A multi-file rail is narrower.
 
 ## Review concerns
 
 ### 01 Brief, sources, and the file count (`brief`)
 
-The brief measure wraps Why, What, and Look for. Sources use the full brief width. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is a grey line under that kicker.
+The brief measure wraps Why, What, and Look for. Sources use the full brief width. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is named in an info card on that kicker.
 
 [groups/brief.md](groups/brief.md)
 
