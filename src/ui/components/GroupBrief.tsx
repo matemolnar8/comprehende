@@ -19,7 +19,6 @@ export function Brief(props: {
   children?: ReactNode;
   className?: string;
   kickerExtra?: ReactNode;
-  note?: string;
 }) {
   return (
     <div className={props.className}>
@@ -32,9 +31,6 @@ export function Brief(props: {
         ) : (
           <Kicker className="mb-2">{props.kicker}</Kicker>
         )
-      ) : null}
-      {props.note !== undefined ? (
-        <p className="-mt-1 mb-3 font-mono text-[11px] leading-[1.45] text-muted-foreground">{props.note}</p>
       ) : null}
       <h1 className="mb-3 font-display text-title-sm tracking-[-0.015em] text-balance text-foreground min-[800px]:text-title">
         {props.title}

@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { InfoIcon } from "lucide-react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
@@ -14,6 +15,26 @@ import { BriefField, briefProse } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
 import { SourceList } from "./SourceList.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+
+function SkippedFiles(props: { paths: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="Skipped files"
+          className="ml-1.5 inline-flex size-3.5 translate-y-px items-center justify-center border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
+        >
+          <InfoIcon aria-hidden className="size-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs border border-border bg-popover px-3 py-2 font-mono text-[11px] leading-[1.45] text-popover-foreground shadow-card">
+        Skipped: {props.paths}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -33,8 +54,12 @@ export function Overview(props: {
   return (
     <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       <Brief
-        kicker={`${sizeLabel(meta.document.size)} · ${fileCount} ${fileCount === 1 ? "file" : "files"}`}
-        note={skipped ?? undefined}
+        kicker={
+          <>
+            {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
+            {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
+          </>
+        }
         title={meta.document.title}
         kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
       >
