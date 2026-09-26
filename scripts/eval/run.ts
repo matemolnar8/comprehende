@@ -13,6 +13,7 @@ import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { loadDocument } from "../../src/review/load.ts";
 import { EVAL_USAGE, parseEvalArgv } from "./args.ts";
+import type { AgentKind } from "./constants.ts";
 import { listEvalCases, selectEvalCases, type EvalCase } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
 import {
@@ -53,9 +54,20 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     return 1;
   }
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
-  const apiKey = process.env.CURSOR_API_KEY;
-  if (rescoreDir === undefined && (apiKey === undefined || apiKey === "")) {
+  const apiKey = process.env.CURSOR_API_KEY ?? "";
+  const musecodeKey = process.env.MUSE_CODE_API_KEY ?? "";
+  const needsCursor =
+    rescoreDir === undefined &&
+    (request.producerAgent === "cursor" || (request.graders && request.graderAgent === "cursor"));
+  const needsMusecode =
+    rescoreDir === undefined &&
+    (request.producerAgent === "musecode" || (request.graders && request.graderAgent === "musecode"));
+  if (needsCursor && apiKey === "") {
     console.error("CURSOR_API_KEY is not set");
+    return 1;
+  }
+  if (needsMusecode && musecodeKey === "") {
+    console.error("MUSE_CODE_API_KEY is not set");
     return 1;
   }
   const casesDir = join(packageRoot, "eval/cases");
@@ -72,8 +84,10 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const summary: RunSummary = {
     stamp,
     skillTree,
-    producerModel: request.producerModel,
-    graderModel: request.graderModel,
+    producerModel: request.producerAgent === "musecode" ? request.musecodeModel : request.producerModel,
+    graderModel: request.graderAgent === "musecode" ? request.musecodeModel : request.graderModel,
+    producerAgent: request.producerAgent,
+    graderAgent: request.graderAgent,
     graders: rescoreDir === undefined && request.graders,
     cases: [],
   };
@@ -86,9 +100,13 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       skillMd,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
+      producerAgent: request.producerAgent,
+      graderAgent: request.graderAgent,
+      musecodeModel: request.musecodeModel,
       graders: rescoreDir === undefined && request.graders,
       sandbox: request.sandbox,
-      apiKey: apiKey ?? "",
+      apiKey,
+      musecodeKey,
       rescoreDir,
     });
     summary.cases.push(result);
@@ -115,9 +133,13 @@ async function evalOneCase(opts: {
   skillMd: string;
   producerModel: string;
   graderModel: string;
+  producerAgent: AgentKind;
+  graderAgent: AgentKind;
+  musecodeModel: string;
   graders: boolean;
   sandbox: boolean;
   apiKey: string;
+  musecodeKey: string;
   rescoreDir?: string;
 }): Promise<CaseResult> {
   const started = Date.now();
@@ -168,7 +190,10 @@ async function evalOneCase(opts: {
       const producer = await runProducer({
         repoCwd,
         model: opts.producerModel,
+        agent: opts.producerAgent,
+        musecodeModel: opts.musecodeModel,
         apiKey: opts.apiKey,
+        musecodeKey: opts.musecodeKey,
         sandbox: opts.sandbox,
         prompt: producerPrompt({
           repoCwd,
@@ -221,14 +246,20 @@ async function evalOneCase(opts: {
             runGrader({
               repoCwd,
               model: opts.graderModel,
+              agent: opts.graderAgent,
+              musecodeModel: opts.musecodeModel,
               apiKey: opts.apiKey,
+              musecodeKey: opts.musecodeKey,
               sandbox: opts.sandbox,
               prompt: groupingPrompt({ skillMd: opts.skillMd, packet }),
             }),
             runGrader({
               repoCwd,
               model: opts.graderModel,
+              agent: opts.graderAgent,
+              musecodeModel: opts.musecodeModel,
               apiKey: opts.apiKey,
+              musecodeKey: opts.musecodeKey,
               sandbox: opts.sandbox,
               prompt: prosePrompt({
                 skillMd: opts.skillMd,

@@ -1,6 +1,7 @@
 import * as z from "zod";
-import { GRADER_TOOLS } from "./constants.ts";
+import { GRADER_TOOLS, type AgentKind } from "./constants.ts";
 import { runLocalAgent, type AgentRunResult } from "./agent.ts";
+import { runMuseCodeAgent } from "./musecode.ts";
 import { skillSection } from "./skill.ts";
 
 const findingSchema = z.object({
@@ -114,29 +115,37 @@ export function prosePrompt(opts: { skillMd: string; packet: string; claims: str
 export async function runGrader(opts: {
   repoCwd: string;
   model: string;
+  agent: AgentKind;
+  musecodeModel: string;
   apiKey: string;
+  musecodeKey: string;
   sandbox: boolean;
   prompt: string;
 }): Promise<GraderResult> {
-  const first = await runLocalAgent({
-    cwd: opts.repoCwd,
-    model: opts.model,
-    prompt: opts.prompt,
-    apiKey: opts.apiKey,
-    tools: [...GRADER_TOOLS],
-    sandbox: opts.sandbox,
-  });
+  const runOnce = (prompt: string): Promise<AgentRunResult> =>
+    opts.agent === "musecode"
+      ? runMuseCodeAgent({
+          cwd: opts.repoCwd,
+          model: opts.musecodeModel,
+          prompt,
+          apiKey: opts.musecodeKey,
+          readOnly: true,
+        })
+      : runLocalAgent({
+          cwd: opts.repoCwd,
+          model: opts.model,
+          prompt,
+          apiKey: opts.apiKey,
+          tools: [...GRADER_TOOLS],
+          sandbox: opts.sandbox,
+        });
+  const first = await runOnce(opts.prompt);
   try {
     return { run: first, output: parseGraderJson(first.text) };
   } catch {
-    const retry = await runLocalAgent({
-      cwd: opts.repoCwd,
-      model: opts.model,
-      prompt: `${opts.prompt}\n\nYour previous reply was not valid JSON. Return only the JSON object, no markdown.`,
-      apiKey: opts.apiKey,
-      tools: [...GRADER_TOOLS],
-      sandbox: opts.sandbox,
-    });
+    const retry = await runOnce(
+      `${opts.prompt}\n\nYour previous reply was not valid JSON. Return only the JSON object, no markdown.`,
+    );
     try {
       return { run: retry, output: parseGraderJson(retry.text) };
     } catch (error) {

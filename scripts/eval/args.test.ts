@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { EVAL_USAGE, parseAddCaseArgv, parseEvalArgv } from "./args.ts";
-import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
+import { DEFAULT_GRADER_MODEL, DEFAULT_MUSECODE_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 describe("eval argv", () => {
   it("parses run flags", () => {
@@ -14,6 +14,9 @@ describe("eval argv", () => {
       json: true,
       producerModel: DEFAULT_PRODUCER_MODEL,
       graderModel: DEFAULT_GRADER_MODEL,
+      producerAgent: "cursor",
+      graderAgent: "cursor",
+      musecodeModel: DEFAULT_MUSECODE_MODEL,
       graders: true,
       sandbox: true,
       rescore: undefined,
@@ -28,8 +31,34 @@ describe("eval argv", () => {
     if (req.kind === "run") {
       assert.equal(req.producerModel, "grok-4.6:effort=high");
       assert.equal(req.graderModel, "grok-4.6");
+      assert.equal(req.producerAgent, "cursor");
+      assert.equal(req.graderAgent, "cursor");
+      assert.equal(req.musecodeModel, DEFAULT_MUSECODE_MODEL);
       assert.equal(req.graders, true);
     }
+  });
+
+  it("parses agent and musecode model flags", () => {
+    const req = parseEvalArgv([
+      "--producer-agent",
+      "musecode",
+      "--grader-agent",
+      "musecode",
+      "--musecode-model",
+      "muse-spark-9.9",
+    ]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.producerAgent, "musecode");
+      assert.equal(req.graderAgent, "musecode");
+      assert.equal(req.musecodeModel, "muse-spark-9.9");
+      assert.equal(req.producerModel, DEFAULT_PRODUCER_MODEL);
+    }
+  });
+
+  it("rejects an unknown agent kind", () => {
+    assert.equal(parseEvalArgv(["--producer-agent", "other"]).kind, "error");
+    assert.equal(parseEvalArgv(["--grader-agent", "other"]).kind, "error");
   });
 
   it("parses --rescore", () => {
@@ -69,6 +98,10 @@ describe("eval argv", () => {
   it("documents --no-graders and --rescore in usage", () => {
     assert.match(EVAL_USAGE, /--no-graders/);
     assert.match(EVAL_USAGE, /--rescore/);
+    assert.match(EVAL_USAGE, /--producer-agent/);
+    assert.match(EVAL_USAGE, /--grader-agent/);
+    assert.match(EVAL_USAGE, /--musecode-model/);
+    assert.match(EVAL_USAGE, /MUSE_CODE_API_KEY/);
   });
 
   it("parses add-case --pr", () => {

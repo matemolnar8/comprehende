@@ -1,5 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { AgentKind } from "./constants.ts";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 import type { DeterministicReport } from "./checks.ts";
 import type { AgentRunResult } from "./agent.ts";
@@ -28,6 +29,8 @@ export type RunSummary = {
   skillTree: string;
   producerModel: string;
   graderModel: string;
+  producerAgent: AgentKind;
+  graderAgent: AgentKind;
   graders: boolean;
   cases: CaseResult[];
 };
