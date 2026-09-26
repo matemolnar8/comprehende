@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec` in this repository.
+   Run `git rev-parse --verify eeff1bec234553b38b2a04e41df8988e9c343ec9` and `git rev-parse --verify 3f11252aa9716996d9c60fe581df65972569abc2` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,17 +22,20 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: https://github.com/matemolnar8/comprehende
 
-base (merge-base)  732a01b08eaa2f79562ea4e2ef76e38c9d92eee3
+base (merge-base)  eeff1bec234553b38b2a04e41df8988e9c343ec9
 
-head               6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec
+head               3f11252aa9716996d9c60fe581df65972569abc2
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec
+git diff --find-renames eeff1bec234553b38b2a04e41df8988e9c343ec9 3f11252aa9716996d9c60fe581df65972569abc2
 
 Commits:
+- 3f11252 Merge branch 'cursor/review-ui-edges-d65b' of https://github.com/matemolnar8/comprehende into cursor/review-ui-edges-d65b
+- df598c4 Keep the hunk path button on the path text.
+- 10df865 Merge branch 'main' into cursor/review-ui-edges-d65b
 - 6e9be6a Put brief field names above their text.
 - 85ce2e5 Lead each source with its text, and put the kind and name under it.
 - 21d6424 Hide skipped binaries behind an info card on the overview kicker.
@@ -40,7 +43,8 @@ Commits:
 - 857ca7f Tighten review layout around the brief, the file rail, and hunk rows.
 
 Sources:
-- transcript Cursor session · Sep 26 Implement the approved audit: cap the brief, drop the single-file rail, flatten hunk cards, align the file count, and tighten the multi-file rail. Keep the story boxes and only lower their tint.
+- transcript Cursor session · Sep 26 Apply the approved audit, then correct the header, the sources, the field headings, and the hunk click.
+- pr-comment cursor[bot] on PR #120
 
 The title:
 
@@ -52,18 +56,18 @@ The why:
 
 The what (small):
 
-Why, What, and Look for stop near 68 characters. A source shows its text first. The kind and the name sit under that text. The header and the overview kicker share one file count. A skipped binary is named in an info card on the overview kicker, and only when a file was skipped. A one-file group has no file rail. Hunk blocks are rounded, with no shadow. A multi-file rail is narrower.
+The brief stacks each field name above its text and caps Why, What, and Look for near 68 characters. A source leads with its gist. The header drops the hunk count. A skipped binary is an info card. Hunk blocks are rounded. A click on the header gap collapses the file.
 
 ## Review concerns
 
 ### 01 Brief, sources, and the file count (`brief`)
 
-The brief measure wraps Why, What, and Look for. Each field name sits above its text. A source shows its text first. The kind and the name sit under that text. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is named in an info card on that kicker.
+Why, What, and Look for stay near 68 characters, and each field name sits above that text. A source shows its gist first. The kind and the name sit under the gist. The header and the overview kicker share one file count. A skipped binary is an info card on the kicker.
 
 [groups/brief.md](groups/brief.md)
 
 ### 02 File rail and hunk rows (`diff-rail`)
 
-A group with one file renders the hunk alone. A wider multi-file group keeps a narrower rail. Hunk blocks are rounded and have a border, with no shadow. The active file's border is primary only when another file is in the group.
+A group with one file renders the hunk alone. A multi-file group keeps a narrower rail. Hunk blocks are rounded and have a border, with no shadow. The path control stays as wide as the path, so a click on the header gap collapses the file.
 
 [groups/diff-rail.md](groups/diff-rail.md)
