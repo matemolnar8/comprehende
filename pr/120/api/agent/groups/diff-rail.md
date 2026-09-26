@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 857ca7f4137e7ce00c87880a7eae47952cfdfd3f` in this repository.
+   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify d8658c1681fc92d4fa0a6d11218095be343f5219` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 857ca7f4137e7ce00c87880a7eae47952cfdfd3f -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 d8658c1681fc92d4fa0a6d11218095be343f5219 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  732a01b08eaa2f79562ea4e2ef76e38c9d92eee3
 
-head               857ca7f4137e7ce00c87880a7eae47952cfdfd3f
+head               d8658c1681fc92d4fa0a6d11218095be343f5219
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 857ca7f4137e7ce00c87880a7eae47952cfdfd3f
+git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 d8658c1681fc92d4fa0a6d11218095be343f5219
 
 Review concern 02 of 02: File rail and hunk rows (`diff-rail`)
 
@@ -39,11 +39,11 @@ Part: Review layout
 
 The why:
 
-[This session](source:s1) asks to drop the rail for one file, start it collapsed under about 1100px, and separate hunks with one rule.
+[This session](source:s1) asks to drop the rail for one file, start it collapsed under about 1100px, and keep hunks as rounded blocks.
 
 The what:
 
-A group with one file renders the hunk alone. A wider multi-file group keeps a narrower rail. The active file's top rule is primary only when another file is in the group.
+A group with one file renders the hunk alone. A wider multi-file group keeps a narrower rail. Hunk blocks are rounded and have a border, with no shadow. The active file's border is primary only when another file is in the group.
 
 Look for:
 - Subtle. Under 1099px the rail starts collapsed only when storage has no choice. A stored open value, or ?rail=open, keeps the rail open.

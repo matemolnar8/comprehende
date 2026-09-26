@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 857ca7f4137e7ce00c87880a7eae47952cfdfd3f` in this repository.
+   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify d8658c1681fc92d4fa0a6d11218095be343f5219` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  732a01b08eaa2f79562ea4e2ef76e38c9d92eee3
 
-head               857ca7f4137e7ce00c87880a7eae47952cfdfd3f
+head               d8658c1681fc92d4fa0a6d11218095be343f5219
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 857ca7f4137e7ce00c87880a7eae47952cfdfd3f
+git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 d8658c1681fc92d4fa0a6d11218095be343f5219
 
 Commits:
+- d8658c1 Drop the hunk count, give sources the brief width, and round hunk blocks.
 - 857ca7f Tighten review layout around the brief, the file rail, and hunk rows.
 
 Sources:
@@ -48,18 +49,18 @@ The why:
 
 The what (small):
 
-Brief prose stops near 68 characters. The header and the overview kicker share one file count, and a skipped binary is named beside that count. A one-file group has no file rail. Hunks stack on one rule, and a multi-file rail is narrower.
+Why, What, and Look for stop near 68 characters. Sources use the full brief width. The header and the overview kicker share one file count. A skipped binary is a grey line on the overview, and only when a file was skipped. A one-file group has no file rail. Hunk blocks are rounded, with no shadow. A multi-file rail is narrower.
 
 ## Review concerns
 
 ### 01 Brief, sources, and the file count (`brief`)
 
-The brief measure wraps What, Look for, and Sources. The overview kicker and the header reading mark both use the grouped file paths, and the coverage sentence sits on the right.
+The brief measure wraps Why, What, and Look for. Sources use the full brief width. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is a grey line under that kicker.
 
 [groups/brief.md](groups/brief.md)
 
 ### 02 File rail and hunk rows (`diff-rail`)
 
-A group with one file renders the hunk alone. A wider multi-file group keeps a narrower rail. The active file's top rule is primary only when another file is in the group.
+A group with one file renders the hunk alone. A wider multi-file group keeps a narrower rail. Hunk blocks are rounded and have a border, with no shadow. The active file's border is primary only when another file is in the group.
 
 [groups/diff-rail.md](groups/diff-rail.md)
