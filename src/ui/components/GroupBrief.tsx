@@ -13,15 +13,13 @@ import { claimsFromLookFor } from "../lib/look-for.ts";
 import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
-/** Label column plus gap, then about 68 characters of prose. The title and the part board stay outside this. */
-const briefMeasure = "max-w-[calc(68ch+5.75rem+1rem)] max-[799px]:max-w-[68ch]";
-
 export function Brief(props: {
   kicker?: ReactNode;
   title: string;
   children?: ReactNode;
   className?: string;
   kickerExtra?: ReactNode;
+  note?: string;
 }) {
   return (
     <div className={props.className}>
@@ -35,10 +33,13 @@ export function Brief(props: {
           <Kicker className="mb-2">{props.kicker}</Kicker>
         )
       ) : null}
+      {props.note !== undefined ? (
+        <p className="-mt-1 mb-3 font-mono text-[11px] leading-[1.45] text-muted-foreground">{props.note}</p>
+      ) : null}
       <h1 className="mb-3 font-display text-title-sm tracking-[-0.015em] text-balance text-foreground min-[800px]:text-title">
         {props.title}
       </h1>
-      {props.children !== undefined ? <div className={briefMeasure}>{props.children}</div> : null}
+      {props.children}
     </div>
   );
 }

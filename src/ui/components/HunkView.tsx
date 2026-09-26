@@ -108,7 +108,10 @@ export function HunkView(props: {
 
   return (
     <article
-      className={cn("min-w-0 border-t bg-card", active ? "border-t-2 border-primary" : "border-border")}
+      className={cn(
+        "min-w-0 overflow-hidden rounded-lg border bg-card",
+        active ? "border-2 border-primary" : "border-border",
+      )}
       data-hunk={index}
     >
       <header

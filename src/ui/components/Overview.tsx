@@ -33,12 +33,8 @@ export function Overview(props: {
   return (
     <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       <Brief
-        kicker={
-          <>
-            {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
-            {skipped !== null ? <span className="text-muted-foreground/70"> · {skipped}</span> : null}
-          </>
-        }
+        kicker={`${sizeLabel(meta.document.size)} · ${fileCount} ${fileCount === 1 ? "file" : "files"}`}
+        note={skipped ?? undefined}
         title={meta.document.title}
         kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
       >

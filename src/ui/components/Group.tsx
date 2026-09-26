@@ -113,7 +113,7 @@ export function Group(props: {
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
-        <article className="mt-8 border-t border-border bg-card">
+        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
           <WaitMark label={waitCopy.group} />
         </article>
       ) : null}

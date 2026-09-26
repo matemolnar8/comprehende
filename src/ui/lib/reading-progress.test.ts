@@ -48,7 +48,7 @@ describe("reading progress", () => {
         { path: "assets/dot.bin", reason: "binary" },
         { path: "pnpm-lock.yaml", reason: "lockfile" },
       ]),
-      "assets/dot.bin skipped",
+      "assets/dot.bin",
     );
     assert.equal(skippedBinaryNote([{ path: "pnpm-lock.yaml", reason: "lockfile" }]), null);
   });

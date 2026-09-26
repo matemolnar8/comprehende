@@ -52,7 +52,7 @@ export function FileStrip(props: {
           })}
         </ul>
       </nav>
-      <div className="flex flex-col">{props.children}</div>
+      <div className="flex flex-col gap-5">{props.children}</div>
     </div>
   );
 }
@@ -141,7 +141,7 @@ export function FileRail(props: {
   if (collapsed) {
     return (
       <div className="mt-4 flex min-h-0 gap-0 max-sm:flex-col">
-        <div className="min-w-0 flex-1">{props.children}</div>
+        <div className="flex min-w-0 flex-1 flex-col gap-5">{props.children}</div>
         <div className="sticky top-4 flex h-[calc(100vh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3" style={{ width: "44px" }}>
           <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Expand file list" onClick={toggle}>
             <ChevronRightIcon className="size-4 rotate-180" />
@@ -156,7 +156,7 @@ export function FileRail(props: {
 
   return (
     <div className="mt-4 flex min-h-0 gap-3 max-sm:flex-col">
-      <div className="min-w-0 flex-1">{props.children}</div>
+      <div className="flex min-w-0 flex-1 flex-col gap-5">{props.children}</div>
       <nav
         ref={railRef}
         aria-label={reading === null ? "Files in group" : `Files in group, ${reading.filesLabel}`}

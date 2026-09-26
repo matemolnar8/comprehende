@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from "react";
 import { cn } from "@/lib/utils.ts";
 
-export const briefProse = "m-0 leading-[1.45] text-pretty text-foreground";
+export const briefProse = "m-0 max-w-[68ch] leading-[1.45] text-pretty text-foreground";
 export const briefRows = "m-0 list-none divide-y divide-border p-0";
 
 export function Kicker(props: { children: ReactNode; id?: string; className?: string }) {
