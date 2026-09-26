@@ -143,7 +143,7 @@ export function HunkView(props: {
                 type="button"
                 variant="link"
                 className={cn(
-                  "h-auto min-w-0 flex-1 justify-start truncate p-0 text-left font-mono text-sm transition-colors",
+                  "h-auto min-w-0 max-w-full shrink justify-start truncate p-0 text-left font-mono text-sm transition-colors",
                   motion,
                   viewed && "text-muted-foreground",
                 )}
