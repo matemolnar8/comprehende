@@ -64,11 +64,12 @@ export function Group(props: {
     requestAnimationFrame(tick);
   }, [loading, props.focusCommentId, files]);
 
-  const renderFile = (file: GroupFile, active: boolean) => (
+  const multi = files.length > 1;
+  const fileNodes = files.map((file) => (
     <HunkView
       key={file.path}
       file={file}
-      active={active}
+      active={multi && activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
       index={file.firstIndex}
       split={split}
       splitRatio={splitRatio}
@@ -80,7 +81,7 @@ export function Group(props: {
       comments={props.comments}
       focusCommentId={props.focusCommentId}
     />
-  );
+  ));
 
   return (
     <>
@@ -112,7 +113,7 @@ export function Group(props: {
       </div>
       {hunkError !== null ? <p className="mt-4 text-warn">{hunkError}</p> : null}
       {loading ? (
-        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card shadow-card">
+        <article className="mt-8 overflow-hidden rounded-lg border border-border bg-card">
           <WaitMark label={waitCopy.group} />
         </article>
       ) : null}
@@ -128,14 +129,24 @@ export function Group(props: {
       ) : null}
 
       {!loading && files.length > 0 ? (
-        narrow ? (
-          <FileStrip files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk}>
-            {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
-          </FileStrip>
+        multi ? (
+          narrow ? (
+            <FileStrip files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk}>
+              {fileNodes}
+            </FileStrip>
+          ) : (
+            <FileRail
+              files={files}
+              activeHunk={activeHunk}
+              viewedPaths={viewedPaths}
+              onSelect={props.onScrollToHunk}
+              onViewed={props.onViewed}
+            >
+              {fileNodes}
+            </FileRail>
+          )
         ) : (
-          <FileRail files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk} onViewed={props.onViewed}>
-            {files.map((file) => renderFile(file, activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount))}
-          </FileRail>
+          <div className="mt-4">{fileNodes}</div>
         )
       ) : null}
     </>

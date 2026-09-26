@@ -14,7 +14,7 @@ import { LookForList } from "./LookForList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Brief(props: {
-  kicker?: string;
+  kicker?: ReactNode;
   title: string;
   children?: ReactNode;
   className?: string;

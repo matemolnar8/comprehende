@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
+import { InfoIcon } from "lucide-react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { claimsFromLookFor } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
-import { readingStatus } from "../lib/reading-progress.ts";
+import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
@@ -14,6 +15,26 @@ import { BriefField, briefProse } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
 import { SourceList } from "./SourceList.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+
+function SkippedFiles(props: { paths: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label="Skipped files"
+          className="ml-1.5 inline-flex size-3.5 translate-y-px items-center justify-center border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
+        >
+          <InfoIcon aria-hidden className="size-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs border border-border bg-popover px-3 py-2 font-mono text-[11px] leading-[1.45] text-popover-foreground shadow-card">
+        Skipped: {props.paths}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function Overview(props: {
   meta: ReviewMeta;
@@ -27,11 +48,18 @@ export function Overview(props: {
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
   const sources = meta.document.sources ?? [];
+  const fileCount = reviewReadingPaths(meta).length;
+  const skipped = skippedBinaryNote(meta.skipped);
 
   return (
     <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       <Brief
-        kicker={`${sizeLabel(meta.document.size)} · ${meta.files.length} files`}
+        kicker={
+          <>
+            {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
+            {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
+          </>
+        }
         title={meta.document.title}
         kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
       >
@@ -163,6 +191,6 @@ function partStyle(color: string): CSSProperties {
     "--strand": color,
     borderLeftWidth: 3,
     borderLeftColor: color,
-    backgroundColor: `color-mix(in srgb, ${color} 8%, var(--card))`,
+    backgroundColor: `color-mix(in srgb, ${color} 5%, var(--card))`,
   } as CSSProperties;
 }

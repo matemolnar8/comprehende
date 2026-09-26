@@ -1,9 +1,13 @@
 import type { Source } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
+import { SOURCE_KIND_ICON, SOURCE_KIND_LABEL } from "../lib/source-display.ts";
 import { useSources } from "../lib/sources-context.tsx";
+import type { Selection } from "../lib/selection.ts";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { BriefField, briefRows } from "./Kicker.tsx";
+
+const gistText = "block text-pretty leading-[1.45] text-foreground";
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -30,55 +34,103 @@ export function SourceList(props: {
   return (
     <BriefField kicker="Sources" className={className}>
       <ul className={briefRows}>
-        {rows.map((source) => {
-          const strand = mixed ? parts.find((part) => part.title === source.part) : undefined;
-          const detail = source.gist ?? source.title;
-          const jump =
-            onOpenSource !== undefined &&
-            selectionForSource !== undefined &&
-            (source.url === undefined || detail !== undefined);
-          return (
-            <li key={source.id} className="flex min-w-0 items-baseline gap-2 py-1 leading-[1.45]">
-              {strand !== undefined ? (
-                <span
-                  aria-hidden
-                  className="mt-[0.3em] size-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: partColor(strand.colorIndex) }}
-                />
-              ) : null}
-              {source.url !== undefined ? (
-                <a
-                  className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}
-                  href={source.url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {source.label}
-                </a>
-              ) : jump ? null : (
-                <span className="max-w-[40%] shrink-0 truncate text-foreground">{source.label}</span>
-              )}
-              {jump ? (
-                <HashLink
-                  selection={selectionForSource(source)}
-                  onSelect={() => onOpenSource(source)}
-                  className="flex min-w-0 flex-1 items-baseline gap-2"
-                  ariaLabel={`Open ${source.label} in the review`}
-                >
-                  {source.url === undefined ? (
-                    <span className={cn("max-w-[40%] shrink-0 truncate text-foreground", hashLinkText)}>{source.label}</span>
-                  ) : null}
-                  {detail !== undefined ? (
-                    <span className="min-w-0 flex-1 text-pretty font-normal text-muted-foreground">{detail}</span>
-                  ) : null}
-                </HashLink>
-              ) : detail !== undefined ? (
-                <span className="min-w-0 flex-1 text-pretty text-muted-foreground">{detail}</span>
-              ) : null}
-            </li>
-          );
-        })}
+        {rows.map((source) => (
+          <SourceRow
+            key={source.id}
+            source={source}
+            strand={mixed ? parts.find((part) => part.title === source.part) : undefined}
+            onOpenSource={onOpenSource}
+            selectionForSource={selectionForSource}
+          />
+        ))}
       </ul>
     </BriefField>
+  );
+}
+
+function SourceRow(props: {
+  source: Source;
+  strand: Part | undefined;
+  onOpenSource: ((source: Source) => void) | undefined;
+  selectionForSource: ((source: Source) => Selection) | undefined;
+}) {
+  const { source, strand, onOpenSource, selectionForSource } = props;
+  const detail = source.gist ?? source.title;
+  const jump =
+    onOpenSource !== undefined &&
+    selectionForSource !== undefined &&
+    (source.url === undefined || detail !== undefined);
+  const meta = <SourceMeta source={source} strand={strand} showName={detail !== undefined} />;
+
+  if (jump && source.url === undefined) {
+    return (
+      <li className="py-2">
+        <HashLink
+          selection={selectionForSource(source)}
+          onSelect={() => onOpenSource(source)}
+          className="block min-w-0"
+          ariaLabel={`Open ${source.label} in the review`}
+        >
+          <span className={cn(gistText, hashLinkText)}>{detail ?? source.label}</span>
+          {meta}
+        </HashLink>
+      </li>
+    );
+  }
+
+  return (
+    <li className="py-2">
+      {detail !== undefined && jump ? (
+        <HashLink
+          selection={selectionForSource(source)}
+          onSelect={() => onOpenSource(source)}
+          className={cn(gistText, hashLinkText)}
+          ariaLabel={`Open ${source.label} in the review`}
+        >
+          {detail}
+        </HashLink>
+      ) : detail !== undefined ? (
+        <span className={gistText}>{detail}</span>
+      ) : source.url !== undefined ? (
+        <a className={cn(gistText, hashLinkText)} href={source.url} target="_blank" rel="noreferrer">
+          {source.label}
+        </a>
+      ) : (
+        <span className={gistText}>{source.label}</span>
+      )}
+      {meta}
+    </li>
+  );
+}
+
+function SourceMeta(props: { source: Source; strand: Part | undefined; showName: boolean }) {
+  const { source, strand, showName } = props;
+  const KindIcon = SOURCE_KIND_ICON[source.kind];
+  return (
+    <span className="mt-1 flex min-w-0 items-center gap-1.5 text-xs leading-[1.45] text-muted-foreground">
+      {strand !== undefined ? (
+        <span
+          aria-hidden
+          className="size-2 shrink-0 rounded-full"
+          style={{ backgroundColor: partColor(strand.colorIndex) }}
+        />
+      ) : null}
+      <KindIcon aria-hidden className="size-3.5 shrink-0" />
+      <span className="shrink-0">{SOURCE_KIND_LABEL[source.kind]}</span>
+      {showName ? (
+        <>
+          <span aria-hidden className="shrink-0">
+            ·
+          </span>
+          {source.url !== undefined ? (
+            <a className={cn("min-w-0 truncate", hashLinkText)} href={source.url} target="_blank" rel="noreferrer">
+              {source.label}
+            </a>
+          ) : (
+            <span className="min-w-0 truncate">{source.label}</span>
+          )}
+        </>
+      ) : null}
+    </span>
   );
 }

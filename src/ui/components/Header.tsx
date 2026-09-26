@@ -8,7 +8,6 @@ import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
-import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
@@ -37,7 +36,6 @@ export function Header(props: {
       <div className="flex min-w-0 items-center gap-4">
         <Logo />
         <Range resolved={meta.resolved} />
-        <Coverage meta={meta} />
         <ReadingMark paths={reviewReadingPaths(meta)} viewed={props.viewedPaths} noun className="mt-0" />
         {meta.groups.length > 0 ? (
           <div className="flex items-center gap-1">
@@ -49,7 +47,7 @@ export function Header(props: {
           </div>
         ) : null}
       </div>
-      <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -201,26 +199,3 @@ export function ThemeToggle(props: { system?: ReactNode }) {
   );
 }
 
-function Coverage(props: { meta: ReviewMeta }) {
-  const { meta } = props;
-  const incomplete =
-    meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0 || meta.coverage.staleSourceCount > 0;
-  const detail = [
-    `${meta.coverage.assignedHunks} of ${meta.coverage.totalHunks} hunks grouped`,
-    meta.coverage.unassignedCount > 0 ? `${meta.coverage.unassignedCount} unassigned` : null,
-    meta.coverage.staleCount > 0 ? `${meta.coverage.staleCount} stale` : null,
-    meta.coverage.staleSourceCount > 0 ? `${meta.coverage.staleSourceCount} stale comment pins` : null,
-  ]
-    .filter((part) => part !== null)
-    .join(" · ");
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className={cn("shrink-0 font-mono text-xs tabular-nums", incomplete ? "text-warn" : "text-muted-foreground")}>
-          {meta.coverage.assignedHunks}/{meta.coverage.totalHunks}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{detail}</TooltipContent>
-    </Tooltip>
-  );
-}

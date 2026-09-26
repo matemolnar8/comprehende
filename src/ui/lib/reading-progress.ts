@@ -63,3 +63,12 @@ export function reviewReadingPaths(review: {
   }
   return paths;
 }
+
+/** Binary paths git skipped. Null when nothing was skipped. */
+export function skippedBinaryNote(skipped: readonly { path: string; reason: string }[]): string | null {
+  const paths = skipped.flatMap((file) => (file.reason === "binary" ? [file.path] : []));
+  if (paths.length === 0) {
+    return null;
+  }
+  return paths.join(", ");
+}
