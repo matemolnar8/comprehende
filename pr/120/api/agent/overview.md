@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 85ce2e531e3d02f615ca887bcdf3ebf762faee8b` in this repository.
+   Run `git rev-parse --verify 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3` and `git rev-parse --verify 6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  732a01b08eaa2f79562ea4e2ef76e38c9d92eee3
 
-head               85ce2e531e3d02f615ca887bcdf3ebf762faee8b
+head               6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 85ce2e531e3d02f615ca887bcdf3ebf762faee8b
+git diff --find-renames 732a01b08eaa2f79562ea4e2ef76e38c9d92eee3 6e9be6a93e1c6c0a1b7ba05479fcd609abccc3ec
 
 Commits:
+- 6e9be6a Put brief field names above their text.
 - 85ce2e5 Lead each source with its text, and put the kind and name under it.
 - 21d6424 Hide skipped binaries behind an info card on the overview kicker.
 - d8658c1 Drop the hunk count, give sources the brief width, and round hunk blocks.
@@ -57,7 +58,7 @@ Why, What, and Look for stop near 68 characters. A source shows its text first. 
 
 ### 01 Brief, sources, and the file count (`brief`)
 
-The brief measure wraps Why, What, and Look for. A source shows its text first. The kind and the name sit under that text. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is named in an info card on that kicker.
+The brief measure wraps Why, What, and Look for. Each field name sits above its text. A source shows its text first. The kind and the name sit under that text. The overview kicker and the header reading mark both use the grouped file paths. A skipped binary is named in an info card on that kicker.
 
 [groups/brief.md](groups/brief.md)
 
