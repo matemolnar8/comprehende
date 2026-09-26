@@ -2,7 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { CheckIcon, ChevronRightIcon, FileIcon } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
-import { fileBasename, fileDirname, readStoredRailCollapsed, writeStoredRailCollapsed } from "../lib/file-nav.ts";
+import {
+  fileBasename,
+  fileDirname,
+  initialRailCollapsed,
+  RAIL_NARROW_QUERY,
+  readStoredRailCollapsed,
+  writeStoredRailCollapsed,
+} from "../lib/file-nav.ts";
 import { fileIndexAtHunk } from "../lib/group-files.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import { readingStatus } from "../lib/reading-progress.ts";
@@ -45,7 +52,7 @@ export function FileStrip(props: {
           })}
         </ul>
       </nav>
-      <div className="space-y-5">{props.children}</div>
+      <div className="flex flex-col">{props.children}</div>
     </div>
   );
 }
@@ -87,19 +94,25 @@ export function FileRail(props: {
   const reading = readingStatus(filePaths, viewedPaths);
   const railRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState(() => {
+    let search = "";
     try {
-      const q = new URLSearchParams(window.location.search).get("rail");
-      if (q === "collapsed") return true;
-      if (q === "open") return false;
+      search = window.location.search;
     } catch {
-      // ignore malformed query, fall back to stored value
+      // ignore a missing location
     }
+    let stored: boolean | null = null;
     try {
-      return readStoredRailCollapsed();
+      stored = readStoredRailCollapsed();
     } catch {
-      // private mode: fall back to expanded
-      return false;
+      // private mode: no stored choice
     }
+    let narrowRail = false;
+    try {
+      narrowRail = window.matchMedia(RAIL_NARROW_QUERY).matches;
+    } catch {
+      // no matchMedia: stay expanded
+    }
+    return initialRailCollapsed(search, stored, narrowRail);
   });
 
   const toggle = () => {
@@ -128,7 +141,7 @@ export function FileRail(props: {
   if (collapsed) {
     return (
       <div className="mt-4 flex min-h-0 gap-0 max-sm:flex-col">
-        <div className="min-w-0 flex-1 space-y-8">{props.children}</div>
+        <div className="min-w-0 flex-1">{props.children}</div>
         <div className="sticky top-4 flex h-[calc(100vh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3" style={{ width: "44px" }}>
           <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Expand file list" onClick={toggle}>
             <ChevronRightIcon className="size-4 rotate-180" />
@@ -142,14 +155,14 @@ export function FileRail(props: {
   }
 
   return (
-    <div className="mt-4 flex min-h-0 gap-6 max-sm:flex-col">
-      <div className="min-w-0 flex-1 space-y-8">{props.children}</div>
+    <div className="mt-4 flex min-h-0 gap-3 max-sm:flex-col">
+      <div className="min-w-0 flex-1">{props.children}</div>
       <nav
         ref={railRef}
         aria-label={reading === null ? "Files in group" : `Files in group, ${reading.filesLabel}`}
-        className="flex h-[calc(100vh-7rem)] w-[300px] shrink-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-card sticky top-4 self-start max-lg:w-[240px] max-sm:w-full max-sm:h-auto max-sm:max-h-[40vh]"
+        className="sticky top-4 flex h-[calc(100vh-7rem)] w-[13rem] shrink-0 flex-col self-start overflow-hidden rounded-lg border border-border bg-card shadow-card max-[1099px]:w-[11rem] max-sm:h-auto max-sm:max-h-[40vh] max-sm:w-full"
       >
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+        <div className="flex items-center gap-2 border-b border-border px-2 py-1.5">
           <p className="flex-1 font-mono text-[11px] tabular-nums text-muted-foreground">
             {reading === null ? null : <ReadingMark paths={filePaths} viewed={viewedPaths} noun className="mt-0" />}
           </p>
@@ -158,7 +171,7 @@ export function FileRail(props: {
           </Button>
         </div>
         <div className="flex-1 overflow-auto py-2">
-          <ul className="space-y-0.5 px-2">
+          <ul className="space-y-0.5 px-1">
             {files.map((file, i) => {
               const viewed = viewedPaths.has(file.path);
               const active = i === activeIndex;
@@ -168,7 +181,7 @@ export function FileRail(props: {
                     data-rail={i}
                     onClick={() => props.onSelect(file.firstIndex)}
                     className={cn(
-                      "flex w-full items-start gap-2.5 rounded-md px-2.5 py-2 text-left transition-colors",
+                      "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors",
                       active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >

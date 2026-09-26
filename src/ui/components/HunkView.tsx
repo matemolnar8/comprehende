@@ -90,97 +90,108 @@ export function HunkView(props: {
     setCollapsed((value) => !value);
   };
 
+  const relocationBadge =
+    word !== undefined ? (
+      <Badge variant="outline" className="font-normal">
+        {word}
+        {file.relocation?.similarity !== undefined ? (
+          <span className="font-mono font-normal tabular-nums text-muted-foreground">{file.relocation.similarity}%</span>
+        ) : null}
+      </Badge>
+    ) : null;
+  const symbolBadges = symbols.map((name) => (
+    <Badge key={name} variant="outline" className="font-mono font-normal">
+      {name}
+    </Badge>
+  ));
+  const hasChips = relocationBadge !== null || symbolBadges.length > 0;
+
   return (
     <article
-      className={cn(
-        "overflow-hidden rounded-lg border bg-card shadow-card transition-[border-color]",
-        motion,
-        active ? "border-primary" : "border-border",
-      )}
+      className={cn("min-w-0 border-t bg-card", active ? "border-t-2 border-primary" : "border-border")}
       data-hunk={index}
     >
       <header
         className={cn(
-          "sticky top-0 z-10 flex flex-wrap items-center gap-x-3 gap-y-1 bg-card px-3 py-2",
+          "sticky top-0 z-10 bg-card px-3 py-2",
           pure ? null : "cursor-pointer",
           collapsed || pure ? null : "border-b border-border",
         )}
         onClick={pure ? undefined : toggleCollapsed}
       >
-        {pure ? null : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="size-6"
-            aria-expanded={!collapsed}
-            aria-controls={bodyId}
-            aria-label={collapsed ? "Expand file" : "Collapse file"}
-            onClick={() => setCollapsed((value) => !value)}
-          >
-            <ChevronDownIcon className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")} />
-          </Button>
-        )}
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <div className="flex min-w-0 items-center gap-3">
+          {pure ? null : (
             <Button
               type="button"
-              variant="link"
-              className={cn("h-auto p-0 font-mono text-sm transition-colors", motion, viewed && "text-muted-foreground")}
-              onClick={() => onOpen(file.path)}
+              variant="ghost"
+              size="icon-sm"
+              className="size-6"
+              aria-expanded={!collapsed}
+              aria-controls={bodyId}
+              aria-label={collapsed ? "Expand file" : "Collapse file"}
+              onClick={() => setCollapsed((value) => !value)}
             >
-              {label}
+              <ChevronDownIcon className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")} />
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Open file</TooltipContent>
-        </Tooltip>
-        {word !== undefined ? (
-          <Badge variant="outline" className="font-normal">
-            {word}
-            {file.relocation?.similarity !== undefined ? (
-              <span className="font-mono font-normal tabular-nums text-muted-foreground">{file.relocation.similarity}%</span>
-            ) : null}
-          </Badge>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="link"
+                className={cn(
+                  "h-auto min-w-0 flex-1 justify-start truncate p-0 text-left font-mono text-sm transition-colors",
+                  motion,
+                  viewed && "text-muted-foreground",
+                )}
+                onClick={() => onOpen(file.path)}
+              >
+                {label}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Open file</TooltipContent>
+          </Tooltip>
+          <div className="ml-auto flex shrink-0 items-center gap-3">
+            {pure ? null : (
+              <code className="font-mono text-xs text-muted-foreground">
+                {file.kind === "image"
+                  ? "image"
+                  : file.kind === "lockfile"
+                    ? "lockfile"
+                    : file.hunkCount === 1 && first !== undefined
+                      ? hunkRangeLabel(first.header)
+                      : `${file.hunkCount} hunks`}
+              </code>
+            )}
+            {file.kind === "image" && word === undefined ? (
+              <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
+            ) : file.kind === "image" || pure ? null : (
+              <span className="font-mono text-[11px] tabular-nums">
+                <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+              </span>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none">
+                  <input
+                    type="checkbox"
+                    className="size-3.5 accent-primary"
+                    checked={viewed}
+                    onChange={(event) => onViewed(file.path, event.target.checked)}
+                  />
+                  <span className="max-[799px]:hidden">Viewed</span>
+                </label>
+              </TooltipTrigger>
+              <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+        {hasChips ? (
+          <div className={cn("mt-1.5 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
+            {relocationBadge}
+            {symbolBadges}
+          </div>
         ) : null}
-        {pure ? null : (
-          <code className="font-mono text-xs text-muted-foreground">
-            {file.kind === "image"
-              ? "image"
-              : file.kind === "lockfile"
-                ? "lockfile"
-                : file.hunkCount === 1 && first !== undefined
-                  ? hunkRangeLabel(first.header)
-                  : `${file.hunkCount} hunks`}
-          </code>
-        )}
-        {file.kind === "image" && word === undefined ? (
-          <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
-        ) : file.kind === "image" || pure ? null : (
-          <span className="font-mono text-[11px] tabular-nums">
-            <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
-          </span>
-        )}
-        {symbols.length > 0
-          ? symbols.map((name) => (
-              <Badge key={name} variant="outline" className="font-mono font-normal">
-                {name}
-              </Badge>
-            ))
-          : null}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <label className="ml-auto flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none">
-              <input
-                type="checkbox"
-                className="size-3.5 accent-primary"
-                checked={viewed}
-                onChange={(event) => onViewed(file.path, event.target.checked)}
-              />
-              <span className="max-[799px]:hidden">Viewed</span>
-            </label>
-          </TooltipTrigger>
-          <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>
-        </Tooltip>
       </header>
       {pure ? null : (
         <div id={bodyId} hidden={collapsed}>

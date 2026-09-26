@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { claimsFromLookFor } from "../lib/look-for.ts";
 import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
-import { readingStatus } from "../lib/reading-progress.ts";
+import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink } from "./HashLink.tsx";
@@ -27,11 +27,18 @@ export function Overview(props: {
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
   const sources = meta.document.sources ?? [];
+  const fileCount = reviewReadingPaths(meta).length;
+  const skipped = skippedBinaryNote(meta.skipped);
 
   return (
     <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
       <Brief
-        kicker={`${sizeLabel(meta.document.size)} · ${meta.files.length} files`}
+        kicker={
+          <>
+            {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
+            {skipped !== null ? <span className="text-muted-foreground/70"> · {skipped}</span> : null}
+          </>
+        }
         title={meta.document.title}
         kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
       >
@@ -163,6 +170,6 @@ function partStyle(color: string): CSSProperties {
     "--strand": color,
     borderLeftWidth: 3,
     borderLeftColor: color,
-    backgroundColor: `color-mix(in srgb, ${color} 8%, var(--card))`,
+    backgroundColor: `color-mix(in srgb, ${color} 5%, var(--card))`,
   } as CSSProperties;
 }

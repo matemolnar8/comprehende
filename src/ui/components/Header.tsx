@@ -2,13 +2,12 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { copyText } from "../lib/copy-text.ts";
-import { reviewReadingPaths } from "../lib/reading-progress.ts";
+import { reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
 import { reviewRef } from "../lib/review-ref.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
-import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
@@ -37,7 +36,6 @@ export function Header(props: {
       <div className="flex min-w-0 items-center gap-4">
         <Logo />
         <Range resolved={meta.resolved} />
-        <Coverage meta={meta} />
         <ReadingMark paths={reviewReadingPaths(meta)} viewed={props.viewedPaths} noun className="mt-0" />
         {meta.groups.length > 0 ? (
           <div className="flex items-center gap-1">
@@ -49,7 +47,7 @@ export function Header(props: {
           </div>
         ) : null}
       </div>
-      <div className="flex flex-wrap items-center gap-2 min-[800px]:justify-end">
+      <div className="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -126,6 +124,7 @@ export function Header(props: {
           </TooltipTrigger>
           <TooltipContent>{busy ? waitCopy.review : "Reload review"}</TooltipContent>
         </Tooltip>
+        <Coverage meta={meta} />
       </div>
     </header>
   );
@@ -205,22 +204,20 @@ function Coverage(props: { meta: ReviewMeta }) {
   const { meta } = props;
   const incomplete =
     meta.coverage.unassignedCount > 0 || meta.coverage.staleCount > 0 || meta.coverage.staleSourceCount > 0;
+  const hunks = meta.coverage.totalHunks === 1 ? "hunk" : "hunks";
   const detail = [
-    `${meta.coverage.assignedHunks} of ${meta.coverage.totalHunks} hunks grouped`,
+    `${meta.coverage.assignedHunks} of ${meta.coverage.totalHunks} ${hunks} grouped`,
     meta.coverage.unassignedCount > 0 ? `${meta.coverage.unassignedCount} unassigned` : null,
     meta.coverage.staleCount > 0 ? `${meta.coverage.staleCount} stale` : null,
     meta.coverage.staleSourceCount > 0 ? `${meta.coverage.staleSourceCount} stale comment pins` : null,
   ]
     .filter((part) => part !== null)
     .join(" · ");
+  const skipped = skippedBinaryNote(meta.skipped);
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className={cn("shrink-0 font-mono text-xs tabular-nums", incomplete ? "text-warn" : "text-muted-foreground")}>
-          {meta.coverage.assignedHunks}/{meta.coverage.totalHunks}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{detail}</TooltipContent>
-    </Tooltip>
+    <p className="m-0 flex shrink-0 items-baseline gap-2 text-right font-mono text-xs">
+      <span className={incomplete ? "text-warn" : "text-muted-foreground"}>{detail}</span>
+      {skipped !== null ? <span className="text-muted-foreground">{skipped}</span> : null}
+    </p>
   );
 }

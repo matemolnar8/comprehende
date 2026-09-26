@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { readingCounts, readingStatus, reviewReadingPaths } from "./reading-progress.ts";
+import { readingCounts, readingStatus, reviewReadingPaths, skippedBinaryNote } from "./reading-progress.ts";
 
 describe("reading progress", () => {
   it("counts unique paths and ignores marks outside the list", () => {
@@ -40,5 +40,16 @@ describe("reading progress", () => {
       }),
       ["a.ts", "b.ts", "c.ts", "package-lock.json"],
     );
+  });
+
+  it("names skipped binaries and ignores other skip reasons", () => {
+    assert.equal(
+      skippedBinaryNote([
+        { path: "assets/dot.bin", reason: "binary" },
+        { path: "pnpm-lock.yaml", reason: "lockfile" },
+      ]),
+      "assets/dot.bin skipped",
+    );
+    assert.equal(skippedBinaryNote([{ path: "pnpm-lock.yaml", reason: "lockfile" }]), null);
   });
 });
