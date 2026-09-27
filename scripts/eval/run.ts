@@ -16,6 +16,7 @@ import { EVAL_USAGE, parseEvalArgv } from "./args.ts";
 import type { AgentKind } from "./constants.ts";
 import { listEvalCases, selectEvalCases, type EvalCase } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
+import { probeCursorAgent } from "./fallback.ts";
 import {
   addDetachedWorktree,
   CASE_BUNDLE,
@@ -56,12 +57,16 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   const apiKey = process.env.CURSOR_API_KEY ?? "";
   const musecodeKey = process.env.MUSE_CODE_API_KEY ?? "";
+  let producerAgent = request.producerAgent;
+  let graderAgent = request.graderAgent;
+  const gradersOn = rescoreDir === undefined && request.graders;
+  const fallbackArmed =
+    request.cursorFallback && rescoreDir === undefined && (producerAgent === "cursor" || (gradersOn && graderAgent === "cursor"));
   const needsCursor =
-    rescoreDir === undefined &&
-    (request.producerAgent === "cursor" || (request.graders && request.graderAgent === "cursor"));
+    rescoreDir === undefined && (producerAgent === "cursor" || (gradersOn && graderAgent === "cursor"));
   const needsMusecode =
-    rescoreDir === undefined &&
-    (request.producerAgent === "musecode" || (request.graders && request.graderAgent === "musecode"));
+    fallbackArmed ||
+    (rescoreDir === undefined && (producerAgent === "musecode" || (gradersOn && graderAgent === "musecode")));
   if (needsCursor && apiKey === "") {
     console.error("CURSOR_API_KEY is not set");
     return 1;
@@ -69,6 +74,21 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   if (needsMusecode && musecodeKey === "") {
     console.error("MUSE_CODE_API_KEY is not set");
     return 1;
+  }
+  if (fallbackArmed) {
+    const probe = await probeCursorAgent({ apiKey, model: request.graderModel, cwd: packageRoot });
+    if (!probe.ok) {
+      const roles: string[] = [];
+      if (producerAgent === "cursor") {
+        producerAgent = "musecode";
+        roles.push("producer");
+      }
+      if (gradersOn && graderAgent === "cursor") {
+        graderAgent = "musecode";
+        roles.push("grader");
+      }
+      console.error(`cursor probe failed (${probe.reason}); running ${roles.join(" and ")} in Muse Code instead`);
+    }
   }
   const casesDir = join(packageRoot, "eval/cases");
   const selected = selectEvalCases(await listEvalCases(casesDir), { ids: request.ids, tag: request.tag });
@@ -84,11 +104,11 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const summary: RunSummary = {
     stamp,
     skillTree,
-    producerModel: request.producerAgent === "musecode" ? request.musecodeModel : request.producerModel,
-    graderModel: request.graderAgent === "musecode" ? request.musecodeModel : request.graderModel,
-    producerAgent: request.producerAgent,
-    graderAgent: request.graderAgent,
-    graders: rescoreDir === undefined && request.graders,
+    producerModel: producerAgent === "musecode" ? request.musecodeModel : request.producerModel,
+    graderModel: graderAgent === "musecode" ? request.musecodeModel : request.graderModel,
+    producerAgent,
+    graderAgent,
+    graders: gradersOn,
     cases: [],
   };
   for (const item of selected) {
@@ -100,10 +120,10 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       skillMd,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
-      producerAgent: request.producerAgent,
-      graderAgent: request.graderAgent,
+      producerAgent,
+      graderAgent,
       musecodeModel: request.musecodeModel,
-      graders: rescoreDir === undefined && request.graders,
+      graders: gradersOn,
       sandbox: request.sandbox,
       apiKey,
       musecodeKey,

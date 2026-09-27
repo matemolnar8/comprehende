@@ -21,11 +21,12 @@ Options:
   --producer-agent <kind> Default cursor. musecode runs the producer in Muse Code
   --grader-agent <kind>    Default cursor. musecode runs the graders in Muse Code
   --musecode-model <id>   Default ${DEFAULT_MUSECODE_MODEL}. Used when an agent is musecode
+  --cursor-fallback       Probe Cursor first; on any Cursor error run cursor roles in Muse Code
   --no-graders            Skip grouping and prose graders
   --sandbox               Enable local sandboxOptions (cursor agents only)
   -h, --help
 
-Needs CURSOR_API_KEY unless --rescore, plus MUSE_CODE_API_KEY when an agent is musecode. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs CURSOR_API_KEY unless --rescore, plus MUSE_CODE_API_KEY when an agent is musecode or --cursor-fallback is set. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -53,6 +54,7 @@ export type EvalRunRequest =
       producerAgent: AgentKind;
       graderAgent: AgentKind;
       musecodeModel: string;
+      cursorFallback: boolean;
       graders: boolean;
       sandbox: boolean;
       rescore?: string;
@@ -77,6 +79,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let producerAgent: AgentKind = "cursor";
     let graderAgent: AgentKind = "cursor";
     let musecodeModel = DEFAULT_MUSECODE_MODEL;
+    let cursorFallback = false;
     let json = false;
     let sandbox = false;
     let graders = true;
@@ -96,6 +99,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       if (arg === "--no-graders") {
         graders = false;
+        continue;
+      }
+      if (arg === "--cursor-fallback") {
+        cursorFallback = true;
         continue;
       }
       if (
@@ -148,6 +155,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       producerAgent,
       graderAgent,
       musecodeModel,
+      cursorFallback,
       graders,
       sandbox,
       rescore,
