@@ -52,6 +52,9 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           MUSE_LAUNCHER_INSTALL=1 ~/.local/bin/muse
           ~/.local/bin/muse --version
+      # The Cursor SDK calls configureRipgrepPath when rg is on PATH. ubuntu-latest has none.
+      - name: Install ripgrep
+        run: sudo apt-get install -y ripgrep
       - name: Full graded eval
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
