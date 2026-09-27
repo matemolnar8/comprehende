@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 27f174fed5f90101139e7e11a6f25cadcf032d99` and `git rev-parse --verify fc810024da4c98cba58061aafa6fa182a580aef2` in this repository.
+   Run `git rev-parse --verify 27f174fed5f90101139e7e11a6f25cadcf032d99` and `git rev-parse --verify 31a825ef7d45ac4e658f3047c06d451b03623ad2` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,36 +24,37 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  27f174fed5f90101139e7e11a6f25cadcf032d99
 
-head               fc810024da4c98cba58061aafa6fa182a580aef2
+head               31a825ef7d45ac4e658f3047c06d451b03623ad2
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 27f174fed5f90101139e7e11a6f25cadcf032d99 fc810024da4c98cba58061aafa6fa182a580aef2
+git diff --find-renames 27f174fed5f90101139e7e11a6f25cadcf032d99 31a825ef7d45ac4e658f3047c06d451b03623ad2
 
 Commits:
+- 31a825e Install ripgrep in the eval workflow
 - fc81002 Point Cursor eval agents at the bundled ripgrep
 
 Sources:
-- transcript Cursor session · Sep 27 Remove the Cursor SDK ripgrep error during eval by configuring the rg path at startup.
+- transcript Cursor session · Sep 27 Install ripgrep in the eval workflow if the SDK finds rg on PATH, and drop the resolver.
 
 The title:
 
-Configure ripgrep for Cursor eval agents
+Install ripgrep for the eval workflow
 
 The why:
 
-Eval runs print Ripgrep path not configured from the Cursor SDK. [The request](source:s1) asks to set that path at startup.
+The package walk is heavier than this repo wants. [The request](source:s1) asks to install ripgrep in the eval workflow when the SDK finds rg on PATH.
 
-The what (small):
+The what (trivial):
 
-Cursor eval runs set CURSOR_RIPGREP_PATH to the SDK platform package rg before Agent.create, so ignore scans can start ripgrep.
+The eval workflow installs ripgrep before the graded run so the Cursor SDK can find rg on PATH.
 
 ## Review concerns
 
-### 01 Bundled ripgrep at SDK startup (`ripgrep`)
+### 01 Ripgrep on the eval runner (`ripgrep`)
 
-runLocalAgent sets CURSOR_RIPGREP_PATH to the platform package rg, and the unit test checks that binary.
+The workflow runs sudo apt-get install -y ripgrep before the graded eval.
 
 [groups/ripgrep.md](groups/ripgrep.md)
