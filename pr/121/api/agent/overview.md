@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 828059462124f776a8c04caf44e08f150f14bf76` and `git rev-parse --verify 5d029c38c740e96de87bfffcade76effe1b3a55f` in this repository.
+   Run `git rev-parse --verify 828059462124f776a8c04caf44e08f150f14bf76` and `git rev-parse --verify e8e77dd12ae08febf6bf96d94a7ad953c901de47` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,36 +24,43 @@ Origin: https://github.com/matemolnar8/comprehende
 
 base (merge-base)  828059462124f776a8c04caf44e08f150f14bf76
 
-head               5d029c38c740e96de87bfffcade76effe1b3a55f
+head               e8e77dd12ae08febf6bf96d94a7ad953c901de47
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 828059462124f776a8c04caf44e08f150f14bf76 5d029c38c740e96de87bfffcade76effe1b3a55f
+git diff --find-renames 828059462124f776a8c04caf44e08f150f14bf76 e8e77dd12ae08febf6bf96d94a7ad953c901de47
 
 Commits:
+- e8e77dd Skill: state large size without this repo's layers
 - 5d029c3 Skill: a cross-layer contract stays large when groups merge
 
 Sources:
-- transcript Cursor session · Sep 26 Eval run 36224503332 failed only on comprehende-47 size: expected large or very-large, got medium, with 4 groups.
+- transcript Cursor session · Sep 26 comprehende-47 was medium with four groups. The size example must not name this repo's checks, UI, or instructions.
 
 The title:
 
-Keep a cross-layer contract large
+Keep size guidance general
 
 The why:
 
-[The eval on main](source:s1) failed because comprehende-47 was medium. The hand-written outcome for that case says large.
+[The eval](source:s1) scored a new contract medium when its groups were merged. The size rule has to say that for any repository.
 
 The what (small):
 
-The size rule now calls a contract that the checks, the UI, and the instructions all use large, even when those layers share fewer groups.
+A new contract that later groups depend on stays large when those groups merge. The project rule keeps this repo's layers out of skill examples.
 
 ## Review concerns
 
-### 01 Size rule for a cross-layer contract (`size-rule`)
+### 01 Size stays large when groups merge (`size-rule`)
 
-`skills-next` says that contract is large, and the `.agents` copy is identical.
+`skills-next` says a contract later groups depend on is large, and the `.agents` copy is identical.
 
 [groups/size-rule.md](groups/size-rule.md)
+
+### 02 Skill examples stay general (`skill-examples`)
+
+`AGENTS.md` tells skill authors to write rules that fit any repository.
+
+[groups/skill-examples.md](groups/skill-examples.md)

@@ -33,16 +33,15 @@ Read the diff:
 
 git diff --find-renames 828059462124f776a8c04caf44e08f150f14bf76 e8e77dd12ae08febf6bf96d94a7ad953c901de47
 
-Review concern 01 of 02: Size stays large when groups merge (`size-rule`)
+Review concern 02 of 02: Skill examples stay general (`skill-examples`)
 
 The why:
 
-[Four groups](source:s1) were scored medium. The same contract with more groups was large.
+[Later edits](source:s1) must not put this repo's layers into a rule that reviews any diff.
 
 The what:
 
-`skills-next` says a contract later groups depend on is large, and the `.agents` copy is identical.
+`AGENTS.md` tells skill authors to write rules that fit any repository.
 
 Hunk refs for this concern:
-- skills-next/comprehende/SKILL.md
-- .agents/skills/comprehende/SKILL.md
+- AGENTS.md
