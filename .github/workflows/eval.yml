@@ -41,7 +41,9 @@ jobs:
           install: false
       - run: pnpm install --frozen-lockfile
       - name: Install Muse Code (Cursor fallback)
-        if: secrets.MUSE_CODE_API_KEY != ''
+        env:
+          MUSE_CODE_API_KEY: ${{ secrets.MUSE_CODE_API_KEY }}
+        if: env.MUSE_CODE_API_KEY != ''
         run: |
           set -euo pipefail
           mkdir -p ~/.local/bin
