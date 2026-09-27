@@ -34,6 +34,8 @@ describe("eval HTML report", () => {
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
       producerModel: "composer-2.5",
       graderModel: "grok-4.6",
+      producerAgent: "cursor",
+      graderAgent: "cursor",
       graders: true,
       cases: [
         caseResult({
@@ -68,8 +70,8 @@ describe("eval HTML report", () => {
     };
     const html = evalReportHtml(summary);
     assert.match(html, /1 of 2 cases failed deterministic checks/);
-    assert.match(html, /producer composer-2\.5/);
-    assert.match(html, /grader grok-4\.6/);
+    assert.match(html, /producer cursor:composer-2\.5/);
+    assert.match(html, /grader cursor:grok-4\.6/);
     assert.match(html, /skill 963f606/);
     assert.match(html, /expected why absent, got present/);
     assert.match(html, /\.\/comprehende-50\/site\/index.html/);
@@ -86,6 +88,8 @@ describe("eval HTML report", () => {
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
       producerModel: "composer-2.5",
       graderModel: "grok-4.6",
+      producerAgent: "cursor",
+      graderAgent: "cursor",
       graders: true,
       cases: [
         caseResult({
@@ -109,6 +113,8 @@ describe("eval HTML report", () => {
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
       producerModel: "composer-2.5",
       graderModel: "grok-4.6",
+      producerAgent: "cursor",
+      graderAgent: "cursor",
       graders: false,
       cases: [caseResult({ id: "comprehende-50" })],
     });

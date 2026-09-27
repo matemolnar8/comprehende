@@ -1,4 +1,10 @@
-import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
+import {
+  AGENT_KINDS,
+  DEFAULT_GRADER_MODEL,
+  DEFAULT_MUSECODE_MODEL,
+  DEFAULT_PRODUCER_MODEL,
+  type AgentKind,
+} from "./constants.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
@@ -12,11 +18,15 @@ Options:
   --json                  Also print summary.json to stdout
   --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. Params: <id>:<param>=<value>,... (grok-4.6:effort=high)
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}. Same param form
+  --producer-agent <kind> Default cursor. musecode runs the producer in Muse Code
+  --grader-agent <kind>    Default cursor. musecode runs the graders in Muse Code
+  --musecode-model <id>   Default ${DEFAULT_MUSECODE_MODEL}. Used when an agent is musecode
+  --cursor-fallback       Probe Cursor first; on any Cursor error run cursor roles in Muse Code
   --no-graders            Skip grouping and prose graders
-  --sandbox               Enable local sandboxOptions
+  --sandbox               Enable local sandboxOptions (cursor agents only)
   -h, --help
 
-Needs CURSOR_API_KEY unless --rescore. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs CURSOR_API_KEY unless --rescore, plus MUSE_CODE_API_KEY when an agent is musecode or --cursor-fallback is set. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -41,6 +51,10 @@ export type EvalRunRequest =
       json: boolean;
       producerModel: string;
       graderModel: string;
+      producerAgent: AgentKind;
+      graderAgent: AgentKind;
+      musecodeModel: string;
+      cursorFallback: boolean;
       graders: boolean;
       sandbox: boolean;
       rescore?: string;
@@ -62,6 +76,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let baseline: string | undefined;
     let producerModel = DEFAULT_PRODUCER_MODEL;
     let graderModel = DEFAULT_GRADER_MODEL;
+    let producerAgent: AgentKind = "cursor";
+    let graderAgent: AgentKind = "cursor";
+    let musecodeModel = DEFAULT_MUSECODE_MODEL;
+    let cursorFallback = false;
     let json = false;
     let sandbox = false;
     let graders = true;
@@ -83,13 +101,20 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
         graders = false;
         continue;
       }
+      if (arg === "--cursor-fallback") {
+        cursorFallback = true;
+        continue;
+      }
       if (
         arg === "--case" ||
         arg === "--tag" ||
         arg === "--baseline" ||
         arg === "--rescore" ||
         arg === "--producer-model" ||
-        arg === "--grader-model"
+        arg === "--grader-model" ||
+        arg === "--producer-agent" ||
+        arg === "--grader-agent" ||
+        arg === "--musecode-model"
       ) {
         const value = args[i + 1];
         if (value === undefined || value.startsWith("-")) {
@@ -106,17 +131,45 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
           rescore = value;
         } else if (arg === "--producer-model") {
           producerModel = value;
-        } else {
+        } else if (arg === "--grader-model") {
           graderModel = value;
+        } else if (arg === "--producer-agent") {
+          producerAgent = parseAgentKind(arg, value);
+        } else if (arg === "--grader-agent") {
+          graderAgent = parseAgentKind(arg, value);
+        } else {
+          musecodeModel = value;
         }
         continue;
       }
       throw new Error(`Unknown option: ${arg}`);
     }
-    return { kind: "run", ids, tag, baseline, json, producerModel, graderModel, graders, sandbox, rescore };
+    return {
+      kind: "run",
+      ids,
+      tag,
+      baseline,
+      json,
+      producerModel,
+      graderModel,
+      producerAgent,
+      graderAgent,
+      musecodeModel,
+      cursorFallback,
+      graders,
+      sandbox,
+      rescore,
+    };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }
+}
+
+function parseAgentKind(flag: string, value: string): AgentKind {
+  if ((AGENT_KINDS as readonly string[]).includes(value)) {
+    return value as AgentKind;
+  }
+  throw new Error(`${flag} must be ${AGENT_KINDS.join(" or ")}, got "${value}"`);
 }
 
 export function parseAddCaseArgv(argv: string[]): AddCaseRequest {

@@ -139,6 +139,8 @@ describe("eval result line", () => {
       skillTree: "abc",
       producerModel: "composer-2.5",
       graderModel: "grok-4.6",
+      producerAgent: "cursor",
+      graderAgent: "cursor",
       graders: true,
       cases: [
         {
