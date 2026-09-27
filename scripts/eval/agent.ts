@@ -1,5 +1,87 @@
+import { accessSync, constants, readFileSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, isAbsolute, join } from "node:path";
 import { Agent, type ConversationStep, type ModelSelection, type ToolName } from "@cursor/sdk";
 import { TASK_TIMEOUT_MS } from "./constants.ts";
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Absolute path to a real rg. `@cursor/sdk` does not export `configureRipgrepPath`.
+ * On local startup it reads `CURSOR_RIPGREP_PATH` and passes that path to the function.
+ * Without it, ignore scans log "Ripgrep path not configured" when rg is not on PATH.
+ */
+export function configureSdkRipgrep(): string | undefined {
+  const current = process.env.CURSOR_RIPGREP_PATH;
+  if (current !== undefined && isAbsolute(current) && executableFile(current) !== undefined) {
+    return current;
+  }
+  const sdkDir = cursorSdkDir();
+  const bundled = sdkDir === undefined ? undefined : bundledRipgrep(sdkDir);
+  if (bundled === undefined) {
+    return undefined;
+  }
+  process.env.CURSOR_RIPGREP_PATH = bundled;
+  return bundled;
+}
+
+function cursorSdkDir(): string | undefined {
+  let dir: string;
+  try {
+    dir = dirname(realpathSync(require.resolve("@cursor/sdk")));
+  } catch {
+    return undefined;
+  }
+  for (;;) {
+    if (readPackageName(dir) === "@cursor/sdk") {
+      return dir;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
+}
+
+function bundledRipgrep(sdkDir: string): string | undefined {
+  const binary = process.platform === "win32" ? "rg.exe" : "rg";
+  const pkg = `@cursor/sdk-${process.platform}-${process.arch}`;
+  try {
+    const fromSdk = createRequire(join(sdkDir, "package.json"));
+    const pkgJson = fromSdk.resolve(`${pkg}/package.json`);
+    const resolved = executableFile(join(dirname(pkgJson), "bin", binary));
+    if (resolved !== undefined) {
+      return resolved;
+    }
+  } catch {
+    // pnpm links the optional platform package beside @cursor/sdk, outside Node lookup.
+  }
+  const folder = `sdk-${process.platform}-${process.arch}`;
+  return executableFile(join(dirname(sdkDir), folder, "bin", binary));
+}
+
+function executableFile(path: string): string | undefined {
+  try {
+    accessSync(path, constants.X_OK);
+    return realpathSync(path);
+  } catch {
+    return undefined;
+  }
+}
+
+function readPackageName(dir: string): string | undefined {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(join(dir, "package.json"), "utf8"));
+  } catch {
+    return undefined;
+  }
+  if (typeof parsed !== "object" || parsed === null || !("name" in parsed)) {
+    return undefined;
+  }
+  return typeof parsed.name === "string" ? parsed.name : undefined;
+}
 
 export type ToolCallRecord = {
   name: string;
@@ -46,6 +128,7 @@ export async function runLocalAgent(opts: {
   timeoutMs?: number;
 }): Promise<AgentRunResult> {
   const timeoutMs = opts.timeoutMs ?? TASK_TIMEOUT_MS;
+  configureSdkRipgrep();
   await using agent = await Agent.create({
     apiKey: opts.apiKey,
     name: "comprehende-eval",
