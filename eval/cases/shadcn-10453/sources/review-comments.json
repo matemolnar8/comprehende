@@ -1,0 +1,132 @@
+[
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3169394510",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "In [my initial PR](https://github.com/shadcn-ui/ui/pull/5952/changes), I did it like this: `const agent = new ProxyAgent()`, **without** passing a proxy value, and without ternary syntax: `ProxyAgent` lib handle it all automatically.\r\n\r\nThat’s the [recommended way to initialize the proxy-agent library](https://github.com/TooTallNate/proxy-agents/tree/main/packages/proxy-agent#example), because:\r\n\r\n* there are different kinds of proxies (HTTPS, PAC, SOCKS, etc.)\r\n* it automatically respects the `no_proxy` environment variable, so some URLs can bypass the proxy\r\n\r\nThere are a few other reasons I [mentioned earlier](https://github.com/shadcn-ui/ui/pull/5952):\r\n\r\n* it works if `HTTPS_PROXY` (uppercase) is set instead of `https_proxy`\r\n* it supports `http_proxy` (not HTTPS), for cases like using an HTTP `REGISTRY_URL`\r\n* it allows dynamic proxy settings (PAC files)\r\n\r\nYou also said you tested it manually with `https_proxy=http://<proxy>:<port>`, which is good. But the other cases I mentioned weren’t tested (no offense, I know proxy testing is quite painful to be honest). My proposed code here also handled `no_proxy`, and I verified that behavior in the initial PR.",
+    "path": "packages/shadcn/src/registry/fetcher.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 23,
+    "original_commit_id": "a4713cec1495f623d56575c7778a1e513bade33c",
+    "commit_id": "a4713cec1495f623d56575c7778a1e513bade33c"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3178124748",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "Thanks @pomeh — you were right that proxy support was thin, and I'd missed this in the first round of the PR.\n\nOne small correction on the API: `new ProxyAgent()` (no argument) works for the [`proxy-agent`](https://github.com/TooTallNate/proxy-agents/tree/main/packages/proxy-agent) package you used in #5952, but **undici's `ProxyAgent` is a different class** despite the identical name. From [undici's typings](https://github.com/nodejs/undici/blob/main/types/proxy-agent.d.ts):\n\n```ts\nconstructor (options: ProxyAgent.Options | string)\n```\n\nThe `uri` is required — no-arg construction throws.\n\nFor the env-var-aware behavior you described, undici ships a separate class: **`EnvHttpProxyAgent`**. I've switched to it in 2784955d9, which now honors:\n\n- `HTTPS_PROXY` / `https_proxy`\n- `HTTP_PROXY` / `http_proxy`\n- `NO_PROXY` / `no_proxy`\n\nCoverage is locked in by:\n\n- **Unit tests** for the env-detection factory (`packages/shadcn/src/registry/proxy.test.ts`)\n- **Integration test** that spins up a real CONNECT-tunneling HTTP proxy and verifies routing + `NO_PROXY` bypass end-to-end (`packages/shadcn/src/registry/proxy.integration.test.ts`)\n\nPAC files and SOCKS proxies aren't supported by `EnvHttpProxyAgent`, but they weren't supported by the previous `https-proxy-agent` setup either — those would require bringing back the broader `proxy-agent` package, which conflicts with this PR's goal of dropping unmaintained transitive deps. Happy to follow up in a separate PR if there's appetite.\n\nThanks again for catching this.",
+    "path": "packages/shadcn/src/registry/fetcher.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 23,
+    "original_commit_id": "a4713cec1495f623d56575c7778a1e513bade33c",
+    "commit_id": "a4713cec1495f623d56575c7778a1e513bade33c"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3178199563",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "Update on this thread: I went further than my initial reply scoped — partly because the framing in your original review (this is the natural opportunity to fix the broader proxy gaps, not just the env-var detection) was the right one.\n\nThe PR now supports:\n\n| Capability | Before | After |\n|---|---|---|\n| `HTTPS_PROXY` / `https_proxy` | partial | ✅ |\n| `HTTP_PROXY` / `http_proxy` | ❌ | ✅ |\n| `NO_PROXY` / `no_proxy` bypass | ❌ | ✅ |\n| `ALL_PROXY=socks*://...` (SOCKS4/5) | ❌ | ✅ |\n| `PAC_URL=...` (PROXY/SOCKS/DIRECT routing) | ❌ | ✅ |\n\nI was wrong in my earlier reply that adding SOCKS/PAC would require bringing back `proxy-agent` — there's a cleaner path that doesn't reintroduce the abandoned-deps concern:\n\n- **SOCKS** via [`socks`](https://www.npmjs.com/package/socks): plugs directly into undici's dispatcher model via a custom undici `Agent` with a `socks`-based `connect` factory. ~50KB, actively maintained, zero runtime deps.\n- **PAC** via [`pac-resolver`](https://www.npmjs.com/package/pac-resolver) + [`quickjs-wasi`](https://www.npmjs.com/package/quickjs-wasi): the JS engine is exposed independently of any HTTP-Agent adapter, so we evaluate PAC and route the result through our own dispatcher selection (HTTP / SOCKS / DIRECT).\n\nPAC support pulls in `quickjs-wasi` (~3 MB WASM blob) for sandboxed PAC script execution. Material for a CLI install but accepted deliberately — PAC scripts can come from network-supplied WPAD discovery where execution isolation matters.\n\nCoverage: **23 unit tests + 13 integration tests** (36 total). Integration tests run a real local CONNECT-tunneling HTTP proxy, a hand-rolled SOCKS5 server, and a local PAC file server — verifying end-to-end routing for each mechanism plus per-host PAC directives.\n\nTitle and description on this PR have been updated to reflect the broader scope. Thanks again for the original push.",
+    "path": "packages/shadcn/src/registry/fetcher.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 23,
+    "original_commit_id": "a4713cec1495f623d56575c7778a1e513bade33c",
+    "commit_id": "a4713cec1495f623d56575c7778a1e513bade33c"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3182321410",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "I see 2 strange things here:\n\n1. proxy should not alter the payload from request or response. The origin server responds with `{ from: \"origin\" }` while proxy server respond with `{ from: \"proxy-direct\" }`, which are 2 distinct body values. Whether you use a proxy or not, the payload should be the same.\n2. I see no other occurrence of value `proxy-direct` elsewhere in this test code. This means the `proxy-direct` is never checked for, which, I guess, can mean several things:\n    1. the proxy is never called, thus never return `proxy-direct` JSON value\n    2. the proxy is called, but its JSON payload body is totally ignored (and `from: \"origin\"` would be the only response payload we got in all test cases)\n    3. the proxy is called, the `proxy-direct` JSON value is returned, but we never test this value explicitly\n\n\n\nTo avoid the body alteration problem, and also solve the second point, I would propose:\n\nto not alter the response body payload by the proxy\nto add a custom, fake, response header by the proxy, such as `X-E2E-Proxy: e2e-proxy-server`\n\nWhat make me unsure with this is the fact that `proxyHits` is checked, and it effectively contains the value expected when tunneling through the proxy, meaning the test are working normally. In any case, having `proxy-direct` value here and not elsewhere is somewhat disturbing.",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 48,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3182440037",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "why not perform the exact same test as previously ?\n\n```\n      // Proof the proxy was used: a CONNECT was recorded against the origin.\n      const originHost = new URL(originUrl).host\n      expect(proxyHits).toEqual([{ url: originHost, method: \"CONNECT\" }])\n```",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 153,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3182572176",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "Thanks for these update @nbouvrette , looks like to have full proxy support now, including automated tests, which is nice to ensure things are working as expected. What a great work !\r\n\r\nI've done 2 smalls remarks on the updated code (regarding tests).",
+    "path": "packages/shadcn/src/registry/fetcher.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 23,
+    "original_commit_id": "a4713cec1495f623d56575c7778a1e513bade33c",
+    "commit_id": "a4713cec1495f623d56575c7778a1e513bade33c"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3188456774",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "You were right that the `proxy-direct` body was dead code — nothing in the test suite asserts on it. The reason is architectural: undici sends `CONNECT host:port` to the proxy (handled by `proxyServer.on(\"connect\", ...)` further down), so the `createServer` request callback is never invoked by any of our actual proxy-routing tests.\n\nYour suggested fix (return the same body as origin + add an `X-E2E-Proxy` header) doesn't quite fit our setup because the proxy uses CONNECT tunneling — it just pipes bytes between client and origin and never sees response headers, so we couldn't add one even if we wanted to.\n\nInstead, in aeaa78b31 I:\n\n1. Replaced the unreachable `proxy-direct` JSON with a clean `502 Bad Gateway` and a comment explaining the proxy is CONNECT-only.\n2. Added a TDD-style test that explicitly asserts the 502 behavior, so future edits can't silently reintroduce a code path that no test exercises:\n\n```ts\ndescribe(\"test proxy server contract\", () => {\n  it(\"responds 502 to direct (non-CONNECT) HTTP requests\", async () => {\n    const response = await fetch(`${proxyUrl}/anything`)\n    expect(response.status).toBe(502)\n  })\n})\n```\n\nThis makes the test fixture's contract explicit and verifies it. Thanks for the catch.",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 48,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3188457352",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "Good catch — the inconsistency was unintentional. Tightened in aeaa78b31 to match the parallel test:\n\n```ts\nconst originHost = new URL(originUrl).host\nexpect(proxyHits).toEqual([{ url: originHost, method: \"CONNECT\" }])\n```\n\nThe looser version (`.toHaveLength(1)` + `.toBe(\"CONNECT\")`) would have missed bugs where the dispatcher CONNECTed to the wrong host (e.g., the proxy's own address instead of the origin's). The strict version catches that bug class.",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 153,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3188518600",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "Perfect, this looks good to me now 😃 ",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 48,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#discussion_r3188521280",
+    "user": {
+      "login": "pomeh"
+    },
+    "body": "Perfect, this all looks good to me now 💯🚀 ",
+    "path": "packages/shadcn/src/registry/proxy.integration.test.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 153,
+    "original_commit_id": "9555497bf1cf86870339678ab10098d4012f105e",
+    "commit_id": "9555497bf1cf86870339678ab10098d4012f105e"
+  }
+]

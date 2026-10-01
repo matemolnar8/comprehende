@@ -1,0 +1,30 @@
+{
+  "id": "caddy-8015",
+  "repo": "https://github.com/caddyserver/caddy.git",
+  "pr": 8015,
+  "base": "256df3c8ad4ed93c58a7e83470a7f15ef8cb1b94",
+  "head": "6c55051729bcdeaac2277211f5bfdd9ac203e368",
+  "tags": ["foreign", "lang-go", "type-service", "shape-generated"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 2 },
+    "groups": { "min": 1, "max": 3 },
+    "size": ["small", "medium"],
+    "sourceKinds": ["ticket", "pr", "pr-comment"],
+    "mechanicalPaths": [
+      "caddytest/integration/caddyfile_adapt/tls_automate_names.caddyfiletest",
+      "caddytest/integration/caddyfile_adapt/tls_automate_names_auto_https_off.caddyfiletest",
+      "caddytest/integration/caddyfile_adapt/tls_automate_names_existing_policy.caddyfiletest",
+      "caddytest/integration/caddyfile_adapt/tls_automate_names_internal.caddyfiletest",
+      "caddytest/integration/caddyfile_adapt/tls_automate_names_without_site_block.caddyfiletest"
+    ],
+    "together": [
+      ["caddyconfig/httpcaddyfile/options.go", "caddyconfig/httpcaddyfile/tlsapp.go"]
+    ],
+    "claims": [
+      "all five adapt fixtures match the implementation, including the outputs with only the automate loader and no policy",
+      "tls_automate_names still manages a listed name when auto_https is off, as the auto_https off fixture pins",
+      "a listed name that already has a site block policy keeps that policy, and the existing policy fixture pins the boundary"
+    ]
+  }
+}

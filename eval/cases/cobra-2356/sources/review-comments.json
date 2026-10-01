@@ -1,0 +1,67 @@
+[
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#discussion_r2836176311",
+    "user": {
+      "login": "ccoVeille"
+    },
+    "body": "This is about that:\n\n> Fixes a bug where getCompletions() accidentally mutates os.Args by writing \"--\" into the shared backing array via an append with spare capacity\n> Uses a three-index slice expression (finalArgs[:len:len]) to cap the slice capacity, forcing append to allocate a new array\n\nThis sounds complicated\n\nThis could be used\n\n```go\nargsCopy := make([]string, len(finalArgs))\ncopy(argsCopy, finalArgs)\n_ = finalCmd.ParseFlags(append(argsCopy, \"--\"))\n```\n\nOr this, that's less obvious, but pretty simple to read.\n\n```go\n_ = finalCmd.ParseFlags(append([]string{}, finalArgs, \"--\"))\n```\n\nI feel like your solution is the most performant but it sounds a bit cryptic",
+    "path": "completions.go",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 369,
+    "original_commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368",
+    "commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#discussion_r2838859215",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "Yeah fair point, it is a bit cryptic if you're not used to the three-index slice idiom. The reason I went with `finalArgs[:len(finalArgs):len(finalArgs)]` is that it caps the capacity to the length, so when `append` adds `\"--\"` it's forced to allocate a new backing array instead of writing into the original one (which is `os.Args`). The `make+copy` approach works too but it's an extra allocation + copy of the whole slice when we really just need to prevent the append from mutating the original. The three-index slice is a single expression that does exactly that. That said, if the maintainers find it less readable I'm happy to switch to make+copy -- either way the bug fix is the same.",
+    "path": "completions.go",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 369,
+    "original_commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368",
+    "commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#discussion_r2880881643",
+    "user": {
+      "login": "marckhouzam"
+    },
+    "body": "@veeceey Agreed on it being a bit too cryptic.\r\nI like @ccoVeille second suggestion, but the syntax is not quite right.\r\nWhat do you guys think of:\r\n`_ = finalCmd.ParseFlags(append(append([]string{}, finalArgs...), \"--\"))`\r\nIf you don't like this, the explicit array copy is also fine.\r\n\r\nShell completion needs to be fast but remains a user-facing operation so does not need to be optimized perfectly: copying a two or three element array is fine. \r\n\r\nPease put a comment before it mentioning we first copy the finalArgs slice to a new array to avoid risking modifying os.Args which currently backs finalArgs.",
+    "path": "completions.go",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 369,
+    "original_commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368",
+    "commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#discussion_r2880890488",
+    "user": {
+      "login": "marckhouzam"
+    },
+    "body": "Nit: please use \"root\" instead of \"prog\" just to be consistent with the name of the root command below.  I has no impact but may just slow down someone looking at it.",
+    "path": "completions_test.go",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 4094,
+    "original_commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368",
+    "commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#discussion_r2902261970",
+    "user": {
+      "login": "alexandear"
+    },
+    "body": "How about copying the `trimmedArgs` slice at the beginning of the function `getCompletions`?\n\nInstead of \n```go\n\ttrimmedArgs := args[:len(args)-1]\n```\nuse\n```go\n\ttrimmedArgs := make([]string, len(args)-1)\n\tcopy(trimmedArgs, args[:len(args)-1])\n```\n\nIn the future, we can change to `slices.Clone`.",
+    "path": "completions.go",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 369,
+    "original_commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368",
+    "commit_id": "52ae4cfa81534a8d9a0bb9b4f88784e6c31c2368"
+  }
+]

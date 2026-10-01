@@ -1,0 +1,23 @@
+{
+  "id": "flask-6096",
+  "repo": "https://github.com/pallets/flask.git",
+  "pr": 6096,
+  "base": "514fc6b3e8402e4c646d5284e97a4f0ab50a7c4b",
+  "head": "7203feabf723edae0286ae5dc64fec8ac4c91735",
+  "tags": ["foreign", "lang-python", "type-web", "shape-together-apart"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 1 },
+    "groups": { "min": 1, "max": 3 },
+    "size": ["trivial", "small"],
+    "sourceKinds": ["ticket", "pr"],
+    "together": [
+      ["src/flask/app.py", "tests/test_basic.py"],
+      ["src/flask/testing.py", "tests/test_testing.py"]
+    ],
+    "claims": [
+      "SERVER_NAME with an IPv6 address and port parses to the right host and int port in Flask.run, covered for [::1]:8080",
+      "session_transaction keeps cookies for IPv6 base URLs because the cookie domain falls back to localhost instead of an empty string"
+    ]
+  }
+}

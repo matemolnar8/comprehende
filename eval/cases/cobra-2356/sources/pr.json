@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/spf13/cobra/pull/2356",
+  "number": 2356,
+  "title": "fix: prevent completions from mutating os.Args via append side effect",
+  "body": "## Summary\n\n- Fixes a bug where `getCompletions()` accidentally mutates `os.Args` by writing `\"--\"` into the shared backing array via an `append` with spare capacity\n- Uses a three-index slice expression (`finalArgs[:len:len]`) to cap the slice capacity, forcing `append` to allocate a new array\n- Adds a regression test that confirms the args slice is not corrupted during shell completion\n\n## Details\n\nWhen shell completions are requested (e.g., `prog __complete x`), `getCompletions()` calls:\n\n```go\n_ = finalCmd.ParseFlags(append(finalArgs, \"--\"))\n```\n\n`finalArgs` is a sub-slice of the original args (derived from `os.Args[1:]`), and if it has spare capacity in its backing array, `append` writes `\"--\"` directly into the shared memory rather than allocating a new slice. This corrupts `os.Args`, which users may be inspecting in their `ValidArgsFunction`.\n\nThe fix uses `finalArgs[:len(finalArgs):len(finalArgs)]` to limit the capacity to the length, guaranteeing that `append` allocates a fresh backing array.\n\nThe bug is most visible with `TraverseChildren: true`, since `Traverse()` returns sub-slices that preserve the original backing array's capacity.\n\nFixes #2257\n\n## Test plan\n\n- [x] Added `TestCompletionDoesNotMutateArgs` that fails without the fix and passes with it\n- [x] Full test suite passes (`go test ./...`)",
+  "user": {
+    "login": "veeceey"
+  },
+  "merged_at": "2026-04-24T20:41:58Z",
+  "merge_commit_sha": "746ef07158728502482cea9f880a6f4b21ef29a9",
+  "base": {
+    "ref": "main",
+    "sha": "61968e893eee2f27696c2fbc8e34fa5c4afaf7c4"
+  },
+  "head": {
+    "ref": "fix/completions-osargs-mutation",
+    "sha": "a36b43475f0a868310fdce4ead976a0cfb8173ea"
+  }
+}

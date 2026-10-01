@@ -1,0 +1,79 @@
+[
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-4287871661",
+    "user": {
+      "login": "vercel[bot]"
+    },
+    "body": "@nbouvrette is attempting to deploy a commit to the **shadcn-pro** Team on [Vercel](https://vercel.com).\n\nA member of the Team first needs to [authorize it](https://vercel.com/git/authorize?team=shadcn-pro&slug=shadcn-pro&teamId=team_jmWISzrixTCH1Huh0ozpzQJw&type=github&job=%7B%22headInfo%22%3A%7B%22sha%22%3A%22cfeb4ef7aa242fce0fb4deda747c98965a94e4fb%22%7D%2C%22id%22%3A%22QmT3STgxCQiQf29yTTrh1dMHmVHhhJXn9EQv96ebea67je%22%2C%22org%22%3A%22shadcn-ui%22%2C%22prId%22%3A10453%2C%22repo%22%3A%22ui%22%7D).\n\n"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-4292333345",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "@shadcn sorry for the unexpected PR but I think this small change will reduce warnings and make the library more future proof."
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-4350344211",
+    "user": {
+      "login": "axieum"
+    },
+    "body": "This PR will resolve a lot of proxy-related issues I am having with `NO_PROXY=` support in shadcn/ui too.\r\n\r\nGreat stuff!"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-4386585882",
+    "user": {
+      "login": "shadcn"
+    },
+    "body": "I've added this to the roadmap. I'll start looking into this now. Thanks for the great work @nbouvrette This is already looking good."
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5083743423",
+    "user": {
+      "login": "socket-security[bot]"
+    },
+    "body": "**Review the following changes in direct dependencies.** Learn more about [Socket for GitHub](https://socket.dev?utm_medium=gh).\n\n<table>\n<thead>\n<tr>\n<th>Diff</th>\n<th width=\"200px\">Package</th>\n<th align=\"center\" width=\"100px\">Supply Chain<br/>Security</th>\n<th align=\"center\" width=\"100px\">Vulnerability</th>\n<th align=\"center\" width=\"100px\">Quality</th>\n<th align=\"center\" width=\"100px\">Maintenance</th>\n<th align=\"center\" width=\"100px\">License</th>\n</tr>\n</thead>\n<tbody>\n<tr><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/diff-added.svg\" title=\"Added\" alt=\"Added\" width=\"20\" height=\"20\"></a></td><td><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\">npm/​socks@​2.8.9</a></td><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/score-100.svg\" title=\"Supply Chain Security\" width=\"40\" height=\"40\" alt=\"100\"></a></td><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/score-100.svg\" title=\"Vulnerability\" width=\"40\" height=\"40\" alt=\"100\"></a></td><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/score-100.svg\" title=\"Quality\" width=\"40\" height=\"40\" alt=\"100\"></a></td><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/score-82.svg\" title=\"Maintenance\" width=\"40\" height=\"40\" alt=\"82\"></a></td><td align=\"center\"><a href=\"https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies&dependency_item_key=101881408455\"><img src=\"https://github-app-statics.socket.dev/score-100.svg\" title=\"License\" width=\"40\" height=\"40\" alt=\"100\"></a></td></tr>\n</tbody>\n</table>\n\n[View full report](https://socket.dev/dashboard/org/vercel/diff-scan/5d6184fc-f541-4d74-a5f2-59eb9c837b8b?tab=dependencies)\n\n<!-- overview-comment -->"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5083783597",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "@shadcn merged `main` in and resolved the conflicts — this is green again.\n\nSince #10905 landed the `undici` swap and the `HTTPS_PROXY`/`HTTP_PROXY`/`NO_PROXY` handling from the original version of this PR, I've **rescoped this branch to just the remaining delta: SOCKS and PAC.** Net diff is now +815/−33 across 7 files, down from the original ~854 lines touching the whole fetch stack. Title and description are updated to match.\n\nOn the conflict resolution, since `proxy.ts` came back as an add/add:\n\n- **`fetchWithProxy`, `fetchOnce` and `getFailureReason` are preserved verbatim**, including the cross-origin redirect hardening from #11196 and its 5 tests. I took your `fetcher.ts` wholesale.\n- The **only** line removed from your version is the module-level `EnvHttpProxyAgent` const, replaced by `createProxyDispatcher(env)`. That factory gates HTTP/HTTPS on the identical four env vars and returns the identical `EnvHttpProxyAgent`, so it's a strict superset — it just checks PAC and SOCKS ahead of it. `git diff` against `main` confirms those 10 lines are the whole removal.\n- `proxy.test.ts` is the union of both suites; they cover different exports (`createProxyDispatcher` vs `fetchWithProxy`) with no overlap.\n- Lockfile was regenerated from `main`'s so the diff contains only `socks`, `pac-resolver`, `quickjs-wasi` and their transitives.\n\n`pnpm typecheck` is clean and all 1720 tests across 83 files pass.\n\nTwo things worth a look when you review:\n\n1. **`quickjs-wasi` is ~3 MB on disk.** It's there so PAC scripts — arbitrary JavaScript fetched over the network — run in a WASM sandbox rather than the CLI's own runtime. If you'd rather not take that weight, I'm happy to split PAC into a separate PR and land SOCKS on its own; SOCKS only needs `socks` (~50 KB) and covers the more common case.\n2. **`ALL_PROXY` only activates the SOCKS branch for `socks*://` schemes**, per the curl convention. `ALL_PROXY=http://…` is deliberately left to the explicit `HTTP_PROXY` variable rather than being silently absorbed — happy to change that if you'd prefer it to be permissive.\n\n@axieum the `NO_PROXY` support you asked about shipped in #10905, so that should be working for you on latest already.\n\n@pomeh thanks again for the review earlier — the integration tests you pushed for are still in here and now cover the SOCKS and PAC paths against real local servers.\n"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5101531597",
+    "user": {
+      "login": "shadcn"
+    },
+    "body": "@nbouvrette Good call on splitting it up. Let's rescope this PR to SOCKS only and move PAC to a follow-up. And keep ALL_PROXY as socks-only. Thanks for working on this. Appreciate it.\r\n\r\n(Let's also bump changeset to minor while we're at it)."
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5158495009",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "Done — rescoped to SOCKS only. PAC is out of this branch entirely and will come as a follow-up PR once this lands; the work is parked on a branch so nothing's lost.\n\n- **PAC removed**: `PacDispatcher`, the directive parser, `PAC_URL` handling and the `pac-resolver` type stub are gone, along with the `pac-resolver` and `quickjs-wasi` dependencies. That's the ~3 MB of WASM off the dependency tree — `socks` (~50 KB) is now the only addition.\n- **`ALL_PROXY` stays SOCKS-only**, as you asked — a non-`socks*` scheme falls through to the explicit `HTTP_PROXY`/`HTTPS_PROXY` variables rather than being silently absorbed. There's a unit test and an integration test pinning that behavior.\n- **Changeset bumped to `minor`.**\n\nNet diff is now **+485/−32 across 6 files**, down from +815/−33 across 7. The lockfile diff is 32 lines and is entirely socks-driven: `socks` was already in there as a transitive of `socks-proxy-agent` at 2.8.6, so promoting it to a direct dep moves it to 2.8.9 and updates its `ip-address` dep. Regenerated with the repo's pinned pnpm 10.33.4 and verified with `--frozen-lockfile`.\n\n`fetchWithProxy`/`fetchOnce`/`getFailureReason` are byte-identical to `main` apart from one explanatory comment, so the cross-origin redirect hardening from #11196 is untouched. `pnpm typecheck` is clean and all 1711 tests across 83 files pass.\n\nTitle and description are updated to match. The only red check is the Vercel preview, which needs a shadcn-pro member to authorize the deploy from my fork.\n"
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5158623523",
+    "user": {
+      "login": "nbouvrette"
+    },
+    "body": "@shadcn tagging you just in case - let me know if anything needs adjusting! 🙏 "
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5237670016",
+    "user": {
+      "login": "shadcn"
+    },
+    "body": "Rescope looks great. Thanks @nbouvrette \r\n\r\nOnce CI is green. I'll merge this."
+  },
+  {
+    "html_url": "https://github.com/shadcn-ui/ui/pull/10453#issuecomment-5237677397",
+    "user": {
+      "login": "vercel[bot]"
+    },
+    "body": "[vc]: #Kuw7ByC408Gab3nHPveZS1aWQqvinpfvprt0bsy5m9Q=:eyJpc01vbm9yZXBvIjp0cnVlLCJ0eXBlIjoiZ2l0aHViIiwicHJvamVjdHMiOlt7Im5hbWUiOiJ1aSIsInByb2plY3RJZCI6InByal8xaXVmRHkzaHNHd0VmR2xpODBmZ2hYU3JBTEk5IiwidjAiOmZhbHNlLCJyb290RGlyZWN0b3J5IjoiYXBwcy92NCIsImluc3BlY3RvclVybCI6Imh0dHBzOi8vdmVyY2VsLmNvbS9zaGFkY24tcHJvL3VpLzUxbkhrbnhpREE2djJpRGtHUFF6QXpUeEV2Q2MiLCJwcmV2aWV3VXJsIjoidWktZ2l0LWZvcmstbmJvdXZyZXR0ZS1kcm9wLW5vZGUtZmV0Y2gtZm9yLXVuZGljaS1zaGFkY24tcHJvLnZlcmNlbC5hcHAiLCJuZXh0Q29tbWl0U3RhdHVzIjoiREVQTE9ZRUQiLCJsaXZlRmVlZGJhY2siOnsicmVzb2x2ZWQiOjAsInVucmVzb2x2ZWQiOjAsInRvdGFsIjowLCJsaW5rIjoidWktZ2l0LWZvcmstbmJvdXZyZXR0ZS1kcm9wLW5vZGUtZmV0Y2gtZm9yLXVuZGljaS1zaGFkY24tcHJvLnZlcmNlbC5hcHAifX1dLCJyZXF1ZXN0UmV2aWV3VXJsIjoiaHR0cHM6Ly92ZXJjZWwuY29tL3ZlcmNlbC1hZ2VudC9yZXF1ZXN0LXJldmlldz9vd25lcj1zaGFkY24tdWkmcmVwbz11aSZwcj0xMDQ1MyJ9\nThe latest updates on your projects. Learn more about [Vercel for GitHub](https://vercel.link/github-learn-more).\n\n| Project | Deployment | Actions | Updated (UTC) |\n| :--- | :----- | :------ | :------ |\n| <a href=\"https://vercel.com/shadcn-pro/ui\"><sup><img src=\"https://vercel.com/api/www/avatar?projectId=prj_1iufDy3hsGwEfGli80fghXSrALI9&teamId=team_jmWISzrixTCH1Huh0ozpzQJw&s=32\" width=\"16\" height=\"16\" align=\"middle\" alt=\"\" /></sup></a> [ui](https://vercel.com/shadcn-pro/ui) | ![Ready](https://vercel.com/static/status/ready.svg) [Ready](https://vercel.com/shadcn-pro/ui/51nHknxiDA6v2iDkGPQzAzTxEvCc) | [Preview](https://ui-git-fork-nbouvrette-drop-node-fetch-for-undici-shadcn-pro.vercel.app) | Aug 10, 2026 8:24am |\n\n<a href=\"https://vercel.com/vercel-agent/request-review?owner=shadcn-ui&repo=ui&pr=10453\" rel=\"noreferrer\"><picture><source media=\"(prefers-color-scheme: dark)\" srcset=\"https://agents-vade-review.vercel.sh/request-review-dark.svg\"><source media=\"(prefers-color-scheme: light)\" srcset=\"https://agents-vade-review.vercel.sh/request-review-light.svg\"><img src=\"https://agents-vade-review.vercel.sh/request-review-light.svg\" alt=\"Request Review\"></picture></a>\n\n"
+  }
+]

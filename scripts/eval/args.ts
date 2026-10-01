@@ -22,11 +22,12 @@ Options:
   --grader-agent <kind>    Default cursor. musecode runs the graders in Muse Code
   --musecode-model <id>   Default ${DEFAULT_MUSECODE_MODEL}. Used when an agent is musecode
   --cursor-fallback       Probe Cursor first; on any Cursor error run cursor roles in Muse Code
+  --cli-login             Use the muse CLI login instead of MUSE_CODE_API_KEY (musecode agents only)
   --no-graders            Skip grouping and prose graders
   --sandbox               Enable local sandboxOptions (cursor agents only)
   -h, --help
 
-Needs CURSOR_API_KEY unless --rescore, plus MUSE_CODE_API_KEY when an agent is musecode or --cursor-fallback is set. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs CURSOR_API_KEY unless --rescore, plus MUSE_CODE_API_KEY when an agent is musecode or --cursor-fallback is set. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -55,6 +56,7 @@ export type EvalRunRequest =
       graderAgent: AgentKind;
       musecodeModel: string;
       cursorFallback: boolean;
+      cliLogin: boolean;
       graders: boolean;
       sandbox: boolean;
       rescore?: string;
@@ -80,6 +82,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let graderAgent: AgentKind = "cursor";
     let musecodeModel = DEFAULT_MUSECODE_MODEL;
     let cursorFallback = false;
+    let cliLogin = false;
     let json = false;
     let sandbox = false;
     let graders = true;
@@ -103,6 +106,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       if (arg === "--cursor-fallback") {
         cursorFallback = true;
+        continue;
+      }
+      if (arg === "--cli-login") {
+        cliLogin = true;
         continue;
       }
       if (
@@ -156,6 +163,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       graderAgent,
       musecodeModel,
       cursorFallback,
+      cliLogin,
       graders,
       sandbox,
       rescore,

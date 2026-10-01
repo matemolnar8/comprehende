@@ -1,0 +1,15 @@
+[
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#discussion_r4002951707",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "A listed name may already have a site-specific automation policy. Keep the name in the automate loader, but reuse its existing policy rather than creating another. Add a regression too.",
+    "path": "caddyconfig/httpcaddyfile/tlsapp.go",
+    "side": "RIGHT",
+    "line": 476,
+    "original_line": 467,
+    "original_commit_id": "6e95e1d4b288fa194a9899f1b89b959deb86565d",
+    "commit_id": "6c55051729bcdeaac2277211f5bfdd9ac203e368"
+  }
+]

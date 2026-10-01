@@ -1,0 +1,10 @@
+{
+  "html_url": "https://github.com/astral-sh/ruff/pull/4615",
+  "number": 4615,
+  "title": "Use a separate `PrinterFlag` for including fix diffs",
+  "body": "## Summary\r\n\r\nFollow-up to my review of #4528 -- I got confused about how the various flags interacted with one another, so opted to change `ecosystem_ci` from a printer argument, to something that sets a new, dedicated flag within `Printer`.\r\n\r\n## Test Plan\r\n\r\n```console\r\n❯ cargo run -p ruff_cli -- check --no-cache --select F841 crates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi --show-fixes\r\n    Finished dev [unoptimized + debuginfo] target(s) in 0.11s\r\n     Running `target/debug/ruff check --no-cache --select F841 crates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi --show-fixes`\r\ncrates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi:16:5: F841 [*] Local variable `T` is assigned to but never used\r\nFound 1 error.\r\n[*] 1 potentially fixable with the --fix option.\r\nstaging on  charlie/flags:main [$⇡] is 📦 v0.0.269 via 🐍 v3.8.16 via 🦀 v1.69.0\r\n❯ cargo run -p ruff_cli -- check --no-cache --select F841 crates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi --show-fixes --ecosystem-ci\r\n    Finished dev [unoptimized + debuginfo] target(s) in 0.11s\r\n     Running `target/debug/ruff check --no-cache --select F841 crates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi --show-fixes --ecosystem-ci`\r\nwarning: The formatting of fixes emitted by this option is a work-in-progress, subject to change at any time, and intended only for internal use.\r\ncrates/ruff/resources/test/fixtures/flake8_pyi/PYI001.pyi:16:5: F841 [*] Local variable `T` is assigned to but never used\r\nℹ Suggested fix\r\n13 13 | _P = ParamSpec(\"_P\")  # OK\r\n14 14 |\r\n15 15 | def f():\r\n16    |-    T = TypeVar(\"T\")  # OK\r\n   16 |+    TypeVar(\"T\")  # OK\r\n\r\nFound 1 error.\r\n[*] 1 potentially fixable with the --fix option.\r\n```",
+  "state": "closed",
+  "user": {
+    "login": "charliermarsh"
+  }
+}

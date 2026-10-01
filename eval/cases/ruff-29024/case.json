@@ -1,0 +1,26 @@
+{
+  "id": "ruff-29024",
+  "repo": "https://github.com/astral-sh/ruff.git",
+  "pr": 29024,
+  "base": "a4e7c20ca0d42f5cb41485210193548b98ee39c2",
+  "head": "6d4fc2ccaf83e11b05d26e72646e70f2b4a50f64",
+  "tags": ["foreign", "lang-rust", "type-checker", "shape-fixtures"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 1 },
+    "groups": { "min": 1, "max": 2 },
+    "size": ["small", "medium"],
+    "sourceKinds": ["pr"],
+    "together": [
+      [
+        "crates/ty_python_semantic/src/types/infer/builder/subscript.rs",
+        "crates/ty_python_semantic/resources/corpus/ty_4615_recursive_paramspec_legacy.py",
+        "crates/ty_python_semantic/resources/corpus/ty_4615_recursive_paramspec_pep695.py"
+      ]
+    ],
+    "claims": [
+      "the fix keeps Divergent cycle markers in ParamSpec calls instead of mapping them to unknown parameters. Unknown still falls back to unknown parameters.",
+      "the two new corpus files test recursive ParamSpec specialization with legacy and PEP 695 syntax for the generic specialization reproducer in ty issue 4615"
+    ]
+  }
+}

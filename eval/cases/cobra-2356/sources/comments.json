@@ -1,0 +1,51 @@
+[
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-3876047783",
+    "user": {
+      "login": "CLAassistant"
+    },
+    "body": "[![CLA assistant check](https://cla-assistant.io/pull/badge/signed)](https://cla-assistant.io/spf13/cobra?pullRequest=2356) <br/>All committers have signed the CLA."
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-3878459333",
+    "user": {
+      "login": "marckhouzam"
+    },
+    "body": "Wow that’s interesting!  Would it be doable to have a test that actually checks that os.Args is unchanged (but wrongly changed without the fix)?"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-3882642956",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "Good call! I reworked the test so it checks `os.Args` directly instead of going through `SetArgs` with a crafted slice.\n\nThe new `TestCompletionDoesNotMutateOsArgs` saves `os.Args`, overrides it with `[]string{\"prog\", \"__completeNoDesc\", \"x\"}` (the program name has to be something other than `cobra.test` to bypass the test guard in `ExecuteC`), then runs completions *without* calling `SetArgs` — so it goes through the real `os.Args[1:]` path. After execution it checks that all three elements of `os.Args` are still intact.\n\nVerified locally:\n\n- **With the fix:** test passes, `os.Args` untouched\n- **Without the fix** (reverted the three-index slice): test fails with `os.Args[2] was mutated: expected \"x\", got \"--\"` — exactly what the issue reporter was seeing\n- Full suite still green (`go test ./...`)"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-3924702969",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "Friendly ping - just checking if the updated test approach looks good. Let me know if you'd like any further changes\\!"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-4043895837",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "@alexandear good call, that's much cleaner — copying `trimmedArgs` at the top of `getCompletions` means we don't have to worry about any downstream appends mutating the original. Went with your `make+copy` approach and reverted the three-index slice back to a plain `append(finalArgs, \"--\")`.\n\nAlso renamed \"prog\" to \"root\" per @marckhouzam's nit."
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-4062081776",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "@alexandear good idea — using slices.Clone (or the copy approach for now) is much safer since it prevents any future mutation of the original args. I'll update it. Thanks\\!"
+  },
+  {
+    "html_url": "https://github.com/spf13/cobra/pull/2356#issuecomment-4212451963",
+    "user": {
+      "login": "veeceey"
+    },
+    "body": "hey @marckhouzam, this has two approvals now (from alexandear and ccoVeille). is there anything else needed to get this merged?"
+  }
+]

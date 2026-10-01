@@ -1,0 +1,23 @@
+[
+  {
+    "html_url": "https://github.com/astral-sh/ruff/pull/29024#issuecomment-5917800918",
+    "user": {
+      "login": "astral-sh-bot[bot]"
+    },
+    "body": "\n<!-- generated-comment typing_conformance_diagnostics_diff -->\n\n\n## [Typing conformance results](https://github.com/python/typing/blob/d44387d4426429de9e0becda96fc639b8d846515/conformance/)\n\n### No changes detected ✅\n\n<details>\n<summary>Current numbers</summary>\n\n<br>\nThe percentage of diagnostics emitted that were expected errors held steady at <b>98.24%</b>. The percentage of expected errors that received a diagnostic held steady at <b>98.24%</b>. The number of fully passing files held steady at <b>134/146</b>.\n\n</details>\n\n"
+  },
+  {
+    "html_url": "https://github.com/astral-sh/ruff/pull/29024#issuecomment-5917816195",
+    "user": {
+      "login": "astral-sh-bot[bot]"
+    },
+    "body": "\n<!-- generated-comment memory_report_diff -->\n\n## Memory usage report\n\nMemory usage unchanged ✅\n"
+  },
+  {
+    "html_url": "https://github.com/astral-sh/ruff/pull/29024#issuecomment-5917831054",
+    "user": {
+      "login": "astral-sh-bot[bot]"
+    },
+    "body": "\n<!-- generated-comment ty ecosystem-analyzer -->\n\n\n## `ecosystem-analyzer` results\n\nNo diagnostic changes detected ✅\n\n\n**[Full report with detailed diff](https://e0d7cac0.ty-ecosystem-ext.pages.dev/diff)** ([timing results](https://e0d7cac0.ty-ecosystem-ext.pages.dev/timing))\n\n"
+  }
+]

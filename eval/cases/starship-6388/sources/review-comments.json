@@ -1,0 +1,28 @@
+[
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#discussion_r1898940700",
+    "user": {
+      "login": "KingMob"
+    },
+    "body": "As a user, I'd be confused as to why there's no `git` listed in the Options table. If git can be configured here, that would be ideal, but if not, the README should tell you where to go instead.\r\n\r\nAlso, I thought the plan was not to make `[\"jujutsu\"]` the default ordering. Should that not be `[\"git\"]`, instead?",
+    "path": "docs/config/README.md",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 4705,
+    "original_commit_id": "19926e1e0aa25eddf63f93ba270d60eef023338f",
+    "commit_id": "64e082acdec8c89e6d08ce76734cf7c8ced8969c"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#discussion_r2202414342",
+    "user": {
+      "login": "joshka"
+    },
+    "body": "As a new starship user, I think it would be helpful here to see some links in this section to the other modules and some links from those modules to this section to help several use cases:\r\n- the user that finds older configurations with explicit modules in the config\r\n- the user that setup their system sometime before this module existed and wants to understand how to upgrade their config\r\n\r\nAdd docs something like:\r\n> This module replaces the existing fossil, git, hg, and pijul modules that were previously included in $all with a module that finds the first matching VCS by performing the appropriate search for folders (or whatever fossil does differently), in the parent directories.\r\n>\r\n> The configuration of the modules is done with their configuration. See ...",
+    "path": "docs/config/README.md",
+    "side": "RIGHT",
+    "line": 4918,
+    "original_line": 4812,
+    "original_commit_id": "41e5acee52638d4c7336683ff5087d81d2cdeef7",
+    "commit_id": "64e082acdec8c89e6d08ce76734cf7c8ced8969c"
+  }
+]
