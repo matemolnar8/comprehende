@@ -260,12 +260,18 @@ function documentRules(ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInp
   );
   const knownGroups = new Set(document.groups.map((group) => group.id));
   const knownSources = new Set((sources ?? []).map((source) => source.id));
+  const partById = new Map(document.groups.map((group) => [group.id, group.part]));
   for (const group of document.groups) {
     for (const dep of group.dependsOn ?? []) {
       if (dep === group.id) {
         addIssue(ctx, `groups id "${group.id}" depends on itself`);
       } else if (!knownGroups.has(dep)) {
         addIssue(ctx, `groups id "${group.id}" dependsOn unknown group "${dep}"`);
+      } else if (partById.get(dep) !== group.part) {
+        addIssue(
+          ctx,
+          `groups id "${group.id}" dependsOn "${dep}" across parts (${partName(group.part)} vs ${partName(partById.get(dep))})`,
+        );
       }
     }
     const seen = new Set<string>();
@@ -321,6 +327,10 @@ function collectPartNameErrors(
       addIssue(ctx, `parts name "${item.name}" is not used by any group`);
     }
   }
+}
+
+function partName(part: string | undefined): string {
+  return part === undefined ? "no part" : `"${part}"`;
 }
 
 function collectDuplicateIds(ctx: z.core.ParsePayload<unknown>, ids: string[], kind: "source" | "group"): void {

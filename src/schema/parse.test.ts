@@ -504,6 +504,48 @@ describe("parseReviewDocument", () => {
     }
   });
 
+  it("rejects dependsOn across parts", () => {
+    const base = {
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "Review command",
+      summary: "Adds a review command.",
+    } as const;
+    const group = {
+      title: "A",
+      why: "Enables later groups.",
+      summary: "Adds a command.",
+      suggestedOrder: 0,
+      hunkRefs: [],
+    };
+    const crossed = parseReviewDocument({
+      ...base,
+      parts: [
+        { name: "shell", summary: "The mobile shell." },
+        { name: "styles", summary: "The compact styles." },
+      ],
+      groups: [
+        { ...group, id: "foundation", part: "styles" },
+        { ...group, id: "shell", title: "B", part: "shell", dependsOn: ["foundation"] },
+      ],
+    });
+    assert.equal(crossed.ok, false);
+    if (!crossed.ok) {
+      assert.match(crossed.errors.join("\n"), /dependsOn "foundation" across parts/);
+    }
+
+    const samePart = parseReviewDocument({
+      ...base,
+      parts: [{ name: "shell", summary: "The mobile shell." }],
+      groups: [
+        { ...group, id: "foundation", part: "shell" },
+        { ...group, id: "shell", title: "B", part: "shell", dependsOn: ["foundation"] },
+      ],
+    });
+    assert.equal(samePart.ok, true);
+  });
+
   it("rejects single-field shape errors", () => {
     const groupBase = {
       id: "g1",
