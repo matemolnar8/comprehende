@@ -1,0 +1,177 @@
+[
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2480560450",
+    "user": {
+      "login": "davidkna"
+    },
+    "body": "I think we should keep `jj` modes and a general `vcs` module as separate PRs.\r\n\r\nFor `git` in particular, repo discovery is also a bit more complex (e.g. it can discover bare repos), and a final version of this should support `GIT_CEILING_DIRECTORIES` for better performance."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2639970911",
+    "user": {
+      "login": "AltGr"
+    },
+    "body": "Very much interested in `jj` support; for what it's worth, here are the info that I'd like to see in my prompt:\r\n- The latest bookmark (`jj log -r 'heads(bookmarks()::@ & bookmarks())' --no-graph -T bookmarks`)\r\n- `+` the current change id (maybe only if I'm not exactly on the tag) (`jj log -r '@ & ~bookmarks()' --no-graph -T 'commit_id.shortest()'`)"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2661475203",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "To give an update on this: I've actively restarted work on it this weekend, I've not been happy at all with what I had previously, I'm finishing the initial implementation and will update the MR soon.\r\n\r\nMy new approach is as follows:\r\n\r\n```toml\r\nformat = \"$vcs\"\r\n\r\n[git_branch]\r\n# config\r\n\r\n[pijul_channel]\r\n# config\r\n\r\n[vcs]\r\norder = [\"git\", \"pijul\"]\r\ngit_modules = \"$git_branch$git_state\"\r\npijul_modules = \"$pijul_channel\"\r\n# Same for other VCSes:\r\n# hg_modules = \"...\"\r\n# fossil_modules = \"...\"\r\n```\r\n\r\nIt keeps individual VCSes modules accessible and configurable at the top level, but when using `$vcs` in `format`, it will directly replace `$vcs` by the modules in `vcs.<found vcs>_modules`. That's it. Nothing more. Any `$<name>` is replaced by the `<name>` module (the default configuration is all modules for that VCS, but I'm not going to limit it that way, it's both easier not to and it allows for custom modules to be added in)\r\n\r\nThere is no complicated formatting or stuff like this for example, I'm not even going to add any smarts like \"not rediscovering repos for each VCS module\" for now, I want a very simple implementation to make it easier to review and test for (they can easily be added in a follow up MR).\r\n\r\nIn the same vein, I'm not going to add JJ support in this MR since it's currently not in starship, but I'll make an MR to build on top of this one quickly."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2661518437",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "One thing I would like recommendations/help on from more experience Starship contributors is testing. This new `vcs` module essentially directly forward to its underlying `<vcs>_modules` so it has extremely little logic by itself (and the little bit about discovering the repo's root I made sure to reuse elsewhere to be sure it was covered by existing tests).\r\n\r\nI don't want to copy-paste all existing VCSes tests so I'm not sure what would be a good way to test this MR."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2781106020",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "Took the time to write tests that cover everything so this MR is ready to go 🎉 "
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2846567180",
+    "user": {
+      "login": "KingMob"
+    },
+    "body": "@poliorcetics What's the current plan with respect to jj? \r\n\r\nI see this comment above: \r\n> In the same vein, I'm not going to add JJ support in this MR since it's currently not in starship, but I'll make an MR to build on top of this one quickly\r\n\r\nbut then there's also your comment https://github.com/starship/starship/issues/5772#issuecomment-2781110535:\r\n\r\n> As per discord messages with the author, consider this MR abandoned. I'm working on https://github.com/starship/starship/pull/6388 and then I'll add jj_* modules on top of it in their own MRs\r\n\r\nI'm confused. What's the plan? Do you need a contributor to add stand-alone jj support?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2873991327",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "> I'm confused. What's the plan? Do you need a contributor to add stand-alone jj support?\r\n\r\nThe plan is to wait for this MR to be merged before I do anything more, because it's already 6 months old.\r\n\r\nAfter that I'll see about doing one MR per JJ module, following the pattern for git modules.\r\n\r\nI could also do one big module that does everything but that's not the starship way I feel?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2874632624",
+    "user": {
+      "login": "brianmay"
+    },
+    "body": "What needs to happen to this PR before it can be merged?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-2939945198",
+    "user": {
+      "login": "DD5HT"
+    },
+    "body": "@davidkna  could you take a look here?\r\nAnyway I can help?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3065027507",
+    "user": {
+      "login": "KingMob"
+    },
+    "body": "What's the next step? Is there more code to be written, or is it ready for review?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3065051124",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "The MR has been ready for review since https://github.com/starship/starship/pull/6388#issuecomment-2781106020"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3065127364",
+    "user": {
+      "login": "KingMob"
+    },
+    "body": "Great! Does the review committee know? The linked \"ready\" comment was 3 months ago. \r\n\r\nAre they busy, or has the PR fallen through the cracks somehow? I see CONTRIBUTING.md says \"No need to assign the pull request to anyone, we'll review it when we can\". Should we just wait?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3065658333",
+    "user": {
+      "login": "benthillerkus"
+    },
+    "body": "I don't think there's a review committee, the main maintainers seem to have taken a step back and there are 186 open pull requests -- I don't think this will be seen without pinging someone."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3065897824",
+    "user": {
+      "login": "penryu"
+    },
+    "body": "So excited to see movement on this!\r\n\r\nIt's working brilliantly for me, and I see that the the `order` option can gracefully ignore any unsupported modules (tested with both `jj` and a garbage value).\r\n\r\nI saw that you want to keep `jj` work separate, and that makes sense! Is that work being tracked in a public branch by any chance?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3067194121",
+    "user": {
+      "login": "davidkna"
+    },
+    "body": "@matchai In general the changes LGTM. The main issue I see with the general approach in the PR is that independent styling of vcs segments is no longer possible (e.g. moving just branch names into `right_format`).\r\n\r\nIf the changes to the root format string are reverted, I feel like this could also be merged without having to consider it as a breaking change to allow for more experimentation prior to an eventual v2 (that said this PR would be another good opportunity to do a v2).\r\n\r\n For a v2-style change any disabled-by-default vcs modules should become enabled-by-default to avoid confusion."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3067201262",
+    "user": {
+      "login": "joshka"
+    },
+    "body": "> @matchai In general the changes LGTM. The main issue I see with the general approach in the PR is that independent styling of vcs segments is no longer possible (e.g. moving just branch names into `right_format`).\r\n\r\nI wonder if it might be possible to solve this problem orthogonal to this PR by introducing named override versions of each module. I.e. by making the modules support being configured as `[vcs.foo]`, `[vcs.bar]` etc. with a similar approach to how `custom.foo` works."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3067294810",
+    "user": {
+      "login": "matchai"
+    },
+    "body": "@davidkna I hadn't considered how it would impact the ability to separate modules contained within VCS. That definitely is a configuration trade-off as-is.\r\n\r\nAs @joshka suggests, the way that `custom` works can be a fix. By default, `$vcs` is in the format string, but it can be broken up and used independently as `${vcs.branch} ${vcs.state}`.\r\n\r\nI'm open to keeping vcs disabled-by-default before a v2 release, as we iron this out."
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3193711730",
+    "user": {
+      "login": "poliorcetics"
+    },
+    "body": "Reverted the default config changes and added a documentation note to say why the module is not part of the default config as well as note it may change in the future.\r\n\r\nI don't use right-aligned prompt at all and the current module (once I work on a Jujutsu follow-up) will handle my needs entirely but if merged and someone wants to take up the work, feel free to ask me questions :)"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3239144464",
+    "user": {
+      "login": "KingMob"
+    },
+    "body": "Is this ready to be merged? Or is there still more to be done?\r\n\r\nLooking forward to this landing!"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3288649152",
+    "user": {
+      "login": "SalTor"
+    },
+    "body": "Would have been great if the JJ vcs module could have been introduced on its own and then this larger initiative of unifying all of them came second. Either way, though, great work"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3311823609",
+    "user": {
+      "login": "nicolaric"
+    },
+    "body": "are there any updates when this is planned to be merged?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3338723441",
+    "user": {
+      "login": "johnstegeman"
+    },
+    "body": "Commenting here to add my support. I'm currently using a custom module for jujutsu (and for git so that i can ensure only one set of modules actually shows anything in the case that I'm in a colocated repo). Works just fine until i want the vcs stuff on the right side of a 2-line prompt (using the fill module), as [fill doesn't play nice with custom modules I've found ](https://github.com/starship/starship/discussions/7007)"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3475134354",
+    "user": {
+      "login": "djamaile"
+    },
+    "body": "Is there a particular reason this isn't being merged?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3695350081",
+    "user": {
+      "login": "KKKZOZ"
+    },
+    "body": "any updates?"
+  },
+  {
+    "html_url": "https://github.com/starship/starship/pull/6388#issuecomment-3708239361",
+    "user": {
+      "login": "davidkna"
+    },
+    "body": "Thanks for the contribution @poliorcetics, and thanks for the reviews @matchai, @joshka and @KingMob!"
+  }
+]

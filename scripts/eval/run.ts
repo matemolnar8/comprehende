@@ -71,8 +71,8 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     console.error("CURSOR_API_KEY is not set");
     return 1;
   }
-  if (needsMusecode && musecodeKey === "") {
-    console.error("MUSE_CODE_API_KEY is not set");
+  if (needsMusecode && musecodeKey === "" && !request.cliLogin) {
+    console.error("MUSE_CODE_API_KEY is not set (or pass --cli-login to use the muse CLI login)");
     return 1;
   }
   if (fallbackArmed) {

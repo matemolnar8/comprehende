@@ -1,0 +1,23 @@
+[
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#issuecomment-4971061203",
+    "user": {
+      "login": "lkk7"
+    },
+    "body": "Not sure about the reason of \"Development Versions\" fail..."
+  },
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#issuecomment-4972116915",
+    "user": {
+      "login": "davidism"
+    },
+    "body": "Dev tests are not updated for Werkzeug main yet, they're expected to fail until next Werkzeug release."
+  },
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#issuecomment-5258048080",
+    "user": {
+      "login": "davidism"
+    },
+    "body": "All looks good, thanks. I'll target this at main since I don't think there will be another bug fix release, and this isn't anything critical."
+  }
+]

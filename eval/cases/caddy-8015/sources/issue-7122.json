@@ -1,0 +1,10 @@
+{
+  "html_url": "https://github.com/caddyserver/caddy/issues/7122",
+  "number": 7122,
+  "title": "Feature request: Caddyfile syntax to automate certificate without adding corresponding HTTPS route",
+  "body": "This is a bit of a weird request, and I won't be at all offended if it gets closed as \"working as intended\", but I think it'd be a small quality of life improvement if the Caddyfile syntax allowed certificate automation to be configured without adding an HTTPS site. Two use cases:\n\n1. As of Caddy 2.10, wildcard certs are optimistically used for non-wildcard site blocks by default, which is awesome. But there's still a question of how to provision the wildcard cert in the first place. It seems to require a \"dummy\" site like so:\n\n   ```\n   *.example.com {\n   }\n   \n   foo.example.com {\n      respond \"Real site\"\n   }\n   ```\n\n   This is easy enough, but means that Caddy will _also_ serve empty-but-valid HTTP responses when domain names without corresponding site blocks (e.g., `bar.example.com`) are pointed at the Caddy host. I guess this is ultimately not a big deal (and someone can probably put an `abort` in the wildcard site block if it really bothers them), but it seems like it's conflating two concepts that, when it comes to wildcard certs, should really be separate.\n\n2.  When caddy-l4 terminates SNI-matched TLS, it appears to use Caddy's standard cert-selection logic, including preferring wildcard certs. Again, this is awesome! (And I'm personally using it now to take advantage of Caddy's excellent cert automation for non-HTTP services like Valkey.) But, again, actually provisioning the certificate in the Caddyfile syntax seems to require an empty site block---and thus an HTTPS server---_even if the Caddy instance is only used for non-HTTPS traffic_.\n\nIt looks like the underlying JSON syntax completely decouples cert automation from servers, and I think would be nice to have a Caddyfile option to enable automation for additional certificates. Maybe something like `additional_certs <name>...` in the global options block?",
+  "state": "closed",
+  "user": {
+    "login": "bcat"
+  }
+}

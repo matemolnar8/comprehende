@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/starship/starship/pull/6388",
+  "number": 6388,
+  "title": "feat(vcs): Introduce the VCS module",
+  "body": "<!--- Provide a general summary of your changes in the Title above -->\r\n<!--- To help with semantic versioning the PR title should start with one of the conventional commit types. -->\r\n<!--- The conventional commit types for Semantic PR are: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert -->\r\n#### Description\r\n<!--- Describe your changes in detail -->\r\n\r\nAs presented in #5932, `starship` supports a list of VCS that is only getting longer over time. It works-*ish* currently because of two reasons:\r\n\r\n- Only Git is active by default\r\n- Is it rare for two repos to be active in the same dir\r\n\r\nBoth of those are unlikely to work out well over time: new VCS tend to come with git compat when living in parallel in the same repo (Jujutsu already does it, I know Pijul plans to from discussions with the author)\r\n\r\nThis Pull Request implements an ordering (configured by the user) in which VCSes are displayed, stopping at the first one found, which neatly solve the issues and avoid double-displays (since there is one main VCS and the other is there as a backup, alternative interface or backend).\r\n\r\nNote we don't remove the standalone modules, to still allow for the many-vcs use case.\r\n\r\n#### Motivation and Context\r\n<!--- Why is this change required? What problem does it solve? -->\r\n<!--- If it fixes an open issue, please link to the issue here. -->\r\nCloses #5932 \r\n\r\n#### Screenshots (if appropriate):\r\n\r\n#### How Has This Been Tested?\r\n<!--- Please describe in detail how you tested your changes. -->\r\n<!--- Include details of your testing environment, tests ran to see how -->\r\n<!--- your change affects other areas of the code, etc. -->\r\n- [x] I have tested using **MacOS**\r\n- [ ] I have tested using **Linux**\r\n- [ ] I have tested using **Windows**\r\n\r\n#### Checklist:\r\n<!--- Go over all the following points, and put an `x` in all the boxes that apply. -->\r\n<!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->\r\n- [x] I have updated the documentation accordingly.\r\n- [x] I have updated the tests accordingly.\r\n",
+  "user": {
+    "login": "poliorcetics"
+  },
+  "merged_at": "2026-01-04T16:44:03Z",
+  "merge_commit_sha": "0dd5a4f402c8d94524aaaa5632b2d0cba7fe1630",
+  "base": {
+    "ref": "master",
+    "sha": "e910f47597f3acec36c1c21bf4204af1a3265b92"
+  },
+  "head": {
+    "ref": "ab/one-vcs-to-bind-them-all",
+    "sha": "c281384564ccebf63b826b07a4cde1910240acdf"
+  }
+}

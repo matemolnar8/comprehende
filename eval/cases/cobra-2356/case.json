@@ -1,0 +1,21 @@
+{
+  "id": "cobra-2356",
+  "repo": "https://github.com/spf13/cobra.git",
+  "pr": 2356,
+  "base": "f2878bab8c96afd6e36968af96343b35dbb82a82",
+  "head": "a36b43475f0a868310fdce4ead976a0cfb8173ea",
+  "tags": ["foreign", "lang-go", "type-cli", "shape-lookfor"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 2 },
+    "groups": { "min": 1, "max": 2 },
+    "size": ["trivial", "small", "medium"],
+    "sourceKinds": ["ticket", "pr", "pr-comment"],
+    "together": [["completions.go", "completions_test.go"]],
+    "claims": [
+      "at head getCompletions copies trimmedArgs with make plus copy, while the PR body still describes a three-index slice and the append of -- is unchanged",
+      "append of -- writes into the shared backing array when the args sub-slice has spare capacity, which corrupts os.Args and shows most with TraverseChildren",
+      "the regression test sets os.Args directly instead of using SetArgs so it takes the real os.Args path, and without the fix os.Args[2] changes from x to --"
+    ]
+  }
+}

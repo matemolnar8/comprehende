@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/astral-sh/ruff/pull/29024",
+  "number": 29024,
+  "title": "[ty] Preserve cycle markers in ParamSpec specialization",
+  "body": "## Summary\n\nWe preserve provisional cycle markers when converting a type argument into a `ParamSpec` parameter list. Previously, we treated `Divergent` like `Unknown` and replaced it with unknown parameters, discarding the marker that inference needs to normalize recursive specializations. Repeated specialization could then keep growing the inferred type until cycle inference panicked.\n\nThe existing fallback for `Unknown` remains unchanged. Corpus regressions cover recursive specializations with both legacy and PEP 695 generic syntax.\n\nAddresses the generic-specialization reproducer in https://github.com/astral-sh/ty/issues/4615. The additional lambda and collection decorator reproducers are covered by #29025 and #28986, respectively.\n",
+  "user": {
+    "login": "charliermarsh"
+  },
+  "merged_at": "2026-09-30T19:42:44Z",
+  "merge_commit_sha": "8b837319917b2ab0d16d2be23bafcb0e403005a9",
+  "base": {
+    "ref": "main",
+    "sha": "a4e7c20ca0d42f5cb41485210193548b98ee39c2"
+  },
+  "head": {
+    "ref": "charlie/ty-paramspec-cycle-markers",
+    "sha": "6d4fc2ccaf83e11b05d26e72646e70f2b4a50f64"
+  }
+}

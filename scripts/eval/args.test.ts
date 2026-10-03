@@ -18,6 +18,7 @@ describe("eval argv", () => {
       graderAgent: "cursor",
       musecodeModel: DEFAULT_MUSECODE_MODEL,
       cursorFallback: false,
+      cliLogin: false,
       graders: true,
       sandbox: true,
       rescore: undefined,
@@ -75,6 +76,19 @@ describe("eval argv", () => {
     }
   });
 
+  it("parses --cli-login", () => {
+    const req = parseEvalArgv(["--cli-login"]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.cliLogin, true);
+    }
+    const plain = parseEvalArgv([]);
+    assert.equal(plain.kind, "run");
+    if (plain.kind === "run") {
+      assert.equal(plain.cliLogin, false);
+    }
+  });
+
   it("parses --rescore", () => {
     const req = parseEvalArgv(["--rescore", "eval/runs/stamp", "--case", "comprehende-50"]);
     assert.equal(req.kind, "run");
@@ -116,6 +130,7 @@ describe("eval argv", () => {
     assert.match(EVAL_USAGE, /--grader-agent/);
     assert.match(EVAL_USAGE, /--musecode-model/);
     assert.match(EVAL_USAGE, /--cursor-fallback/);
+    assert.match(EVAL_USAGE, /--cli-login/);
     assert.match(EVAL_USAGE, /MUSE_CODE_API_KEY/);
   });
 

@@ -1,0 +1,24 @@
+{
+  "id": "starship-6388",
+  "repo": "https://github.com/starship/starship.git",
+  "pr": 6388,
+  "base": "8a69666084d248b8fd76b6c54f38aea12abce6e3",
+  "head": "c281384564ccebf63b826b07a4cde1910240acdf",
+  "tags": ["foreign", "lang-rust", "type-cli", "shape-multipart"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 1 },
+    "groups": { "min": 2, "max": 5 },
+    "size": ["medium", "large"],
+    "sourceKinds": ["ticket", "pr", "pr-comment"],
+    "together": [
+      ["src/modules/fossil_branch.rs", "src/modules/fossil_metrics.rs", "src/modules/hg_branch.rs", "src/modules/pijul_channel.rs"]
+    ],
+    "apart": [["src/modules/vcs.rs", ".github/config-schema.json"]],
+    "claims": [
+      "At head the standalone VCS modules stay and $vcs is enabled but absent from the default prompt order, so the change is not breaking. The issue first proposed removing top level modules, and the PR body says they stay for the many VCS use case.",
+      "The issue motivates with jj colocated with git, but at head the dispatcher accepts only fossil, git, hg, and pijul. Unknown order entries are skipped, so jj in order gives no jj output until follow up work lands.",
+      "At head the module renders the matched inner modules inline, so segments cannot split across format and right_format. The docs note warns the format may change for right aligned prompts."
+    ]
+  }
+}

@@ -1,0 +1,135 @@
+[
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5662013210",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "Good catch, and it was worse than redundant — that combination didn't adapt at all. Reproducing it on the previous commit:\n\n```\n{\n\temail nobody@example.com\n\ttls_automate_names foo.example.com\n}\n\nfoo.example.com {\n\ttls {\n\t\tca https://acme.example.test/directory\n\t}\n}\n```\n```\nhostname appears in more than one automation policy, making certificate management ambiguous: foo.example.com\n```\n\nThe adapter rejects overlapping subjects and my second policy collided with the site block's.\n\nFixed in cef0148: a name that already appears as a subject of some automation policy keeps that policy, and is still added to the automate loader. Same comparison the overlap check itself uses, so the two can't disagree. The config above now adapts, with the site block's issuer intact:\n\n```json\n\"certificates\": { \"automate\": [\"foo.example.com\"] },\n\"automation\": { \"policies\": [\n  { \"subjects\": [\"foo.example.com\"], \"issuers\": [{\"ca\": \"https://acme.example.test/directory\", \"email\": \"nobody@example.com\", \"module\": \"acme\"}] }\n]}\n```\n\nRegression test added as `tls_automate_names_existing_policy.caddyfiletest`. It carries both halves in one config — `foo.example.com` with a site block of its own keeps that policy, while `bar.example.com` has no site block and gets the one built from global options — so it pins the boundary rather than just the fixed case. I checked it fails when the new guard is removed.\n\n`go test ./caddyconfig/... ./caddytest/...` is green."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5662345005",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "@mholt, are you happy with tls_automate_names, or do you still prefer `tls_certs` / `tls_certificates` ?\r\n\r\nOnce the name is settled, please add the global-option documentation in caddyserver/website @IslamElsayed - preferably human written :/ but I suppose if you can at least get a shape we can always refine it."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5667526305",
+    "user": {
+      "login": "mholt"
+    },
+    "body": "What about `tls_certificates_for`?"
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5674641192",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "That sounds pretty good to me. Happy for it to be changed and docs PR to be submitted."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5675059562",
+    "user": {
+      "login": "francislavoie"
+    },
+    "body": "I don't like `_for`, we have no precedence of config using that kind of language. I don't find it consistent with the rest of the config."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5675849592",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "Hmmmm that is also true, ill let you battle"
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5678925850",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "Thanks for the review.\n\nOn the name — I'll implement whichever of the three you land on; it's a one-line change plus renaming four test files, so it costs nothing to decide late. One piece of data rather than an opinion, since @francislavoie's point is checkable: of the 41 currently registered global options, none contains a preposition.\n\n```\nacme_ca acme_ca_root acme_dns acme_eab admin auto_https cert_issuer cert_lifetime\ndebug default_bind default_sni dns ech email events fallback_sni filesystem\ngrace_period http_port https_port key_type local_certs log metrics ocsp_interval\nocsp_stapling on_demand_tls order persist_config pki preferred_chains renew_interval\nrenewal_window_ratio servers shutdown_delay skip_install_trust storage storage_check\nstorage_clean_interval tls_resolvers\n```\n\n`on_demand_tls` is the closest thing, and that's a compound adjective rather than a preposition linking two nouns. So \"no precedence for that kind of language\" holds as stated. Whether that should decide it is yours to call — `tls_certificates_for` does read more obviously than the alternatives.\n\nOn docs: yes, I'll open the PR to caddyserver/website. I'll write it myself rather than generate it, and I'd rather do that once the name is settled so the examples don't have to be rewritten — but say the word if you'd prefer a rough shape sooner to refine, and I'll put one up against whichever name is currently winning.\n\n@steadytao one thing from your review I want to make sure I read right: \"jumped the gun\" — if you mean I should have waited for the name before implementing, that's fair, and I'll hold the rename until you two have settled rather than guessing again."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5679093941",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "That is precisely what I meant. It allows us to prevent this kind of noise in PRs and keep it to issues where it generally belongs. Appreciate it."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5689697396",
+    "user": {
+      "login": "francislavoie"
+    },
+    "body": "I still prefer `tls_automate_names` as I originally suggested. We already have `tls_` for other options and this identifies which \"app\" the option belongs to, `automate` directly relates to what it produces in JSON, and `names` is the actual term for what the list contains."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5693876366",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "@steadytao docs PR is up: caddyserver/website#570.\n\nIt uses `tls_automate_names`, per @francislavoie's call above, so nothing here needs changing — the implementation already matches.\n\nOne thing in it I flagged there and will repeat: I wrote \"(Requires Caddy 2.12 or newer.)\" purely because v2.11.4 is the latest release. If this lands in some other version, that line needs correcting and I have no way to know which."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5695285146",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "The implementation still looks correct. However; please add one adaptation fixture covering `auto_https off` with `tls_automate_names` since this option deliberately overrides that general certificate-management disable and the documentation should state the same behaviour as I mentioned there."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5712318523",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "Added in 6c55051 — `tls_automate_names_auto_https_off.caddyfiletest`.\n\nYou were right that it needed pinning rather than changing: the option already overrides the disable. The hostless-key block above it is gated on `!slices.Contains(autoHTTPS, \"off\")`, but the `tls_automate_names` block is not, on the reasoning that naming a subject explicitly is a stronger signal than the general switch — the same way `force_automate` is not gated either. The fixture shows both facts in one adapt output:\n\n```json\n\"automatic_https\": { \"disable\": true },\n...\n\"tls\": { \"certificates\": { \"automate\": [\"mail.example.com\"] } }\n```\n\nI checked it actually guards that: adding the `auto_https off` gate to the block makes this fixture the only one that fails."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5739361307",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "Website PR needs its updates but other then that; it may be worth including this in 2.12 alongside #7976 - @francislavoie, thoughts?"
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5739462328",
+    "user": {
+      "login": "francislavoie"
+    },
+    "body": "Since it's a low impact new feature and not an API change I'm fine with adding it into 2.11.5 maybe."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5739470750",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "Works for me."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5745282138",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "Thanks — 2.11.5 answers the one thing I had flagged as a guess in the docs PR. Updated it there in caddyserver/website@30a0dc0: the entry now reads \"(Requires Caddy 2.11.5 or newer.)\" instead of 2.12.\n\n@steadytao if \"needs its updates\" meant something beyond the version note, say what and I will fix it — that was the only open item I knew of on caddyserver/website#570."
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5757282350",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "Requires https://github.com/caddyserver/website/pull/570"
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5855176928",
+    "user": {
+      "login": "IslamElsayed"
+    },
+    "body": "Hi @steadytao @francislavoie  — both this and caddyserver/website#570 are approved and I don't think anything is outstanding on my side. Since this was targeted at 2.11.5 and I see that hasn't been cut yet, is there anything else you'd like from me before it can be merged?"
+  },
+  {
+    "html_url": "https://github.com/caddyserver/caddy/pull/8015#issuecomment-5869688045",
+    "user": {
+      "login": "steadytao"
+    },
+    "body": "Still happy. @francislavoie could I get your final review and merge?"
+  }
+]
