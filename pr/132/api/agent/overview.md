@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 9e1a4edadbfb87ab47458352767dc22fa0052f02` and `git rev-parse --verify 77ca76e50a4efc5d945d8aa19bcc0f0c7c93fd9c` in this repository.
+   Run `git rev-parse --verify 9e1a4edadbfb87ab47458352767dc22fa0052f02` and `git rev-parse --verify 00532f43fb3d8862ca13ca92e9eaa4600a522835` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende.git
 
 base (merge-base)  9e1a4edadbfb87ab47458352767dc22fa0052f02
 
-head               77ca76e50a4efc5d945d8aa19bcc0f0c7c93fd9c
+head               00532f43fb3d8862ca13ca92e9eaa4600a522835
 
 Named refs at pin: main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 9e1a4edadbfb87ab47458352767dc22fa0052f02 77ca76e50a4efc5d945d8aa19bcc0f0c7c93fd9c
+git diff --find-renames 9e1a4edadbfb87ab47458352767dc22fa0052f02 00532f43fb3d8862ca13ca92e9eaa4600a522835
 
 Commits:
+- 00532f4 Size the open sources list from the font
 - 77ca76e Collapse sources by default and scroll after three rows
 
 Sources:
