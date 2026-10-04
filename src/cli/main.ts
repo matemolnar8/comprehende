@@ -5,7 +5,7 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdReview, cmdValidate, resolveOutPath } from "./commands.ts";
+import { cmdDigest, cmdPregroup, cmdReview, cmdShow, cmdValidate, resolveOutPath } from "./commands.ts";
 import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
@@ -75,6 +75,23 @@ export async function run(argv: string[]): Promise<number> {
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);
         console.error(`exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`);
+        return 0;
+      }
+      case "digest": {
+        console.log(await cmdDigest(request.cwd, request.base, request.head));
+        return 0;
+      }
+      case "show": {
+        console.log(await cmdShow(request.cwd, request.base, request.head, { hunk: request.hunk, file: request.file }));
+        return 0;
+      }
+      case "pregroup": {
+        const dataPath = resolveDataPath(request.data, request.cwd);
+        const { document } = await cmdPregroup(request.cwd, dataPath, request.base, request.head);
+        console.log(dataPath);
+        console.error(
+          `wrote draft  ${document.groups.length} groups  stub prose\nAccept, split, and write the prose. Then:\n  comprehende validate --data ${dataPath}`,
+        );
         return 0;
       }
     }

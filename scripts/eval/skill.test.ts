@@ -19,7 +19,7 @@ describe("next skill workflow", () => {
     const md = await readNextSkillMd(findPackageRoot());
     const grouping = skillSection(md, "Grouping rules");
     assert.match(md, /Each step is one tool call where the step says so/);
-    assert.match(md, /One shell call: verify the refs, check the CLI version, write the covering skeleton, log, and stat/);
+    assert.match(md, /One shell call: verify the refs, write the draft, print the digest and the draft, log, and stat/);
     assert.match(md, /Write the whole `review\.json` in one write/);
     assert.match(md, /`label` is that subject line, or a SHA from the same log/);
     assert.match(
@@ -31,18 +31,18 @@ describe("next skill workflow", () => {
     assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     const shells = [...md.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1] ?? "");
-    const batch = shells.find((block) => block.includes("rev-parse") && block.includes("review --base"));
+    const batch = shells.find((block) => block.includes("rev-parse") && block.includes("pregroup --base"));
     assert.ok(batch);
     assert.match(
       batch,
       /git rev-parse --verify --end-of-options "<base>\^\{commit\}" && git rev-parse --verify --end-of-options "<head>\^\{commit\}" &&/,
     );
     assert.match(batch, /npm view comprehende version/);
+    assert.match(batch, /digest --base <base> --head <head>/);
     assert.match(batch, /git log --format=/);
     assert.match(batch, /git diff --stat/);
     assert.match(md, /<executable> --version` in this same shell call/);
-    assert.match(md, /From the `--stat` in step 2/);
-    assert.match(md, /:\(exclude\)<path>/);
+    assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);
     assert.doesNotMatch(md, /package-lock\.json/);
     assert.doesNotMatch(md, /yarn\.lock/);
