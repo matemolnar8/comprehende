@@ -1,0 +1,1 @@
+{"path":"src/ui/components/SourceList.module.css","ref":"77ca76e50a4efc5d945d8aa19bcc0f0c7c93fd9c","side":"new","content":".scroll {\n  overflow-y: auto;\n  overscroll-behavior: contain;\n  scrollbar-width: thin;\n  scrollbar-color: var(--border) transparent;\n}\n","language":"css"}
