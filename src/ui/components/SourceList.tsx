@@ -1,3 +1,5 @@
+import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { ChevronDownIcon } from "lucide-react";
 import type { Source } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
@@ -5,9 +7,12 @@ import { SOURCE_KIND_ICON, SOURCE_KIND_LABEL } from "../lib/source-display.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import type { Selection } from "../lib/selection.ts";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
-import { BriefField, briefRows } from "./Kicker.tsx";
+import { briefRows } from "./Kicker.tsx";
+import styles from "./SourceList.module.css";
 
 const gistText = "block text-pretty leading-[1.45] text-foreground";
+const motion = "duration-[var(--motion)] ease-[var(--motion-ease)]";
+const VISIBLE_SOURCE_COUNT = 3;
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -20,32 +25,97 @@ export function SourceList(props: {
   const handle = useSources();
   const onOpenSource = handle?.onOpenSource;
   const selectionForSource = handle?.selectionForSource;
-  if (ids.length === 0) {
-    return null;
-  }
   const byId = new Map(sources.map((source) => [source.id, source]));
   const rows = ids.flatMap((id) => {
     const source = byId.get(id);
     return source === undefined ? [] : [source];
   });
+  const [open, setOpen] = useState(false);
+  const headingId = useId();
+  const listId = useId();
+  const listRef = useRef<HTMLUListElement>(null);
+  const maxHeight = useVisibleSourceMaxHeight(listRef, open && rows.length > 0, rows.length);
   if (rows.length === 0) {
     return null;
   }
+  const scroll = maxHeight !== undefined;
+
   return (
-    <BriefField kicker="Sources" className={className}>
-      <ul className={briefRows}>
-        {rows.map((source) => (
-          <SourceRow
-            key={source.id}
-            source={source}
-            strand={mixed ? parts.find((part) => part.title === source.part) : undefined}
-            onOpenSource={onOpenSource}
-            selectionForSource={selectionForSource}
+    <section className={cn("mb-4 last:mb-0", className)} aria-labelledby={headingId}>
+      <h2 id={headingId} className="font-mono text-[11px] font-normal leading-[1.45] text-muted-foreground">
+        <button
+          type="button"
+          className={cn(
+            "flex w-full items-center gap-1 rounded-sm border-0 bg-transparent p-0 text-left font-mono text-[11px] font-normal leading-[1.45] text-inherit outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50",
+            motion,
+            open && "mb-1",
+          )}
+          aria-expanded={open}
+          aria-controls={open ? listId : undefined}
+          onClick={() => setOpen((value) => !value)}
+        >
+          <ChevronDownIcon
+            aria-hidden
+            className={cn("size-3 shrink-0 transition-transform", motion, !open && "-rotate-90")}
           />
-        ))}
-      </ul>
-    </BriefField>
+          <span>Sources</span>
+          <span aria-hidden className="shrink-0">
+            ·
+          </span>
+          <span className="tabular-nums">{rows.length}</span>
+        </button>
+      </h2>
+      {open ? (
+        <ul
+          id={listId}
+          ref={listRef}
+          className={cn(briefRows, scroll && styles.scroll)}
+          style={scroll ? ({ maxHeight } satisfies CSSProperties) : undefined}
+        >
+          {rows.map((source) => (
+            <SourceRow
+              key={source.id}
+              source={source}
+              strand={mixed ? parts.find((part) => part.title === source.part) : undefined}
+              onOpenSource={onOpenSource}
+              selectionForSource={selectionForSource}
+            />
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
+}
+
+function useVisibleSourceMaxHeight(
+  listRef: RefObject<HTMLUListElement | null>,
+  open: boolean,
+  count: number,
+): number | undefined {
+  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
+
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!open || list === null || count <= VISIBLE_SOURCE_COUNT) {
+      setMaxHeight(undefined);
+      return;
+    }
+
+    const measure = () => {
+      const items = [...list.children].slice(0, VISIBLE_SOURCE_COUNT);
+      const next = Math.ceil(items.reduce((sum, item) => sum + item.getBoundingClientRect().height, 0));
+      setMaxHeight((current) => (current === next || next <= 0 ? current : next));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    for (const item of [...list.children].slice(0, VISIBLE_SOURCE_COUNT)) {
+      observer.observe(item);
+    }
+    return () => observer.disconnect();
+  }, [count, listRef, open]);
+
+  return maxHeight;
 }
 
 function SourceRow(props: {
