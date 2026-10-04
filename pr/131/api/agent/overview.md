@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 78b8cdbc1a55f6c0bd0da551ff2c9c98544ca9c5` and `git rev-parse --verify 8c5594bbc15b7382c254dbd821ad68b5dadafbc0` in this repository.
+   Run `git rev-parse --verify 78b8cdbc1a55f6c0bd0da551ff2c9c98544ca9c5` and `git rev-parse --verify 4436eb9e832e4c208e49426536711663295397f4` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,16 +24,16 @@ Origin: https://github.com/matemolnar8/comprehende.git
 
 base (merge-base)  78b8cdbc1a55f6c0bd0da551ff2c9c98544ca9c5
 
-head               8c5594bbc15b7382c254dbd821ad68b5dadafbc0
+head               4436eb9e832e4c208e49426536711663295397f4
 
 Named refs at pin: origin/HEAD ... HEAD
 
 Read the diff:
 
-git diff --find-renames 78b8cdbc1a55f6c0bd0da551ff2c9c98544ca9c5 8c5594bbc15b7382c254dbd821ad68b5dadafbc0
+git diff --find-renames 78b8cdbc1a55f6c0bd0da551ff2c9c98544ca9c5 4436eb9e832e4c208e49426536711663295397f4
 
 Commits:
-- 8c5594b Digest-first review generation
+- 4436eb9 Digest-first review generation
 - 841bb77 Eval: read token usage from Muse Code session export
 
 Sources:
