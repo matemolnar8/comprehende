@@ -14,8 +14,8 @@ describe("skill schema sync", () => {
     assert.match(nextSkillMd, /npm view comprehende version/);
     assert.match(nextSkillMd, /npx skills update/);
     assert.match(nextSkillMd, /Do not run that command/);
-    assert.match(nextSkillMd, /review --base <base> --head <head> --data/);
-    assert.match(nextSkillMd, /Re-run `review`/);
+    assert.match(nextSkillMd, /pregroup --base <base> --head <head> --data/);
+    assert.match(nextSkillMd, /Re-run `pregroup`/);
     assert.doesNotMatch(nextSkillMd, /Re-run `index`/);
     assert.doesNotMatch(nextSkillMd, /comprehende@[^\s`]+ index /);
     const root = findPackageRoot();

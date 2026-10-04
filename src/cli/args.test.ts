@@ -15,6 +15,8 @@ describe("parseArgv", () => {
       head: undefined,
       data: "review.json",
       out: undefined,
+      hunk: undefined,
+      file: undefined,
       port: 0,
       open: true,
     });
@@ -30,6 +32,8 @@ describe("parseArgv", () => {
       head: undefined,
       data: "review.json",
       out: "dist/review",
+      hunk: undefined,
+      file: undefined,
       port: DEFAULT_PORT,
       open: false,
     });
@@ -45,9 +49,47 @@ describe("parseArgv", () => {
       head: "HEAD",
       data: "review.json",
       out: undefined,
+      hunk: undefined,
+      file: undefined,
       port: DEFAULT_PORT,
       open: false,
     });
+  });
+
+  it("parses digest, show, and pregroup flags", () => {
+    assert.deepEqual(parseArgv(["digest", "--base", "a", "--head", "b"], "/repo"), {
+      kind: "command",
+      command: "digest",
+      cwd: "/repo",
+      base: "a",
+      head: "b",
+      data: undefined,
+      out: undefined,
+      hunk: undefined,
+      file: undefined,
+      port: DEFAULT_PORT,
+      open: false,
+    });
+    assert.deepEqual(parseArgv(["show", "--hunk", "a.ts@1+2"], "/repo"), {
+      kind: "command",
+      command: "show",
+      cwd: "/repo",
+      base: undefined,
+      head: undefined,
+      data: undefined,
+      out: undefined,
+      hunk: "a.ts@1+2",
+      file: undefined,
+      port: DEFAULT_PORT,
+      open: false,
+    });
+    const pregroup = parseArgv(["pregroup", "--data", "r.json", "--file", "a.ts"], "/repo");
+    assert.equal(pregroup.kind, "command");
+    if (pregroup.kind === "command") {
+      assert.equal(pregroup.command, "pregroup");
+      assert.equal(pregroup.data, "r.json");
+      assert.equal(pregroup.file, "a.ts");
+    }
   });
 
   it("rejects unknown commands", () => {

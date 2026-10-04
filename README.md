@@ -64,6 +64,16 @@ comprehende serve --data review.json
 comprehende export --data review.json --out <dir>
 ```
 
+For token-cheap reviews the skill works from a digest instead of the full diff:
+
+```sh
+comprehende digest --base <ref> --head <ref>
+comprehende show --hunk <path@oldStart+newStart>
+comprehende pregroup --base <ref> --head <ref> --data review.json
+```
+
+`digest` prints one line per changed file (kind, hunks, symbols), `show` prints the patch for one hunk or file, and `pregroup` writes a draft review (identical copies, mechanical files, one change group).
+
 ## Release
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.

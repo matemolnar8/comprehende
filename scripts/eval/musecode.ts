@@ -11,9 +11,30 @@ export type MuseExecResult = {
   reason?: string;
   toolCalls: ToolCallRecord[];
   steps: number;
+  sessionId?: string;
+};
+
+export type MuseUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cachedTokens: number;
+  reasoningTokens: number;
+  completions: number;
+};
+
+const ZERO_USAGE: MuseUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cachedTokens: 0,
+  reasoningTokens: 0,
+  completions: 0,
 };
 
 type MuseEvent = {
+  stream?: {
+    kind?: string;
+    id?: string;
+  };
   payload_type?: string;
   payload?: {
     kind?: string;
@@ -30,6 +51,7 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
   let terminal = "";
   let text = "";
   let reason: string | undefined;
+  let sessionId: string | undefined;
   for (const line of stdout.split("\n")) {
     const trimmed = line.trim();
     if (trimmed === "") {
@@ -40,6 +62,9 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
       event = JSON.parse(trimmed) as MuseEvent;
     } catch {
       continue;
+    }
+    if (sessionId === undefined && event.stream?.kind === "session" && typeof event.stream.id === "string") {
+      sessionId = event.stream.id;
     }
     const payload = event.payload;
     if (payload?.kind === "run_terminal") {
@@ -57,7 +82,86 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
       }
     }
   }
-  return { text, terminal, reason, toolCalls, steps };
+  return { text, terminal, reason, toolCalls, steps, sessionId };
+}
+
+/**
+ * Sum per-completion usage from a `muse export --session <id>` document.
+ * `muse exec --json` streams progress events only; token counters live in
+ * the durable session log as `model_completed` events, which the export
+ * carries verbatim. Echo-provider legs report zeros, which sum to zero.
+ */
+export function parseExportUsage(document: unknown): MuseUsage {
+  if (typeof document !== "object" || document === null || !("events" in document)) {
+    return { ...ZERO_USAGE };
+  }
+  const events = (document as { events?: unknown }).events;
+  if (!Array.isArray(events)) {
+    return { ...ZERO_USAGE };
+  }
+  const total = { ...ZERO_USAGE };
+  for (const record of events) {
+    if (typeof record !== "object" || record === null) {
+      continue;
+    }
+    const event = (record as { envelope?: { payload?: { event?: unknown } } }).envelope?.payload?.event;
+    if (typeof event !== "object" || event === null) {
+      continue;
+    }
+    const typed = event as { kind?: unknown; usage?: unknown };
+    if (typed.kind !== "model_completed" || typeof typed.usage !== "object" || typed.usage === null) {
+      continue;
+    }
+    const usage = typed.usage as Record<string, unknown>;
+    total.inputTokens += toCount(usage.input_tokens);
+    total.outputTokens += toCount(usage.output_tokens);
+    total.cachedTokens += toCount(usage.cached_tokens);
+    total.reasoningTokens += toCount(usage.reasoning_tokens);
+    total.completions += 1;
+  }
+  return total;
+}
+
+function toCount(value: unknown): number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
+}
+
+/** Offline `muse export --session <id>`. Returns zeros when the export fails. */
+async function readMuseUsage(sessionId: string, cwd: string): Promise<MuseUsage> {
+  const outPath = join(cwd, "usage-export.json");
+  const code = await new Promise<number>((resolve) => {
+    let child;
+    try {
+      child = spawn("muse", ["export", "--session", sessionId, "--out", outPath], {
+        cwd,
+        stdio: ["ignore", "ignore", "ignore"],
+      });
+    } catch {
+      resolve(127);
+      return;
+    }
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve(124);
+    }, 60_000);
+    child.on("error", () => {
+      clearTimeout(timer);
+      resolve(127);
+    });
+    child.on("close", (exit) => {
+      clearTimeout(timer);
+      resolve(exit ?? 1);
+    });
+  });
+  if (code !== 0) {
+    return { ...ZERO_USAGE };
+  }
+  try {
+    const { readFile } = await import("node:fs/promises");
+    return parseExportUsage(JSON.parse(await readFile(outPath, "utf8")));
+  } catch {
+    return { ...ZERO_USAGE };
+  }
 }
 
 /** Headless `muse exec`. Prompt travels in a file, the API key in stdin. */
@@ -124,11 +228,17 @@ export async function runMuseCodeAgent(opts: {
         error: tail(stderr) ?? `muse exec exited ${String(code)} with no terminal event`,
       };
     }
+    const usage = parsed.sessionId === undefined ? { ...ZERO_USAGE } : await readMuseUsage(parsed.sessionId, tmp);
+    const inputTokens = usage.inputTokens;
+    const outputTokens = usage.outputTokens;
     return {
       text: parsed.text,
       status: "finished",
       durationMs: Date.now() - started,
-      tokens: 0,
+      tokens: inputTokens + outputTokens,
+      inputTokens,
+      outputTokens,
+      cacheReadTokens: usage.cachedTokens,
       steps: parsed.steps,
       toolCalls: parsed.toolCalls,
     };

@@ -5,9 +5,9 @@ import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { after, describe, it } from "node:test";
-import { cmdIndex, cmdReview, cmdValidate } from "./commands.ts";
+import { cmdDigest, cmdIndex, cmdPregroup, cmdReview, cmdShow, cmdValidate } from "./commands.ts";
 import { skeletonPaths } from "../review/skeleton.ts";
-import { createExampleRepo } from "../test/example-repo.ts";
+import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
 import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
 const REAL_GIT = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
@@ -93,6 +93,40 @@ describe("cmdReview git work", { concurrency: false }, () => {
       assert.deepEqual(await log.read(), []);
       await assert.rejects(access(dataPath));
     });
+  });
+
+  it("digests one line per file with no patch text", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-digest-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const text = await cmdDigest(repo.root, repo.base, repo.head);
+    assert.match(text, /# Digest .* — \d+ files, \d+ hunks/);
+    assert.match(text, /src\/app\.test\.ts.*test.*pairs with src\/app\.\*/);
+    assert.match(text, /README\.md.*docs/);
+    assert.match(text, /src\/helpers\.ts.*rename/);
+    assert.equal(text.includes(SECRET_ADD), false);
+  });
+
+  it("shows one file or hunk patch on demand", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-show-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const patch = await cmdShow(repo.root, repo.base, repo.head, { file: "src/types.ts" });
+    assert.match(patch, /string \| number/);
+    await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, { file: "nope.ts" }), /no diff for path/);
+    await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, {}), /--hunk/);
+    await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, { hunk: "bogus" }), /invalid hunk ref|no diff for path/);
+  });
+
+  it("pregroups a draft that validate accepts", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-pregroup-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    const { document } = await cmdPregroup(repo.root, dataPath, repo.base, repo.head);
+    assert.ok(document.groups.some((group) => group.id === "change"));
+    assert.ok(document.groups.some((group) => group.id === "mechanical"));
+    await cmdValidate(repo.root, dataPath);
   });
 });
 

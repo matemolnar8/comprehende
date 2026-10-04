@@ -1,4 +1,4 @@
-export type CommandName = "review" | "validate" | "serve" | "export";
+export type CommandName = "review" | "validate" | "serve" | "export" | "digest" | "show" | "pregroup";
 
 export type CliRequest =
   | { kind: "help" }
@@ -12,11 +12,21 @@ export type CliRequest =
       head?: string;
       data?: string;
       out?: string;
+      hunk?: string;
+      file?: string;
       port: number;
       open: boolean;
     };
 
-const COMMANDS: ReadonlySet<string> = new Set<CommandName>(["review", "validate", "serve", "export"]);
+const COMMANDS: ReadonlySet<string> = new Set<CommandName>([
+  "review",
+  "validate",
+  "serve",
+  "export",
+  "digest",
+  "show",
+  "pregroup",
+]);
 
 export const DEFAULT_PORT = 4567;
 
@@ -35,6 +45,17 @@ Commands:
   review    [--base <ref>] [--head <ref>] --data <review.json>
             Write a covering skeleton (every hunk ref, stub prose). Does not
             invent a review. Fill title, groups, and summaries, then validate.
+
+  digest    [--base <ref>] [--head <ref>]
+            Print one line per changed file (kind, hunks, symbols). No patch
+            text. Group from this; fetch patch with show.
+
+  show      [--base <ref>] [--head <ref>] --hunk <ref> | --file <path>
+            Print the patch for one hunk (path@oldStart+newStart) or one file.
+
+  pregroup  [--base <ref>] [--head <ref>] --data <review.json>
+            Write a draft review: identical copies, mechanical files, and one
+            change group for the rest. Accept, split, and write the prose.
 
   validate  --data <review.json>
             Check schema, ref resolution, hunk coverage, and source citations
@@ -91,6 +112,8 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
       head: flag(rest, "--head"),
       data: flag(rest, "--data"),
       out: flag(rest, "--out"),
+      hunk: flag(rest, "--hunk"),
+      file: flag(rest, "--file"),
       port,
       open: rest.includes("--open"),
     };
