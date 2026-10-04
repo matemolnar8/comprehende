@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useId, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
 import type { Source } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
@@ -12,7 +12,6 @@ import styles from "./SourceList.module.css";
 
 const gistText = "block text-pretty leading-[1.45] text-foreground";
 const motion = "duration-[var(--motion)] ease-[var(--motion-ease)]";
-const VISIBLE_SOURCE_COUNT = 3;
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -33,12 +32,9 @@ export function SourceList(props: {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const listId = useId();
-  const listRef = useRef<HTMLUListElement>(null);
-  const maxHeight = useVisibleSourceMaxHeight(listRef, open && rows.length > 0, rows.length);
   if (rows.length === 0) {
     return null;
   }
-  const scroll = maxHeight !== undefined;
 
   return (
     <section className={cn("mb-4 last:mb-0", className)} aria-labelledby={headingId}>
@@ -66,12 +62,7 @@ export function SourceList(props: {
         </button>
       </h2>
       {open ? (
-        <ul
-          id={listId}
-          ref={listRef}
-          className={cn(briefRows, scroll && styles.scroll)}
-          style={scroll ? ({ maxHeight } satisfies CSSProperties) : undefined}
-        >
+        <ul id={listId} className={cn(briefRows, styles.scroll)}>
           {rows.map((source) => (
             <SourceRow
               key={source.id}
@@ -85,37 +76,6 @@ export function SourceList(props: {
       ) : null}
     </section>
   );
-}
-
-function useVisibleSourceMaxHeight(
-  listRef: RefObject<HTMLUListElement | null>,
-  open: boolean,
-  count: number,
-): number | undefined {
-  const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined);
-
-  useLayoutEffect(() => {
-    const list = listRef.current;
-    if (!open || list === null || count <= VISIBLE_SOURCE_COUNT) {
-      setMaxHeight(undefined);
-      return;
-    }
-
-    const measure = () => {
-      const items = [...list.children].slice(0, VISIBLE_SOURCE_COUNT);
-      const next = Math.ceil(items.reduce((sum, item) => sum + item.getBoundingClientRect().height, 0));
-      setMaxHeight((current) => (current === next || next <= 0 ? current : next));
-    };
-
-    measure();
-    const observer = new ResizeObserver(measure);
-    for (const item of [...list.children].slice(0, VISIBLE_SOURCE_COUNT)) {
-      observer.observe(item);
-    }
-    return () => observer.disconnect();
-  }, [count, listRef, open]);
-
-  return maxHeight;
 }
 
 function SourceRow(props: {

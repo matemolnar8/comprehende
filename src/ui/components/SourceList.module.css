@@ -1,4 +1,6 @@
 .scroll {
+  /* Gist line, meta line, and row padding, three times. */
+  max-height: calc(3 * 4.25em);
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
