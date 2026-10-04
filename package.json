@@ -22,6 +22,7 @@
     "fixture:smoke": "tsx scripts/fixture-smoke.ts",
     "generate:schema": "tsx scripts/generate-review-schema.ts",
     "sync:skill": "tsx scripts/sync-skill.ts",
+    "dev:skill": "pnpm build && tsx scripts/install-local-skill.ts",
     "release:skill": "tsx scripts/sync-skill.ts --release",
     "check:skill": "tsx scripts/check-skill-sync.ts",
     "pack:smoke": "tsx scripts/pack-smoke.ts",

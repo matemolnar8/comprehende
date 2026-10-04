@@ -48,6 +48,14 @@ This repository publishes those exports to GitHub Pages. A pull request review l
 
 `pnpm dev` and `pnpm exec` run with this package as cwd, so they only make sense when _this_ repo is the one under review. To review a different project from a checkout, `cd` into it and run `npx comprehende@0.8.0` (or `node /path/to/comprehende/dist/cli/main.js` after `pnpm build`).
 
+To run the next skill with the locally built CLI from any other folder, install this checkout as the global skill:
+
+```sh
+pnpm dev:skill
+```
+
+That builds, copies `skills-next/comprehende/` to `~/.agents/skills/comprehende/`, and rewrites the CLI pin to `node <checkout>/dist/cli/main.js`. Re-run it after rebuilding, and after `npx skills update` (which restores the published skill).
+
 ## CLI
 
 Run inside the git repository under review. Cwd is the repo.
