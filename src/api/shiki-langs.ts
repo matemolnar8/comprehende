@@ -68,14 +68,10 @@ export function highlightPathsFromFiles(files: readonly { path: string; oldPath?
   return paths;
 }
 
-export function chunksToKeep(manifest: ShikiLangsManifest, langs: readonly string[]): string[] | undefined {
+export function chunksToKeep(manifest: ShikiLangsManifest, langs: readonly string[]): string[] {
   const keep = new Set<string>();
   for (const lang of langs) {
-    const files = manifest.files[lang];
-    if (files === undefined) {
-      return undefined;
-    }
-    for (const file of files) {
+    for (const file of manifest.files[lang] ?? []) {
       keep.add(file);
     }
   }
@@ -88,11 +84,7 @@ export async function pruneUnusedHighlighterChunks(outDir: string, paths: readon
     return [];
   }
   const langs = highlightLangsForPaths(paths, manifest.lookup);
-  const keep = chunksToKeep(manifest, langs);
-  if (keep === undefined) {
-    return [];
-  }
-  const keepSet = new Set(keep);
+  const keepSet = new Set(chunksToKeep(manifest, langs));
   const removed: string[] = [];
   for (const file of manifest.chunks) {
     if (keepSet.has(file)) {
