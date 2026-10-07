@@ -92,12 +92,12 @@ describe("highlighter manifest", () => {
     assert.deepEqual(highlightLangsForPaths(paths, manifest.lookup).sort(), ["css", "html", "typescript"]);
   });
 
-  it("keeps static embeds and refuses to prune when a used language is missing", () => {
+  it("keeps static embeds and ignores languages with no chunk", () => {
     assert.deepEqual(
-      chunksToKeep(manifest, ["html"])?.sort(),
+      chunksToKeep(manifest, ["html"]).sort(),
       ["assets/shiki-lang-css-ccc.js", "assets/shiki-lang-html-ddd.js", "assets/shiki-lang-javascript-bbb.js"],
     );
-    assert.equal(chunksToKeep(manifest, ["html", "rust"]), undefined);
+    assert.deepEqual(chunksToKeep(manifest, ["css", "rust"]), ["assets/shiki-lang-css-ccc.js"]);
     assert.deepEqual(chunksToKeep(manifest, []), []);
   });
 });
@@ -120,6 +120,21 @@ describe("pruneUnusedHighlighterChunks", () => {
     assert.equal(existsSync(join(root, "assets/shiki-lang-python-eee.js.map")), false);
     assert.equal(existsSync(join(root, "assets/shiki-lang-html-ddd.js")), false);
     assert.ok(removed.includes("assets/shiki-lang-python-eee.js"));
+  });
+
+  it("still prunes when the diff has a language with no chunk", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-shiki-nochunk-"));
+    roots.push(root);
+    await mkdir(join(root, "assets"));
+    await writeFile(join(root, "shiki-langs.json"), `${JSON.stringify(manifest)}\n`);
+    for (const file of manifest.chunks) {
+      await writeFile(join(root, file), `// ${file}\n`);
+    }
+
+    await pruneUnusedHighlighterChunks(root, ["src/app.ts", "Dockerfile"]);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-typescript-aaa.js")), true);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-python-eee.js")), false);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-markdown-fff.js")), false);
   });
 
   it("leaves the folder alone when the manifest is missing", async () => {
