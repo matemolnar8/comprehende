@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -139,6 +139,42 @@ describe("export static site", () => {
     assert.equal(existsSync(join(outDir, "assets/shiki-lang-typescript-aaa.js")), true);
     assert.equal(existsSync(join(outDir, "assets/shiki-lang-markdown-fff.js")), true);
     assert.equal(existsSync(join(outDir, "assets/shiki-lang-python-eee.js")), false);
+  });
+
+  it("exports highlighter chunks for exactly the languages in the diff", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-export-only-langs-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    await writeCoveringDocument(dataPath, await cmdIndex(repo.root, repo.base, repo.head));
+
+    const allLangs = ["typescript", "markdown", "python", "rust", "go", "java", "css", "html", "javascript", "json"];
+    const chunkOf = (lang: string) => `assets/shiki-lang-${lang}-hash.js`;
+    const uiRoot = join(root, "ui");
+    await mkdir(join(uiRoot, "assets"), { recursive: true });
+    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "assets/index-hash.js"), "// app\n");
+    await writeFile(
+      join(uiRoot, "shiki-langs.json"),
+      `${JSON.stringify({
+        version: 1,
+        chunks: allLangs.map(chunkOf),
+        files: Object.fromEntries(allLangs.map((lang) => [lang, [chunkOf(lang)]])),
+        lookup: { ts: "typescript", md: "markdown", py: "python", rs: "rust", go: "go", java: "java", json: "json" },
+      })}\n`,
+    );
+    for (const lang of allLangs) {
+      await writeFile(join(uiRoot, chunkOf(lang)), `// ${lang}\n`);
+    }
+
+    const outDir = join(root, "site");
+    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
+
+    assert.deepEqual((await readdir(join(outDir, "assets"))).sort(), [
+      "index-hash.js",
+      "shiki-lang-markdown-hash.js",
+      "shiki-lang-typescript-hash.js",
+    ]);
   });
 
   it("refuses unresolved source refs", async () => {
