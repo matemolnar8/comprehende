@@ -28,6 +28,10 @@ describe("next skill workflow", () => {
     );
     assert.match(md, /This shape is enough to write a valid document/);
     assert.match(md, /references\/example\.md` is an optional filled sample/);
+    assert.match(md, /whose thread is open/);
+    assert.match(md, /A resolved thread \(`isResolved`\) has no pin/);
+    assert.match(md, /An outdated comment has no pin/);
+    assert.match(md, /original_line/);
     assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     const shells = [...md.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1] ?? "");

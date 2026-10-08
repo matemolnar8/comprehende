@@ -18,7 +18,7 @@
 
 **Look for.** Claims the live diff does not make obvious. Group `lookFor` holds claims that live in those hunks. Document `lookFor` holds whole-change and missing-work claims. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
 
-**Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. Transcripts have no URL.
+**Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. The pin is the line that comment still sits on at head, on an open thread. A resolved thread and an outdated comment keep the source and omit the pin. Transcripts have no URL.
 
 **Citation.** A markdown link `[text](source:id)` in the why, the what, or lookFor. The UI turns it into a mark. `validate` fails on an unknown id.
 
