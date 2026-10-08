@@ -88,6 +88,14 @@ describe("eval result line", () => {
     assert.doesNotMatch(line, /producer-tools/);
   });
 
+  it("prints why the producer failed and hints at the fallback on a usage limit", () => {
+    const base = { id: "c1", ok: false, durationMs: 1000, tokens: 0 };
+    const crash = formatCaseLine({ ...base, producerError: "spawn rg ENOENT\n    at foo" });
+    assert.match(crash, /producer FAIL: spawn rg ENOENT  /);
+    const limited = formatCaseLine({ ...base, producerError: "429 usage limit reached" });
+    assert.match(limited, /producer FAIL: 429 usage limit reached \(usage limit, try --cursor-fallback\)/);
+  });
+
   it("prints producer tool calls and the token split next to the total", () => {
     const line = formatCaseLine({
       id: "comprehende-47",

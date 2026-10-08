@@ -4,7 +4,7 @@ This is a tool that helps us, humans understand (comprehend) AI code changes, su
 
 ## Background
 
-AI agents write more code than humans can review line by line. This tool moves review from cognitive surrender to cognitive offloading. The glossary below defines both. The full argument is in the README.
+AI agents write more code than humans can review line by line. This tool moves review from cognitive surrender to cognitive offloading. The [glossary](./docs/glossary.md) defines both. The full argument is in the README.
 
 ## What the tool is
 
@@ -22,55 +22,7 @@ It's a review assistant tool, which users can run as a skill (invoked using slas
 
 ## Glossary
 
-### Concepts
-
-**Cognitive offloading.** Hand off the _how_. Keep the _why_ and the _what_. The human still has a view of the change to compare against.
-
-**Cognitive surrender.** Stop constructing an answer and adopt the tool's answer, with no _why_ or _what_ of your own. That is how comprehension debt grows.
-
-**Comprehension debt.** The gap between the code in the system and the understanding the humans who develop, maintain, or operate it have. Unlike technical debt, nobody chooses it. It stays invisible until something breaks.
-
-**The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
-
-**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any existing human or agent generated that's related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
-
-**The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
-
-**The how.** How the change is implemented. The live git diff is the how. The agent may group and summarize it. The agent must not replace it.
-
-**Look for.** Claims the live diff does not make obvious. Group `lookFor` holds claims that live in those hunks. Document `lookFor` holds whole-change and missing-work claims. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
-
-**Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. Transcripts have no URL.
-
-**Citation.** A markdown link `[text](source:id)` in the why, the what, or lookFor. The UI turns it into a mark. `validate` fails on an unknown id.
-
-### Code
-
-**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
-
-**Group.** Schema `groups` item. The UI uses the same word.
-
-**Review concern.** Why these hunks are read together. Not a directory, unless that directory is the concern.
-
-**Part / story.** Independent work. Could have been its own PR. `dependsOn` only inside a story.
-
-**Size.** Review burden. Not file or hunk count.
-
-**Hunk ref.** Pointer into live git. Copy from the `review` skeleton. Never invent.
-
-**Index.** Internal hunk list. No line content. Not stored in the UI. `review` writes those refs into a covering skeleton.
-
-**Live git.** `git` in cwd at serve time. Git wins.
-
-**Coverage.** Every live hunk in at least one group. Duplicates allowed.
-
-**Unassigned.** Live hunks with no group. Still shown.
-
-**Stale ref.** Pointer that does not match live git. Serve still starts. Do not invent a replacement.
-
-**Skill.** Grouping instructions. Does not talk to git.
-
-**CLI.** review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
+Read [docs/glossary.md](./docs/glossary.md) before editing the skill, the schema, the review code, or UI copy.
 
 ## Project rules
 
@@ -97,6 +49,10 @@ When opening a pull request, run the local built CLI `comprehende review --data 
 After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `CURSOR_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
 A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `CURSOR_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
+
+Eval commands, run times, and what to do when a run aborts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
+
+Judgement rules for review: [.cursor/BUGBOT.md](./.cursor/BUGBOT.md).
 
 ## Notes from Máté, the repo owner
 
