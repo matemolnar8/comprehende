@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { isCliHuntCall } from "./agent.ts";
+import { isCliHuntCall } from "./musecode.ts";
 import { producerPrompt } from "./producer.ts";
 
 const prompt = producerPrompt({
@@ -42,5 +42,10 @@ describe("CLI hunt classifier", () => {
     assert.equal(isCliHuntCall({ name: "grep", detail: "/tmp/comprehende-eval-x/out/review.json" }), false);
     assert.equal(isCliHuntCall({ name: "grep", detail: "dist/cli" }), true);
     assert.equal(isCliHuntCall({ name: "shell", detail: "node /repo/dist/cli/main.js validate --data /tmp/out/review.json" }), false);
+  });
+
+  it("matches Muse tool name suffixes", () => {
+    assert.equal(isCliHuntCall({ name: "read_file", detail: "dist/cli/main.js" }), true);
+    assert.equal(isCliHuntCall({ name: "read_file", detail: "/tmp/skill/SKILL.md" }), false);
   });
 });

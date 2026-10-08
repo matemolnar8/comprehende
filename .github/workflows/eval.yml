@@ -1,7 +1,5 @@
 # Full graded eval after skill, schema, review, or harness land on main.
-# Needs repo secret CURSOR_API_KEY. Skips (does not fail) when that secret is unset.
-# Optional repo secret MUSE_CODE_API_KEY installs the Muse Code CLI and arms
-# --cursor-fallback: when Cursor errors (usage limits included), roles move to Muse.
+# Needs repo secret MUSE_CODE_API_KEY. Skips (does not fail) when that secret is unset.
 # Event-driven: path filter on main, plus workflow_dispatch. Not a cron.
 
 name: Eval suite
@@ -40,10 +38,9 @@ jobs:
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile
-      - name: Install Muse Code (Cursor fallback)
+      - name: Install Muse Code
         env:
           MUSE_CODE_API_KEY: ${{ secrets.MUSE_CODE_API_KEY }}
-        if: env.MUSE_CODE_API_KEY != ''
         run: |
           set -euo pipefail
           mkdir -p ~/.local/bin
@@ -52,31 +49,22 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           MUSE_LAUNCHER_INSTALL=1 ~/.local/bin/muse
           ~/.local/bin/muse --version
-      # The Cursor SDK calls configureRipgrepPath when rg is on PATH. ubuntu-latest has none.
+      # Agent search tools use rg when it is on PATH. ubuntu-latest has none.
       - name: Install ripgrep
         run: sudo apt-get install -y ripgrep
       - name: Full graded eval
         env:
-          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           MUSE_CODE_API_KEY: ${{ secrets.MUSE_CODE_API_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${CURSOR_API_KEY}" ]; then
-            echo "Repo secret CURSOR_API_KEY is not set. Skipping the full graded suite."
+          if [ -z "${MUSE_CODE_API_KEY}" ]; then
+            echo "Repo secret MUSE_CODE_API_KEY is not set. Skipping the full graded suite."
             echo "Add it under Settings → Secrets and variables → Actions."
-            echo "::warning::CURSOR_API_KEY secret missing; full eval skipped"
+            echo "::warning::MUSE_CODE_API_KEY secret missing; full eval skipped"
             exit 0
           fi
           unset GITHUB_TOKEN GH_TOKEN
-          flags="--json"
-          if [ -n "${MUSE_CODE_API_KEY}" ] && command -v muse >/dev/null 2>&1; then
-            flags="$flags --cursor-fallback"
-          else
-            echo "::warning::Muse fallback unavailable (needs the MUSE_CODE_API_KEY secret and the muse CLI); cursor-only run"
-          fi
-          # Word-split on purpose: flags holds separate argv words.
-          # shellcheck disable=SC2086
-          pnpm eval -- $flags
+          pnpm eval -- --json
       - name: Upload eval run
         if: always()
         uses: actions/upload-artifact@v4

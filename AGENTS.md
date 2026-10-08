@@ -46,9 +46,9 @@ Releases happen manually. Do not change `package.json` version unless the user a
 
 When opening a pull request, run the local built CLI `comprehende review --data <path>` to write the covering skeleton (one path per changed file, stub prose). Fill interpretation with the comprehende skill from skills-next. Do not paste hunk refs by hand. Export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
 
-After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `CURSOR_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
+After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `MUSE_CODE_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
-A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `CURSOR_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
+A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `MUSE_CODE_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
 
 Eval commands, run times, and what to do when a run aborts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
 

@@ -32,10 +32,8 @@ describe("eval HTML report", () => {
     const summary: RunSummary = {
       stamp: "2026-09-13T03-13-34-249Z",
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
-      producerModel: "composer-2.5",
-      graderModel: "grok-4.6",
-      producerAgent: "cursor",
-      graderAgent: "cursor",
+      producerModel: "muse-spark-1.3-contributor",
+      graderModel: "muse-spark-1.3-contributor",
       graders: true,
       cases: [
         caseResult({
@@ -70,8 +68,8 @@ describe("eval HTML report", () => {
     };
     const html = evalReportHtml(summary);
     assert.match(html, /1 of 2 cases failed deterministic checks/);
-    assert.match(html, /producer cursor:composer-2\.5/);
-    assert.match(html, /grader cursor:grok-4\.6/);
+    assert.match(html, /producer muse-spark-1\.3-contributor/);
+    assert.match(html, /grader muse-spark-1\.3-contributor/);
     assert.match(html, /skill 963f606/);
     assert.match(html, /expected why absent, got present/);
     assert.match(html, /\.\/comprehende-50\/site\/index.html/);
@@ -86,10 +84,8 @@ describe("eval HTML report", () => {
     const html = evalReportHtml({
       stamp: "2026-09-21T02-00-00-000Z",
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
-      producerModel: "composer-2.5",
-      graderModel: "grok-4.6",
-      producerAgent: "cursor",
-      graderAgent: "cursor",
+      producerModel: "muse-spark-1.3-contributor",
+      graderModel: "muse-spark-1.3-contributor",
       graders: true,
       cases: [
         caseResult({
@@ -111,15 +107,13 @@ describe("eval HTML report", () => {
     const html = evalReportHtml({
       stamp: "2026-09-20T21-00-00-000Z",
       skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
-      producerModel: "composer-2.5",
-      graderModel: "grok-4.6",
-      producerAgent: "cursor",
-      graderAgent: "cursor",
+      producerModel: "muse-spark-1.3-contributor",
+      graderModel: "muse-spark-1.3-contributor",
       graders: false,
       cases: [caseResult({ id: "comprehende-50" })],
     });
     assert.match(html, /graders off/);
-    assert.doesNotMatch(html, /grader grok-4\.6/);
+    assert.doesNotMatch(html, /grader muse-spark/);
   });
 
   it("escapes HTML characters", () => {
