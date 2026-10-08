@@ -52,7 +52,7 @@ A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) r
 
 Eval commands, run times, and what to do when a run aborts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
 
-Judgement rules for review: [CODING_STANDARDS.md](./CODING_STANDARDS.md).
+Judgement rules for review: [.cursor/BUGBOT.md](./.cursor/BUGBOT.md).
 
 ## Notes from Máté, the repo owner
 

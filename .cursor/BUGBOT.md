@@ -1,6 +1,6 @@
-# Coding standards
+# Review rules
 
-The reviewer reads this file. Implementers read `AGENTS.md`. Each rule here is a judgement call. A fixed pattern belongs in a check (`pnpm typecheck`, `pnpm test`, `actionlint` in CI), not in this file.
+Bugbot reads this file. Each rule here is a judgement call. A fixed pattern belongs in a check (`pnpm typecheck`, `pnpm test`, `actionlint` in CI), not in this file.
 
 ## Smallest fix
 
