@@ -6,6 +6,7 @@ import type { DeterministicReport } from "./checks.ts";
 import type { AgentRunResult } from "./agent.ts";
 import type { Finding, GraderResult } from "./graders.ts";
 import { isCliHuntCall } from "./agent.ts";
+import { isUsageLimitMessage } from "./fallback.ts";
 
 export type CaseResult = {
   id: string;
@@ -42,10 +43,18 @@ export function caseFailed(result: CaseResult): boolean {
   return (result.checks?.failures.length ?? 0) > 0;
 }
 
+const REASON_MAX = 120;
+
+function producerFailureReason(error: string): string {
+  const firstLine = (error.split("\n")[0] ?? "").trim();
+  const reason = firstLine.length > REASON_MAX ? `${firstLine.slice(0, REASON_MAX)}...` : firstLine;
+  return isUsageLimitMessage(error) ? `${reason} (usage limit, try --cursor-fallback)` : reason;
+}
+
 export function formatCaseLine(result: CaseResult): string {
   const bits = [result.id];
   if (result.producerError !== undefined) {
-    bits.push("producer FAIL");
+    bits.push(`producer FAIL: ${producerFailureReason(result.producerError)}`);
   } else {
     bits.push(result.validateError === undefined ? "validate ok" : "validate FAIL");
   }
