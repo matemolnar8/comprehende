@@ -1,6 +1,4 @@
-import { PRODUCER_DISALLOWED_TOOLS, type AgentKind } from "./constants.ts";
-import { runLocalAgent, type AgentRunResult } from "./agent.ts";
-import { runMuseCodeAgent } from "./musecode.ts";
+import { runMuseCodeAgent, type AgentRunResult } from "./musecode.ts";
 
 export function producerPrompt(opts: {
   repoCwd: string;
@@ -25,28 +23,14 @@ export function producerPrompt(opts: {
 export async function runProducer(opts: {
   repoCwd: string;
   model: string;
-  agent: AgentKind;
-  musecodeModel: string;
   apiKey: string;
-  musecodeKey: string;
-  sandbox: boolean;
   prompt: string;
 }): Promise<AgentRunResult> {
-  if (opts.agent === "musecode") {
-    return runMuseCodeAgent({
-      cwd: opts.repoCwd,
-      model: opts.musecodeModel,
-      prompt: opts.prompt,
-      apiKey: opts.musecodeKey,
-      readOnly: false,
-    });
-  }
-  return runLocalAgent({
+  return runMuseCodeAgent({
     cwd: opts.repoCwd,
     model: opts.model,
     prompt: opts.prompt,
     apiKey: opts.apiKey,
-    disallowedTools: PRODUCER_DISALLOWED_TOOLS,
-    sandbox: opts.sandbox,
+    readOnly: false,
   });
 }

@@ -54,7 +54,6 @@
     "provenance": true
   },
   "devDependencies": {
-    "@cursor/sdk": "^1.0.31",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",

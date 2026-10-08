@@ -1,7 +1,5 @@
 import * as z from "zod";
-import { GRADER_TOOLS, type AgentKind } from "./constants.ts";
-import { runLocalAgent, type AgentRunResult } from "./agent.ts";
-import { runMuseCodeAgent } from "./musecode.ts";
+import { runMuseCodeAgent, type AgentRunResult } from "./musecode.ts";
 import { skillSection } from "./skill.ts";
 
 const findingSchema = z.object({
@@ -115,30 +113,17 @@ export function prosePrompt(opts: { skillMd: string; packet: string; claims: str
 export async function runGrader(opts: {
   repoCwd: string;
   model: string;
-  agent: AgentKind;
-  musecodeModel: string;
   apiKey: string;
-  musecodeKey: string;
-  sandbox: boolean;
   prompt: string;
 }): Promise<GraderResult> {
   const runOnce = (prompt: string): Promise<AgentRunResult> =>
-    opts.agent === "musecode"
-      ? runMuseCodeAgent({
-          cwd: opts.repoCwd,
-          model: opts.musecodeModel,
-          prompt,
-          apiKey: opts.musecodeKey,
-          readOnly: true,
-        })
-      : runLocalAgent({
-          cwd: opts.repoCwd,
-          model: opts.model,
-          prompt,
-          apiKey: opts.apiKey,
-          tools: [...GRADER_TOOLS],
-          sandbox: opts.sandbox,
-        });
+    runMuseCodeAgent({
+      cwd: opts.repoCwd,
+      model: opts.model,
+      prompt,
+      apiKey: opts.apiKey,
+      readOnly: true,
+    });
   const first = await runOnce(opts.prompt);
   try {
     return { run: first, output: parseGraderJson(first.text) };

@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { GRADER_TOOLS } from "./constants.ts";
 import { groupingPrompt, parseGraderJson, prosePrompt } from "./graders.ts";
 import { caseFailed, formatCaseLine, formatDuration, formatRunTotals, formatTokens, type CaseResult } from "./result.ts";
-import type { AgentRunResult } from "./agent.ts";
+import type { AgentRunResult } from "./musecode.ts";
 
 const finishedRun: AgentRunResult = {
   text: "",
@@ -88,12 +87,12 @@ describe("eval result line", () => {
     assert.doesNotMatch(line, /producer-tools/);
   });
 
-  it("prints why the producer failed and hints at the fallback on a usage limit", () => {
+  it("prints why the producer failed", () => {
     const base = { id: "c1", ok: false, durationMs: 1000, tokens: 0 };
     const crash = formatCaseLine({ ...base, producerError: "spawn rg ENOENT\n    at foo" });
     assert.match(crash, /producer FAIL: spawn rg ENOENT  /);
     const limited = formatCaseLine({ ...base, producerError: "429 usage limit reached" });
-    assert.match(limited, /producer FAIL: 429 usage limit reached \(usage limit, try --cursor-fallback\)/);
+    assert.match(limited, /producer FAIL: 429 usage limit reached/);
   });
 
   it("prints producer tool calls and the token split next to the total", () => {
@@ -125,7 +124,6 @@ describe("eval result line", () => {
   });
 
   it("inlines the packet and keeps targeted work-tree reads", () => {
-    assert.deepEqual([...GRADER_TOOLS], ["read", "grep", "glob", "ls"]);
     const grouping = groupingPrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a" });
     assert.match(grouping, /PACKET_UNIQUE_7f3a/);
     assert.match(grouping, /Start from this packet/);
@@ -145,10 +143,8 @@ describe("eval result line", () => {
     const line = formatRunTotals({
       stamp: "t",
       skillTree: "abc",
-      producerModel: "composer-2.5",
-      graderModel: "grok-4.6",
-      producerAgent: "cursor",
-      graderAgent: "cursor",
+      producerModel: "muse-spark-1.3-contributor",
+      graderModel: "muse-spark-1.3-contributor",
       graders: true,
       cases: [
         {

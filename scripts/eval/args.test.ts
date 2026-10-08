@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { EVAL_USAGE, parseAddCaseArgv, parseEvalArgv } from "./args.ts";
-import { DEFAULT_GRADER_MODEL, DEFAULT_MUSECODE_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
+import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 describe("eval argv", () => {
   it("parses run flags", () => {
-    const req = parseEvalArgv(["--tag", "smoke", "--case", "comprehende-50", "--json", "--sandbox"]);
+    const req = parseEvalArgv(["--tag", "smoke", "--case", "comprehende-50", "--json"]);
     assert.deepEqual(req, {
       kind: "run",
       ids: ["comprehende-50"],
@@ -14,66 +14,37 @@ describe("eval argv", () => {
       json: true,
       producerModel: DEFAULT_PRODUCER_MODEL,
       graderModel: DEFAULT_GRADER_MODEL,
-      producerAgent: "cursor",
-      graderAgent: "cursor",
-      musecodeModel: DEFAULT_MUSECODE_MODEL,
-      cursorFallback: false,
       cliLogin: false,
       graders: true,
-      sandbox: true,
       rescore: undefined,
     });
   });
 
-  it("defaults to grok 4.6 high producer and grok grader", () => {
-    assert.equal(DEFAULT_PRODUCER_MODEL, "grok-4.6:effort=high");
-    assert.equal(DEFAULT_GRADER_MODEL, "grok-4.6");
+  it("defaults producer and grader to Muse", () => {
+    assert.equal(DEFAULT_PRODUCER_MODEL, "muse-spark-1.3-contributor");
+    assert.equal(DEFAULT_GRADER_MODEL, "muse-spark-1.3-contributor");
     const req = parseEvalArgv([]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
-      assert.equal(req.producerModel, "grok-4.6:effort=high");
-      assert.equal(req.graderModel, "grok-4.6");
-      assert.equal(req.producerAgent, "cursor");
-      assert.equal(req.graderAgent, "cursor");
-      assert.equal(req.musecodeModel, DEFAULT_MUSECODE_MODEL);
+      assert.equal(req.producerModel, "muse-spark-1.3-contributor");
+      assert.equal(req.graderModel, "muse-spark-1.3-contributor");
       assert.equal(req.graders, true);
     }
   });
 
-  it("parses agent and musecode model flags", () => {
-    const req = parseEvalArgv([
-      "--producer-agent",
-      "musecode",
-      "--grader-agent",
-      "musecode",
-      "--musecode-model",
-      "muse-spark-9.9",
-    ]);
+  it("parses model overrides", () => {
+    const req = parseEvalArgv(["--producer-model", "muse-spark-9.9", "--grader-model", "muse-spark-9.8"]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
-      assert.equal(req.producerAgent, "musecode");
-      assert.equal(req.graderAgent, "musecode");
-      assert.equal(req.musecodeModel, "muse-spark-9.9");
-      assert.equal(req.producerModel, DEFAULT_PRODUCER_MODEL);
+      assert.equal(req.producerModel, "muse-spark-9.9");
+      assert.equal(req.graderModel, "muse-spark-9.8");
     }
   });
 
-  it("rejects an unknown agent kind", () => {
-    assert.equal(parseEvalArgv(["--producer-agent", "other"]).kind, "error");
-    assert.equal(parseEvalArgv(["--grader-agent", "other"]).kind, "error");
-  });
-
-  it("parses --cursor-fallback", () => {
-    const req = parseEvalArgv(["--cursor-fallback"]);
-    assert.equal(req.kind, "run");
-    if (req.kind === "run") {
-      assert.equal(req.cursorFallback, true);
-    }
-    const plain = parseEvalArgv([]);
-    assert.equal(plain.kind, "run");
-    if (plain.kind === "run") {
-      assert.equal(plain.cursorFallback, false);
-    }
+  it("rejects removed cursor flags", () => {
+    assert.equal(parseEvalArgv(["--producer-agent", "musecode"]).kind, "error");
+    assert.equal(parseEvalArgv(["--cursor-fallback"]).kind, "error");
+    assert.equal(parseEvalArgv(["--sandbox"]).kind, "error");
   });
 
   it("parses --cli-login", () => {
@@ -123,15 +94,15 @@ describe("eval argv", () => {
     assert.equal(parseEvalArgv(["--nope"]).kind, "error");
   });
 
-  it("documents --no-graders and --rescore in usage", () => {
+  it("documents models and login in usage", () => {
     assert.match(EVAL_USAGE, /--no-graders/);
     assert.match(EVAL_USAGE, /--rescore/);
-    assert.match(EVAL_USAGE, /--producer-agent/);
-    assert.match(EVAL_USAGE, /--grader-agent/);
-    assert.match(EVAL_USAGE, /--musecode-model/);
-    assert.match(EVAL_USAGE, /--cursor-fallback/);
+    assert.match(EVAL_USAGE, /--producer-model/);
+    assert.match(EVAL_USAGE, /--grader-model/);
     assert.match(EVAL_USAGE, /--cli-login/);
     assert.match(EVAL_USAGE, /MUSE_CODE_API_KEY/);
+    assert.doesNotMatch(EVAL_USAGE, /CURSOR_API_KEY/);
+    assert.doesNotMatch(EVAL_USAGE, /--cursor-fallback/);
   });
 
   it("parses add-case --pr", () => {

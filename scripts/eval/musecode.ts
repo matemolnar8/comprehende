@@ -3,7 +3,24 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { TASK_TIMEOUT_MS } from "./constants.ts";
-import type { AgentRunResult, ToolCallRecord } from "./agent.ts";
+
+export type ToolCallRecord = {
+  name: string;
+  detail?: string;
+};
+
+export type AgentRunResult = {
+  text: string;
+  status: "finished" | "error" | "cancelled";
+  durationMs: number;
+  tokens: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
+  steps: number;
+  toolCalls: ToolCallRecord[];
+  error?: string;
+};
 
 export type MuseExecResult = {
   text: string;
@@ -41,7 +58,7 @@ type MuseEvent = {
     terminal?: string;
     text?: string;
     reason?: string | null;
-    event?: { kind?: string; operation?: string };
+    event?: { kind?: string; operation?: string; input?: unknown; args?: unknown };
   };
 };
 
@@ -76,7 +93,8 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
     if (payload?.event?.kind === "side_effect_intent") {
       const operation = payload.event.operation ?? "";
       if (operation.startsWith("tool:")) {
-        toolCalls.push({ name: operation.slice("tool:".length) });
+        const detail = detailOf(payload.event.input ?? payload.event.args);
+        toolCalls.push(detail === undefined ? { name: operation.slice("tool:".length) } : { name: operation.slice("tool:".length), detail });
       } else if (operation.startsWith("model.")) {
         steps += 1;
       }
@@ -124,6 +142,56 @@ export function parseExportUsage(document: unknown): MuseUsage {
 
 function toCount(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
+}
+
+/** Best-effort tool detail (command, path, pattern) for the cli-hunt metric. */
+function detailOf(input: unknown): string | undefined {
+  if (typeof input !== "object" || input === null) {
+    return undefined;
+  }
+  const args = input as Record<string, unknown>;
+  const value =
+    (typeof args.command === "string" && args.command) ||
+    (typeof args.path === "string" && args.path) ||
+    (typeof args.globPattern === "string" && args.globPattern) ||
+    (typeof args.pattern === "string" && args.pattern) ||
+    undefined;
+  if (value === undefined || value === "") {
+    return undefined;
+  }
+  return value.length > 200 ? `${value.slice(0, 197)}...` : value;
+}
+
+/**
+ * Flags producer calls that hunt for the CLI instead of running the pinned
+ * one from the prompt: reads or searches under dist, or another build/pack.
+ * Muse tool names carry suffixes (read_file), so match the base name.
+ */
+export function isCliHuntCall(call: ToolCallRecord): boolean {
+  const detail = call.detail ?? "";
+  const base = call.name.replace(/[_-].*$/, "");
+  switch (base) {
+    case "glob":
+      return /dist|cli\/main|package\.json/i.test(detail);
+    case "ls":
+    case "list":
+      return /(?:^|\/)dist(?:\/|$)|(?:^|\/)cli(?:\/|$)/.test(detail);
+    case "grep":
+    case "search":
+      return /(?:^|\/)dist(?:\/|$)|cli\/main/.test(detail);
+    case "read":
+      return /(?:^|\/)dist\/|cli\/main\.js/.test(detail);
+    case "shell":
+    case "exec":
+    case "bash":
+      return (
+        /(?:\bls\b|\bfind\b|\bwhich\b|\btype\b|\bglob\b).{0,80}(?:dist|comprehende|cli\/main)/i.test(detail) ||
+        /(?:pnpm|npm)\s+(?:run\s+)?build\b/.test(detail) ||
+        /npm pack/.test(detail)
+      );
+    default:
+      return false;
+  }
 }
 
 /** Offline `muse export --session <id>`. Returns zeros when the export fails. */

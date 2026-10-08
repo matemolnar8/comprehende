@@ -2,6 +2,8 @@
 
 `pnpm eval -- --help` lists every flag. Cases live in `eval/cases/<id>/` (`case.json`, `expected.md`, frozen `sources/`). `eval/review-criteria.md` says how to read `expected.md`.
 
+Producer and graders run in Muse Code (`muse exec`). Both default to `muse-spark-1.3-contributor`. Override with `--producer-model` or `--grader-model`.
+
 ## Run times
 
 - Smoke (`--tag smoke --no-graders`) takes about 4 minutes.
@@ -13,10 +15,6 @@
 - A case that fails with `[canceled] This operation was aborted` can end the whole suite (issue #123). Re-run only the cases that did not finish with `--case <id>`. Do not re-run the full suite.
 - Each run writes `eval/runs/<stamp>/summary.json`. Read the failed case's `result.json` there for the full error.
 
-## Cursor usage limit
+## Muse setup
 
-When Cursor reports a usage limit, add `--cursor-fallback`. It needs `MUSE_CODE_API_KEY` and the `muse` CLI. The eval workflow installs both. Locally, install the CLI the way `.github/workflows/eval.yml` does.
-
-## Before reading SDK internals
-
-`@cursor/sdk` ships minified bundles. Check the [SDK docs](https://cursor.com/docs/api/sdk/typescript) and test the cheapest hypothesis first. For example, the SDK finds `rg` on `PATH`, so the fix for the ripgrep log line was an install step in `eval.yml`, not code.
+Runs need `MUSE_CODE_API_KEY`, or pass `--cli-login` to use the `muse` CLI login instead. The `muse` CLI must be on `PATH`. The eval workflow installs it. Locally, install the CLI the way `.github/workflows/eval.yml` does.
