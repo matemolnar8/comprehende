@@ -1,4 +1,4 @@
-import { addedSymbols, hunkRangeLabel } from "../../schema/hunk-meta.ts";
+import { hunkRangeLabel } from "../../schema/hunk-meta.ts";
 import { PierreFileDiff } from "../PierreDiff.tsx";
 import { fetchPatch } from "../api.ts";
 import { ImageDiff } from "./ImageDiff.tsx";
@@ -37,9 +37,6 @@ export function HunkView(props: {
   const [patch, setPatch] = useState(file.patch);
   const [patchError, setPatchError] = useState<string | null>(null);
   const first = file.hunks[0];
-  const symbols = addedSymbols(
-    file.hunks.flatMap((hunk) => hunk.lines.filter((line) => line.kind === "add").map((line) => line.text)),
-  );
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
   const word = relocationWord(file);
   const pure = isPureRelocation(file);
@@ -99,12 +96,6 @@ export function HunkView(props: {
         ) : null}
       </Badge>
     ) : null;
-  const symbolBadges = symbols.map((name) => (
-    <Badge key={name} variant="outline" className="font-mono font-normal">
-      {name}
-    </Badge>
-  ));
-  const hasChips = relocationBadge !== null || symbolBadges.length > 0;
 
   return (
     <article
@@ -189,10 +180,9 @@ export function HunkView(props: {
             </Tooltip>
           </div>
         </div>
-        {hasChips ? (
+        {relocationBadge !== null ? (
           <div className={cn("mt-1.5 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
             {relocationBadge}
-            {symbolBadges}
           </div>
         ) : null}
       </header>
