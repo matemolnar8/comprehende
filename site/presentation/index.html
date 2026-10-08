@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Comprehende: keep yourself in the loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --background:#f4f6f8;
+    --foreground:#171b22;
+    --card:#ffffff;
+    --muted:#e8ecf1;
+    --muted-fg:#5c6570;
+    --primary:#3d4fd8;
+    --border:#d5dbe3;
+    --add:#1a7f37;
+    --warn:#9a6700;
+    --strand-0:#2458b5;
+    --strand-1:#9a5b00;
+    --strand-2:#6b3d96;
+    --radius:.45rem;
+    --sans:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    --disp:"Bricolage Grotesque","IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--background);color:var(--foreground);
+    font-family:var(--sans);font-size:15px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .slide{
+    min-height:100dvh;display:none;
+    padding:clamp(28px,6vh,72px) clamp(28px,7vw,110px);
+    align-content:center;gap:clamp(14px,2.6vh,28px);
+    max-width:1180px;margin:0 auto;
+  }
+  .slide.on{display:grid;animation:rise .3s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.slide.on{animation:none}}
+  h1,h2{font-family:var(--disp);margin:0;line-height:1.05;letter-spacing:-.015em;font-weight:700}
+  h1{font-size:clamp(40px,7.5vw,88px)}
+  h2{font-size:clamp(30px,4.6vw,56px)}
+  p{margin:0;font-size:clamp(15px,1.7vw,20px);line-height:1.55;color:var(--muted-fg);max-width:62ch}
+  p.solid{color:var(--foreground)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:16px 18px;display:grid;gap:6px;align-content:start;
+    box-shadow:0 1px 2px rgba(23,27,34,.07),0 2px 8px rgba(23,27,34,.04);
+  }
+  .card h3{margin:0;font-family:var(--disp);font-size:19px;font-weight:700;letter-spacing:-.01em}
+  .card p{font-size:15px}
+  .card ul{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--muted-fg);font-size:15px}
+  code{font-family:var(--mono);font-size:.92em;background:var(--muted);border-radius:4px;padding:1px 6px}
+  .cmd{
+    background:var(--foreground);color:#f4f6f8;border-radius:var(--radius);
+    padding:16px 18px;font-family:var(--mono);
+    font-size:clamp(12px,1.45vw,15px);line-height:1.75;white-space:pre;overflow-x:auto;
+  }
+  .cmd .c{color:#9aa7bd}
+  /* Before / after grouping visual */
+  .morph{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch}
+  @media(max-width:760px){.morph{grid-template-columns:1fr}.arrow{transform:rotate(90deg);justify-self:center}}
+  .morph .col{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:grid;gap:7px;align-content:start}
+  .morph .col h4{margin:0 0 2px;font-family:var(--mono);font-weight:500;font-size:12px;color:var(--muted-fg)}
+  .file{font-family:var(--mono);font-size:13px;padding:7px 10px;border-radius:4px;background:var(--background);border:1px solid var(--border)}
+  .file.g1{border-left:4px solid var(--strand-0);background:#fff}
+  .file.g2{border-left:4px solid var(--strand-1);background:#fff}
+  .file.g3{border-left:4px solid var(--strand-2);background:#fff}
+  .grouplabel{font-family:var(--mono);font-size:11.5px;color:var(--muted-fg)}
+  .arrow{align-self:center;font-family:var(--disp);font-size:28px;color:var(--muted-fg)}
+  .split{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}
+  @media(max-width:760px){.split{grid-template-columns:1fr}}
+  .yes{border-top:4px solid var(--add)}
+  .no{border-top:4px solid var(--warn)}
+  .nav{
+    position:fixed;right:18px;bottom:16px;display:flex;gap:8px;align-items:center;
+    font-family:var(--mono);font-size:12px;color:var(--muted-fg);
+  }
+  .nav button{
+    font-family:var(--mono);font-size:13px;border:1px solid var(--border);background:var(--card);
+    border-radius:var(--radius);padding:8px 13px;cursor:pointer;color:var(--foreground);
+  }
+  .nav button:hover{border-color:var(--foreground)}
+  .nav button:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+</style>
+</head>
+<body>
+
+  <!-- 1 -->
+  <section class="slide on">
+    <h1>Comprehende.<br />Keep yourself in the loop.</h1>
+    <p class="solid">Comprehende is a local review assistant for git diffs. It groups a diff by review concern and shows the groups in a fixed UI.</p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <h2>AI writes faster than we can read.</h2>
+    <p class="solid">When we accept generated code with no view of our own, comprehension debt grows. Nobody chooses it, and it stays hidden until something breaks.</p>
+    <p>Comprehende gives you a view to hold against the diff. You hand off the how and keep the why and the what.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <h2>Read concerns, not files A to Z.</h2>
+    <div class="morph">
+      <div class="col">
+        <h4>diff order</h4>
+        <div class="file">api/routes.ts</div>
+        <div class="file">api/validator.ts</div>
+        <div class="file">auth/login.ts</div>
+        <div class="file">db/seed.ts</div>
+        <div class="file">ui/modal.tsx</div>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="col">
+        <h4>review order</h4>
+        <span class="grouplabel">login calls the new validator</span>
+        <div class="file g1">auth/login.ts, api/validator.ts</div>
+        <span class="grouplabel">settings page becomes a modal</span>
+        <div class="file g2">ui/modal.tsx, api/routes.ts</div>
+        <span class="grouplabel">regenerated seed, safe to skim</span>
+        <div class="file g3">db/seed.ts</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <h2>Three parts. Each does one job.</h2>
+    <div class="grid2">
+      <div class="card"><h3>The skill groups</h3><p>It reads the digest, one line per file, and writes the title, the groups, the summaries, and the look-for notes. It never copies patch text.</p></div>
+      <div class="card"><h3>Git shows the diff</h3><p>Serve reads the diff from git in your repo at serve time. The review file holds interpretation only.</p></div>
+    </div>
+    <div class="card"><h3>The UI stays fixed</h3><p>Same screens for every review. Only the data changes. Serve runs it locally, export writes a static site.</p></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <h2>Install in two minutes.</h2>
+    <div class="split">
+      <div class="cmd"><span class="c"># add the skill, once</span>
+npx skills add matemolnar8/comprehende
+
+<span class="c"># inside the repo under review</span>
+npx comprehende@0.10.0 serve --data review.json</div>
+      <div class="card"><h3>Needs</h3><ul><li>Node 24, git, and a work tree.</li><li>Run every command inside the repo under review.</li><li>Full flow is <code>review</code>, <code>validate</code>, <code>serve</code>, <code>export</code>.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <h2>What the UI shows.</h2>
+    <div class="grid2">
+      <div class="card"><h3>A reading order</h3><p>Groups list in suggested order. Foundations first, mechanical work last. Mixed work splits into parts.</p></div>
+      <div class="card"><h3>Why, what, look for</h3><p>Each group states why it exists and what it changes. Look-for notes name what a first read misses, with cited sources.</p></div>
+      <div class="card"><h3>Full context</h3><p>Full files, blame, commit messages, and the sources the skill read sit one click away. Links reopen the same view.</p></div>
+      <div class="card"><h3>Honest coverage</h3><p>Validate checks that every hunk sits in a group. Ungrouped hunks show as unassigned. Lockfiles get their own bucket.</p></div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <h2>Goals and non-goals.</h2>
+    <div class="grid2">
+      <div class="card yes"><h3>Goals</h3><ul><li>Live git wins. The review file is interpretation only.</li><li>Same UI every time. Only the data changes.</li><li>Plain wording a tired reviewer can read.</li><li>Local first. No hosted service needed.</li></ul></div>
+      <div class="card no"><h3>Non-goals</h3><ul><li>No auto-approve and no review gate.</li><li>It does not replace the diff.</li><li>No forge lock-in. Plain git only.</li><li>It never invents a motive from the patch.</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <h2>Try it on your next AI diff.</h2>
+    <p class="solid">Group the diff, hold your own view against it, then merge. That keeps the speed without the surrender.</p>
+    <div class="cmd">npx skills add matemolnar8/comprehende</div>
+  </section>
+
+  <div class="nav"><span id="count">1 / 8</span><button id="prev" aria-label="Previous slide">←</button><button id="next" aria-label="Next slide">→</button></div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const count=document.getElementById('count');
+  let i=0;
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+    count.textContent=(i+1)+' / '+slides.length;
+    history.replaceState(null,'','#s'+(i+1));
+  }
+  document.getElementById('prev').onclick=e=>{e.stopPropagation();go(i-1)};
+  document.getElementById('next').onclick=e=>{e.stopPropagation();go(i+1)};
+  addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1)}
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+  });
+  let tx=null;
+  addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{
+    if(tx==null)return;const d=e.changedTouches[0].clientX-tx;
+    if(Math.abs(d)>40)go(i+(d<0?1:-1));tx=null;
+  },{passive:true});
+  const m=location.hash.match(/s(\d+)/);go(m?+m[1]-1:0);
+</script>
+</body>
+</html>
