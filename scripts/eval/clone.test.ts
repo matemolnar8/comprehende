@@ -3,13 +3,13 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { git } from "../../src/git/exec.ts";
 import { initEmptyRepo } from "../../src/test/init-repo.ts";
 import { cloneCaseBundle, writeCaseBundle } from "./clone.ts";
 
 const roots: string[] = [];
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }

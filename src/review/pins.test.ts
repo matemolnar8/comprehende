@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex, cmdValidate } from "../cli/commands.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
@@ -11,7 +11,7 @@ import { commentPinErrors, staleCommentPins } from "./pins.ts";
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }

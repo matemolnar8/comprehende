@@ -3,12 +3,12 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { copySkillForEval, readNextSkillMd, skillSection } from "./skill.ts";
 
 const roots: string[] = [];
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }

@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
@@ -16,7 +16,7 @@ import { exportStaticSite } from "./snapshot.ts";
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
 
-after(async () => {
+afterAll(async () => {
   await Promise.all(
     servers.map(
       (server) =>

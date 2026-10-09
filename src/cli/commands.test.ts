@@ -4,7 +4,7 @@ import { access, chmod, mkdir, mkdtemp, readFile, writeFile } from "node:fs/prom
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { cmdDigest, cmdIndex, cmdPregroup, cmdReview, cmdShow, cmdValidate } from "./commands.ts";
 import { skeletonPaths } from "../review/skeleton.ts";
 import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
@@ -13,13 +13,13 @@ import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 const REAL_GIT = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-describe("cmdReview git work", { concurrency: false }, () => {
+describe("cmdReview git work", { concurrent: false }, () => {
   it("pins the range once and writes a skeleton validate accepts", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-git-"));
     roots.push(root);

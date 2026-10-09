@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { git } from "./exec.ts";
@@ -10,7 +10,7 @@ import { nameFromRemoteUrl, readRepoIdentity, stripRemoteCredentials } from "./r
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }

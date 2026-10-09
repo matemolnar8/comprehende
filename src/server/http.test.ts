@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
@@ -15,7 +15,7 @@ import { showFile } from "../git/show.ts";
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
 
-after(async () => {
+afterAll(async () => {
   await Promise.all(
     servers.map(
       (server) =>

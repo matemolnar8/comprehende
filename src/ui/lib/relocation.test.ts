@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import type { DiffLine } from "../../schema/types.ts";
 import { isPureRelocation, movedMarkLabel, movedMarks, relocationWord } from "./relocation.ts";
 

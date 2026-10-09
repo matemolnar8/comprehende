@@ -36,7 +36,7 @@
     "prepack": "pnpm run build",
     "dev": "tsx src/cli/main.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
-    "test": "tsx --test \"src/**/*.test.ts\" \"scripts/**/*.test.ts\"",
+    "test": "vp test run",
     "eval": "pnpm build && tsx scripts/eval/run.ts",
     "eval:add": "tsx scripts/eval/add-case.ts",
     "fixture": "tsx scripts/build-fixture.ts",
@@ -47,7 +47,7 @@
     "release:skill": "tsx scripts/sync-skill.ts --release",
     "check:skill": "tsx scripts/check-skill-sync.ts",
     "pack:smoke": "tsx scripts/pack-smoke.ts",
-    "prepare": "node scripts/install-git-hooks.js"
+    "prepare": "vp config --no-agent"
   },
   "dependencies": {
     "zod": "^4.5.4"

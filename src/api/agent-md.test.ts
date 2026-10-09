@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { agentClipboardPrompt, agentMd, formatHunkRef, isImageSlot } from "./agent-md.ts";
 import type { ApiReview } from "./types.ts";
 

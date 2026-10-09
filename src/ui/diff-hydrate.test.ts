@@ -1,6 +1,6 @@
 import { hydratePartialDiff, parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { EXPANSION_LINE_COUNT } from "./lib/gap-style.ts";
 
 const PAD = Array.from({ length: 40 }, (_, i) => `const pad${i} = ${i};`);

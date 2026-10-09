@@ -1,6 +1,6 @@
 import { filesFromPayload, fileIndexAtHunk } from "./group-files.ts";
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 
 describe("filesFromPayload", () => {
   it("keeps lockfile line counts and gives a file with no hunks one navigation slot", () => {

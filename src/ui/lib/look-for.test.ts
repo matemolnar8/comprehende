@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
 import { hashWriteMode, serializeHash } from "./selection.ts";
 import {
