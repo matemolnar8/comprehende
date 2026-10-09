@@ -67,7 +67,16 @@ describe("coverage join", () => {
         size: "small",
         title: "Coverage join",
         summary: "Joins live hunks to refs.",
-        groups: [{ id: "g", title: "G", why: "Joins live hunks to refs.", summary: "", suggestedOrder: 0, hunkRefs: [] }],
+        groups: [
+          {
+            id: "g",
+            title: "G",
+            why: "Joins live hunks to refs.",
+            summary: "",
+            suggestedOrder: 0,
+            hunkRefs: [],
+          },
+        ],
       },
       live,
     );
@@ -129,11 +138,17 @@ describe("coverage join", () => {
     assert.equal(hit.stale.length, 0);
     assert.equal(hit.unassigned.length, 0);
 
-    const missed = joinCoverage(doc([{ path: "missing.ts" }, { path: "a.ts", oldStart: 9, newStart: 9 }]), live);
+    const missed = joinCoverage(
+      doc([{ path: "missing.ts" }, { path: "a.ts", oldStart: 9, newStart: 9 }]),
+      live,
+    );
     assert.equal(missed.assignedHunks, 0);
     assert.equal(missed.stale.length, 2);
     assert.equal(missed.unassigned.length, 2);
-    assert.deepEqual(missed.stale, [{ path: "missing.ts" }, { path: "a.ts", oldStart: 9, newStart: 9 }]);
+    assert.deepEqual(missed.stale, [
+      { path: "missing.ts" },
+      { path: "a.ts", oldStart: 9, newStart: 9 },
+    ]);
   });
 
   it("ignores a lockfile path string", () => {
@@ -144,7 +159,10 @@ describe("coverage join", () => {
 
   it("does not list the same hunk twice when a path and a compact ref overlap", () => {
     const live = [hunk("a.ts", 1, 1), hunk("a.ts", 8, 8)];
-    const coverage = joinCoverage(doc([{ path: "a.ts" }, { path: "a.ts", oldStart: 1, newStart: 1 }]), live);
+    const coverage = joinCoverage(
+      doc([{ path: "a.ts" }, { path: "a.ts", oldStart: 1, newStart: 1 }]),
+      live,
+    );
     assert.equal(coverage.groups[0]?.hunks.length, 2);
     assert.equal(coverage.assignedHunks, 2);
   });
@@ -169,7 +187,9 @@ describe("example repo index/validate", () => {
     assert.ok(appSecond);
     const gap = appSecond.newStart - (appFirst.newStart + appFirst.newLines);
     assert.ok(gap > 10, `expected a collapsed gap over 10 lines, got ${gap}`);
-    assert.ok(index.hunks.some((hunk) => hunk.path === "src/helpers.ts" && hunk.oldPath === "src/util.ts"));
+    assert.ok(
+      index.hunks.some((hunk) => hunk.path === "src/helpers.ts" && hunk.oldPath === "src/util.ts"),
+    );
 
     const dataPath = join(root, "review.json");
     const document = await writeCoveringDocument(dataPath, index);
@@ -198,7 +218,9 @@ describe("example repo index/validate", () => {
     await writeFile(byPath, `${JSON.stringify(withRefs(document, paths), null, 2)}\n`);
     const pathCheck = await cmdValidate(repo.root, byPath);
     assert.equal(pathCheck.assignedHunks, index.hunks.length);
-    const loaded = JSON.parse(await readFile(byPath, "utf8")) as { groups: { hunkRefs: unknown[] }[] };
+    const loaded = JSON.parse(await readFile(byPath, "utf8")) as {
+      groups: { hunkRefs: unknown[] }[];
+    };
     assert.ok(loaded.groups[0]?.hunkRefs.every((ref) => typeof ref === "string"));
 
     const appRefs = appHunks.map((item) =>
@@ -208,17 +230,28 @@ describe("example repo index/validate", () => {
     );
     const others = paths.filter((path) => path !== "src/app.ts");
     const splitPath = join(root, "split.json");
-    await writeFile(splitPath, `${JSON.stringify(withRefs(document, [...appRefs, ...others]), null, 2)}\n`);
+    await writeFile(
+      splitPath,
+      `${JSON.stringify(withRefs(document, [...appRefs, ...others]), null, 2)}\n`,
+    );
     const splitCheck = await cmdValidate(repo.root, splitPath);
     assert.equal(splitCheck.assignedHunks, index.hunks.length);
 
     const dropped = join(root, "dropped.json");
-    await writeFile(dropped, `${JSON.stringify(withRefs(document, [...appRefs.slice(1), ...others]), null, 2)}\n`);
+    await writeFile(
+      dropped,
+      `${JSON.stringify(withRefs(document, [...appRefs.slice(1), ...others]), null, 2)}\n`,
+    );
     await assert.rejects(() => cmdValidate(repo.root, dropped), /coverage/);
   });
 });
 
-function hunk(path: string, oldStart: number, newStart: number, extra?: Partial<LiveHunk>): LiveHunk {
+function hunk(
+  path: string,
+  oldStart: number,
+  newStart: number,
+  extra?: Partial<LiveHunk>,
+): LiveHunk {
   return {
     path,
     oldStart,
@@ -239,7 +272,16 @@ function doc(hunkRefs: ReviewHunkRef[]): ReviewDocument {
     size: "small",
     title: "Coverage join",
     summary: "Joins live hunks to refs.",
-    groups: [{ id: "g", title: "G", why: "Joins live hunks to refs.", summary: "", suggestedOrder: 0, hunkRefs }],
+    groups: [
+      {
+        id: "g",
+        title: "G",
+        why: "Joins live hunks to refs.",
+        summary: "",
+        suggestedOrder: 0,
+        hunkRefs,
+      },
+    ],
   };
 }
 

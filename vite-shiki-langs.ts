@@ -7,7 +7,8 @@ export function shikiLangChunks(): Plugin {
     name: "shiki-lang-chunks",
     outputOptions(options) {
       const previous = options.codeSplitting;
-      const previousGroups = typeof previous === "object" && previous !== null ? (previous.groups ?? []) : [];
+      const previousGroups =
+        typeof previous === "object" && previous !== null ? (previous.groups ?? []) : [];
       options.codeSplitting = {
         ...(typeof previous === "object" && previous !== null ? previous : {}),
         includeDependenciesRecursively: false,
@@ -50,11 +51,20 @@ export function shikiLangChunks(): Plugin {
         files[lang] = langChunkClosure(fileName, chunkImports, langChunkSet);
       }
 
+      // The Pierre map types values as possibly undefined; the manifest only
+      // keeps defined lookups, matching what parseShikiLangsManifest accepts.
+      const lookup: Record<string, string> = {};
+      for (const [extension, language] of Object.entries(EXTENSION_TO_FILE_FORMAT)) {
+        if (language !== undefined) {
+          lookup[extension] = language;
+        }
+      }
+
       const manifest: ShikiLangsManifest = {
         version: 1,
         chunks,
         files,
-        lookup: { ...EXTENSION_TO_FILE_FORMAT },
+        lookup,
       };
       this.emitFile({
         type: "asset",

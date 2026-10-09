@@ -4,7 +4,13 @@ import { REVIEW_BUCKETS } from "../../api/types.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import type { Selection } from "../lib/selection.ts";
-import { colorIndexByGroupId, groupOrderIndex, isMixedReview, partColor, type Part } from "../lib/parts.ts";
+import {
+  colorIndexByGroupId,
+  groupOrderIndex,
+  isMixedReview,
+  partColor,
+  type Part,
+} from "../lib/parts.ts";
 import { readingStatus, type ReadingStatus } from "../lib/reading-progress.ts";
 import { FilePeek } from "./FilePeek.tsx";
 import { HashLink } from "./HashLink.tsx";
@@ -26,7 +32,13 @@ export function Sidebar(props: {
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const documentLookFor = meta.document.lookFor?.length ?? 0;
   return (
-    <nav className={cn("h-full overflow-auto bg-card", props.compact === true ? "py-3" : "py-6", props.className)}>
+    <nav
+      className={cn(
+        "h-full overflow-auto bg-card",
+        props.compact === true ? "py-3" : "py-6",
+        props.className,
+      )}
+    >
       <div className="relative">
         <span className={styles.selection} aria-hidden />
         <ul className="mb-6 list-none p-0">
@@ -173,15 +185,27 @@ function StackItem(props: {
         />
       ) : null}
       {props.index !== undefined ? (
-        <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{props.index}</span>
+        <span className="mt-px w-5 shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
+          {props.index}
+        </span>
       ) : null}
       <span className="min-w-0 flex-1 text-left leading-snug">
         <span className="flex min-w-0 items-start gap-2.5">
-          <span className={cn("min-w-0 flex-1", reading !== null && reading.left === 0 && !props.active && "opacity-60")}>
+          <span
+            className={cn(
+              "min-w-0 flex-1",
+              reading !== null && reading.left === 0 && !props.active && "opacity-60",
+            )}
+          >
             {props.title}
           </span>
           {props.count !== undefined ? (
-            <span className={cn("mt-px shrink-0 text-[11px] tabular-nums text-muted-foreground", props.warn && "text-warn")}>
+            <span
+              className={cn(
+                "mt-px shrink-0 text-[11px] tabular-nums text-muted-foreground",
+                props.warn && "text-warn",
+              )}
+            >
               {props.count}
             </span>
           ) : null}
@@ -220,5 +244,7 @@ function stackLabel(
   if (reading === null) {
     return label;
   }
-  return label === undefined ? `${title}, ${reading.filesLabel}` : `${label}, ${reading.filesLabel}`;
+  return label === undefined
+    ? `${title}, ${reading.filesLabel}`
+    : `${label}, ${reading.filesLabel}`;
 }

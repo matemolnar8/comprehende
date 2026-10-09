@@ -80,7 +80,9 @@ describe("skill schema sync", () => {
         installedFiles: fileMap(nextFiles),
         publishedSkillMd: nextMd,
       }),
-      ["skills-next/comprehende/SKILL.md pins npx comprehende@0.3.0, package.json version is 0.4.0"],
+      [
+        "skills-next/comprehende/SKILL.md pins npx comprehende@0.3.0, package.json version is 0.4.0",
+      ],
     );
   });
 
@@ -155,17 +157,38 @@ describe("sync next skill", () => {
 
       await syncNextSkill({ root });
 
-      assert.equal(await readFile(join(root, "skills-next/comprehende/SKILL.md"), "utf8"), "use npx comprehende@0.4.0 index\n");
-      assert.equal(await readFile(join(root, "skills-next/comprehende/references/review.schema.json"), "utf8"), "schema-v2\n");
-      assert.equal(await readFile(join(root, ".agents/skills/comprehende/SKILL.md"), "utf8"), "use npx comprehende@0.4.0 index\n");
-      assert.equal(await readFile(join(root, "skills/comprehende/SKILL.md"), "utf8"), "use npx comprehende@0.3.0 index\n");
-      assert.equal(await readFile(join(root, "skills/comprehende/references/review.schema.json"), "utf8"), "schema-v1\n");
+      assert.equal(
+        await readFile(join(root, "skills-next/comprehende/SKILL.md"), "utf8"),
+        "use npx comprehende@0.4.0 index\n",
+      );
+      assert.equal(
+        await readFile(join(root, "skills-next/comprehende/references/review.schema.json"), "utf8"),
+        "schema-v2\n",
+      );
+      assert.equal(
+        await readFile(join(root, ".agents/skills/comprehende/SKILL.md"), "utf8"),
+        "use npx comprehende@0.4.0 index\n",
+      );
+      assert.equal(
+        await readFile(join(root, "skills/comprehende/SKILL.md"), "utf8"),
+        "use npx comprehende@0.3.0 index\n",
+      );
+      assert.equal(
+        await readFile(join(root, "skills/comprehende/references/review.schema.json"), "utf8"),
+        "schema-v1\n",
+      );
       assert.deepEqual(skillSyncErrors(await loadWorkingTreeSkillSync(root)), []);
 
       await syncNextSkill({ root, release: true });
 
-      assert.equal(await readFile(join(root, "skills/comprehende/SKILL.md"), "utf8"), "use npx comprehende@0.4.0 index\n");
-      assert.equal(await readFile(join(root, "skills/comprehende/references/review.schema.json"), "utf8"), "schema-v2\n");
+      assert.equal(
+        await readFile(join(root, "skills/comprehende/SKILL.md"), "utf8"),
+        "use npx comprehende@0.4.0 index\n",
+      );
+      assert.equal(
+        await readFile(join(root, "skills/comprehende/references/review.schema.json"), "utf8"),
+        "schema-v2\n",
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
@@ -174,9 +197,11 @@ describe("sync next skill", () => {
 
 describe("cli pin rewrite", () => {
   it("rewrites every npx comprehende@ pin to the given version", () => {
-    const markdown = ["npx comprehende@0.0.1 index", "`npx comprehende@9.9.9`", "npx comprehende@0.1.0 serve"].join(
-      "\n",
-    );
+    const markdown = [
+      "npx comprehende@0.0.1 index",
+      "`npx comprehende@9.9.9`",
+      "npx comprehende@0.1.0 serve",
+    ].join("\n");
     const updated = applyCliPin(markdown, "1.2.3");
     assert.equal(updated.includes("npx comprehende@1.2.3"), true);
     assert.equal(updated.includes("npx comprehende@0.0.1"), false);
@@ -185,7 +210,9 @@ describe("cli pin rewrite", () => {
   });
 
   it("fails when the skill has no pin", () => {
-    assert.deepEqual(cliPinErrors("run comprehende index", "0.1.0"), ["SKILL.md must pin npx comprehende@0.1.0"]);
+    assert.deepEqual(cliPinErrors("run comprehende index", "0.1.0"), [
+      "SKILL.md must pin npx comprehende@0.1.0",
+    ]);
   });
 
   it("fails when a pin does not match package.json", () => {
@@ -212,16 +239,28 @@ async function writeFixture(
     installedSchema: string;
   },
 ): Promise<void> {
-  await writeFile(join(root, "package.json"), `${JSON.stringify({ name: "comprehende", version: files.version })}\n`);
+  await writeFile(
+    join(root, "package.json"),
+    `${JSON.stringify({ name: "comprehende", version: files.version })}\n`,
+  );
   await mkdir(join(root, "src/schema"), { recursive: true });
   await mkdir(join(root, "skills-next/comprehende/references"), { recursive: true });
   await mkdir(join(root, "skills/comprehende/references"), { recursive: true });
   await mkdir(join(root, ".agents/skills/comprehende/references"), { recursive: true });
   await writeFile(join(root, "src/schema/review.schema.json"), files.canonicalSchema);
   await writeFile(join(root, "skills-next/comprehende/SKILL.md"), files.nextSkillMd);
-  await writeFile(join(root, "skills-next/comprehende/references/review.schema.json"), files.nextSchema);
+  await writeFile(
+    join(root, "skills-next/comprehende/references/review.schema.json"),
+    files.nextSchema,
+  );
   await writeFile(join(root, "skills/comprehende/SKILL.md"), files.publishedSkillMd);
-  await writeFile(join(root, "skills/comprehende/references/review.schema.json"), files.publishedSchema);
+  await writeFile(
+    join(root, "skills/comprehende/references/review.schema.json"),
+    files.publishedSchema,
+  );
   await writeFile(join(root, ".agents/skills/comprehende/SKILL.md"), files.installedSkillMd);
-  await writeFile(join(root, ".agents/skills/comprehende/references/review.schema.json"), files.installedSchema);
+  await writeFile(
+    join(root, ".agents/skills/comprehende/references/review.schema.json"),
+    files.installedSchema,
+  );
 }

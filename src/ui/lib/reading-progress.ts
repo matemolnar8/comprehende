@@ -11,7 +11,10 @@ export type ReadingStatus = ReadingCounts & {
   filesLabel: string;
 };
 
-export function readingCounts(paths: readonly string[], viewed: ReadonlySet<string>): ReadingCounts {
+export function readingCounts(
+  paths: readonly string[],
+  viewed: ReadonlySet<string>,
+): ReadingCounts {
   const unique = new Set(paths);
   let viewedCount = 0;
   for (const path of unique) {
@@ -23,7 +26,10 @@ export function readingCounts(paths: readonly string[], viewed: ReadonlySet<stri
 }
 
 /** Null when the list has no files. Progress is the reader's attention, not a verdict. */
-export function readingStatus(paths: readonly string[], viewed: ReadonlySet<string>): ReadingStatus | null {
+export function readingStatus(
+  paths: readonly string[],
+  viewed: ReadonlySet<string>,
+): ReadingStatus | null {
   const counts = readingCounts(paths, viewed);
   if (counts.total === 0) {
     return null;
@@ -32,7 +38,11 @@ export function readingStatus(paths: readonly string[], viewed: ReadonlySet<stri
   return {
     ...counts,
     label: done ? "Viewed" : `${counts.left} left`,
-    filesLabel: done ? "All files viewed" : counts.left === 1 ? "1 file left" : `${counts.left} files left`,
+    filesLabel: done
+      ? "All files viewed"
+      : counts.left === 1
+        ? "1 file left"
+        : `${counts.left} files left`,
   };
 }
 
@@ -65,7 +75,9 @@ export function reviewReadingPaths(review: {
 }
 
 /** Binary paths git skipped. Null when nothing was skipped. */
-export function skippedBinaryNote(skipped: readonly { path: string; reason: string }[]): string | null {
+export function skippedBinaryNote(
+  skipped: readonly { path: string; reason: string }[],
+): string | null {
   const paths = skipped.flatMap((file) => (file.reason === "binary" ? [file.path] : []));
   if (paths.length === 0) {
     return null;

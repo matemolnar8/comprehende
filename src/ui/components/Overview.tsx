@@ -5,7 +5,14 @@ import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { claimsFromLookFor } from "../lib/look-for.ts";
-import { dependsOnDepth, groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
+import {
+  dependsOnDepth,
+  groupOrderIndex,
+  isMixedReview,
+  partColor,
+  partSummary,
+  type Part,
+} from "../lib/parts.ts";
 import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
@@ -79,11 +86,18 @@ export function Overview(props: {
           claims={claimsFromLookFor({ kind: "document" }, meta.document.lookFor)}
           focusKey={focusLookForKey}
         />
-        <SourceList ids={sources.map((source) => source.id)} sources={sources} mixed={mixed} parts={parts} />
+        <SourceList
+          ids={sources.map((source) => source.id)}
+          sources={sources}
+          mixed={mixed}
+          parts={parts}
+        />
       </Brief>
       <div
         className={
-          mixed ? "mt-8 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1" : "mt-8"
+          mixed
+            ? "mt-8 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1"
+            : "mt-8"
         }
       >
         {parts.map((part) => (
@@ -132,7 +146,11 @@ function PartColumn(props: {
             className="flex w-full items-center gap-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
             ariaLabel={`Open part ${part.title}`}
           >
-            <span aria-hidden className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ backgroundColor: color }}
+            />
             <span>{part.title}</span>
           </HashLink>
           {summary !== undefined ? (
@@ -161,14 +179,21 @@ function PartColumn(props: {
                   "gap-3 rounded-none py-2.5 min-[800px]:py-3",
                   mixed && "rounded-md",
                 )}
-                style={depth > 0 ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` } : undefined}
+                style={
+                  depth > 0
+                    ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` }
+                    : undefined
+                }
               >
                 <span className="mt-px w-5 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                   {padIndex(index)}
                 </span>
                 <span className="min-w-0 flex-1">
                   <strong
-                    className={cn("block font-medium text-foreground", reading !== null && reading.left === 0 && "opacity-60")}
+                    className={cn(
+                      "block font-medium text-foreground",
+                      reading !== null && reading.left === 0 && "opacity-60",
+                    )}
                   >
                     {group.title}
                   </strong>

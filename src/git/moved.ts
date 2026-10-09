@@ -63,7 +63,10 @@ export function markMovedLines(files: readonly DiffFile[]): void {
 
   matches.sort((a, b) => b.score - a.score || b.adds.length - a.adds.length);
   for (const match of matches) {
-    if (match.dels.some((slot) => usedDel.has(slot)) || match.adds.some((slot) => usedAdd.has(slot))) {
+    if (
+      match.dels.some((slot) => usedDel.has(slot)) ||
+      match.adds.some((slot) => usedAdd.has(slot))
+    ) {
       continue;
     }
     for (let i = 0; i < match.adds.length; i++) {

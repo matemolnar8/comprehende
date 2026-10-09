@@ -3,7 +3,11 @@ import { hunksPayload, type ReviewContext } from "../../src/api/live.ts";
 import type { ApiGroupFile } from "../../src/api/types.ts";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 
-export async function writeGradingPacket(ctx: ReviewContext, frozen: unknown[], outPath: string): Promise<string> {
+export async function writeGradingPacket(
+  ctx: ReviewContext,
+  frozen: unknown[],
+  outPath: string,
+): Promise<string> {
   const markdown = gradingPacket(ctx, frozen);
   await writeFile(outPath, markdown);
   return markdown;
@@ -19,7 +23,9 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     `Summary: ${document.summary}`,
   ];
   if (document.parts !== undefined && document.parts.length > 0) {
-    parts.push(`Parts:\n${document.parts.map((part) => `- ${part.name}: ${part.summary}`).join("\n")}`);
+    parts.push(
+      `Parts:\n${document.parts.map((part) => `- ${part.name}: ${part.summary}`).join("\n")}`,
+    );
   }
   parts.push(
     lookForBlock("Document lookFor", document.lookFor),
@@ -37,7 +43,9 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     "## Groups",
     "",
   );
-  const groups = [...document.groups].sort((a, b) => a.suggestedOrder - b.suggestedOrder || a.id.localeCompare(b.id));
+  const groups = [...document.groups].sort(
+    (a, b) => a.suggestedOrder - b.suggestedOrder || a.id.localeCompare(b.id),
+  );
   for (const group of groups) {
     const payload = hunksPayload(ctx, group.id);
     parts.push(`### ${group.title} (\`${group.id}\`)`);

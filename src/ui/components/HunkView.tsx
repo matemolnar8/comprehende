@@ -30,8 +30,20 @@ export function HunkView(props: {
   comments?: FileComment[];
   focusCommentId?: string;
 }) {
-  const { file, active, index, split, splitRatio, wrap, viewed, onSplitRatio, onOpen, onViewed, comments, focusCommentId } =
-    props;
+  const {
+    file,
+    active,
+    index,
+    split,
+    splitRatio,
+    wrap,
+    viewed,
+    onSplitRatio,
+    onOpen,
+    onViewed,
+    comments,
+    focusCommentId,
+  } = props;
   const deferred = file.kind === "lockfile";
   const [collapsed, setCollapsed] = useState(viewed || deferred);
   const [patch, setPatch] = useState(file.patch);
@@ -44,10 +56,14 @@ export function HunkView(props: {
   const bodyId = useId();
 
   const fileComments = useMemo(
-    () => (comments ?? []).filter((comment) => comment.path === file.path || comment.path === file.oldPath),
+    () =>
+      (comments ?? []).filter(
+        (comment) => comment.path === file.path || comment.path === file.oldPath,
+      ),
     [comments, file.oldPath, file.path],
   );
-  const focused = focusCommentId !== undefined && fileComments.some((comment) => comment.id === focusCommentId);
+  const focused =
+    focusCommentId !== undefined && fileComments.some((comment) => comment.id === focusCommentId);
 
   useEffect(() => {
     setCollapsed(viewed || deferred);
@@ -81,7 +97,10 @@ export function HunkView(props: {
   }, [collapsed, deferred, file.path, patch, patchError]);
 
   const toggleCollapsed = (event: MouseEvent) => {
-    if (event.target instanceof Element && event.target.closest("button, input, label, a") !== null) {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("button, input, label, a") !== null
+    ) {
       return;
     }
     setCollapsed((value) => !value);
@@ -92,7 +111,9 @@ export function HunkView(props: {
       <Badge variant="outline" className="font-normal">
         {word}
         {file.relocation?.similarity !== undefined ? (
-          <span className="font-mono font-normal tabular-nums text-muted-foreground">{file.relocation.similarity}%</span>
+          <span className="font-mono font-normal tabular-nums text-muted-foreground">
+            {file.relocation.similarity}%
+          </span>
         ) : null}
       </Badge>
     ) : null;
@@ -125,7 +146,9 @@ export function HunkView(props: {
               aria-label={collapsed ? "Expand file" : "Collapse file"}
               onClick={() => setCollapsed((value) => !value)}
             >
-              <ChevronDownIcon className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")} />
+              <ChevronDownIcon
+                className={cn("size-4 transition-transform", motion, collapsed && "-rotate-90")}
+              />
             </Button>
           )}
           <Tooltip>
@@ -161,7 +184,8 @@ export function HunkView(props: {
               <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
             ) : file.kind === "image" || pure ? null : (
               <span className="font-mono text-[11px] tabular-nums">
-                <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+                <span className="text-del">−{file.removed}</span>{" "}
+                <span className="text-add">+{file.added}</span>
               </span>
             )}
             <Tooltip>
@@ -176,7 +200,9 @@ export function HunkView(props: {
                   <span className="max-[799px]:hidden">Viewed</span>
                 </label>
               </TooltipTrigger>
-              <TooltipContent>{viewed ? "Mark as not viewed" : "Mark as viewed"} (v)</TooltipContent>
+              <TooltipContent>
+                {viewed ? "Mark as not viewed" : "Mark as viewed"} (v)
+              </TooltipContent>
             </Tooltip>
           </div>
         </div>

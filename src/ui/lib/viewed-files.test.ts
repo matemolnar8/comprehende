@@ -18,7 +18,7 @@ describe("viewed files", () => {
     assert.equal(parseViewed(null).size, 0);
     assert.equal(parseViewed("").size, 0);
     assert.equal(parseViewed("{").size, 0);
-    assert.equal(parseViewed("{\"path\":true}").size, 0);
+    assert.equal(parseViewed('{"path":true}').size, 0);
     assert.equal(parseViewed("[1]").size, 0);
   });
 

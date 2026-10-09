@@ -78,7 +78,10 @@ function pinBlock(review: ApiReview, options: { commits: boolean }): string {
       : `Repository: ${review.repo.name}`;
   const commits =
     options.commits && review.commits.length > 0
-      ? ["Commits:", ...review.commits.map((commit) => `- ${commit.shortSha} ${commit.subject}`)].join("\n")
+      ? [
+          "Commits:",
+          ...review.commits.map((commit) => `- ${commit.shortSha} ${commit.subject}`),
+        ].join("\n")
       : null;
   return joinBlocks([
     "## Pin",
@@ -113,7 +116,9 @@ function coverageBlock(review: ApiReview): string | null {
     );
   }
   if (review.coverage.staleCount > 0) {
-    lines.push(`Stale hunk refs: ${review.coverage.staleCount}. Live git wins. The pointer is flagged, not replaced.`);
+    lines.push(
+      `Stale hunk refs: ${review.coverage.staleCount}. Live git wins. The pointer is flagged, not replaced.`,
+    );
   }
   return lines.length === 0 ? null : lines.join("\n");
 }
@@ -212,5 +217,7 @@ function resolveShaSteps(review: ApiReview): string[] {
 const SHOW_CODE_RULE = "When you show code, quote the live git lines.";
 
 function joinBlocks(parts: Array<string | null | undefined>): string {
-  return parts.filter((part): part is string => part !== null && part !== undefined && part.length > 0).join("\n\n");
+  return parts
+    .filter((part): part is string => part !== null && part !== undefined && part.length > 0)
+    .join("\n\n");
 }

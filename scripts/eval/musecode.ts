@@ -80,7 +80,11 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
     } catch {
       continue;
     }
-    if (sessionId === undefined && event.stream?.kind === "session" && typeof event.stream.id === "string") {
+    if (
+      sessionId === undefined &&
+      event.stream?.kind === "session" &&
+      typeof event.stream.id === "string"
+    ) {
       sessionId = event.stream.id;
     }
     const payload = event.payload;
@@ -94,7 +98,11 @@ export function parseMuseExecJsonl(stdout: string): MuseExecResult {
       const operation = payload.event.operation ?? "";
       if (operation.startsWith("tool:")) {
         const detail = detailOf(payload.event.input ?? payload.event.args);
-        toolCalls.push(detail === undefined ? { name: operation.slice("tool:".length) } : { name: operation.slice("tool:".length), detail });
+        toolCalls.push(
+          detail === undefined
+            ? { name: operation.slice("tool:".length) }
+            : { name: operation.slice("tool:".length), detail },
+        );
       } else if (operation.startsWith("model.")) {
         steps += 1;
       }
@@ -122,12 +130,17 @@ export function parseExportUsage(document: unknown): MuseUsage {
     if (typeof record !== "object" || record === null) {
       continue;
     }
-    const event = (record as { envelope?: { payload?: { event?: unknown } } }).envelope?.payload?.event;
+    const event = (record as { envelope?: { payload?: { event?: unknown } } }).envelope?.payload
+      ?.event;
     if (typeof event !== "object" || event === null) {
       continue;
     }
     const typed = event as { kind?: unknown; usage?: unknown };
-    if (typed.kind !== "model_completed" || typeof typed.usage !== "object" || typed.usage === null) {
+    if (
+      typed.kind !== "model_completed" ||
+      typeof typed.usage !== "object" ||
+      typed.usage === null
+    ) {
       continue;
     }
     const usage = typed.usage as Record<string, unknown>;
@@ -185,7 +198,9 @@ export function isCliHuntCall(call: ToolCallRecord): boolean {
     case "exec":
     case "bash":
       return (
-        /(?:\bls\b|\bfind\b|\bwhich\b|\btype\b|\bglob\b).{0,80}(?:dist|comprehende|cli\/main)/i.test(detail) ||
+        /(?:\bls\b|\bfind\b|\bwhich\b|\btype\b|\bglob\b).{0,80}(?:dist|comprehende|cli\/main)/i.test(
+          detail,
+        ) ||
         /(?:pnpm|npm)\s+(?:run\s+)?build\b/.test(detail) ||
         /npm pack/.test(detail)
       );
@@ -255,7 +270,9 @@ export async function runMuseCodeAgent(opts: {
       promptPath,
       "--model",
       opts.model,
-      ...(opts.readOnly ? ["--disable-approval", "--disable-shell", "--disable-write"] : ["--yolo"]),
+      ...(opts.readOnly
+        ? ["--disable-approval", "--disable-shell", "--disable-write"]
+        : ["--yolo"]),
       ...(opts.apiKey === "" ? [] : ["--api-key-stdin"]),
     ];
     const { code, stdout, stderr } = await spawnMuse(args, opts.cwd, opts.apiKey, timeoutMs);
@@ -296,7 +313,10 @@ export async function runMuseCodeAgent(opts: {
         error: tail(stderr) ?? `muse exec exited ${String(code)} with no terminal event`,
       };
     }
-    const usage = parsed.sessionId === undefined ? { ...ZERO_USAGE } : await readMuseUsage(parsed.sessionId, tmp);
+    const usage =
+      parsed.sessionId === undefined
+        ? { ...ZERO_USAGE }
+        : await readMuseUsage(parsed.sessionId, tmp);
     const inputTokens = usage.inputTokens;
     const outputTokens = usage.outputTokens;
     return {

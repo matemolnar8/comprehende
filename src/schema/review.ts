@@ -28,7 +28,11 @@ function stringList(description?: string) {
   return description === undefined ? schema.optional() : schema.optional().meta({ description });
 }
 
-function addIssue(ctx: z.core.ParsePayload<unknown>, message: string, path: PropertyKey[] = []): void {
+function addIssue(
+  ctx: z.core.ParsePayload<unknown>,
+  message: string,
+  path: PropertyKey[] = [],
+): void {
   ctx.issues.push({
     code: "custom",
     message,
@@ -58,16 +62,22 @@ const sourceShape = z.strictObject(
   {
     id: nonemptyString(),
     kind: z.enum(SOURCE_KINDS, { error: () => `must be one of ${SOURCE_KINDS.join(", ")}` }),
-    label: nonemptyString("Short name shown in the UI. Examples: #24, alice on PR #32, Cursor session · Aug 12."),
+    label: nonemptyString(
+      "Short name shown in the UI. Examples: #24, alice on PR #32, Cursor session · Aug 12.",
+    ),
     url: nonemptyString("Omit for transcripts.").optional(),
     title: nonemptyString().optional(),
-    gist: nonemptyString("One or two sentences, written by the skill, saying why this source matters.").optional(),
+    gist: nonemptyString(
+      "One or two sentences, written by the skill, saying why this source matters.",
+    ).optional(),
     part: nonemptyString(
       "Short name of the independent story this source belongs to. Same name as the groups in that story.",
     ).optional(),
     author: nonemptyString("pr-comment only.").optional(),
     body: anyString("pr-comment only. The comment, faithful.").optional(),
-    path: nonemptyString("pr-comment only. Git path. With side and line, pins the comment to live git.").optional(),
+    path: nonemptyString(
+      "pr-comment only. Git path. With side and line, pins the comment to live git.",
+    ).optional(),
     side: z
       .enum(["old", "new"], { error: "must be old or new" })
       .meta({ description: "pr-comment only. Git-shaped, not GitHub-shaped." })
@@ -102,7 +112,9 @@ function sourceRules(ctx: z.core.ParsePayload<z.infer<typeof sourceShape>>): voi
   if (source.body === undefined) {
     addIssue(ctx, "is required on pr-comment sources", ["body"]);
   }
-  const pinCount = [source.path, source.side, source.line].filter((item) => item !== undefined).length;
+  const pinCount = [source.path, source.side, source.line].filter(
+    (item) => item !== undefined,
+  ).length;
   if (pinCount > 0 && pinCount !== 3) {
     addIssue(ctx, "line pin needs path, side, and line together");
   }
@@ -121,16 +133,16 @@ const groupSchema = z.strictObject(
     part: nonemptyString(
       "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs.",
     ).optional(),
-    sources: stringList("Ids of document sources this group names, even when the prose does not cite them inline."),
+    sources: stringList(
+      "Ids of document sources this group names, even when the prose does not cite them inline.",
+    ),
     suggestedOrder: z
       .number({ error: "must be a finite number" })
       .finite({ error: "must be a finite number" }),
-    hunkRefs: z
-      .array(hunkRefStringSchema, { error: "must be an array" })
-      .meta({
-        description:
-          "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk.",
-      }),
+    hunkRefs: z.array(hunkRefStringSchema, { error: "must be an array" }).meta({
+      description:
+        "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk.",
+    }),
   },
   { error: objectError },
 );
@@ -158,32 +170,30 @@ const reviewDocumentObject = z
   .strictObject(
     {
       version: z.literal(1, { error: "must be 1" }),
-      size: z.enum(REVIEW_SIZES, { error: () => `must be one of ${REVIEW_SIZES.join(", ")}` }).meta({
-        description: "Human review burden of this change.",
-      }),
+      size: z
+        .enum(REVIEW_SIZES, { error: () => `must be one of ${REVIEW_SIZES.join(", ")}` })
+        .meta({
+          description: "Human review burden of this change.",
+        }),
       source: reviewSourceSchema,
-      title: nonemptyString("Short name of the whole change. Prefer a user-created title when it names this change."),
+      title: nonemptyString(
+        "Short name of the whole change. Prefer a user-created title when it names this change.",
+      ),
       summary: nonemptyString("Short what of the whole change. Name the stories."),
       why: nonemptyString(
         "Generated why for the whole change, from tickets, issues, a request description, or a transcript. Cite sources with [text](source:id).",
       ).optional(),
-      sources: z
-        .array(sourceSchema, { error: "must be an array" })
-        .optional()
-        .meta({
-          description:
-            "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
-        }),
+      sources: z.array(sourceSchema, { error: "must be an array" }).optional().meta({
+        description:
+          "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
+      }),
       lookFor: stringList(
         "Whole-change and missing-work claims. Cite the source. Do not store a pass/fail.",
       ),
-      parts: z
-        .array(reviewPartSchema, { error: "must be an array" })
-        .optional()
-        .meta({
-          description:
-            "One entry per independent story when groups use part. name matches group part. summary is that story's one-sentence what.",
-        }),
+      parts: z.array(reviewPartSchema, { error: "must be an array" }).optional().meta({
+        description:
+          "One entry per independent story when groups use part. name matches group part. summary is that story's one-sentence what.",
+      }),
       groups: z.array(groupSchema, { error: "must be an array" }),
     },
     { error: objectError },
@@ -197,17 +207,22 @@ const reviewDocumentInput = reviewDocumentObject.extend({
   tickets: z.array(legacyTicketSchema, { error: "must be an array" }).optional(),
 });
 
-export const reviewDocumentSchema = reviewDocumentInput.check(documentRules).transform((document) => {
-  const { tickets, ...rest } = document;
-  const next = tickets === undefined || rest.sources !== undefined ? rest : { ...rest, sources: tickets.map(ticketToSource) };
-  return {
-    ...next,
-    groups: next.groups.map((group) => ({
-      ...group,
-      hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
-    })),
-  };
-});
+export const reviewDocumentSchema = reviewDocumentInput
+  .check(documentRules)
+  .transform((document) => {
+    const { tickets, ...rest } = document;
+    const next =
+      tickets === undefined || rest.sources !== undefined
+        ? rest
+        : { ...rest, sources: tickets.map(ticketToSource) };
+    return {
+      ...next,
+      groups: next.groups.map((group) => ({
+        ...group,
+        hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
+      })),
+    };
+  });
 
 function normalizeWrittenHunkRef(value: string): ReviewHunkRef {
   const parsed = parseHunkRefString(value);
@@ -333,7 +348,11 @@ function partName(part: string | undefined): string {
   return part === undefined ? "no part" : `"${part}"`;
 }
 
-function collectDuplicateIds(ctx: z.core.ParsePayload<unknown>, ids: string[], kind: "source" | "group"): void {
+function collectDuplicateIds(
+  ctx: z.core.ParsePayload<unknown>,
+  ids: string[],
+  kind: "source" | "group",
+): void {
   const seen = new Set<string>();
   for (const id of ids) {
     if (seen.has(id)) {

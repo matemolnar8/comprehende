@@ -18,9 +18,15 @@ after(() => {
 
 describe("nameFromRemoteUrl", () => {
   it("reads the last path segment from https, ssh, and scp urls", () => {
-    assert.equal(nameFromRemoteUrl("https://github.com/matemolnar8/comprehende.git"), "comprehende");
+    assert.equal(
+      nameFromRemoteUrl("https://github.com/matemolnar8/comprehende.git"),
+      "comprehende",
+    );
     assert.equal(nameFromRemoteUrl("git@github.com:matemolnar8/comprehende.git"), "comprehende");
-    assert.equal(nameFromRemoteUrl("ssh://git@github.com/matemolnar8/comprehende.git"), "comprehende");
+    assert.equal(
+      nameFromRemoteUrl("ssh://git@github.com/matemolnar8/comprehende.git"),
+      "comprehende",
+    );
     assert.equal(nameFromRemoteUrl("/tmp/widgets.git"), "widgets");
   });
 

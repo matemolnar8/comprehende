@@ -3,7 +3,11 @@ import { join } from "node:path";
 import { replaceCliPin } from "../../src/schema/cli-pin.ts";
 import { skillPaths } from "../../src/schema/skill-paths.ts";
 
-export async function copySkillForEval(packageRoot: string, dest: string, cliPath: string): Promise<void> {
+export async function copySkillForEval(
+  packageRoot: string,
+  dest: string,
+  cliPath: string,
+): Promise<void> {
   const { nextSkill } = skillPaths(packageRoot);
   await cp(nextSkill, dest, { recursive: true });
   const skillMd = join(dest, "SKILL.md");
@@ -29,7 +33,10 @@ export function skillSection(markdown: string, heading: string): string {
       break;
     }
   }
-  return lines.slice(start + 1, end).join("\n").trim();
+  return lines
+    .slice(start + 1, end)
+    .join("\n")
+    .trim();
 }
 
 export async function readNextSkillMd(packageRoot: string): Promise<string> {

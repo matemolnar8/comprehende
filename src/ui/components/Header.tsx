@@ -30,13 +30,29 @@ export function Header(props: {
   comments?: boolean;
   onComments?: () => void;
 }) {
-  const { meta, wrap, split, onWrap, onUnified, onSplit, onRefresh, busy = false, comments, onComments } = props;
+  const {
+    meta,
+    wrap,
+    split,
+    onWrap,
+    onUnified,
+    onSplit,
+    onRefresh,
+    busy = false,
+    comments,
+    onComments,
+  } = props;
   return (
     <header className="flex flex-col gap-2 border-b border-border bg-card px-5 py-3 min-[800px]:flex-row min-[800px]:flex-wrap min-[800px]:items-center min-[800px]:justify-between">
       <div className="flex min-w-0 items-center gap-4">
         <Logo />
         <Range resolved={meta.resolved} />
-        <ReadingMark paths={reviewReadingPaths(meta)} viewed={props.viewedPaths} noun className="mt-0" />
+        <ReadingMark
+          paths={reviewReadingPaths(meta)}
+          viewed={props.viewedPaths}
+          noun
+          className="mt-0"
+        />
         {meta.groups.length > 0 ? (
           <div className="flex items-center gap-1">
             <GroupNav meta={meta} selection={props.selection} onSelect={props.onSelect} />
@@ -171,7 +187,9 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
           {copied ? "Copied" : props.display}
         </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">{props.tooltip}</TooltipContent>
+      <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">
+        {props.tooltip}
+      </TooltipContent>
     </Tooltip>
   );
 }
@@ -185,12 +203,7 @@ export function ThemeToggle(props: { system?: ReactNode }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          size="icon-sm"
-          variant="outline"
-          aria-label={label}
-          onClick={toggleTheme}
-        >
+        <Button size="icon-sm" variant="outline" aria-label={label} onClick={toggleTheme}>
           {preference === "light" ? <SunIcon /> : preference === "dark" ? <MoonIcon /> : system}
         </Button>
       </TooltipTrigger>
@@ -198,4 +211,3 @@ export function ThemeToggle(props: { system?: ReactNode }) {
     </Tooltip>
   );
 }
-

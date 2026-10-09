@@ -1,9 +1,11 @@
 import { REVIEW_BUCKETS, type ReviewBucket } from "../../api/types.ts";
 import { padIndex } from "../../schema/types.ts";
-import type { ReviewMeta } from "../api.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type Part, type PartGroup } from "./parts.ts";
 
-export type Selection = { kind: "overview" } | { kind: "group"; id: string } | { kind: ReviewBucket };
+export type Selection =
+  | { kind: "overview" }
+  | { kind: "group"; id: string }
+  | { kind: ReviewBucket };
 
 export type SelectionStackSource = {
   groups: PartGroup[];
@@ -13,6 +15,13 @@ export type SelectionStackSource = {
 
 export type PartShiftSource = {
   groups: PartGroup[];
+};
+
+// Only the group id and title feed the selection caption, so tests can pass a
+// minimal meta instead of a full review.
+export type SelectionCaptionMeta = {
+  document: { title: string };
+  groups: readonly { id: string; title: string }[];
 };
 
 export function defaultSelection(source: SelectionStackSource): Selection {
@@ -94,7 +103,10 @@ export function hashWriteMode(
   return "push";
 }
 
-export function restoreSelection(source: SelectionStackSource, stored: Selection | null): Selection {
+export function restoreSelection(
+  source: SelectionStackSource,
+  stored: Selection | null,
+): Selection {
   // Invariant: unknown or missing buckets fall back to the default selection.
   if (stored === null) {
     return defaultSelection(source);
@@ -102,7 +114,11 @@ export function restoreSelection(source: SelectionStackSource, stored: Selection
   if (stored.kind === "group" && !source.groups.some((group) => group.id === stored.id)) {
     return defaultSelection(source);
   }
-  if (stored.kind === REVIEW_BUCKETS.unassigned && source.unassigned.hunkCount === 0 && source.groups.length > 0) {
+  if (
+    stored.kind === REVIEW_BUCKETS.unassigned &&
+    source.unassigned.hunkCount === 0 &&
+    source.groups.length > 0
+  ) {
     return defaultSelection(source);
   }
   if (stored.kind === REVIEW_BUCKETS.lockfiles && (source.lockfiles?.fileCount ?? 0) === 0) {
@@ -164,7 +180,10 @@ function partForWalk(parts: readonly Part[], selection: Selection | null): Part 
   if (selection?.kind === "group") {
     return parts.find((item) => item.groupIds.includes(selection.id)) ?? parts[0];
   }
-  if (selection?.kind === REVIEW_BUCKETS.unassigned || selection?.kind === REVIEW_BUCKETS.lockfiles) {
+  if (
+    selection?.kind === REVIEW_BUCKETS.unassigned ||
+    selection?.kind === REVIEW_BUCKETS.lockfiles
+  ) {
     return parts[parts.length - 1];
   }
   return parts[0];
@@ -188,7 +207,12 @@ export function shiftPartSelection(
   setSelection: (selection: Selection) => void,
   delta: number,
 ): void {
-  if (meta === null || selection === null || selection.kind === REVIEW_BUCKETS.unassigned || selection.kind === REVIEW_BUCKETS.lockfiles) {
+  if (
+    meta === null ||
+    selection === null ||
+    selection.kind === REVIEW_BUCKETS.unassigned ||
+    selection.kind === REVIEW_BUCKETS.lockfiles
+  ) {
     return;
   }
   const parts = groupParts(meta.groups);
@@ -196,7 +220,11 @@ export function shiftPartSelection(
     return;
   }
   const current =
-    selection.kind === "group" ? parts.findIndex((part) => part.groupIds.includes(selection.id)) : delta > 0 ? -1 : parts.length;
+    selection.kind === "group"
+      ? parts.findIndex((part) => part.groupIds.includes(selection.id))
+      : delta > 0
+        ? -1
+        : parts.length;
   if (selection.kind === "group" && current < 0) {
     return;
   }
@@ -223,16 +251,13 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
   return a.kind === "group" && b.kind === "group" && b.id === a.id;
 }
 
-export function selectionNavLabel(
-  meta: Pick<ReviewMeta, "document" | "groups">,
-  selection: Selection,
-): string {
+export function selectionNavLabel(meta: SelectionCaptionMeta, selection: Selection): string {
   const caption = selectionCaption(meta, selection);
   return caption.index !== undefined ? `${caption.index} ${caption.title}` : caption.title;
 }
 
 export function selectionCaption(
-  meta: Pick<ReviewMeta, "document" | "groups">,
+  meta: SelectionCaptionMeta,
   selection: Selection | null,
 ): { index?: string; title: string } {
   if (selection === null || selection.kind === "overview") {

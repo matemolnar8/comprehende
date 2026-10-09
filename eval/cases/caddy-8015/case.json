@@ -18,9 +18,7 @@
       "caddytest/integration/caddyfile_adapt/tls_automate_names_internal.caddyfiletest",
       "caddytest/integration/caddyfile_adapt/tls_automate_names_without_site_block.caddyfiletest"
     ],
-    "together": [
-      ["caddyconfig/httpcaddyfile/options.go", "caddyconfig/httpcaddyfile/tlsapp.go"]
-    ],
+    "together": [["caddyconfig/httpcaddyfile/options.go", "caddyconfig/httpcaddyfile/tlsapp.go"]],
     "claims": [
       "all five adapt fixtures match the implementation, including the outputs with only the automate loader and no policy",
       "tls_automate_names still manages a listed name when auto_https is off, as the auto_https off fixture pins",

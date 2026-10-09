@@ -5,7 +5,8 @@ export function hunkRangeLabel(header: string): string {
 
 export function addedSymbols(addedLines: string[]): string[] {
   const names: string[] = [];
-  const pattern = /^(?:export\s+)?(?:async\s+)?(?:function|class|type|interface|enum)\s+([A-Za-z_][\w]*)/;
+  const pattern =
+    /^(?:export\s+)?(?:async\s+)?(?:function|class|type|interface|enum)\s+([A-Za-z_][\w]*)/;
   for (const line of addedLines) {
     const match = pattern.exec(line.trim());
     const name = match?.[1];

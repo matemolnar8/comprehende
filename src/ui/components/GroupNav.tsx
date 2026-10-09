@@ -16,7 +16,10 @@ export function GroupNav(props: {
   const previous = neighborSelection(props.meta, props.selection, -1);
   const next = neighborSelection(props.meta, props.selection, 1);
   return (
-    <nav aria-label="Previous and next group" className={props.className ?? "flex shrink-0 items-center gap-0.5"}>
+    <nav
+      aria-label="Previous and next group"
+      className={props.className ?? "flex shrink-0 items-center gap-0.5"}
+    >
       <NavControl direction="prev" target={previous} meta={props.meta} onSelect={props.onSelect} />
       <NavControl direction="next" target={next} meta={props.meta} onSelect={props.onSelect} />
     </nav>
@@ -32,8 +35,10 @@ function NavControl(props: {
   const disabled = props.target === undefined;
   const name = props.direction === "prev" ? "Previous" : "Next";
   const shortcut = props.direction === "prev" ? "[" : "]";
-  const destination = props.target !== undefined ? selectionNavLabel(props.meta, props.target) : undefined;
-  const hint = destination !== undefined ? `${name}: ${destination} ${shortcut}` : `${name} ${shortcut}`;
+  const destination =
+    props.target !== undefined ? selectionNavLabel(props.meta, props.target) : undefined;
+  const hint =
+    destination !== undefined ? `${name}: ${destination} ${shortcut}` : `${name} ${shortcut}`;
   const button = (
     <Button
       type="button"
@@ -48,7 +53,11 @@ function NavControl(props: {
         }
       }}
     >
-      {props.direction === "prev" ? <ChevronLeftIcon className="size-3.5" /> : <ChevronRightIcon className="size-3.5" />}
+      {props.direction === "prev" ? (
+        <ChevronLeftIcon className="size-3.5" />
+      ) : (
+        <ChevronRightIcon className="size-3.5" />
+      )}
     </Button>
   );
   if (disabled) {

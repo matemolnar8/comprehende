@@ -38,7 +38,11 @@ describe("image diffs", () => {
     const dataPath = join(root, "review.json");
     const index = await cmdIndex(repo.root, repo.base, repo.head);
 
-    assert.ok(index.hunks.some((hunk) => hunk.path === "assets/shot.png" && hunk.oldStart === 0 && hunk.newStart === 0));
+    assert.ok(
+      index.hunks.some(
+        (hunk) => hunk.path === "assets/shot.png" && hunk.oldStart === 0 && hunk.newStart === 0,
+      ),
+    );
     assert.ok(index.hunks.some((hunk) => hunk.path === "shots/home.png"));
     assert.ok(index.skipped.some((item) => item.path === "assets/dot.bin"));
     assert.equal(
@@ -49,7 +53,7 @@ describe("image diffs", () => {
     await writeCoveringDocument(dataPath, index);
     const uiRoot = join(root, "ui");
     await mkdir(uiRoot);
-    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "index.html"), '<!doctype html><div id="root"></div>\n');
 
     const live = await startServer({ cwd: repo.root, dataPath, port: 0, uiRoot });
     servers.push(live.server);
@@ -63,27 +67,39 @@ describe("image diffs", () => {
     assert.equal(review.files.find((file) => file.path === "shots/home.png")?.image, true);
     assert.ok(review.skipped.some((item) => item.path === "assets/dot.bin"));
 
-    const shotNew = await fetch(new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "new" }), `${live.url}/`));
+    const shotNew = await fetch(
+      new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "new" }), `${live.url}/`),
+    );
     assert.equal(shotNew.status, 200);
     assert.equal(shotNew.headers.get("content-type"), "image/png");
     assert.deepEqual(Buffer.from(await shotNew.arrayBuffer()), repo.shotNew);
 
-    const shotOld = await fetch(new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "old" }), `${live.url}/`));
+    const shotOld = await fetch(
+      new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "old" }), `${live.url}/`),
+    );
     assert.deepEqual(Buffer.from(await shotOld.arrayBuffer()), repo.shotOld);
 
-    const lfsNew = await fetch(new URL(apiHref({ kind: "image", path: "shots/home.png", side: "new" }), `${live.url}/`));
+    const lfsNew = await fetch(
+      new URL(apiHref({ kind: "image", path: "shots/home.png", side: "new" }), `${live.url}/`),
+    );
     assert.equal(lfsNew.status, 200);
     assert.deepEqual(Buffer.from(await lfsNew.arrayBuffer()), repo.lfsNew);
 
-    const lfsOld = await fetch(new URL(apiHref({ kind: "image", path: "shots/home.png", side: "old" }), `${live.url}/`));
+    const lfsOld = await fetch(
+      new URL(apiHref({ kind: "image", path: "shots/home.png", side: "old" }), `${live.url}/`),
+    );
     assert.deepEqual(Buffer.from(await lfsOld.arrayBuffer()), repo.lfsOld);
 
-    const group = (await (await fetch(new URL(apiHref({ kind: "review" }), `${live.url}/`))).json()) as {
+    const group = (await (
+      await fetch(new URL(apiHref({ kind: "review" }), `${live.url}/`))
+    ).json()) as {
       groups: { id: string }[];
     };
     const groupId = group.groups[0]?.id;
     assert.ok(groupId);
-    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: groupId }), `${live.url}/`));
+    const hunksRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: groupId }), `${live.url}/`),
+    );
     const payload = (await hunksRes.json()) as {
       files: { path: string; kind: string; status: string; hunks: unknown[] }[];
     };
@@ -97,8 +113,12 @@ describe("image diffs", () => {
     servers.push(frozen.server);
 
     for (const resource of listResources(ctx).filter((item) => item.kind === "image")) {
-      const liveBytes = Buffer.from(await (await fetch(new URL(apiHref(resource), `${live.url}/`))).arrayBuffer());
-      const frozenBytes = Buffer.from(await (await fetch(new URL(apiHref(resource), `${frozen.url}/`))).arrayBuffer());
+      const liveBytes = Buffer.from(
+        await (await fetch(new URL(apiHref(resource), `${live.url}/`))).arrayBuffer(),
+      );
+      const frozenBytes = Buffer.from(
+        await (await fetch(new URL(apiHref(resource), `${frozen.url}/`))).arrayBuffer(),
+      );
       assert.deepEqual(frozenBytes, liveBytes, apiHref(resource));
     }
     assert.equal(existsSync(join(outDir, "api/images/new/assets/shot.png")), true);
@@ -119,12 +139,16 @@ describe("image diffs", () => {
     const live = await startServer({ cwd: repo.root, dataPath, port: 0, uiRoot });
     servers.push(live.server);
 
-    const missing = await fetch(new URL(apiHref({ kind: "image", path: "shots/home.png", side: "new" }), `${live.url}/`));
+    const missing = await fetch(
+      new URL(apiHref({ kind: "image", path: "shots/home.png", side: "new" }), `${live.url}/`),
+    );
     assert.equal(missing.status, 404);
     const body = (await missing.json()) as { error: string };
     assert.match(body.error, /Git LFS object/);
 
-    const png = await fetch(new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "new" }), `${live.url}/`));
+    const png = await fetch(
+      new URL(apiHref({ kind: "image", path: "assets/shot.png", side: "new" }), `${live.url}/`),
+    );
     assert.equal(png.status, 200);
   });
 });

@@ -53,7 +53,9 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
       if (isLockfilePath(ref.path)) {
         continue;
       }
-      const matches = isLocatedHunkRef(ref) ? matchLocated(ref, liveByKey) : (liveByPath.get(ref.path) ?? []);
+      const matches = isLocatedHunkRef(ref)
+        ? matchLocated(ref, liveByKey)
+        : (liveByPath.get(ref.path) ?? []);
       if (matches.length === 0) {
         stale.push(ref);
         allStale.push(ref);

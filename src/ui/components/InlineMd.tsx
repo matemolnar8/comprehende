@@ -31,7 +31,11 @@ export function InlineMd(props: { text: string }): ReactNode {
         if (href === undefined || href === "") {
           return createElement("span", null, children);
         }
-        return createElement("a", { href, className: "text-primary hover:underline", target: "_blank", rel: "noreferrer" }, children);
+        return createElement(
+          "a",
+          { href, className: "text-primary hover:underline", target: "_blank", rel: "noreferrer" },
+          children,
+        );
       }
       const source = sources?.byId.get(id);
       if (source === undefined) {

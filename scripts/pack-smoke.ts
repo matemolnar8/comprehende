@@ -24,14 +24,21 @@ try {
 async function run(): Promise<void> {
   const packDir = await mkdtemp(join(tmpdir(), "comprehende-pack-"));
   roots.push(packDir);
-  execFileSync("pnpm", ["pack", "--pack-destination", packDir], { cwd: repoRoot, stdio: "inherit" });
+  execFileSync("pnpm", ["pack", "--pack-destination", packDir], {
+    cwd: repoRoot,
+    stdio: "inherit",
+  });
 
   const version = await readPackageVersionFromDir(repoRoot);
   const tarball = join(packDir, `comprehende-${version}.tgz`);
   assert.equal(existsSync(tarball), true, `expected ${tarball}`);
 
   const listing = execFileSync("tar", ["-tzf", tarball], { encoding: "utf8" }).split("\n");
-  for (const required of ["package/dist/cli/main.js", "package/dist/ui/index.html", "package/skills/comprehende/SKILL.md"]) {
+  for (const required of [
+    "package/dist/cli/main.js",
+    "package/dist/ui/index.html",
+    "package/skills/comprehende/SKILL.md",
+  ]) {
     assert.equal(listing.includes(required), true, `tarball missing ${required}`);
   }
   assert.equal(
@@ -44,11 +51,18 @@ async function run(): Promise<void> {
     execFileSync("tar", ["-xOf", tarball, "package/package.json"], { encoding: "utf8" }),
   );
   const packedDependencies: unknown = isRecord(packedPkg) ? packedPkg.dependencies : undefined;
-  assert.deepEqual(Object.keys(packedDependencies ?? {}).sort(), ["zod"], "packed tarball may depend on zod only");
+  assert.deepEqual(
+    Object.keys(packedDependencies ?? {}).sort(),
+    ["zod"],
+    "packed tarball may depend on zod only",
+  );
 
   const installDir = await mkdtemp(join(tmpdir(), "comprehende-install-"));
   roots.push(installDir);
-  await writeFile(join(installDir, "package.json"), `${JSON.stringify({ name: "pack-smoke-consumer", private: true }, null, 2)}\n`);
+  await writeFile(
+    join(installDir, "package.json"),
+    `${JSON.stringify({ name: "pack-smoke-consumer", private: true }, null, 2)}\n`,
+  );
   execFileSync("npm", ["install", tarball, "--omit=dev"], { cwd: installDir, stdio: "inherit" });
 
   const bin = join(installDir, "node_modules/.bin/comprehende");
@@ -77,10 +91,14 @@ async function run(): Promise<void> {
   assert.equal(indexOut.status, 1, "packed bin must reject index");
   assert.match(indexOut.stderr, /Unknown command: index/);
 
-  const reviewOut = execFileSync(bin, ["review", "--base", repo.base, "--head", repo.head, "--data", dataPath], {
-    cwd: repo.root,
-    encoding: "utf8",
-  });
+  const reviewOut = execFileSync(
+    bin,
+    ["review", "--base", repo.base, "--head", repo.head, "--data", dataPath],
+    {
+      cwd: repo.root,
+      encoding: "utf8",
+    },
+  );
   assert.equal(reviewOut.trim(), dataPath);
   const skeletonRaw: unknown = JSON.parse(await readFile(dataPath, "utf8"));
   assert.ok(isRecord(skeletonRaw), "review skeleton must be a JSON object");
@@ -90,7 +108,10 @@ async function run(): Promise<void> {
   const skeletonGroups = skeletonRaw.groups;
   assert.ok(Array.isArray(skeletonGroups) && isRecord(skeletonGroups[0]));
   const skeletonHunks = skeletonGroups[0]?.hunkRefs;
-  assert.ok(Array.isArray(skeletonHunks) && skeletonHunks.length > 0, "review skeleton must list hunk refs");
+  assert.ok(
+    Array.isArray(skeletonHunks) && skeletonHunks.length > 0,
+    "review skeleton must list hunk refs",
+  );
   const groupId = skeletonGroups[0]?.id;
   if (typeof groupId !== "string") {
     throw new Error("review skeleton group is missing id");
@@ -115,7 +136,7 @@ async function run(): Promise<void> {
     const html = await page.text();
     assert.match(html, /<div id="root">/);
   } finally {
-  child.kill("SIGTERM");
+    child.kill("SIGTERM");
     await waitForExit(child);
   }
 
@@ -125,9 +146,21 @@ async function run(): Promise<void> {
     encoding: "utf8",
   });
   assert.equal(existsSync(join(outDir, "index.html")), true, "export must copy the UI");
-  assert.equal(existsSync(join(outDir, "api/review.json")), true, "export must write frozen review JSON");
-  assert.equal(existsSync(join(outDir, "api/agent/overview.md")), true, "export must write overview agent markdown");
-  assert.equal(existsSync(join(outDir, `api/agent/groups/${groupId}.md`)), true, "export must write group agent markdown");
+  assert.equal(
+    existsSync(join(outDir, "api/review.json")),
+    true,
+    "export must write frozen review JSON",
+  );
+  assert.equal(
+    existsSync(join(outDir, "api/agent/overview.md")),
+    true,
+    "export must write overview agent markdown",
+  );
+  assert.equal(
+    existsSync(join(outDir, `api/agent/groups/${groupId}.md`)),
+    true,
+    "export must write group agent markdown",
+  );
   const overviewMd = await readFile(join(outDir, "api/agent/overview.md"), "utf8");
   assert.match(overviewMd, /git diff --find-renames/);
   assert.match(overviewMd, new RegExp(`\\[groups/${groupId}\\.md\\]\\(groups/${groupId}\\.md\\)`));
@@ -155,9 +188,18 @@ async function run(): Promise<void> {
   };
   const kept = exportedManifest.chunks.filter((file) => existsSync(join(outDir, file)));
   const dropped = exportedManifest.chunks.filter((file) => !existsSync(join(outDir, file)));
-  assert.ok(kept.some((file) => file.includes("shiki-lang-typescript")), "export must keep typescript");
-  assert.ok(kept.some((file) => file.includes("shiki-lang-markdown")), "export must keep markdown");
-  assert.ok(dropped.some((file) => file.includes("shiki-lang-python")), "export must drop unused python");
+  assert.ok(
+    kept.some((file) => file.includes("shiki-lang-typescript")),
+    "export must keep typescript",
+  );
+  assert.ok(
+    kept.some((file) => file.includes("shiki-lang-markdown")),
+    "export must keep markdown",
+  );
+  assert.ok(
+    dropped.some((file) => file.includes("shiki-lang-python")),
+    "export must drop unused python",
+  );
   assert.ok(dropped.length > kept.length, "export must drop most highlighter files");
 
   console.log("pack-smoke ok");

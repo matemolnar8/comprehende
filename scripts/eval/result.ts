@@ -57,7 +57,9 @@ export function formatCaseLine(result: CaseResult): string {
     bits.push(failed(checks, "sources") ? "sources FAIL" : "sources ok");
     bits.push(failed(checks, "why") ? `why ${checks.why} FAIL` : `why ${checks.why}`);
     bits.push(failed(checks, "parts") ? `parts ${checks.parts} FAIL` : `parts ${checks.parts}`);
-    bits.push(failed(checks, "groups") ? `groups ${checks.groups} FAIL` : `groups ${checks.groups}`);
+    bits.push(
+      failed(checks, "groups") ? `groups ${checks.groups} FAIL` : `groups ${checks.groups}`,
+    );
     bits.push(failed(checks, "size") ? `size ${checks.size} FAIL` : `size ${checks.size}`);
     bits.push(`together ${checks.togetherOk}/${checks.togetherTotal}`);
     bits.push(`apart ${checks.apartOk}/${checks.apartTotal}`);
@@ -108,7 +110,10 @@ export function formatCaseLine(result: CaseResult): string {
   return bits.join("  ");
 }
 
-export function formatBaselineDelta(current: CaseResult, previous: CaseResult | undefined): string | undefined {
+export function formatBaselineDelta(
+  current: CaseResult,
+  previous: CaseResult | undefined,
+): string | undefined {
   if (previous === undefined) {
     return `${current.id}  new`;
   }
@@ -137,7 +142,11 @@ export function formatBaselineDelta(current: CaseResult, previous: CaseResult | 
   return `${current.id}  ${bits.join("  ")}`;
 }
 
-export async function writeCaseArtifacts(dir: string, result: CaseResult, extras: Record<string, string>): Promise<void> {
+export async function writeCaseArtifacts(
+  dir: string,
+  result: CaseResult,
+  extras: Record<string, string>,
+): Promise<void> {
   await mkdir(dir, { recursive: true });
   await writeFile(join(dir, "result.json"), `${JSON.stringify(result, null, 2)}\n`);
   for (const [name, body] of Object.entries(extras)) {
@@ -190,7 +199,10 @@ export function formatRunTotals(summary: RunSummary): string {
   const groupingTokens = sum(summary.cases, (item) => item.grouping?.run.tokens ?? 0);
   const proseTokens = sum(summary.cases, (item) => item.prose?.run.tokens ?? 0);
   const graderTokens = groupingTokens + proseTokens;
-  const producerHunt = sum(summary.cases, (item) => item.producer?.toolCalls.filter(isCliHuntCall).length ?? 0);
+  const producerHunt = sum(
+    summary.cases,
+    (item) => item.producer?.toolCalls.filter(isCliHuntCall).length ?? 0,
+  );
   const producerTools = sum(summary.cases, (item) => item.producer?.toolCalls.length ?? 0);
   const producerInput = sum(summary.cases, (item) => item.producer?.inputTokens ?? 0);
   const producerCacheRead = sum(summary.cases, (item) => item.producer?.cacheReadTokens ?? 0);
@@ -224,7 +236,10 @@ function sum<T>(items: readonly T[], value: (item: T) => number): number {
   return items.reduce((total, item) => total + value(item), 0);
 }
 
-export function claimsFromGrader(expected: string[] | undefined, grader: GraderResult | undefined): CaseResult["claims"] {
+export function claimsFromGrader(
+  expected: string[] | undefined,
+  grader: GraderResult | undefined,
+): CaseResult["claims"] {
   if (expected === undefined || expected.length === 0) {
     return undefined;
   }

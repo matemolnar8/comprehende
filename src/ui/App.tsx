@@ -30,7 +30,11 @@ import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { useNarrow } from "./lib/narrow.ts";
 import { linePinnedSources } from "../schema/source.ts";
 import type { Source } from "../schema/types.ts";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable.tsx";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable.tsx";
 import { TooltipProvider } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 
@@ -191,14 +195,19 @@ export function App() {
     runViewTransition(() => setInspector(null), "scene");
   }, [inspector]);
 
-  const { viewedPaths, setFileViewed } = useViewedFiles(meta?.resolved.baseSha, meta?.resolved.headSha);
+  const { viewedPaths, setFileViewed } = useViewedFiles(
+    meta?.resolved.baseSha,
+    meta?.resolved.headSha,
+  );
 
   const scrollToHunk = useCallback((index: number) => {
     setActiveHunk(index);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const main = mainRef.current;
-        const target = (main ?? document).querySelector(`[data-hunk="${index}"]`) as HTMLElement | null;
+        const target = (main ?? document).querySelector(
+          `[data-hunk="${index}"]`,
+        ) as HTMLElement | null;
         if (target === null || main === null) {
           target?.scrollIntoView({ block: "start", behavior: "instant" });
           return;
@@ -284,7 +293,19 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeHunk, closeInspector, inspector, payloadFiles, load, meta, scrollToHunk, selectFromNav, selection, setFileViewed, viewedPaths]);
+  }, [
+    activeHunk,
+    closeInspector,
+    inspector,
+    payloadFiles,
+    load,
+    meta,
+    scrollToHunk,
+    selectFromNav,
+    selection,
+    setFileViewed,
+    viewedPaths,
+  ]);
 
   useEffect(() => {
     if (focusLookForKey !== null) {
@@ -304,8 +325,7 @@ export function App() {
   const parts = useMemo(() => groupParts(meta?.groups ?? []), [meta]);
   const colorById = useMemo(() => colorIndexByGroupId(parts), [parts]);
   const mixed = isMixedReview(parts);
-  const strandColor =
-    mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
+  const strandColor = mixed && selectedGroup !== null ? colorById.get(selectedGroup.id) : undefined;
   const staleSourceIds = useMemo(
     () => new Set((meta?.staleSources ?? []).map((pin) => pin.id)),
     [meta],
@@ -353,7 +373,8 @@ export function App() {
       staleIds: staleSourceIds,
       onCite: openSource,
       onOpenSource: openSource,
-      selectionForSource: (source: Source) => targetForSource(source)?.selection ?? { kind: "overview" as const },
+      selectionForSource: (source: Source) =>
+        targetForSource(source)?.selection ?? { kind: "overview" as const },
     };
   }, [meta, openSource, staleSourceIds, targetForSource]);
 
@@ -409,67 +430,89 @@ export function App() {
   return (
     <TooltipProvider>
       <SourcesProvider value={sourcesHandle}>
-      <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
-        {narrow ? (
-          <MobileShell
-            meta={meta}
-            selection={selection}
-            parts={parts}
-            onSelect={selectFromNav}
-            viewedPaths={viewedPaths}
-            wrap={wrap}
-            onWrap={() => setWrap((value) => !value)}
-            comments={showComments}
-            onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
-          >
-            {stage}
-          </MobileShell>
-        ) : (
-          <>
-            <Header
+        <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
+          {narrow ? (
+            <MobileShell
               meta={meta}
               selection={selection}
+              parts={parts}
               onSelect={selectFromNav}
-              wrap={wrap}
-              split={split}
-              onWrap={() => setWrap((value) => !value)}
-              onUnified={() => setSplit(false)}
-              onSplit={() => {
-                setSplit(true);
-                if (!split) {
-                  setSplitRatio(0.5);
-                }
-              }}
-              onRefresh={() => void load()}
               viewedPaths={viewedPaths}
-              busy={loading}
+              wrap={wrap}
+              onWrap={() => setWrap((value) => !value)}
               comments={showComments}
-              onComments={pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined}
-            />
-
-            <ResizablePanelGroup
-              className="min-h-0 flex-1"
-              defaultLayout={defaultLayout}
-              onLayoutChanged={onLayoutChanged}
+              onComments={
+                pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
+              }
             >
-              <ResizablePanel id="stack" defaultSize="20" minSize="14%" className="min-h-0 min-w-0">
-                <Sidebar meta={meta} selection={selection} parts={parts} viewedPaths={viewedPaths} onSelect={selectFromNav} />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-              <ResizablePanel id="main" defaultSize="80" minSize="40%" className="min-h-0 min-w-0">
-                <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
-                  {stage}
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          </>
-        )}
-      </div>
+              {stage}
+            </MobileShell>
+          ) : (
+            <>
+              <Header
+                meta={meta}
+                selection={selection}
+                onSelect={selectFromNav}
+                wrap={wrap}
+                split={split}
+                onWrap={() => setWrap((value) => !value)}
+                onUnified={() => setSplit(false)}
+                onSplit={() => {
+                  setSplit(true);
+                  if (!split) {
+                    setSplitRatio(0.5);
+                  }
+                }}
+                onRefresh={() => void load()}
+                viewedPaths={viewedPaths}
+                busy={loading}
+                comments={showComments}
+                onComments={
+                  pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
+                }
+              />
+
+              <ResizablePanelGroup
+                className="min-h-0 flex-1"
+                defaultLayout={defaultLayout}
+                onLayoutChanged={onLayoutChanged}
+              >
+                <ResizablePanel
+                  id="stack"
+                  defaultSize="20"
+                  minSize="14%"
+                  className="min-h-0 min-w-0"
+                >
+                  <Sidebar
+                    meta={meta}
+                    selection={selection}
+                    parts={parts}
+                    viewedPaths={viewedPaths}
+                    onSelect={selectFromNav}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+                <ResizablePanel
+                  id="main"
+                  defaultSize="80"
+                  minSize="40%"
+                  className="min-h-0 min-w-0"
+                >
+                  <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
+                    {stage}
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            </>
+          )}
+        </div>
       </SourcesProvider>
     </TooltipProvider>
   );
 }
 
 function Boot(props: { children: ReactNode; className?: string }) {
-  return <div className={cn("px-10 py-8 text-muted-foreground", props.className)}>{props.children}</div>;
+  return (
+    <div className={cn("px-10 py-8 text-muted-foreground", props.className)}>{props.children}</div>
+  );
 }

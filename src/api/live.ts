@@ -1,7 +1,13 @@
 import { loadDocument } from "../review/load.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
-import { fileLanguage, filePatchFromGit, findDiffFile, readPathDiff, toHunkRef } from "../git/diff.ts";
+import {
+  fileLanguage,
+  filePatchFromGit,
+  findDiffFile,
+  readPathDiff,
+  toHunkRef,
+} from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
 import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
@@ -14,7 +20,15 @@ import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
-import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileSide } from "./types.ts";
+import type {
+  ApiBlame,
+  ApiFile,
+  ApiHunk,
+  ApiHunks,
+  ApiGroupFile,
+  ApiReview,
+  FileSide,
+} from "./types.ts";
 import { REVIEW_BUCKETS } from "./types.ts";
 
 export type JsonSnapshot = {
@@ -42,12 +56,19 @@ export type ReviewContext = {
   commits: ApiReview["commits"];
 };
 
-export async function pinReviewSource(cwd: string, data: string | ReviewDocument): Promise<PinnedRange> {
+export async function pinReviewSource(
+  cwd: string,
+  data: string | ReviewDocument,
+): Promise<PinnedRange> {
   const document = typeof data === "string" ? await loadDocument(data) : data;
   return pinRange(cwd, document.source.baseRef, document.source.headRef);
 }
 
-export async function openReview(cwd: string, data: string | ReviewDocument, pin?: PinnedRange): Promise<ReviewContext> {
+export async function openReview(
+  cwd: string,
+  data: string | ReviewDocument,
+  pin?: PinnedRange,
+): Promise<ReviewContext> {
   const document = typeof data === "string" ? await loadDocument(data) : data;
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   const { files, coverage } = await coverReview(cwd, document, range);
@@ -89,7 +110,10 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
     },
     groups: coverage.groups
       .slice()
-      .sort((a, b) => a.group.suggestedOrder - b.group.suggestedOrder || a.group.id.localeCompare(b.group.id))
+      .sort(
+        (a, b) =>
+          a.group.suggestedOrder - b.group.suggestedOrder || a.group.id.localeCompare(b.group.id),
+      )
       .map((group) => ({
         id: group.group.id,
         title: group.group.title,
@@ -127,7 +151,9 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       }
       return entry;
     }),
-    skipped: files.filter((file) => file.binary && !file.image).map((file) => ({ path: file.path, reason: "binary" })),
+    skipped: files
+      .filter((file) => file.binary && !file.image)
+      .map((file) => ({ path: file.path, reason: "binary" })),
     commits,
   };
 }
@@ -157,7 +183,11 @@ export function hunksPayload(ctx: ReviewContext, groupId: string): ApiHunks {
   return serializeGroup(ctx.files, group.hunks);
 }
 
-export async function filePayload(ctx: ReviewContext, path: string, side: FileSide): Promise<ApiFile> {
+export async function filePayload(
+  ctx: ReviewContext,
+  path: string,
+  side: FileSide,
+): Promise<ApiFile> {
   const file = findFile(ctx.files, path);
   const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
   assertSideExists(file, side);
@@ -170,7 +200,11 @@ export async function filePayload(ctx: ReviewContext, path: string, side: FileSi
   }
 }
 
-export async function blamePayload(ctx: ReviewContext, path: string, side: FileSide): Promise<ApiBlame> {
+export async function blamePayload(
+  ctx: ReviewContext,
+  path: string,
+  side: FileSide,
+): Promise<ApiBlame> {
   const file = findFile(ctx.files, path);
   const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
   assertSideExists(file, side);
@@ -183,7 +217,11 @@ export async function blamePayload(ctx: ReviewContext, path: string, side: FileS
   }
 }
 
-export async function imagePayload(ctx: ReviewContext, path: string, side: FileSide): Promise<BytesSnapshot> {
+export async function imagePayload(
+  ctx: ReviewContext,
+  path: string,
+  side: FileSide,
+): Promise<BytesSnapshot> {
   const file = findFile(ctx.files, path);
   if (!file.image) {
     throw new ApiError(404, "path is not an image in the live diff");
@@ -283,7 +321,9 @@ function serializeGroup(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
     }
     filesByPath.push({ file, hunks: [hunk] });
   }
-  const serializedFiles = filesByPath.map(({ file, hunks: fileHunks }) => serializeGroupFile(file, fileHunks, true));
+  const serializedFiles = filesByPath.map(({ file, hunks: fileHunks }) =>
+    serializeGroupFile(file, fileHunks, true),
+  );
   return { hunks: hunks.map(serializeHunk), files: serializedFiles };
 }
 
@@ -308,7 +348,11 @@ async function patchPayload(ctx: ReviewContext, path: string): Promise<ApiGroupF
   return serializeGroupFile(live, live.hunks, false);
 }
 
-async function readPathDiffSafe(ctx: ReviewContext, path: string, oldPath?: string): Promise<DiffFile | undefined> {
+async function readPathDiffSafe(
+  ctx: ReviewContext,
+  path: string,
+  oldPath?: string,
+): Promise<DiffFile | undefined> {
   try {
     return await readPathDiff(ctx.cwd, ctx.resolved.baseSha, ctx.resolved.headSha, path, oldPath);
   } catch (error) {
@@ -316,7 +360,11 @@ async function readPathDiffSafe(ctx: ReviewContext, path: string, oldPath?: stri
   }
 }
 
-function serializeGroupFile(file: DiffFile, fileHunks: LiveHunk[], deferLockfile: boolean): ApiGroupFile {
+function serializeGroupFile(
+  file: DiffFile,
+  fileHunks: LiveHunk[],
+  deferLockfile: boolean,
+): ApiGroupFile {
   const lockfile = isLockfilePath(file.path) && !file.binary && !file.image;
   const deferred = deferLockfile && lockfile;
   const next: ApiGroupFile = {

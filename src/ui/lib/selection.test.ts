@@ -69,7 +69,10 @@ describe("selection hash", () => {
   });
 
   it("restores a stored group when it still exists", () => {
-    assert.deepEqual(restoreSelection(source, { kind: "group", id: "ui" }), { kind: "group", id: "ui" });
+    assert.deepEqual(restoreSelection(source, { kind: "group", id: "ui" }), {
+      kind: "group",
+      id: "ui",
+    });
   });
 
   it("falls back when the stored group is gone", () => {
@@ -78,7 +81,10 @@ describe("selection hash", () => {
 
   it("falls back from unassigned when no leftover hunks remain", () => {
     assert.deepEqual(
-      restoreSelection({ groups: [{ id: "auth" }], unassigned: { hunkCount: 0 } }, { kind: "unassigned" }),
+      restoreSelection(
+        { groups: [{ id: "auth" }], unassigned: { hunkCount: 0 } },
+        { kind: "unassigned" },
+      ),
       { kind: "overview" },
     );
   });
@@ -98,7 +104,10 @@ describe("selection hash", () => {
     const pages = "https://matemolnar8.github.io/comprehende/pr/78/";
     const group = { kind: "group", id: "auth" } as const;
     assert.equal(urlWithSelection(serve, { kind: "overview" }), "http://127.0.0.1:4310/#overview");
-    assert.equal(urlWithSelection(pages, group), "https://matemolnar8.github.io/comprehende/pr/78/#group/auth");
+    assert.equal(
+      urlWithSelection(pages, group),
+      "https://matemolnar8.github.io/comprehende/pr/78/#group/auth",
+    );
     assert.equal(
       urlWithSelection(`${pages}#overview`, group),
       "https://matemolnar8.github.io/comprehende/pr/78/#group/auth",
@@ -142,7 +151,10 @@ describe("selection hash", () => {
       ],
     } as const;
     assert.equal(selectionNavLabel(meta, { kind: "overview" }), "Overview");
-    assert.equal(selectionNavLabel(meta, { kind: "group", id: "ui" }), "02 Show the resolved range");
+    assert.equal(
+      selectionNavLabel(meta, { kind: "group", id: "ui" }),
+      "02 Show the resolved range",
+    );
   });
 });
 
@@ -162,20 +174,34 @@ describe("group walk", () => {
   });
 
   it("steps to the next group and stops at the last one", () => {
-    assert.deepEqual(neighborSelection(stacked, { kind: "overview" }, 1), { kind: "group", id: "auth" });
-    assert.deepEqual(neighborSelection(stacked, { kind: "group", id: "auth" }, 1), { kind: "group", id: "ui" });
+    assert.deepEqual(neighborSelection(stacked, { kind: "overview" }, 1), {
+      kind: "group",
+      id: "auth",
+    });
+    assert.deepEqual(neighborSelection(stacked, { kind: "group", id: "auth" }, 1), {
+      kind: "group",
+      id: "ui",
+    });
     assert.equal(neighborSelection(stacked, { kind: "group", id: "ui" }, 1), undefined);
   });
 
   it("steps to the previous group and stops at overview", () => {
-    assert.deepEqual(neighborSelection(stacked, { kind: "group", id: "auth" }, -1), { kind: "overview" });
+    assert.deepEqual(neighborSelection(stacked, { kind: "group", id: "auth" }, -1), {
+      kind: "overview",
+    });
     assert.equal(neighborSelection(stacked, { kind: "overview" }, -1), undefined);
   });
 
   it("returns from unassigned to the last group", () => {
-    assert.deepEqual(neighborSelection(stacked, { kind: "unassigned" }, -1), { kind: "group", id: "ui" });
+    assert.deepEqual(neighborSelection(stacked, { kind: "unassigned" }, -1), {
+      kind: "group",
+      id: "ui",
+    });
     assert.equal(neighborSelection(stacked, { kind: "unassigned" }, 1), undefined);
-    assert.deepEqual(neighborSelection(stacked, { kind: "lockfiles" }, -1), { kind: "group", id: "ui" });
+    assert.deepEqual(neighborSelection(stacked, { kind: "lockfiles" }, -1), {
+      kind: "group",
+      id: "ui",
+    });
   });
 
   it("does nothing when there is no source", () => {
@@ -225,9 +251,14 @@ const story: SelectionStackSource = {
 
 function takePartShift(selection: Selection, delta: number): Selection | undefined {
   let next: Selection | undefined;
-  shiftPartSelection(story, selection, (value) => {
-    next = value;
-  }, delta);
+  shiftPartSelection(
+    story,
+    selection,
+    (value) => {
+      next = value;
+    },
+    delta,
+  );
   return next;
 }
 
@@ -240,21 +271,43 @@ describe("story and part selection", () => {
   });
 
   it("stays inside one part for [ and ]", () => {
-    assert.deepEqual(neighborSelection(story, { kind: "overview" }, 1), { kind: "group", id: "cookie" });
+    assert.deepEqual(neighborSelection(story, { kind: "overview" }, 1), {
+      kind: "group",
+      id: "cookie",
+    });
     assert.equal(neighborSelection(story, { kind: "overview" }, -1), undefined);
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, 1), { kind: "group", id: "login" });
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, 1), {
+      kind: "group",
+      id: "login",
+    });
     assert.equal(neighborSelection(story, { kind: "group", id: "login" }, 1), undefined);
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "login" }, -1), { kind: "group", id: "cookie" });
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, -1), { kind: "overview" });
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "docs" }, -1), { kind: "overview" });
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "login" }, -1), {
+      kind: "group",
+      id: "cookie",
+    });
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, -1), {
+      kind: "overview",
+    });
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "docs" }, -1), {
+      kind: "overview",
+    });
     assert.equal(neighborSelection(story, { kind: "group", id: "docs" }, 1), undefined);
   });
 
   it("moves between parts with { and }", () => {
     assert.deepEqual(takePartShift({ kind: "overview" }, 1), { kind: "group", id: "cookie" });
-    assert.deepEqual(takePartShift({ kind: "group", id: "login" }, 1), { kind: "group", id: "docs" });
-    assert.deepEqual(takePartShift({ kind: "group", id: "docs" }, 1), { kind: "group", id: "cookie" });
-    assert.deepEqual(takePartShift({ kind: "group", id: "docs" }, -1), { kind: "group", id: "cookie" });
+    assert.deepEqual(takePartShift({ kind: "group", id: "login" }, 1), {
+      kind: "group",
+      id: "docs",
+    });
+    assert.deepEqual(takePartShift({ kind: "group", id: "docs" }, 1), {
+      kind: "group",
+      id: "cookie",
+    });
+    assert.deepEqual(takePartShift({ kind: "group", id: "docs" }, -1), {
+      kind: "group",
+      id: "cookie",
+    });
   });
 
   it("does nothing on unassigned", () => {
@@ -263,10 +316,13 @@ describe("story and part selection", () => {
   });
 
   it("returns from unassigned to the last group of the last part", () => {
-    assert.deepEqual(neighborSelection({ ...story, unassigned: { hunkCount: 1 } }, { kind: "unassigned" }, -1), {
-      kind: "group",
-      id: "docs",
-    });
+    assert.deepEqual(
+      neighborSelection({ ...story, unassigned: { hunkCount: 1 } }, { kind: "unassigned" }, -1),
+      {
+        kind: "group",
+        id: "docs",
+      },
+    );
   });
 
   it("pushes a live hash for [ ] and { } hops", () => {

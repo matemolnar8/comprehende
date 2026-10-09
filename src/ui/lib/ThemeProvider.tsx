@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   applyResolvedTheme,
   readStoredPreference,
@@ -29,7 +37,8 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, []);
 
   const toggleTheme = useCallback(() => {
-    const next: ThemePreference = preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
+    const next: ThemePreference =
+      preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
     setPreference(next);
   }, [preference, setPreference]);
 

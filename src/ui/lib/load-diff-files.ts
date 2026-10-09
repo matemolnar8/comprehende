@@ -4,7 +4,9 @@ import type { ApiFile, FileSide } from "../../api/types.ts";
 export function canHydrateDiff(fileDiff: Pick<FileDiffMetadata, "isPartial" | "type">): boolean {
   return (
     fileDiff.isPartial &&
-    (fileDiff.type === "change" || fileDiff.type === "rename-changed" || fileDiff.type === "rename-pure")
+    (fileDiff.type === "change" ||
+      fileDiff.type === "rename-changed" ||
+      fileDiff.type === "rename-pure")
   );
 }
 

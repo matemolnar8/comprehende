@@ -62,7 +62,10 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     return 1;
   }
   const casesDir = join(packageRoot, "eval/cases");
-  const selected = selectEvalCases(await listEvalCases(casesDir), { ids: request.ids, tag: request.tag });
+  const selected = selectEvalCases(await listEvalCases(casesDir), {
+    ids: request.ids,
+    tag: request.tag,
+  });
   if (selected.length === 0) {
     console.error("no eval cases matched");
     return 1;
@@ -257,14 +260,19 @@ async function evalOneCase(opts: {
     await rm(tmp, { recursive: true, force: true });
   }
   result.ok = !caseFailed(result);
-  result.tokens = (result.producer?.tokens ?? 0) + (result.grouping?.run.tokens ?? 0) + (result.prose?.run.tokens ?? 0);
+  result.tokens =
+    (result.producer?.tokens ?? 0) +
+    (result.grouping?.run.tokens ?? 0) +
+    (result.prose?.run.tokens ?? 0);
   result.durationMs = Date.now() - started;
   await writeCaseArtifacts(caseOut, result, {});
   return result;
 }
 
 async function printBaseline(baselineDir: string, summary: RunSummary): Promise<void> {
-  const previous = JSON.parse(await readFile(join(resolve(baselineDir), "summary.json"), "utf8")) as RunSummary;
+  const previous = JSON.parse(
+    await readFile(join(resolve(baselineDir), "summary.json"), "utf8"),
+  ) as RunSummary;
   const byId = new Map(previous.cases.map((item) => [item.id, item]));
   console.log("baseline deltas");
   for (const item of summary.cases) {

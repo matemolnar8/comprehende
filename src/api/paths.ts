@@ -46,7 +46,10 @@ function apiRel(resource: ApiResource, encodeFiles: boolean): string {
 }
 
 export function parseApiPath(pathname: string): ApiResource | undefined {
-  const parts = pathname.split("/").filter((part) => part !== "").map(decodeSegment);
+  const parts = pathname
+    .split("/")
+    .filter((part) => part !== "")
+    .map(decodeSegment);
   if (parts[0] !== "api" || parts[1] === undefined) {
     return undefined;
   }
@@ -98,7 +101,11 @@ export function parseApiPath(pathname: string): ApiResource | undefined {
     }
     return { kind: "patch", path };
   }
-  if ((parts[1] === "files" || parts[1] === "blame") && parts.length >= 4 && parts[2] !== undefined) {
+  if (
+    (parts[1] === "files" || parts[1] === "blame") &&
+    parts.length >= 4 &&
+    parts[2] !== undefined
+  ) {
     const side = parts[2];
     if (!isSourceSide(side)) {
       return undefined;
@@ -156,7 +163,10 @@ function stem(file: string, ext: string): string | undefined {
 
 export function isSafePath(path: string): boolean {
   return (
-    path.trim() !== "" && !path.startsWith("/") && !path.includes("\0") && !path.split("/").includes("..")
+    path.trim() !== "" &&
+    !path.startsWith("/") &&
+    !path.includes("\0") &&
+    !path.split("/").includes("..")
   );
 }
 

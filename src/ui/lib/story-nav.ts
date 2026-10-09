@@ -22,7 +22,9 @@ export function storyNav(groups: readonly StoryGroup[], groupId: string): StoryN
   }
   return {
     dependsOn: (group.dependsOn ?? []).flatMap((id) => hop(byId, id)),
-    dependents: groups.flatMap((item) => ((item.dependsOn ?? []).includes(groupId) ? hop(byId, item.id) : [])),
+    dependents: groups.flatMap((item) =>
+      (item.dependsOn ?? []).includes(groupId) ? hop(byId, item.id) : [],
+    ),
   };
 }
 

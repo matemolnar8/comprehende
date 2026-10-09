@@ -30,9 +30,17 @@ describe("markMovedLines", () => {
     roots.push(root);
     await initEmptyRepo(root);
     await mkdir(join(root, "src"), { recursive: true });
-    await writeFile(join(root, "src/alpha.ts"), `export const stay = 1;\n${BLOCK}\nexport const tail = 1;\n`, "utf8");
+    await writeFile(
+      join(root, "src/alpha.ts"),
+      `export const stay = 1;\n${BLOCK}\nexport const tail = 1;\n`,
+      "utf8",
+    );
     await writeFile(join(root, "src/beta.ts"), "export const other = 1;\n", "utf8");
-    await writeFile(join(root, "src/keep.ts"), "export const kept = 1;\nexport const still = 2;\n", "utf8");
+    await writeFile(
+      join(root, "src/keep.ts"),
+      "export const kept = 1;\nexport const still = 2;\n",
+      "utf8",
+    );
     await writeFile(
       join(root, "src/util.ts"),
       'export const label = "util";\nexport function help(): number {\n  return 1;\n}\n',
@@ -43,7 +51,11 @@ describe("markMovedLines", () => {
 
     await mkdir(join(root, "lib"), { recursive: true });
     await git(root, ["mv", "src/keep.ts", "lib/keep.ts"]);
-    await writeFile(join(root, "src/alpha.ts"), "export const stay = 1;\nexport const tail = 1;\n", "utf8");
+    await writeFile(
+      join(root, "src/alpha.ts"),
+      "export const stay = 1;\nexport const tail = 1;\n",
+      "utf8",
+    );
     await writeFile(
       join(root, "src/beta.ts"),
       `export const other = 1;\n${BLOCK}\nexport const added = true;\n`,
@@ -99,14 +111,20 @@ describe("markMovedLines", () => {
 
     const beta = files.find((file) => file.path === "src/beta.ts");
     assert.ok(beta);
-    const fromAlpha = beta.hunks.flatMap((hunk) => hunk.lines).find((line) => line.moved !== undefined);
+    const fromAlpha = beta.hunks
+      .flatMap((hunk) => hunk.lines)
+      .find((line) => line.moved !== undefined);
     assert.equal(fromAlpha?.moved?.path, "src/alpha.ts");
-    const realAdd = beta.hunks.flatMap((hunk) => hunk.lines).find((line) => line.text.includes("added = true"));
+    const realAdd = beta.hunks
+      .flatMap((hunk) => hunk.lines)
+      .find((line) => line.text.includes("added = true"));
     assert.equal(realAdd?.moved, undefined);
   });
 });
 
-function movedKeys(files: { path: string; hunks: { lines: { kind: string; text: string; moved?: unknown }[] }[] }[]): string[] {
+function movedKeys(
+  files: { path: string; hunks: { lines: { kind: string; text: string; moved?: unknown }[] }[] }[],
+): string[] {
   const keys: string[] = [];
   for (const file of files) {
     for (const hunk of file.hunks) {

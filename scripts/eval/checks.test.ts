@@ -238,7 +238,11 @@ describe("eval deterministic checks", () => {
       frozen: [],
       repo: { owner: "other", repo: "place" },
     });
-    assert.ok(otherRepo.failures.some((item) => item.check === "sources" && item.message.includes("not this repo")));
+    assert.ok(
+      otherRepo.failures.some(
+        (item) => item.check === "sources" && item.message.includes("not this repo"),
+      ),
+    );
 
     const invented = await runDeterministicChecks({
       cwd: root,
@@ -256,7 +260,11 @@ describe("eval deterministic checks", () => {
       frozen: [],
       repo: { owner: "matemolnar8", repo: "comprehende" },
     });
-    assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
+    assert.ok(
+      invented.failures.some(
+        (item) => item.check === "sources" && item.message.includes("url sha is not in"),
+      ),
+    );
   });
 
   it("accepts a commit subject label that drops one trailing period", async () => {
@@ -288,7 +296,11 @@ describe("eval deterministic checks", () => {
         ],
       });
 
-    const dropped = await runDeterministicChecks({ cwd: root, document: withLabel("Replace document tickets with first-class sources"), frozen: [] });
+    const dropped = await runDeterministicChecks({
+      cwd: root,
+      document: withLabel("Replace document tickets with first-class sources"),
+      frozen: [],
+    });
     assert.deepEqual(dropped.failures, []);
 
     const exact = await runDeterministicChecks({
@@ -298,8 +310,16 @@ describe("eval deterministic checks", () => {
     });
     assert.deepEqual(exact.failures, []);
 
-    const invented = await runDeterministicChecks({ cwd: root, document: withLabel("Replace tickets with first-class sources"), frozen: [] });
-    assert.ok(invented.failures.some((item) => item.check === "sources" && item.message.includes("label is not in")));
+    const invented = await runDeterministicChecks({
+      cwd: root,
+      document: withLabel("Replace tickets with first-class sources"),
+      frozen: [],
+    });
+    assert.ok(
+      invented.failures.some(
+        (item) => item.check === "sources" && item.message.includes("label is not in"),
+      ),
+    );
   });
 
   it("rejects a commit that only sits on the base side of the fork", async () => {
@@ -347,7 +367,11 @@ describe("eval deterministic checks", () => {
       frozen: [],
       repo: { owner: "matemolnar8", repo: "comprehende" },
     });
-    assert.ok(report.failures.some((item) => item.check === "sources" && item.message.includes("url sha is not in")));
+    assert.ok(
+      report.failures.some(
+        (item) => item.check === "sources" && item.message.includes("url sha is not in"),
+      ),
+    );
 
     const onHead = await runDeterministicChecks({
       cwd: root,

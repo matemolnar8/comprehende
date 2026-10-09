@@ -92,7 +92,10 @@ describe("agentMd", () => {
   });
 
   it("returns null for an unknown group", () => {
-    assert.equal(agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "missing" }), null);
+    assert.equal(
+      agentMd(sampleReview(), { kind: "agent-md", target: "group", group: "missing" }),
+      null,
+    );
   });
 
   it("omits silent why, sources, and coverage", () => {
@@ -134,7 +137,9 @@ function sampleReview(): ApiReview {
       title: "Ask AI about this review",
       why: "Ticket #24 needs a prompt a coding agent can paste.",
       summary: "Adds a copy-prompt control to overview and group.",
-      lookFor: ["[#24](source:s1) asked for a pasteable prompt. Overview and group both have CopyPrompt."],
+      lookFor: [
+        "[#24](source:s1) asked for a pasteable prompt. Overview and group both have CopyPrompt.",
+      ],
       sources: [
         {
           id: "s1",
@@ -219,7 +224,13 @@ function sampleReview(): ApiReview {
     stale: [],
     staleSources: [],
     files: [
-      { path: "src/auth/session.ts", status: "modified", binary: false, image: false, hunkCount: 1 },
+      {
+        path: "src/auth/session.ts",
+        status: "modified",
+        binary: false,
+        image: false,
+        hunkCount: 1,
+      },
       { path: "src/api/login.ts", status: "modified", binary: false, image: false, hunkCount: 1 },
     ],
     skipped: [],

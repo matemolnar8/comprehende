@@ -12,7 +12,11 @@ export type CommitInfo = {
 const RECORD_SEP = "\x1e";
 const FIELD_SEP = "\0";
 
-export async function listCommits(cwd: string, baseRef: string, headRef: string): Promise<CommitInfo[]> {
+export async function listCommits(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+): Promise<CommitInfo[]> {
   const stdout = await git(cwd, [
     "log",
     "--format=%H%x00%h%x00%s%x00%an%x00%ad%x00%b%x1e",

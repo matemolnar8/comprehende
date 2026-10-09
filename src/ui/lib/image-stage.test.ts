@@ -39,4 +39,3 @@ describe("stageCaption", () => {
     assert.equal(stageCaption(320, 180, 0.5), "320 × 180 at 50%");
   });
 });
-

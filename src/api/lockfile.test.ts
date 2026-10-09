@@ -40,7 +40,7 @@ describe("lockfile payloads", () => {
 
     const uiRoot = join(root, "ui");
     await mkdir(uiRoot);
-    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "index.html"), '<!doctype html><div id="root"></div>\n');
 
     const live = await startServer({ cwd: repo.root, dataPath, port: 0, uiRoot });
     servers.push(live.server);
@@ -56,21 +56,28 @@ describe("lockfile payloads", () => {
     assert.ok(review.lockfiles.files.includes("package-lock.json"));
     assert.ok(review.lockfiles.files.includes("apps/web/yarn.lock"));
 
-    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: groupId }), `${live.url}/`));
+    const hunksRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: groupId }), `${live.url}/`),
+    );
     const payload = (await hunksRes.json()) as {
       files: { path: string; kind: string; patch: string; added?: number; removed?: number }[];
     };
     const encoded = JSON.stringify(payload);
     assert.equal(encoded.includes(LOCKFILE_SECRET), false);
     assert.equal(encoded.includes(APP_SECRET), true);
-    assert.equal(payload.files.some((file) => file.path === "package-lock.json"), false);
+    assert.equal(
+      payload.files.some((file) => file.path === "package-lock.json"),
+      false,
+    );
 
     const app = payload.files.find((file) => file.path === "src/app.ts");
     assert.ok(app);
     assert.equal(app.kind, "text");
     assert.equal(app.patch.includes(APP_SECRET), true);
 
-    const lockfilesRes = await fetch(new URL(apiHref({ kind: "hunks", group: "lockfiles" }), `${live.url}/`));
+    const lockfilesRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: "lockfiles" }), `${live.url}/`),
+    );
     const lockfiles = (await lockfilesRes.json()) as {
       files: { path: string; kind: string; patch: string; added?: number; removed?: number }[];
     };
@@ -86,14 +93,18 @@ describe("lockfile payloads", () => {
     assert.equal(yarn.kind, "lockfile");
     assert.equal(yarn.patch, "");
 
-    const patchRes = await fetch(new URL(apiHref({ kind: "patch", path: "package-lock.json" }), `${live.url}/`));
+    const patchRes = await fetch(
+      new URL(apiHref({ kind: "patch", path: "package-lock.json" }), `${live.url}/`),
+    );
     assert.equal(patchRes.status, 200);
     const patch = (await patchRes.json()) as { path: string; kind: string; patch: string };
     assert.equal(patch.kind, "lockfile");
     assert.equal(patch.patch.includes(LOCKFILE_SECRET), true);
     assert.equal(patch.patch.startsWith("diff --git "), true);
 
-    const missing = await fetch(new URL(apiHref({ kind: "patch", path: "src/app.ts" }), `${live.url}/`));
+    const missing = await fetch(
+      new URL(apiHref({ kind: "patch", path: "src/app.ts" }), `${live.url}/`),
+    );
     assert.equal(missing.status, 404);
 
     const outDir = join(root, "site");
@@ -107,7 +118,9 @@ describe("lockfile payloads", () => {
     );
     assert.ok(patchResource);
     const livePatch = await (await fetch(new URL(apiHref(patchResource), `${live.url}/`))).json();
-    const frozenPatch = await (await fetch(new URL(apiHref(patchResource), `${frozen.url}/`))).json();
+    const frozenPatch = await (
+      await fetch(new URL(apiHref(patchResource), `${frozen.url}/`))
+    ).json();
     assert.deepEqual(frozenPatch, livePatch);
   });
 });

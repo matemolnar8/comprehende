@@ -34,12 +34,28 @@ export function Group(props: {
   focusCommentId?: string;
   focusLookForKey?: string;
 }) {
-  const { group, bucket, groups, strandColor, loading, hunkError, files, activeHunk, split, splitRatio, wrap, viewedPaths } =
-    props;
+  const {
+    group,
+    bucket,
+    groups,
+    strandColor,
+    loading,
+    hunkError,
+    files,
+    activeHunk,
+    split,
+    splitRatio,
+    wrap,
+    viewedPaths,
+  } = props;
   const lockfiles = bucket === REVIEW_BUCKETS.lockfiles;
   const strand =
     strandColor ??
-    (lockfiles ? "var(--muted-foreground)" : bucket === REVIEW_BUCKETS.unassigned ? "var(--warn)" : "var(--primary)");
+    (lockfiles
+      ? "var(--muted-foreground)"
+      : bucket === REVIEW_BUCKETS.unassigned
+        ? "var(--warn)"
+        : "var(--primary)");
 
   const filePaths = files.map((file) => file.path);
   const narrow = useNarrow();
@@ -69,7 +85,9 @@ export function Group(props: {
     <HunkView
       key={file.path}
       file={file}
-      active={multi && activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount}
+      active={
+        multi && activeHunk >= file.firstIndex && activeHunk < file.firstIndex + file.hunkCount
+      }
       index={file.firstIndex}
       split={split}
       splitRatio={splitRatio}
@@ -131,7 +149,12 @@ export function Group(props: {
       {!loading && files.length > 0 ? (
         multi ? (
           narrow ? (
-            <FileStrip files={files} activeHunk={activeHunk} viewedPaths={viewedPaths} onSelect={props.onScrollToHunk}>
+            <FileStrip
+              files={files}
+              activeHunk={activeHunk}
+              viewedPaths={viewedPaths}
+              onSelect={props.onScrollToHunk}
+            >
               {fileNodes}
             </FileStrip>
           ) : (

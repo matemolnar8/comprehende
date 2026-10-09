@@ -34,7 +34,9 @@ function doc(over: Partial<ReviewDocument>): ReviewDocument {
 describe("citationIds", () => {
   it("reads source: hrefs from markdown links", () => {
     assert.deepEqual(
-      citationIds("Reviewers asked for [a cap on retries](source:s2), and [#24](source:s1) tracks the feature."),
+      citationIds(
+        "Reviewers asked for [a cap on retries](source:s2), and [#24](source:s1) tracks the feature.",
+      ),
       ["s2", "s1"],
     );
   });

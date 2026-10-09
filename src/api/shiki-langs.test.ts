@@ -38,7 +38,11 @@ const manifest: ShikiLangsManifest = {
     typescript: ["assets/shiki-lang-typescript-aaa.js"],
     javascript: ["assets/shiki-lang-javascript-bbb.js"],
     css: ["assets/shiki-lang-css-ccc.js"],
-    html: ["assets/shiki-lang-html-ddd.js", "assets/shiki-lang-javascript-bbb.js", "assets/shiki-lang-css-ccc.js"],
+    html: [
+      "assets/shiki-lang-html-ddd.js",
+      "assets/shiki-lang-javascript-bbb.js",
+      "assets/shiki-lang-css-ccc.js",
+    ],
     python: ["assets/shiki-lang-python-eee.js"],
     markdown: ["assets/shiki-lang-markdown-fff.js"],
   },
@@ -58,16 +62,19 @@ const manifest: ShikiLangsManifest = {
 describe("highlighter manifest", () => {
   it("parses a v1 manifest and rejects junk", () => {
     assert.deepEqual(parseShikiLangsManifest(manifest), manifest);
-    assert.equal(parseShikiLangsManifest({ version: 2, chunks: [], files: {}, lookup: {} }), undefined);
-    assert.equal(parseShikiLangsManifest({ version: 1, chunks: ["a"], files: { ts: "nope" }, lookup: {} }), undefined);
+    assert.equal(
+      parseShikiLangsManifest({ version: 2, chunks: [], files: {}, lookup: {} }),
+      undefined,
+    );
+    assert.equal(
+      parseShikiLangsManifest({ version: 1, chunks: ["a"], files: { ts: "nope" }, lookup: {} }),
+      undefined,
+    );
     assert.equal(parseShikiLangsManifest(null), undefined);
   });
 
   it("reads language ids from shiki module paths", () => {
-    assert.equal(
-      shikiLangId("/x/node_modules/@shikijs/langs/dist/typescript.mjs"),
-      "typescript",
-    );
+    assert.equal(shikiLangId("/x/node_modules/@shikijs/langs/dist/typescript.mjs"), "typescript");
     assert.equal(
       shikiLangId("C:\\x\\node_modules\\@shikijs\\langs\\dist\\html-derivative.mjs"),
       "html-derivative",
@@ -89,14 +96,19 @@ describe("highlighter manifest", () => {
       { path: "src/app.ts" },
       { path: "web/index.html", oldPath: "web/index.css" },
     ]);
-    assert.deepEqual(highlightLangsForPaths(paths, manifest.lookup).sort(), ["css", "html", "typescript"]);
+    assert.deepEqual(highlightLangsForPaths(paths, manifest.lookup).sort(), [
+      "css",
+      "html",
+      "typescript",
+    ]);
   });
 
   it("keeps static embeds and ignores languages with no chunk", () => {
-    assert.deepEqual(
-      chunksToKeep(manifest, ["html"]).sort(),
-      ["assets/shiki-lang-css-ccc.js", "assets/shiki-lang-html-ddd.js", "assets/shiki-lang-javascript-bbb.js"],
-    );
+    assert.deepEqual(chunksToKeep(manifest, ["html"]).sort(), [
+      "assets/shiki-lang-css-ccc.js",
+      "assets/shiki-lang-html-ddd.js",
+      "assets/shiki-lang-javascript-bbb.js",
+    ]);
     assert.deepEqual(chunksToKeep(manifest, ["css", "rust"]), ["assets/shiki-lang-css-ccc.js"]);
     assert.deepEqual(chunksToKeep(manifest, []), []);
   });

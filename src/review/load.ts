@@ -7,7 +7,9 @@ export async function loadDocument(dataPath: string): Promise<ReviewDocument> {
   const text = await readFile(dataPath, "utf8");
   const parsed = parseReviewJson(text);
   if (!parsed.ok) {
-    throw new Error(`invalid review document:\n${parsed.errors.map((error) => `  - ${error}`).join("\n")}`);
+    throw new Error(
+      `invalid review document:\n${parsed.errors.map((error) => `  - ${error}`).join("\n")}`,
+    );
   }
   return parsed.document;
 }

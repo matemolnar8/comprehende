@@ -141,7 +141,10 @@ describe("groupParts", () => {
 describe("partSummary", () => {
   it("returns the listed summary for a titled part and nothing when the name is missing", () => {
     const listed = [
-      { name: "Session cookie", summary: "`setSessionCookie` applies HttpOnly options, and login uses it." },
+      {
+        name: "Session cookie",
+        summary: "`setSessionCookie` applies HttpOnly options, and login uses it.",
+      },
       { name: "README", summary: "The README documents the new cookie behavior." },
     ];
     assert.equal(partSummary(listed, "README"), "The README documents the new cookie behavior.");

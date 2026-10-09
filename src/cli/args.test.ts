@@ -40,7 +40,10 @@ describe("parseArgv", () => {
   });
 
   it("parses review flags", () => {
-    const req = parseArgv(["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"], "/repo");
+    const req = parseArgv(
+      ["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"],
+      "/repo",
+    );
     assert.deepEqual(req, {
       kind: "command",
       command: "review",

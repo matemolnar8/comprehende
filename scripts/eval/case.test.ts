@@ -32,7 +32,9 @@ describe("eval case schema", () => {
     }`);
     assert.equal(spec.id, "comprehende-47");
     assert.equal(spec.expect?.why, "present");
-    assert.throws(() => parseEvalCaseJson(`{"id":"x","repo":"r","pr":1,"base":"a","head":"b","extra":true}`));
+    assert.throws(() =>
+      parseEvalCaseJson(`{"id":"x","repo":"r","pr":1,"base":"a","head":"b","extra":true}`),
+    );
   });
 
   it("defaults tags and lists folders that match --case and --tag", async () => {

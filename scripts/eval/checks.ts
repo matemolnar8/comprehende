@@ -4,7 +4,13 @@ import { git, gitOk } from "../../src/git/exec.ts";
 import { isLocatedHunkRef } from "../../src/schema/identity.ts";
 import type { ReviewDocument, ReviewGroup, Source } from "../../src/schema/types.ts";
 import type { EvalExpect } from "./case.ts";
-import { collectFrozenUrls, normalizeUrl, parseGithubCommitUrl, shaInRange, type GithubRepo } from "./github.ts";
+import {
+  collectFrozenUrls,
+  normalizeUrl,
+  parseGithubCommitUrl,
+  shaInRange,
+  type GithubRepo,
+} from "./github.ts";
 
 export type CheckFailure = {
   check: string;
@@ -57,7 +63,8 @@ export async function runDeterministicChecks(opts: {
     failures.push({ check: "worktree", message: "producer left the work tree dirty" });
   }
 
-  const why: "present" | "absent" = opts.document.why !== undefined && opts.document.why.trim() !== "" ? "present" : "absent";
+  const why: "present" | "absent" =
+    opts.document.why !== undefined && opts.document.why.trim() !== "" ? "present" : "absent";
   const parts = distinctParts(opts.document.groups);
   const groups = opts.document.groups.length;
   const size = opts.document.size;
@@ -70,13 +77,19 @@ export async function runDeterministicChecks(opts: {
   failures.push(...rangeFailures("groups", groups, expect.groups));
   failures.push(...crossPartDependsOn(opts.document.groups));
   if (expect.size !== undefined && !expect.size.includes(size)) {
-    failures.push({ check: "size", message: `expected size ${expect.size.join("|")}, got ${size}` });
+    failures.push({
+      check: "size",
+      message: `expected size ${expect.size.join("|")}, got ${size}`,
+    });
   }
   if (expect.sourceKinds !== undefined) {
     const kinds = new Set((opts.document.sources ?? []).map((source) => source.kind));
     const missing = expect.sourceKinds.filter((kind) => !kinds.has(kind));
     if (missing.length > 0) {
-      failures.push({ check: "sourceKinds", message: `missing source kinds: ${missing.join(", ")}` });
+      failures.push({
+        check: "sourceKinds",
+        message: `missing source kinds: ${missing.join(", ")}`,
+      });
     }
   }
 
@@ -111,7 +124,10 @@ export async function runDeterministicChecks(opts: {
     }
   }
 
-  if (expect.mechanicalPaths !== undefined && !someGroupCovers(opts.document.groups, expect.mechanicalPaths)) {
+  if (
+    expect.mechanicalPaths !== undefined &&
+    !someGroupCovers(opts.document.groups, expect.mechanicalPaths)
+  ) {
     failures.push({
       check: "mechanical",
       message: `no one group holds mechanical paths ${expect.mechanicalPaths.join(", ")}`,
@@ -187,7 +203,9 @@ function someGroupCovers(groups: ReviewGroup[], paths: readonly string[]): boole
 
 function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
   if (source.kind === "transcript") {
-    return [{ check: "sources", message: `transcript source "${source.id}" is invented in this harness` }];
+    return [
+      { check: "sources", message: `transcript source "${source.id}" is invented in this harness` },
+    ];
   }
   if (source.url === undefined) {
     return [];
@@ -196,7 +214,12 @@ function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
     return [];
   }
   if (!allowed.has(normalizeUrl(source.url))) {
-    return [{ check: "sources", message: `source "${source.id}" url is not in the frozen set: ${source.url}` }];
+    return [
+      {
+        check: "sources",
+        message: `source "${source.id}" url is not in the frozen set: ${source.url}`,
+      },
+    ];
   }
   return [];
 }
@@ -204,7 +227,9 @@ function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
 /** A commit `label` is the subject line. Producers often drop the conventional final period. */
 function commitLabelMatchesSubject(label: string, subjects: readonly string[]): boolean {
   const bareLabel = stripOneTrailingPeriod(label);
-  return subjects.some((subject) => subject === label || stripOneTrailingPeriod(subject) === bareLabel);
+  return subjects.some(
+    (subject) => subject === label || stripOneTrailingPeriod(subject) === bareLabel,
+  );
 }
 
 function stripOneTrailingPeriod(text: string): string {
@@ -221,8 +246,13 @@ async function commitSourceFailures(
     return [];
   }
   const range = `${document.source.baseRef}..${document.source.headRef}`;
-  const shas = (await git(cwd, ["log", "--format=%H", "--end-of-options", range])).trim().split("\n").filter(Boolean);
-  const subjects = (await git(cwd, ["log", "--format=%s", "--end-of-options", range])).trim().split("\n");
+  const shas = (await git(cwd, ["log", "--format=%H", "--end-of-options", range]))
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  const subjects = (await git(cwd, ["log", "--format=%s", "--end-of-options", range]))
+    .trim()
+    .split("\n");
   const shaSet = new Set(shas);
   const failures: CheckFailure[] = [];
   for (const source of commits) {
@@ -253,12 +283,17 @@ async function commitSourceFailures(
     }
     const exists = await gitOk(cwd, ["cat-file", "-e", `${source.label}^{commit}`]);
     if (exists) {
-      const resolved = (await git(cwd, ["rev-parse", "--verify", `${source.label}^{commit}`])).trim();
+      const resolved = (
+        await git(cwd, ["rev-parse", "--verify", `${source.label}^{commit}`])
+      ).trim();
       if (shaSet.has(resolved)) {
         continue;
       }
     }
-    failures.push({ check: "sources", message: `commit source "${source.id}" label is not in ${range}: ${source.label}` });
+    failures.push({
+      check: "sources",
+      message: `commit source "${source.id}" label is not in ${range}: ${source.label}`,
+    });
   }
   return failures;
 }

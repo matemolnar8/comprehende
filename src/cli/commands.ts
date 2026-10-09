@@ -1,6 +1,12 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { filePatchFromGit, readDiff, readHunkIndex, readPathDiff, resolveSource } from "../git/diff.ts";
+import {
+  filePatchFromGit,
+  readDiff,
+  readHunkIndex,
+  readPathDiff,
+  resolveSource,
+} from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
 import { coverReview, coverageErrors } from "../review/coverage.ts";
 import { buildDigest, digestHunkRefs, formatDigest } from "../review/digest.ts";
@@ -11,7 +17,11 @@ import { parseHunkRefString } from "../schema/identity.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
 
-export async function cmdIndex(cwd: string, base: string | undefined, head: string | undefined): Promise<HunkIndex> {
+export async function cmdIndex(
+  cwd: string,
+  base: string | undefined,
+  head: string | undefined,
+): Promise<HunkIndex> {
   const baseRef = base ?? (await defaultBaseRef(cwd));
   const headRef = head ?? "HEAD";
   return readHunkIndex(cwd, baseRef, headRef);
@@ -43,7 +53,11 @@ export async function cmdValidate(
   const resolved = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
   const { coverage } = await coverReview(cwd, document);
   const pins = await staleCommentPins(cwd, document, resolved);
-  const errors = [...coverageErrors(coverage), ...sourceCitationErrors(document), ...commentPinErrors(pins)];
+  const errors = [
+    ...coverageErrors(coverage),
+    ...sourceCitationErrors(document),
+    ...commentPinErrors(pins),
+  ];
   if (errors.length > 0) {
     throw new Error(errors.join("\n\n"));
   }
@@ -51,7 +65,11 @@ export async function cmdValidate(
 }
 
 /** One line per file. No patch text. Group from this; fetch patch with show. */
-export async function cmdDigest(cwd: string, base: string | undefined, head: string | undefined): Promise<string> {
+export async function cmdDigest(
+  cwd: string,
+  base: string | undefined,
+  head: string | undefined,
+): Promise<string> {
   const baseRef = base ?? (await defaultBaseRef(cwd));
   const headRef = head ?? "HEAD";
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
@@ -75,7 +93,10 @@ export async function cmdShow(
   if (target === undefined) {
     throw new Error("show needs --hunk <ref> or --file <path>");
   }
-  const parsed = request.hunk === undefined ? { kind: "file", path: target } as const : parseHunkRefString(target);
+  const parsed =
+    request.hunk === undefined
+      ? ({ kind: "file", path: target } as const)
+      : parseHunkRefString(target);
   if (parsed === undefined) {
     throw new Error(`invalid hunk ref: ${target}`);
   }
@@ -86,7 +107,9 @@ export async function cmdShow(
   if (parsed.kind === "file") {
     return file.patch;
   }
-  const hunk = file.hunks.find((item) => item.oldStart === parsed.oldStart && item.newStart === parsed.newStart);
+  const hunk = file.hunks.find(
+    (item) => item.oldStart === parsed.oldStart && item.newStart === parsed.newStart,
+  );
   if (hunk === undefined) {
     throw new Error(`no hunk matches: ${target}`);
   }
@@ -109,7 +132,11 @@ export async function cmdPregroup(
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
   const files = await readDiff(cwd, baseSha, headSha);
   const { files: digests } = buildDigest(files);
-  const mirrorRoots = new Set(digests.filter((digest) => digest.mirrorOf !== undefined).map((digest) => digest.mirrorOf as string));
+  const mirrorRoots = new Set(
+    digests
+      .filter((digest) => digest.mirrorOf !== undefined)
+      .map((digest) => digest.mirrorOf as string),
+  );
   const mirrors = new Map<string, string[]>();
   const mechanical: string[] = [];
   const change: string[] = [];
@@ -122,7 +149,12 @@ export async function cmdPregroup(
       mirrors.set(root, cluster);
       continue;
     }
-    if (digest.kind === "rename" || digest.kind === "copy" || digest.kind === "move" || digest.kind === "generated") {
+    if (
+      digest.kind === "rename" ||
+      digest.kind === "copy" ||
+      digest.kind === "move" ||
+      digest.kind === "generated"
+    ) {
       mechanical.push(...refs);
       continue;
     }
@@ -130,7 +162,14 @@ export async function cmdPregroup(
   }
   const index = await readHunkIndex(cwd, baseRef, headRef);
   const skeleton = skeletonDocument(index);
-  const groups: { id: string; title: string; why: string; summary: string; suggestedOrder: number; hunkRefs: string[] }[] = [];
+  const groups: {
+    id: string;
+    title: string;
+    why: string;
+    summary: string;
+    suggestedOrder: number;
+    hunkRefs: string[];
+  }[] = [];
   if (change.length > 0 || (mirrors.size === 0 && mechanical.length === 0)) {
     groups.push({
       id: "change",

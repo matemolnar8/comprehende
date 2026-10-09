@@ -14,7 +14,8 @@ export function shouldViewTransition(options?: {
 }): boolean {
   const reduced = options?.reducedMotion ?? prefersReducedMotion();
   const start =
-    options?.startViewTransition ?? (typeof document === "undefined" ? undefined : document.startViewTransition);
+    options?.startViewTransition ??
+    (typeof document === "undefined" ? undefined : document.startViewTransition);
   return !reduced && typeof start === "function";
 }
 

@@ -5,7 +5,11 @@ import { join } from "node:path";
 import { describe, it } from "node:test";
 import { loadDotEnv } from "./env.ts";
 
-const KEYS = ["COMPREHENDE_EVAL_DOTENV_A", "COMPREHENDE_EVAL_DOTENV_B", "COMPREHENDE_EVAL_DOTENV_C"] as const;
+const KEYS = [
+  "COMPREHENDE_EVAL_DOTENV_A",
+  "COMPREHENDE_EVAL_DOTENV_B",
+  "COMPREHENDE_EVAL_DOTENV_C",
+] as const;
 
 function save(): Map<string, string | undefined> {
   return new Map(KEYS.map((key) => [key, process.env[key]]));

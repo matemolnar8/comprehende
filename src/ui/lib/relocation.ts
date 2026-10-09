@@ -30,7 +30,9 @@ export function isPureRelocation(file: {
   removed: number;
   relocation?: Relocation;
 }): boolean {
-  return file.kind === "text" && file.relocation !== undefined && file.added === 0 && file.removed === 0;
+  return (
+    file.kind === "text" && file.relocation !== undefined && file.added === 0 && file.removed === 0
+  );
 }
 
 export type MovedMark = {
@@ -62,7 +64,12 @@ export function movedMarks(hunks: readonly { lines: readonly DiffLine[] }[]): Mo
         prev.peerPath === line.moved.path &&
         lineNo === prev.line + 1 &&
         line.moved.line === prev.peerLine + 1;
-      const mark: MovedMark = { side, line: lineNo, peerPath: line.moved.path, peerLine: line.moved.line };
+      const mark: MovedMark = {
+        side,
+        line: lineNo,
+        peerPath: line.moved.path,
+        peerLine: line.moved.line,
+      };
       if (!continues) {
         marks.push(mark);
       }
@@ -73,6 +80,7 @@ export function movedMarks(hunks: readonly { lines: readonly DiffLine[] }[]): Mo
 }
 
 export function movedMarkLabel(filePath: string, mark: MovedMark): string {
-  const where = mark.peerPath === filePath ? `line ${mark.peerLine}` : `${mark.peerPath}:${mark.peerLine}`;
+  const where =
+    mark.peerPath === filePath ? `line ${mark.peerLine}` : `${mark.peerPath}:${mark.peerLine}`;
   return mark.side === "new" ? `from ${where}` : `to ${where}`;
 }

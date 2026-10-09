@@ -1,9 +1,22 @@
 import { isImagePath } from "../schema/image.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
-import type { DiffFile, FileStatus, HunkIndex, HunkRef, LiveHunk, Relocation, ReviewSource } from "../schema/types.ts";
+import type {
+  DiffFile,
+  FileStatus,
+  HunkIndex,
+  HunkRef,
+  LiveHunk,
+  Relocation,
+  ReviewSource,
+} from "../schema/types.ts";
 import { git } from "./exec.ts";
 import { markMovedLines } from "./moved.ts";
-import { parseNameStatus, parseNumstat, type NameStatusEntry, type NumstatEntry } from "./name-status.ts";
+import {
+  parseNameStatus,
+  parseNumstat,
+  type NameStatusEntry,
+  type NumstatEntry,
+} from "./name-status.ts";
 import { assertSafePath, rangeLabel, resolveCommit } from "./repo.ts";
 
 const HUNK_HEADER = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -32,7 +45,15 @@ export async function readDiff(cwd: string, baseRef: string, headRef: string): P
 async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
   const range = `${baseRef}...${headRef}`;
   const entries = parseNameStatus(
-    await git(cwd, ["diff", "--find-renames", "--find-copies", "--name-status", "-z", "--end-of-options", range]),
+    await git(cwd, [
+      "diff",
+      "--find-renames",
+      "--find-copies",
+      "--name-status",
+      "-z",
+      "--end-of-options",
+      range,
+    ]),
   );
   const lockEntries = entries.filter((entry) => isLockfilePath(entry.path));
   const diffArgs = [
@@ -124,7 +145,11 @@ export function findDiffFile<T extends { path: string; oldPath?: string }>(
   return files.find((file) => file.path === path) ?? files.find((file) => file.oldPath === path);
 }
 
-export async function readHunkIndex(cwd: string, baseRef: string, headRef: string): Promise<HunkIndex> {
+export async function readHunkIndex(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+): Promise<HunkIndex> {
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
   const files = await readDiffAt(cwd, baseSha, headSha);
   const hunks: HunkRef[] = [];
@@ -521,7 +546,11 @@ function lockfileDiffFile(entry: NameStatusEntry, stat: NumstatEntry | undefined
   return file;
 }
 
-function mergeDiffFiles(entries: NameStatusEntry[], files: DiffFile[], stubs: DiffFile[]): DiffFile[] {
+function mergeDiffFiles(
+  entries: NameStatusEntry[],
+  files: DiffFile[],
+  stubs: DiffFile[],
+): DiffFile[] {
   const filesByPath = new Map(files.map((file) => [file.path, file]));
   const stubsByPath = new Map(stubs.map((file) => [file.path, file]));
   const out: DiffFile[] = [];

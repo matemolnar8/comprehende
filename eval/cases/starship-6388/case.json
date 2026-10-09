@@ -12,7 +12,12 @@
     "size": ["medium", "large"],
     "sourceKinds": ["ticket", "pr", "pr-comment"],
     "together": [
-      ["src/modules/fossil_branch.rs", "src/modules/fossil_metrics.rs", "src/modules/hg_branch.rs", "src/modules/pijul_channel.rs"]
+      [
+        "src/modules/fossil_branch.rs",
+        "src/modules/fossil_metrics.rs",
+        "src/modules/hg_branch.rs",
+        "src/modules/pijul_channel.rs"
+      ]
     ],
     "apart": [["src/modules/vcs.rs", ".github/config-schema.json"]],
     "claims": [

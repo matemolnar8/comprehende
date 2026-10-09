@@ -153,7 +153,12 @@ describe("lookForClaims", () => {
       groups: [cookie, login, docs],
       unassigned: { hunkCount: 0 },
     };
-    const next = selectionForLookFor({ kind: "group", id: "login", title: "Login route", index: 2 });
+    const next = selectionForLookFor({
+      kind: "group",
+      id: "login",
+      title: "Login route",
+      index: 2,
+    });
     assert.equal(serializeHash(next), "#group/login");
     assert.equal(hashWriteMode(source, "#overview", next, true), "push");
     const overview = selectionForLookFor({ kind: "document" });
@@ -270,13 +275,18 @@ describe("openTargetForSource", () => {
         group.id === "login" ? { ...group, sources: ["s1", "s9"] } : group,
       ),
     };
-    assert.deepEqual(openTargetForSource(orphan, lookForClaims(withCommit, withCommit.groups), withCommit), {
-      selection: { kind: "group", id: "login" },
-    });
+    assert.deepEqual(
+      openTargetForSource(orphan, lookForClaims(withCommit, withCommit.groups), withCommit),
+      {
+        selection: { kind: "group", id: "login" },
+      },
+    );
   });
 
   it("falls back to overview when nothing owns the source", () => {
     const extra: Source = { id: "s8", kind: "transcript", label: "Cursor session" };
-    assert.deepEqual(openTargetForSource(extra, claims, document), { selection: { kind: "overview" } });
+    assert.deepEqual(openTargetForSource(extra, claims, document), {
+      selection: { kind: "overview" },
+    });
   });
 });

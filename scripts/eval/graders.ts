@@ -39,7 +39,9 @@ export type GraderResult = {
 };
 
 export function parseGraderJson(text: string): GraderOutput {
-  const candidates = [text.trim(), fencedJson(text), braceSlice(text)].filter((item) => item !== "");
+  const candidates = [text.trim(), fencedJson(text), braceSlice(text)].filter(
+    (item) => item !== "",
+  );
   const errors: string[] = [];
   for (const candidate of candidates) {
     try {

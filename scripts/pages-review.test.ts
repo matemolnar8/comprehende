@@ -34,10 +34,13 @@ describe("pages-review urls", () => {
       owner: "matemolnar8",
       repo: "comprehende",
     });
-    assert.deepEqual(parseGithubRepo("https://x-access-token:tok@github.com/matemolnar8/comprehende"), {
-      owner: "matemolnar8",
-      repo: "comprehende",
-    });
+    assert.deepEqual(
+      parseGithubRepo("https://x-access-token:tok@github.com/matemolnar8/comprehende"),
+      {
+        owner: "matemolnar8",
+        repo: "comprehende",
+      },
+    );
     assert.deepEqual(parseGithubRepo("git@github.com:matemolnar8/comprehende.git"), {
       owner: "matemolnar8",
       repo: "comprehende",
@@ -233,8 +236,14 @@ describe("pages-review publish and prune", () => {
   it("publishes and prunes through the CLI", async () => {
     const ctx = await setupRemoteRepo();
     const site = await writeExport(ctx.root, "cli", "cli");
-    assert.equal(await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9"]), 0);
-    assert.equal(await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--name", "demo"]), 0);
+    assert.equal(
+      await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9"]),
+      0,
+    );
+    assert.equal(
+      await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--name", "demo"]),
+      0,
+    );
     let pages = await checkoutPages(ctx);
     assert.equal(existsSync(join(pages, "pr/9/index.html")), true);
     assert.equal(existsSync(join(pages, "site/demo/index.html")), true);
@@ -249,7 +258,17 @@ describe("pages-review publish and prune", () => {
     const ctx = await setupRemoteRepo();
     const site = await writeExport(ctx.root, "cli", "cli");
     assert.equal(
-      await runPagesReview(["publish", "--repo", ctx.repo, "--dir", site, "--pr", "9", "--name", "demo"]),
+      await runPagesReview([
+        "publish",
+        "--repo",
+        ctx.repo,
+        "--dir",
+        site,
+        "--pr",
+        "9",
+        "--name",
+        "demo",
+      ]),
       1,
     );
   });
@@ -298,6 +317,14 @@ async function writeExport(root: string, name: string, body: string): Promise<st
 
 async function checkoutPages(ctx: RemoteRepo): Promise<string> {
   const dest = join(ctx.root, `pages-${crypto.randomUUID()}`);
-  await git(ctx.root, ["clone", "--no-local", "--branch", "gh-pages", "--single-branch", ctx.bare, dest]);
+  await git(ctx.root, [
+    "clone",
+    "--no-local",
+    "--branch",
+    "gh-pages",
+    "--single-branch",
+    ctx.bare,
+    dest,
+  ]);
   return dest;
 }

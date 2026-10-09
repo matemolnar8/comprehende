@@ -4,13 +4,19 @@ const PR_URL = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)(?:\/.*)?$/
 
 export function parseGithubPrUrl(url: string): GithubRepo & { pr: number } {
   const match = url.trim().match(PR_URL);
-  if (match === null || match[1] === undefined || match[2] === undefined || match[3] === undefined) {
+  if (
+    match === null ||
+    match[1] === undefined ||
+    match[2] === undefined ||
+    match[3] === undefined
+  ) {
     throw new Error(`not a GitHub pull request URL: ${url}`);
   }
   return { owner: match[1], repo: match[2], pr: Number(match[3]) };
 }
 
-const COMMIT_URL = /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{7,40})(?:[/?#].*)?$/iu;
+const COMMIT_URL =
+  /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/commit\/([0-9a-f]{7,40})(?:[/?#].*)?$/iu;
 const REPO_HTTPS = /^https:\/\/github\.com\/([^/]+)\/([^/]+)$/u;
 const REPO_SSH = /^git@github\.com:([^/]+)\/([^/]+)$/u;
 
@@ -104,7 +110,11 @@ function walk(value: unknown, urls: Set<string>): void {
     return;
   }
   for (const [key, item] of Object.entries(value)) {
-    if ((key === "html_url" || key === "url") && typeof item === "string" && /^https?:\/\//u.test(item)) {
+    if (
+      (key === "html_url" || key === "url") &&
+      typeof item === "string" &&
+      /^https?:\/\//u.test(item)
+    ) {
       for (const expanded of expandAllowedUrl(item)) {
         urls.add(expanded);
       }

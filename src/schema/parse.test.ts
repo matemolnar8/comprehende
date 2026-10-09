@@ -54,11 +54,19 @@ describe("parseReviewDocument", () => {
     const empty = parseReviewDocument({ ...base, groups: [{ ...group, hunkRefs: ["@1+2"] }] });
     assert.equal(empty.ok, false);
     if (!empty.ok) {
-      assert.match(empty.errors.join("\n"), /hunkRefs\[0\] must be a path or path@oldStart\+newStart/);
+      assert.match(
+        empty.errors.join("\n"),
+        /hunkRefs\[0\] must be a path or path@oldStart\+newStart/,
+      );
     }
     const object = parseReviewDocument({
       ...base,
-      groups: [{ ...group, hunkRefs: [{ path: "src/app.ts", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 }] }],
+      groups: [
+        {
+          ...group,
+          hunkRefs: [{ path: "src/app.ts", oldStart: 1, oldLines: 2, newStart: 1, newLines: 3 }],
+        },
+      ],
     });
     assert.equal(object.ok, false);
     if (!object.ok) {
@@ -108,7 +116,9 @@ describe("parseReviewDocument", () => {
       size: "small",
       title: "Review command",
       summary: "Adds a review command.",
-      lookFor: ["[#24](source:s1) asked for a pasteable prompt. The copy control is on overview and group."],
+      lookFor: [
+        "[#24](source:s1) asked for a pasteable prompt. The copy control is on overview and group.",
+      ],
       sources: [{ id: "s1", kind: "ticket", label: "#24" }],
       groups: [
         {
@@ -240,7 +250,10 @@ describe("parseReviewDocument", () => {
   });
 
   it("accepts the skill example document", async () => {
-    const md = await readFile(join(skillPaths(findPackageRoot()).nextSkill, "references/example.md"), "utf8");
+    const md = await readFile(
+      join(skillPaths(findPackageRoot()).nextSkill, "references/example.md"),
+      "utf8",
+    );
     const match = md.match(/```json\n([\s\S]*?)\n```/);
     assert.ok(match?.[1]);
     const result = parseReviewJson(match[1]);
@@ -405,7 +418,9 @@ describe("parseReviewDocument", () => {
       size: "small",
       title: "Review command",
       summary: "Adds a review command.",
-      sources: [{ id: "t1", kind: "transcript", label: "Cursor session", url: "https://example.test" }],
+      sources: [
+        { id: "t1", kind: "transcript", label: "Cursor session", url: "https://example.test" },
+      ],
       groups: [
         {
           id: "g1",
@@ -577,7 +592,9 @@ describe("parseReviewDocument", () => {
         name: "missing group why",
         input: {
           ...docBase,
-          groups: [{ id: "g1", title: "CLI", summary: "Adds a command.", suggestedOrder: 0, hunkRefs: [] }],
+          groups: [
+            { id: "g1", title: "CLI", summary: "Adds a command.", suggestedOrder: 0, hunkRefs: [] },
+          ],
         },
         match: /groups\[0\]\.why must be a string/,
       },
@@ -618,10 +635,14 @@ describe("parseReviewDocument", () => {
 
 describe("hunk-meta", () => {
   it("reads added symbols", () => {
-    assert.deepEqual(addedSymbols(["export function createInvitation() {", "const x = 1", "export type Id = string"]), [
-      "createInvitation",
-      "Id",
-    ]);
+    assert.deepEqual(
+      addedSymbols([
+        "export function createInvitation() {",
+        "const x = 1",
+        "export type Id = string",
+      ]),
+      ["createInvitation", "Id"],
+    );
   });
 
   it("reads @@ range label without context prose", () => {

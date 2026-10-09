@@ -2,7 +2,13 @@ import { useState, type ReactNode } from "react";
 import { MessageSquareIcon, PanelLeftIcon, SmartphoneIcon, WrapTextIcon } from "lucide-react";
 import type { ReviewMeta } from "../api.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet.tsx";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet.tsx";
 import type { Part } from "../lib/parts.ts";
 import { reviewReadingPaths } from "../lib/reading-progress.ts";
 import { selectionCaption, type Selection } from "../lib/selection.ts";
@@ -44,10 +50,17 @@ export function MobileShell(props: {
         </Button>
         <p className="flex min-w-0 flex-1 items-baseline gap-2">
           {caption.index !== undefined ? (
-            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{caption.index}</span>
+            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+              {caption.index}
+            </span>
           ) : null}
           <span className="truncate text-sm font-medium">{caption.title}</span>
-          <ReadingMark paths={reviewReadingPaths(props.meta)} viewed={props.viewedPaths} noun className="mt-0" />
+          <ReadingMark
+            paths={reviewReadingPaths(props.meta)}
+            viewed={props.viewedPaths}
+            noun
+            className="mt-0"
+          />
         </p>
         <GroupNav meta={props.meta} selection={props.selection} onSelect={props.onSelect} />
         <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -76,7 +89,9 @@ export function MobileShell(props: {
           <ThemeToggle system={<SmartphoneIcon />} />
         </div>
       </header>
-      <div className="min-h-0 flex-1 [[data-motion=scene]_&]:[view-transition-name:review-scene]">{props.children}</div>
+      <div className="min-h-0 flex-1 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
+        {props.children}
+      </div>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" showCloseButton={false} className="p-0">
           <SheetHeader className="border-b border-border">

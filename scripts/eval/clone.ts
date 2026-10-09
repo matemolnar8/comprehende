@@ -38,16 +38,25 @@ export async function ensureBareClone(opts: {
   return dest;
 }
 
-export async function fetchCaseRefs(bare: string, pr: number, base: string, head: string): Promise<void> {
+export async function fetchCaseRefs(
+  bare: string,
+  pr: number,
+  base: string,
+  head: string,
+): Promise<void> {
   const remote = (await gitOk(bare, ["remote", "get-url", "github"])) ? "github" : "origin";
-  await git(bare, [
-    "fetch",
-    "--prune",
-    remote,
-    `+refs/pull/${pr}/head:refs/eval/pr-${pr}`,
-    "+refs/heads/main:refs/heads/main",
-    "+refs/heads/master:refs/heads/master",
-  ], { allowFail: true });
+  await git(
+    bare,
+    [
+      "fetch",
+      "--prune",
+      remote,
+      `+refs/pull/${pr}/head:refs/eval/pr-${pr}`,
+      "+refs/heads/main:refs/heads/main",
+      "+refs/heads/master:refs/heads/master",
+    ],
+    { allowFail: true },
+  );
   if (!(await gitOk(bare, ["cat-file", "-e", `${head}^{commit}`]))) {
     await git(bare, ["fetch", remote, head]);
   }
@@ -71,9 +80,16 @@ const BUNDLE_BASE_REF = "refs/eval/base";
 const BUNDLE_HEAD_REF = "refs/eval/head";
 
 /** Bundle the base tree plus base..head so a run needs no remote. The history is cut at base. */
-export async function writeCaseBundle(bare: string, base: string, head: string, dest: string): Promise<void> {
+export async function writeCaseBundle(
+  bare: string,
+  base: string,
+  head: string,
+  dest: string,
+): Promise<void> {
   if (!(await gitOk(bare, ["merge-base", "--is-ancestor", base, head]))) {
-    throw new Error(`base ${base} is not an ancestor of head ${head}, so the history cannot be cut at base`);
+    throw new Error(
+      `base ${base} is not an ancestor of head ${head}, so the history cannot be cut at base`,
+    );
   }
   await git(bare, ["update-ref", BUNDLE_BASE_REF, base]);
   await git(bare, ["update-ref", BUNDLE_HEAD_REF, head]);
@@ -81,16 +97,40 @@ export async function writeCaseBundle(bare: string, base: string, head: string, 
   try {
     const source = pathToFileURL(bare).href;
     await git(tmp, ["init", "--bare", "--quiet"]);
-    await git(tmp, ["fetch", "--quiet", "--depth=1", source, `${BUNDLE_BASE_REF}:${BUNDLE_BASE_REF}`]);
-    await git(tmp, ["fetch", "--quiet", `--shallow-exclude=${BUNDLE_BASE_REF}`, source, `${BUNDLE_HEAD_REF}:${BUNDLE_HEAD_REF}`]);
-    await git(tmp, ["bundle", "create", "--quiet", resolve(dest), BUNDLE_BASE_REF, BUNDLE_HEAD_REF]);
+    await git(tmp, [
+      "fetch",
+      "--quiet",
+      "--depth=1",
+      source,
+      `${BUNDLE_BASE_REF}:${BUNDLE_BASE_REF}`,
+    ]);
+    await git(tmp, [
+      "fetch",
+      "--quiet",
+      `--shallow-exclude=${BUNDLE_BASE_REF}`,
+      source,
+      `${BUNDLE_HEAD_REF}:${BUNDLE_HEAD_REF}`,
+    ]);
+    await git(tmp, [
+      "bundle",
+      "create",
+      "--quiet",
+      resolve(dest),
+      BUNDLE_BASE_REF,
+      BUNDLE_HEAD_REF,
+    ]);
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
 }
 
 /** A bundle carries no shallow list, so mark base as the boundary before fetching from it. */
-export async function cloneCaseBundle(opts: { bundle: string; dest: string; base: string; repoUrl: string }): Promise<void> {
+export async function cloneCaseBundle(opts: {
+  bundle: string;
+  dest: string;
+  base: string;
+  repoUrl: string;
+}): Promise<void> {
   await mkdir(opts.dest, { recursive: true });
   await git(opts.dest, ["init", "--bare", "--quiet"]);
   await writeFile(join(opts.dest, "shallow"), `${opts.base}\n`);
@@ -108,12 +148,17 @@ export async function removeWorktree(bare: string, dest: string): Promise<void> 
   await git(bare, ["worktree", "prune"], { allowFail: true });
 }
 
-export async function thisRepoMirror(packageRoot: string, repoUrl: string): Promise<string | undefined> {
+export async function thisRepoMirror(
+  packageRoot: string,
+  repoUrl: string,
+): Promise<string | undefined> {
   const wanted = parseGithubRepo(repoUrl);
   if (wanted === undefined) {
     return undefined;
   }
-  const origin = (await git(packageRoot, ["config", "--get", "remote.origin.url"], { allowFail: true })).trim();
+  const origin = (
+    await git(packageRoot, ["config", "--get", "remote.origin.url"], { allowFail: true })
+  ).trim();
   const parsed = parseGithubRepo(origin);
   if (parsed === undefined || parsed.owner !== wanted.owner || parsed.repo !== wanted.repo) {
     return undefined;

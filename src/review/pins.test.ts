@@ -66,10 +66,7 @@ describe("stale comment pins", () => {
       },
       { baseSha: repo.base, headSha: repo.head },
     );
-    assert.deepEqual(
-      live.map((pin) => pin.id).sort(),
-      ["gone", "missing-file"],
-    );
+    assert.deepEqual(live.map((pin) => pin.id).sort(), ["gone", "missing-file"]);
     assert.match(commentPinErrors(live).join("\n"), /gone src\/app.ts new:9999/);
   });
 

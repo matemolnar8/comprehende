@@ -28,7 +28,10 @@ describe("linked git worktree", () => {
     await git(repo.root, ["worktree", "add", "--detach", linked, "HEAD"]);
 
     await assertWorkTree(linked);
-    assert.equal(realpathSync(await gitCommonDir(linked)), realpathSync(await gitCommonDir(repo.root)));
+    assert.equal(
+      realpathSync(await gitCommonDir(linked)),
+      realpathSync(await gitCommonDir(repo.root)),
+    );
 
     const identity = await readRepoIdentity(linked);
     assert.equal(identity.origin, null);

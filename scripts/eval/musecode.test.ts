@@ -57,7 +57,10 @@ describe("muse exec JSONL", () => {
   });
 
   it("leaves session id undefined when no session stream arrived", () => {
-    const raw = JSON.stringify({ payload_type: "p", payload: { kind: "run_terminal", terminal: "completed", text: "DONE", reason: null } });
+    const raw = JSON.stringify({
+      payload_type: "p",
+      payload: { kind: "run_terminal", terminal: "completed", text: "DONE", reason: null },
+    });
     assert.equal(parseMuseExecJsonl(raw).sessionId, undefined);
   });
 
@@ -69,7 +72,9 @@ describe("muse exec JSONL", () => {
   });
 
   it("skips blank lines and non-JSON banners", () => {
-    const parsed = parseMuseExecJsonl(`\nmuse: workspace root: /tmp\n${terminal("completed", "DONE")}\n`);
+    const parsed = parseMuseExecJsonl(
+      `\nmuse: workspace root: /tmp\n${terminal("completed", "DONE")}\n`,
+    );
     assert.equal(parsed.terminal, "completed");
     assert.equal(parsed.text, "DONE");
   });
@@ -95,7 +100,12 @@ describe("muse export usage", () => {
   it("sums model_completed usage across completions", () => {
     const usage = parseExportUsage({
       events: [
-        exportRecord({ input_tokens: 100, output_tokens: 20, cached_tokens: 10, reasoning_tokens: 5 }),
+        exportRecord({
+          input_tokens: 100,
+          output_tokens: 20,
+          cached_tokens: 10,
+          reasoning_tokens: 5,
+        }),
         exportRecord({ input_tokens: 50, output_tokens: 7, cached_tokens: 0, reasoning_tokens: 0 }),
         { envelope: { payload: { event: { kind: "goal_usage_attribution" } } } },
       ],
@@ -110,7 +120,13 @@ describe("muse export usage", () => {
   });
 
   it("returns zeros for missing or malformed documents", () => {
-    const zero = { inputTokens: 0, outputTokens: 0, cachedTokens: 0, reasoningTokens: 0, completions: 0 };
+    const zero = {
+      inputTokens: 0,
+      outputTokens: 0,
+      cachedTokens: 0,
+      reasoningTokens: 0,
+      completions: 0,
+    };
     assert.deepEqual(parseExportUsage(undefined), zero);
     assert.deepEqual(parseExportUsage({}), zero);
     assert.deepEqual(parseExportUsage({ events: "nope" }), zero);

@@ -33,7 +33,12 @@ describe("eval argv", () => {
   });
 
   it("parses model overrides", () => {
-    const req = parseEvalArgv(["--producer-model", "muse-spark-9.9", "--grader-model", "muse-spark-9.8"]);
+    const req = parseEvalArgv([
+      "--producer-model",
+      "muse-spark-9.9",
+      "--grader-model",
+      "muse-spark-9.8",
+    ]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
       assert.equal(req.producerModel, "muse-spark-9.9");
@@ -116,7 +121,11 @@ describe("eval argv", () => {
   });
 
   it("parses add-case --bundle", () => {
-    const req = parseAddCaseArgv(["--pr", "https://github.com/matemolnar8/cigster/pull/84", "--bundle"]);
+    const req = parseAddCaseArgv([
+      "--pr",
+      "https://github.com/matemolnar8/cigster/pull/84",
+      "--bundle",
+    ]);
     assert.deepEqual(req, {
       kind: "add",
       prUrl: "https://github.com/matemolnar8/cigster/pull/84",

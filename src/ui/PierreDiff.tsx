@@ -104,7 +104,8 @@ export function clampSplitRatio(ratio: number): number {
 
 export function PierreDiffPool(props: { children: ReactNode }) {
   const poolOptions = useMemo(() => {
-    const cores = typeof navigator === "undefined" ? 4 : Math.max(1, navigator.hardwareConcurrency || 4);
+    const cores =
+      typeof navigator === "undefined" ? 4 : Math.max(1, navigator.hardwareConcurrency || 4);
     return {
       workerFactory: () => new DiffsWorker(),
       poolSize: Math.max(2, Math.min(6, Math.floor(cores / 2))),
@@ -294,7 +295,9 @@ function renderRowAnnotation(annotation: DiffLineAnnotation<RowMeta>): ReactNode
   return (
     <>
       {movedLabel !== undefined ? <MovedChip label={movedLabel} /> : null}
-      {comments !== undefined && comments.length > 0 ? <CommentPin comments={comments} focusId={focusId} /> : null}
+      {comments !== undefined && comments.length > 0 ? (
+        <CommentPin comments={comments} focusId={focusId} />
+      ) : null}
     </>
   );
 }
@@ -345,7 +348,18 @@ export function PierreFileDiff(props: {
   moves?: readonly MovedMark[];
   focusCommentId?: string;
 }) {
-  const { path, patch, split, wrap, splitRatio, onSplitRatio, hydrate = true, comments, moves, focusCommentId } = props;
+  const {
+    path,
+    patch,
+    split,
+    wrap,
+    splitRatio,
+    onSplitRatio,
+    hydrate = true,
+    comments,
+    moves,
+    focusCommentId,
+  } = props;
   const { resolved } = useTheme();
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);

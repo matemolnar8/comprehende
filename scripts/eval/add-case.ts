@@ -31,7 +31,9 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
   const sourcesDir = join(caseDir, "sources");
   await mkdir(sourcesDir, { recursive: true });
 
-  const pr = asRecord(await ghJson(["api", `repos/${parsed.owner}/${parsed.repo}/pulls/${parsed.pr}`]));
+  const pr = asRecord(
+    await ghJson(["api", `repos/${parsed.owner}/${parsed.repo}/pulls/${parsed.pr}`]),
+  );
   const reviewComments = await ghJsonList([
     "api",
     "--paginate",
@@ -56,7 +58,9 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
       );
       await writeJson(join(sourcesDir, `issue-${issueNumber}.json`), trimIssue(issue));
     } catch (error) {
-      console.error(`skip issue #${issueNumber}: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `skip issue #${issueNumber}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -70,14 +74,18 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
   });
   const remotes = (await git(bare, ["remote"])).trim().split("\n");
   const remote = remotes.includes("github") ? "github" : "origin";
-  await git(bare, [
-    "fetch",
-    "--prune",
-    remote,
-    `+refs/pull/${parsed.pr}/head:refs/eval/pr-${parsed.pr}`,
-    "+refs/heads/main:refs/heads/main",
-    "+refs/heads/master:refs/heads/master",
-  ], { allowFail: true });
+  await git(
+    bare,
+    [
+      "fetch",
+      "--prune",
+      remote,
+      `+refs/pull/${parsed.pr}/head:refs/eval/pr-${parsed.pr}`,
+      "+refs/heads/main:refs/heads/main",
+      "+refs/heads/master:refs/heads/master",
+    ],
+    { allowFail: true },
+  );
   let base = nestedSha(pr, "base");
   if (mergeSha !== undefined) {
     await git(bare, ["fetch", remote, mergeSha], { allowFail: true });
@@ -100,7 +108,10 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
 }
 
 async function ghJson(args: string[]): Promise<unknown> {
-  const { stdout } = await execFileAsync("gh", args, { encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+  const { stdout } = await execFileAsync("gh", args, {
+    encoding: "utf8",
+    maxBuffer: 32 * 1024 * 1024,
+  });
   return JSON.parse(stdout);
 }
 
@@ -128,14 +139,25 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 function nestedSha(pr: Record<string, unknown>, key: "head" | "base"): string {
   const ref = pr[key];
-  if (typeof ref !== "object" || ref === null || !("sha" in ref) || typeof ref.sha !== "string" || ref.sha === "") {
+  if (
+    typeof ref !== "object" ||
+    ref === null ||
+    !("sha" in ref) ||
+    typeof ref.sha !== "string" ||
+    ref.sha === ""
+  ) {
     throw new Error(`pull request ${key}.sha is missing`);
   }
   return ref.sha;
 }
 
 function trimUser(value: unknown): { login: string } | undefined {
-  if (typeof value !== "object" || value === null || !("login" in value) || typeof value.login !== "string") {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("login" in value) ||
+    typeof value.login !== "string"
+  ) {
     return undefined;
   }
   return { login: value.login };
