@@ -1,0 +1,1 @@
+{"path":"pnpm-workspace.yaml","ref":"faffb06a46ff492182596dbb26b16485f45b27a0","side":"old","lines":[{"sha":"08219d97bec94e2956041735556eb6d3de201b03","author":"matemolnar8","timestamp":1786659923,"line":1,"text":"allowBuilds:"},{"sha":"08219d97bec94e2956041735556eb6d3de201b03","author":"matemolnar8","timestamp":1786659923,"line":2,"text":"  esbuild: true"}]}

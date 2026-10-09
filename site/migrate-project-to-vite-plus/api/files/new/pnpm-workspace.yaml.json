@@ -1,0 +1,1 @@
+{"path":"pnpm-workspace.yaml","ref":"5f921bb44fa732555b152da19147990c4e99b664","side":"new","content":"allowBuilds:\n  esbuild: true\ncatalog:\n  vite: npm:@voidzero-dev/vite-plus-core@1.1.0\n  vite-plus: 1.1.0\noverrides:\n  vite@*: \"catalog:\"\npeerDependencyRules:\n  allowAny:\n    - vite\n  allowedVersions:\n    vite: \"*\"\n","language":"yaml"}

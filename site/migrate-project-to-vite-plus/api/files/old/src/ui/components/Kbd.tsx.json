@@ -1,0 +1,1 @@
+{"path":"src/ui/components/Kbd.tsx","ref":"faffb06a46ff492182596dbb26b16485f45b27a0","side":"old","content":"import { cn } from \"@/lib/utils.ts\";\n\nexport function Kbd(props: { children: string; className?: string }) {\n  return <kbd className={cn(\"font-mono text-[10px] font-normal text-muted-foreground\", props.className)}>{props.children}</kbd>;\n}\n","language":"tsx"}
