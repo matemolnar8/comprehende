@@ -147,11 +147,13 @@ function movedKeysFromColor(stdout: string): string[] {
       path = header[2];
       continue;
     }
+    // eslint-disable-next-line no-control-regex -- git color-words output embeds ANSI escapes
     const added = /^(?:\x1b\[36m\+\x1b\[m\x1b\[36m|\x1b\[36m\+)(.*)\x1b\[m$/.exec(line);
     if (added?.[1] !== undefined && !added[1].startsWith("@")) {
       keys.push(`${path}\0add\0${added[1]}`);
       continue;
     }
+    // eslint-disable-next-line no-control-regex -- git color-words output embeds ANSI escapes
     const deleted = /^(?:\x1b\[35m-\x1b\[m\x1b\[35m|\x1b\[35m-)(.*)\x1b\[m$/.exec(line);
     if (deleted?.[1] !== undefined) {
       keys.push(`${path}\0del\0${deleted[1]}`);
@@ -161,5 +163,6 @@ function movedKeysFromColor(stdout: string): string[] {
 }
 
 function stripAnsi(line: string): string {
+  // eslint-disable-next-line no-control-regex -- stripping ANSI escapes is the whole job
   return line.replaceAll(/\x1b\[[0-9;]*m/g, "");
 }

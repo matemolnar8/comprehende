@@ -15,7 +15,7 @@ export function shouldViewTransition(options?: {
   const reduced = options?.reducedMotion ?? prefersReducedMotion();
   const start =
     options?.startViewTransition ??
-    (typeof document === "undefined" ? undefined : document.startViewTransition);
+    (typeof document === "undefined" ? undefined : document.startViewTransition.bind(document));
   return !reduced && typeof start === "function";
 }
 
@@ -24,7 +24,7 @@ export function runViewTransition(update: () => void, kind: MotionKind): void {
     update();
     return;
   }
-  const start = document.startViewTransition;
+  const start = document.startViewTransition.bind(document);
   if (typeof start !== "function") {
     update();
     return;
@@ -33,7 +33,7 @@ export function runViewTransition(update: () => void, kind: MotionKind): void {
   const token = ++motionGeneration;
   root.dataset.motion = kind;
   try {
-    const done = start.call(document, () => {
+    const done = start(() => {
       flushSync(update);
     });
     void done.finished.finally(() => {
