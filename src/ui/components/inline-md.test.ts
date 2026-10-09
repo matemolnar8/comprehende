@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { InlineMd } from "./InlineMd.tsx";
@@ -21,11 +21,16 @@ describe("flattenInline", () => {
 
 describe("InlineMd", () => {
   it("turns backtick symbols into code spans", () => {
-    assert.equal(html("The cache is `WorkerOutputCache`."), "The cache is <code>WorkerOutputCache</code>.");
+    assert.equal(
+      html("The cache is `WorkerOutputCache`."),
+      "The cache is <code>WorkerOutputCache</code>.",
+    );
   });
 
   it("puts the chip and strong look on the markdown tags", () => {
-    const markup = renderToStaticMarkup(createElement(InlineMd, { text: "A `chip` and **bold**." }));
+    const markup = renderToStaticMarkup(
+      createElement(InlineMd, { text: "A `chip` and **bold**." }),
+    );
     assert.match(markup, /<code class="[^"]+">chip<\/code>/);
     assert.match(markup, /<strong class="[^"]+">bold<\/strong>/);
   });
@@ -54,7 +59,10 @@ describe("InlineMd", () => {
   });
 
   it("parses code inside strong", () => {
-    assert.equal(html("**see `WorkerOutputCache`**"), "<strong>see <code>WorkerOutputCache</code></strong>");
+    assert.equal(
+      html("**see `WorkerOutputCache`**"),
+      "<strong>see <code>WorkerOutputCache</code></strong>",
+    );
   });
 
   it("leaves unmatched emphasis markers as text", () => {
@@ -80,8 +88,13 @@ describe("InlineMd", () => {
   });
 
   it("turns a fenced block into one inline code span, not a pre stack", () => {
-    const source = ["Keep `WorkerOutputCache`.", "```", "function x() {}", "```", "Done."].join("\n");
-    assert.equal(html(source), "Keep <code>WorkerOutputCache</code>. <code>function x() {}</code> Done.");
+    const source = ["Keep `WorkerOutputCache`.", "```", "function x() {}", "```", "Done."].join(
+      "\n",
+    );
+    assert.equal(
+      html(source),
+      "Keep <code>WorkerOutputCache</code>. <code>function x() {}</code> Done.",
+    );
     assert.equal(html(source).includes("<pre"), false);
   });
 

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { isPlainLeftClick } from "./plain-click.ts";
 
 const plain = { button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false };

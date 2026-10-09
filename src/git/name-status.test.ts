@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { parseNameStatus, parseNumstat } from "./name-status.ts";
 
 describe("parseNameStatus", () => {
@@ -15,17 +15,34 @@ describe("parseNameStatus", () => {
   it("reads a copy score separately from a rename", () => {
     const stdout = "C080\0src/util.ts\0src/util.copy.ts\0";
     assert.deepEqual(parseNameStatus(stdout), [
-      { status: "renamed", path: "src/util.copy.ts", oldPath: "src/util.ts", similarity: 80, copy: true },
+      {
+        status: "renamed",
+        path: "src/util.copy.ts",
+        oldPath: "src/util.ts",
+        similarity: 80,
+        copy: true,
+      },
     ]);
   });
 });
 
 describe("parseNumstat", () => {
   it("reads git --numstat -z including renames", () => {
-    const stdout = ["1\t0\tnew.txt", "1\t1\tpackage-lock.json", "0\t0\t", "old.txt", "renamed.txt", ""].join("\0");
+    const stdout = [
+      "1\t0\tnew.txt",
+      "1\t1\tpackage-lock.json",
+      "0\t0\t",
+      "old.txt",
+      "renamed.txt",
+      "",
+    ].join("\0");
     const stats = parseNumstat(stdout);
     assert.deepEqual(stats.get("new.txt"), { path: "new.txt", added: 1, removed: 0 });
-    assert.deepEqual(stats.get("package-lock.json"), { path: "package-lock.json", added: 1, removed: 1 });
+    assert.deepEqual(stats.get("package-lock.json"), {
+      path: "package-lock.json",
+      added: 1,
+      removed: 1,
+    });
     assert.deepEqual(stats.get("renamed.txt"), {
       path: "renamed.txt",
       oldPath: "old.txt",

@@ -85,7 +85,9 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       summary: "`src/types.ts` changes `Id` from `string` to `string | number`.",
       part: MIXED_PART_LIB,
       sources: ["s2"],
-      lookFor: ["Breaking. `Id` is now `string | number`. A caller that stored only strings still type-checks."],
+      lookFor: [
+        "Breaking. `Id` is now `string | number`. A caller that stored only strings still type-checks.",
+      ],
       suggestedOrder: 3,
       hunkRefs: types,
     },
@@ -103,7 +105,8 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       id: MIXED_GROUP_RELOCATIONS,
       title: "File move and copy",
       why: "Git reports a pure move and a pure copy. Those paths are their own concern.",
-      summary: "`src/keep.ts` moves to `lib/keep.ts`. `src/beta.copy.ts` is a copy of `src/beta.ts`.",
+      summary:
+        "`src/keep.ts` moves to `lib/keep.ts`. `src/beta.copy.ts` is a copy of `src/beta.ts`.",
       part: MIXED_PART_LIB,
       suggestedOrder: 5,
       hunkRefs: [...keep, ...copy],
@@ -174,11 +177,17 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
   return document;
 }
 
-export async function writeCoveringDocument(dataPath: string, index: HunkIndex): Promise<ReviewDocument> {
+export async function writeCoveringDocument(
+  dataPath: string,
+  index: HunkIndex,
+): Promise<ReviewDocument> {
   return writeReview(dataPath, coveringDocument(index));
 }
 
-export async function writeMixedCoveringDocument(dataPath: string, index: HunkIndex): Promise<ReviewDocument> {
+export async function writeMixedCoveringDocument(
+  dataPath: string,
+  index: HunkIndex,
+): Promise<ReviewDocument> {
   return writeReview(dataPath, mixedCoveringDocument(index));
 }
 

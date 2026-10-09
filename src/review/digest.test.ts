@@ -1,10 +1,24 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { buildDigest, formatDigest } from "./digest.ts";
 import type { DiffFile, LiveHunk } from "../schema/types.ts";
 
-function hunk(path: string, oldStart: number, newStart: number, lines: LiveHunk["lines"]): LiveHunk {
-  return { path, oldStart, oldLines: lines.length, newStart, newLines: lines.length, header: "x", lines, patch: "" };
+function hunk(
+  path: string,
+  oldStart: number,
+  newStart: number,
+  lines: LiveHunk["lines"],
+): LiveHunk {
+  return {
+    path,
+    oldStart,
+    oldLines: lines.length,
+    newStart,
+    newLines: lines.length,
+    header: "x",
+    lines,
+    patch: "",
+  };
 }
 
 function add(text: string, n = 1): LiveHunk["lines"][number] {
@@ -16,13 +30,24 @@ function del(text: string, n = 1): LiveHunk["lines"][number] {
 }
 
 function file(path: string, hunks: LiveHunk[], extra: Partial<DiffFile> = {}): DiffFile {
-  return { path, status: "modified", binary: false, image: false, headerPatch: "", patch: "", hunks, ...extra };
+  return {
+    path,
+    status: "modified",
+    binary: false,
+    image: false,
+    headerPatch: "",
+    patch: "",
+    hunks,
+    ...extra,
+  };
 }
 
 describe("buildDigest", () => {
   it("classifies test, docs, and logic files and pairs tests", () => {
     const digest = buildDigest([
-      file("src/auth/session.ts", [hunk("src/auth/session.ts", 1, 1, [add("export function setSessionCookie() {}")])]),
+      file("src/auth/session.ts", [
+        hunk("src/auth/session.ts", 1, 1, [add("export function setSessionCookie() {}")]),
+      ]),
       file("src/auth/session.test.ts", [hunk("src/auth/session.test.ts", 0, 1, [add("test()")])]),
       file("README.md", [hunk("README.md", 1, 1, [add("docs")])]),
     ]);
@@ -52,7 +77,11 @@ describe("buildDigest", () => {
 
   it("prefers rename over test and skips binaries", () => {
     const digest = buildDigest([
-      file("a.test.ts", [], { oldPath: "b.test.ts", status: "renamed", relocation: { kind: "rename" } }),
+      file("a.test.ts", [], {
+        oldPath: "b.test.ts",
+        status: "renamed",
+        relocation: { kind: "rename" },
+      }),
       file("dot.bin", [], { binary: true }),
     ]);
     assert.equal(digest.files.length, 1);

@@ -3,12 +3,12 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { copySkillForEval, readNextSkillMd, skillSection } from "./skill.ts";
 
 const roots: string[] = [];
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -19,7 +19,10 @@ describe("next skill workflow", () => {
     const md = await readNextSkillMd(findPackageRoot());
     const grouping = skillSection(md, "Grouping rules");
     assert.match(md, /Each step is one tool call where the step says so/);
-    assert.match(md, /One shell call: verify the refs, write the draft, print the digest and the draft, log, and stat/);
+    assert.match(
+      md,
+      /One shell call: verify the refs, write the draft, print the digest and the draft, log, and stat/,
+    );
     assert.match(md, /Write the whole `review\.json` in one write/);
     assert.match(md, /`label` is that subject line, or a SHA from the same log/);
     assert.match(
@@ -35,7 +38,9 @@ describe("next skill workflow", () => {
     assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     const shells = [...md.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1] ?? "");
-    const batch = shells.find((block) => block.includes("rev-parse") && block.includes("pregroup --base"));
+    const batch = shells.find(
+      (block) => block.includes("rev-parse") && block.includes("pregroup --base"),
+    );
     assert.ok(batch);
     assert.match(
       batch,
@@ -57,7 +62,10 @@ describe("next skill workflow", () => {
     assert.match(grouping, /path@oldStart\+newStart/);
     assert.match(grouping, /A path covers every live hunk of that file/);
     assert.doesNotMatch(grouping, /Lockfiles stay in `skipped`/);
-    const example = await readFile(join(findPackageRoot(), "skills-next/comprehende/references/example.md"), "utf8");
+    const example = await readFile(
+      join(findPackageRoot(), "skills-next/comprehende/references/example.md"),
+      "utf8",
+    );
     assert.doesNotMatch(example, /review\.schema\.json/);
   });
 });

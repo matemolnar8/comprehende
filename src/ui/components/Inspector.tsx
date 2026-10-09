@@ -26,9 +26,9 @@ export function Inspector(props: {
   const { inspector, wrap, setInspector, onClose } = props;
   const image = isImagePath(inspector.path);
   const [content, setContent] = useState<string>("");
-  const [blame, setBlame] = useState<{ author: string; line: number; text: string; sha: string; timestamp: number }[] | null>(
-    null,
-  );
+  const [blame, setBlame] = useState<
+    { author: string; line: number; text: string; sha: string; timestamp: number }[] | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const blameContents = useMemo(
@@ -148,9 +148,7 @@ export function Inspector(props: {
       {error !== null ? <p className="px-4 text-warn min-[800px]:px-8">{error}</p> : null}
       {loading && error === null && !image ? (
         <div className="px-4 pt-2 min-[800px]:px-8">
-          <WaitMark
-            label={inspector.mode === "file" ? waitCopy.file : waitCopy.blame}
-          />
+          <WaitMark label={inspector.mode === "file" ? waitCopy.file : waitCopy.blame} />
         </div>
       ) : null}
       {image ? (
@@ -169,7 +167,12 @@ export function Inspector(props: {
       ) : null}
       {!image && inspector.mode === "blame" && error === null && !loading && blame !== null ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8">
-          <PierreFile path={inspector.path} contents={blameContents} wrap={wrap} annotations={blameAnnotations} />
+          <PierreFile
+            path={inspector.path}
+            contents={blameContents}
+            wrap={wrap}
+            annotations={blameAnnotations}
+          />
         </div>
       ) : null}
     </div>

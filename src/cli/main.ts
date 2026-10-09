@@ -5,7 +5,14 @@ import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
-import { cmdDigest, cmdPregroup, cmdReview, cmdShow, cmdValidate, resolveOutPath } from "./commands.ts";
+import {
+  cmdDigest,
+  cmdPregroup,
+  cmdReview,
+  cmdShow,
+  cmdValidate,
+  resolveOutPath,
+} from "./commands.ts";
 import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
@@ -48,7 +55,9 @@ export async function run(argv: string[]): Promise<number> {
       case "validate": {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const { document, assignedHunks } = await cmdValidate(request.cwd, dataPath);
-        console.log(`ok  ${document.groups.length} groups  ${assignedHunks} hunk refs  ${dataPath}`);
+        console.log(
+          `ok  ${document.groups.length} groups  ${assignedHunks} hunk refs  ${dataPath}`,
+        );
         return 0;
       }
       case "serve": {
@@ -74,7 +83,9 @@ export async function run(argv: string[]): Promise<number> {
         warnReview(ctx, "export continues; git wins, unassigned/stale are visible");
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);
-        console.error(`exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`);
+        console.error(
+          `exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`,
+        );
         return 0;
       }
       case "digest": {
@@ -82,7 +93,12 @@ export async function run(argv: string[]): Promise<number> {
         return 0;
       }
       case "show": {
-        console.log(await cmdShow(request.cwd, request.base, request.head, { hunk: request.hunk, file: request.file }));
+        console.log(
+          await cmdShow(request.cwd, request.base, request.head, {
+            hunk: request.hunk,
+            file: request.file,
+          }),
+        );
         return 0;
       }
       case "pregroup": {
@@ -108,7 +124,10 @@ function warnReview(ctx: Parameters<typeof reviewProblems>[0], note: string): vo
   }
 }
 
-function waitForClose(server: { close: (cb: (error?: Error) => void) => void; on: (event: string, cb: () => void) => void }): Promise<void> {
+function waitForClose(server: {
+  close: (cb: (error?: Error) => void) => void;
+  on: (event: string, cb: () => void) => void;
+}): Promise<void> {
   return new Promise((resolve) => {
     const shutdown = (): void => {
       server.close(() => resolve());
@@ -120,7 +139,8 @@ function waitForClose(server: { close: (cb: (error?: Error) => void) => void; on
 }
 
 function openUrl(url: string): void {
-  const command = process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
+  const command =
+    process.platform === "darwin" ? "open" : process.platform === "win32" ? "cmd" : "xdg-open";
   const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
   spawn(command, args, { stdio: "ignore", detached: true }).unref();
 }

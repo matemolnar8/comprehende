@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import {
   classifyDiffFiles,
@@ -58,7 +58,10 @@ describe("parseUnifiedDiff", () => {
     assert.equal(app.hunks[0]?.oldStart, 1);
     assert.equal(app.hunks[0]?.newStart, 1);
     assert.equal(app.hunks[1]?.oldStart, 20);
-    assert.equal(app.hunks[0]?.lines.some((line) => line.kind === "add" && line.text.includes("extra")), true);
+    assert.equal(
+      app.hunks[0]?.lines.some((line) => line.kind === "add" && line.text.includes("extra")),
+      true,
+    );
 
     const renamed = files[1];
     assert.ok(renamed);
@@ -206,7 +209,7 @@ describe("classifyDiffFiles", () => {
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -248,9 +251,18 @@ describe("lockfile diffs", () => {
 
     const index = await readHunkIndex(repo.root, repo.base, repo.head);
     assert.equal(JSON.stringify(index).includes(LOCKFILE_SECRET), false);
-    assert.equal(index.hunks.some((hunk) => hunk.path === "package-lock.json"), false);
-    assert.ok(index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"));
-    assert.ok(index.skipped.some((item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile"));
+    assert.equal(
+      index.hunks.some((hunk) => hunk.path === "package-lock.json"),
+      false,
+    );
+    assert.ok(
+      index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"),
+    );
+    assert.ok(
+      index.skipped.some(
+        (item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile",
+      ),
+    );
     assert.ok(index.skipped.some((item) => item.path === "bun.lockb"));
   });
 });

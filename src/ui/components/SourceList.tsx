@@ -38,7 +38,10 @@ export function SourceList(props: {
 
   return (
     <section className={cn("mb-4 last:mb-0", className)} aria-labelledby={headingId}>
-      <h2 id={headingId} className="font-mono text-[11px] font-normal leading-[1.45] text-muted-foreground">
+      <h2
+        id={headingId}
+        className="font-mono text-[11px] font-normal leading-[1.45] text-muted-foreground"
+      >
         <button
           type="button"
           className={cn(
@@ -122,7 +125,12 @@ function SourceRow(props: {
       ) : detail !== undefined ? (
         <span className={gistText}>{detail}</span>
       ) : source.url !== undefined ? (
-        <a className={cn(gistText, hashLinkText)} href={source.url} target="_blank" rel="noreferrer">
+        <a
+          className={cn(gistText, hashLinkText)}
+          href={source.url}
+          target="_blank"
+          rel="noreferrer"
+        >
           {source.label}
         </a>
       ) : (
@@ -153,7 +161,12 @@ function SourceMeta(props: { source: Source; strand: Part | undefined; showName:
             ·
           </span>
           {source.url !== undefined ? (
-            <a className={cn("min-w-0 truncate", hashLinkText)} href={source.url} target="_blank" rel="noreferrer">
+            <a
+              className={cn("min-w-0 truncate", hashLinkText)}
+              href={source.url}
+              target="_blank"
+              rel="noreferrer"
+            >
               {source.label}
             </a>
           ) : (

@@ -3,7 +3,11 @@ import { cp, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/p
 import { dirname, join, relative } from "node:path";
 import { applyCliPin, cliPinErrors, listedCliPins } from "./cli-pin.ts";
 import { skillPaths } from "./skill-paths.ts";
-import { findPackageRoot, parsePackageVersion, readPackageVersionFromDir } from "../package-root.ts";
+import {
+  findPackageRoot,
+  parsePackageVersion,
+  readPackageVersionFromDir,
+} from "../package-root.ts";
 import { gitEnv } from "../git/exec.ts";
 
 export type SkillSyncInput = {
@@ -19,10 +23,14 @@ export type SkillSyncInput = {
 export function skillSyncErrors(input: SkillSyncInput): string[] {
   const errors: string[] = [];
   if (input.nextSchema !== input.canonicalSchema) {
-    errors.push("skills-next/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill");
+    errors.push(
+      "skills-next/comprehende/references/review.schema.json drifted. Run: pnpm sync:skill",
+    );
   }
   errors.push(
-    ...cliPinErrors(input.nextSkillMd, input.version).map((error) => `skills-next/comprehende/${error}`),
+    ...cliPinErrors(input.nextSkillMd, input.version).map(
+      (error) => `skills-next/comprehende/${error}`,
+    ),
   );
   if (listedCliPins(input.publishedSkillMd).length === 0) {
     errors.push("skills/comprehende/SKILL.md must pin npx comprehende@<version>");
@@ -31,7 +39,9 @@ export function skillSyncErrors(input: SkillSyncInput): string[] {
   const nextKeys = [...input.nextFiles.keys()].sort();
   const installedKeys = [...input.installedFiles.keys()].sort();
   if (nextKeys.join("\n") !== installedKeys.join("\n")) {
-    errors.push(".agents/skills/comprehende is not a copy of skills-next/comprehende. Run: pnpm sync:skill");
+    errors.push(
+      ".agents/skills/comprehende is not a copy of skills-next/comprehende. Run: pnpm sync:skill",
+    );
     return errors;
   }
   for (const rel of nextKeys) {
@@ -71,7 +81,10 @@ export function loadStagedSkillSync(root = findPackageRoot()): SkillSyncInput {
   };
 }
 
-export async function syncNextSkill(options?: { root?: string; release?: boolean }): Promise<string[]> {
+export async function syncNextSkill(options?: {
+  root?: string;
+  release?: boolean;
+}): Promise<string[]> {
   const root = options?.root ?? findPackageRoot();
   const release = options?.release === true;
   const paths = skillPaths(root);
@@ -141,7 +154,11 @@ function gitStagedTree(root: string, prefix: string): Map<string, string> {
 
 function gitShowStaged(root: string, path: string): string {
   try {
-    return execFileSync("git", ["show", `:${path}`], { cwd: root, encoding: "utf8", env: gitEnv() });
+    return execFileSync("git", ["show", `:${path}`], {
+      cwd: root,
+      encoding: "utf8",
+      env: gitEnv(),
+    });
   } catch {
     throw new Error(`staged file missing: ${path}`);
   }

@@ -49,7 +49,9 @@ export async function createImageRepo(root: string): Promise<ImageRepo> {
 export function screenshotPng(variant: "old" | "new" | "lfs-old" | "lfs-new"): Buffer {
   const width = 320;
   const height = 180;
-  const accent: readonly [number, number, number] = variant.endsWith("new") ? [61, 79, 216] : [26, 127, 55];
+  const accent: readonly [number, number, number] = variant.endsWith("new")
+    ? [61, 79, 216]
+    : [26, 127, 55];
   return encodePng(width, height, (x, y) => {
     if (y < 28) {
       return [24, 28, 36, 255];

@@ -3,7 +3,7 @@ import { mkdtemp, mkdir, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
@@ -16,7 +16,7 @@ import { exportStaticSite } from "./snapshot.ts";
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
 
-after(async () => {
+afterAll(async () => {
   await Promise.all(
     servers.map(
       (server) =>
@@ -41,7 +41,7 @@ describe("export static site", () => {
 
     const uiRoot = join(root, "ui");
     await mkdir(uiRoot);
-    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "index.html"), '<!doctype html><div id="root"></div>\n');
 
     const live = await startServer({ cwd: repo.root, dataPath, port: 0, uiRoot });
     servers.push(live.server);
@@ -90,7 +90,9 @@ describe("export static site", () => {
       assert.deepEqual(await frozenRes.json(), await liveRes.json(), apiHref(resource));
     }
 
-    const review = (await (await fetch(new URL(apiHref({ kind: "review" }), `${frozen.url}/`))).json()) as {
+    const review = (await (
+      await fetch(new URL(apiHref({ kind: "review" }), `${frozen.url}/`))
+    ).json()) as {
       document: unknown;
       groups: { hunkCount: number }[];
     };
@@ -99,7 +101,9 @@ describe("export static site", () => {
     assert.equal(reviewText.includes(SECRET_DEL), false);
     assert.ok((review.groups[0]?.hunkCount ?? 0) >= 4);
 
-    const app = await fetch(new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${frozen.url}/`));
+    const app = await fetch(
+      new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${frozen.url}/`),
+    );
     assert.equal(app.status, 200);
     const file = (await app.json()) as { content: string };
     assert.equal(file.content.includes(SECRET_ADD), true);
@@ -115,12 +119,16 @@ describe("export static site", () => {
 
     const uiRoot = join(root, "ui");
     await mkdir(join(uiRoot, "assets"), { recursive: true });
-    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "index.html"), '<!doctype html><div id="root"></div>\n');
     await writeFile(
       join(uiRoot, "shiki-langs.json"),
       `${JSON.stringify({
         version: 1,
-        chunks: ["assets/shiki-lang-typescript-aaa.js", "assets/shiki-lang-python-eee.js", "assets/shiki-lang-markdown-fff.js"],
+        chunks: [
+          "assets/shiki-lang-typescript-aaa.js",
+          "assets/shiki-lang-python-eee.js",
+          "assets/shiki-lang-markdown-fff.js",
+        ],
         files: {
           typescript: ["assets/shiki-lang-typescript-aaa.js"],
           python: ["assets/shiki-lang-python-eee.js"],
@@ -148,11 +156,22 @@ describe("export static site", () => {
     const dataPath = join(root, "review.json");
     await writeCoveringDocument(dataPath, await cmdIndex(repo.root, repo.base, repo.head));
 
-    const allLangs = ["typescript", "markdown", "python", "rust", "go", "java", "css", "html", "javascript", "json"];
+    const allLangs = [
+      "typescript",
+      "markdown",
+      "python",
+      "rust",
+      "go",
+      "java",
+      "css",
+      "html",
+      "javascript",
+      "json",
+    ];
     const chunkOf = (lang: string) => `assets/shiki-lang-${lang}-hash.js`;
     const uiRoot = join(root, "ui");
     await mkdir(join(uiRoot, "assets"), { recursive: true });
-    await writeFile(join(uiRoot, "index.html"), "<!doctype html><div id=\"root\"></div>\n");
+    await writeFile(join(uiRoot, "index.html"), '<!doctype html><div id="root"></div>\n');
     await writeFile(join(uiRoot, "assets/index-hash.js"), "// app\n");
     await writeFile(
       join(uiRoot, "shiki-langs.json"),
@@ -160,7 +179,15 @@ describe("export static site", () => {
         version: 1,
         chunks: allLangs.map(chunkOf),
         files: Object.fromEntries(allLangs.map((lang) => [lang, [chunkOf(lang)]])),
-        lookup: { ts: "typescript", md: "markdown", py: "python", rs: "rust", go: "go", java: "java", json: "json" },
+        lookup: {
+          ts: "typescript",
+          md: "markdown",
+          py: "python",
+          rs: "rust",
+          go: "go",
+          java: "java",
+          json: "json",
+        },
       })}\n`,
     );
     for (const lang of allLangs) {

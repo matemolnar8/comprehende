@@ -1,16 +1,24 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import type { DiffLine } from "../../schema/types.ts";
 import { isPureRelocation, movedMarkLabel, movedMarks, relocationWord } from "./relocation.ts";
 
 describe("relocationWord", () => {
   it("names a copy, a directory move, and a rename", () => {
     assert.equal(
-      relocationWord({ path: "src/util.copy.ts", oldPath: "src/util.ts", relocation: { kind: "copy", similarity: 100 } }),
+      relocationWord({
+        path: "src/util.copy.ts",
+        oldPath: "src/util.ts",
+        relocation: { kind: "copy", similarity: 100 },
+      }),
       "Copied",
     );
     assert.equal(
-      relocationWord({ path: "lib/keep.ts", oldPath: "src/keep.ts", relocation: { kind: "rename", similarity: 100 } }),
+      relocationWord({
+        path: "lib/keep.ts",
+        oldPath: "src/keep.ts",
+        relocation: { kind: "rename", similarity: 100 },
+      }),
       "Moved",
     );
     assert.equal(
@@ -64,9 +72,33 @@ describe("movedMarks", () => {
 
 describe("isPureRelocation", () => {
   it("is true only for a text file with a relocation and no line delta", () => {
-    assert.equal(isPureRelocation({ kind: "text", added: 0, removed: 0, relocation: { kind: "rename", similarity: 100 } }), true);
-    assert.equal(isPureRelocation({ kind: "text", added: 1, removed: 0, relocation: { kind: "rename", similarity: 80 } }), false);
-    assert.equal(isPureRelocation({ kind: "image", added: 0, removed: 0, relocation: { kind: "rename", similarity: 100 } }), false);
+    assert.equal(
+      isPureRelocation({
+        kind: "text",
+        added: 0,
+        removed: 0,
+        relocation: { kind: "rename", similarity: 100 },
+      }),
+      true,
+    );
+    assert.equal(
+      isPureRelocation({
+        kind: "text",
+        added: 1,
+        removed: 0,
+        relocation: { kind: "rename", similarity: 80 },
+      }),
+      false,
+    );
+    assert.equal(
+      isPureRelocation({
+        kind: "image",
+        added: 0,
+        removed: 0,
+        relocation: { kind: "rename", similarity: 100 },
+      }),
+      false,
+    );
     assert.equal(isPureRelocation({ kind: "text", added: 0, removed: 0 }), false);
   });
 });

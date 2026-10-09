@@ -40,7 +40,11 @@ export async function createExampleRepo(root: string): Promise<ExampleRepo> {
   await writeFile(join(root, "src/app.ts"), appFile("alpha", SECRET_DEL), "utf8");
   await writeFile(join(root, "src/util.ts"), UTIL_BASE, "utf8");
   await writeFile(join(root, "src/types.ts"), "export type Id = string;\n", "utf8");
-  await writeFile(join(root, "src/keep.ts"), "export const kept = 1;\nexport const still = 2;\n", "utf8");
+  await writeFile(
+    join(root, "src/keep.ts"),
+    "export const kept = 1;\nexport const still = 2;\n",
+    "utf8",
+  );
   await writeFile(
     join(root, "src/alpha.ts"),
     `export const stay = 1;\n${MOVED_BLOCK}\nexport const tail = 1;\n`,
@@ -74,7 +78,11 @@ export async function createExampleRepo(root: string): Promise<ExampleRepo> {
   await mkdir(join(root, "lib"), { recursive: true });
   await git(root, ["mv", "src/keep.ts", "lib/keep.ts"]);
   await writeFile(join(root, "src/beta.copy.ts"), "export const other = 1;\n", "utf8");
-  await writeFile(join(root, "src/alpha.ts"), "export const stay = 1;\nexport const tail = 1;\n", "utf8");
+  await writeFile(
+    join(root, "src/alpha.ts"),
+    "export const stay = 1;\nexport const tail = 1;\n",
+    "utf8",
+  );
   await writeFile(
     join(root, "src/beta.ts"),
     `export const other = 1;\n${MOVED_BLOCK}\nexport const added = true;\n`,
@@ -114,7 +122,10 @@ function appFile(name: string, marker: string): string {
     "export function midH(): number { return 8; }",
     "export function midI(): number { return 9; }",
     "export function midJ(): number { return 10; }",
-    ...Array.from({ length: 80 }, (_, i) => `export const pad${String(i).padStart(2, "0")} = ${i};`),
+    ...Array.from(
+      { length: 80 },
+      (_, i) => `export const pad${String(i).padStart(2, "0")} = ${i};`,
+    ),
     "export function end(): string {",
     `  return "${name}-end";`,
     "}",

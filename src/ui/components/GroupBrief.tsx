@@ -85,8 +85,8 @@ export function GroupBrief(props: {
         <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />
         {group.staleCount > 0 ? (
           <p className="mt-3 text-warn">
-            {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git. Git wins; the
-            pointer is flagged, not replaced.
+            {group.staleCount} hunk ref{group.staleCount === 1 ? "" : "s"} no longer match live git.
+            Git wins; the pointer is flagged, not replaced.
           </p>
         ) : null}
       </div>

@@ -1,5 +1,10 @@
 import { padIndex } from "../../schema/types.ts";
-import { citationIds, groupIdForPinnedSource, groupSourceIds, isLinePinned } from "../../schema/source.ts";
+import {
+  citationIds,
+  groupIdForPinnedSource,
+  groupSourceIds,
+  isLinePinned,
+} from "../../schema/source.ts";
 import type { ReviewDocument, Source } from "../../schema/types.ts";
 import { groupOrderIndex, groupParts, type PartGroup } from "./parts.ts";
 import type { Selection } from "./selection.ts";
@@ -57,7 +62,10 @@ export function selectionForLookFor(owner: LookForOwner): Selection {
   return owner.kind === "document" ? { kind: "overview" } : { kind: "group", id: owner.id };
 }
 
-export function claimsFromLookFor(owner: LookForOwner, items: readonly string[] | undefined): LookForClaim[] {
+export function claimsFromLookFor(
+  owner: LookForOwner,
+  items: readonly string[] | undefined,
+): LookForClaim[] {
   return (items ?? []).map((text, index) => {
     const parsed = parseLookForBullet(text);
     const claim: LookForClaim = {
@@ -75,7 +83,10 @@ export function claimsFromLookFor(owner: LookForOwner, items: readonly string[] 
   });
 }
 
-export function lookForClaims(document: { lookFor?: readonly string[] }, groups: readonly LookForGroup[]): LookForClaim[] {
+export function lookForClaims(
+  document: { lookFor?: readonly string[] },
+  groups: readonly LookForGroup[],
+): LookForClaim[] {
   const claims = claimsFromLookFor({ kind: "document" }, document.lookFor);
   const parts = groupParts(groups);
   const byId = new Map(groups.map((group) => [group.id, group]));

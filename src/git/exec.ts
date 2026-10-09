@@ -40,7 +40,11 @@ export class GitError extends Error {
   }
 }
 
-export async function git(cwd: string, args: string[], opts?: { allowFail?: boolean }): Promise<string> {
+export async function git(
+  cwd: string,
+  args: string[],
+  opts?: { allowFail?: boolean },
+): Promise<string> {
   try {
     const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
       cwd,
@@ -58,7 +62,11 @@ export async function git(cwd: string, args: string[], opts?: { allowFail?: bool
   }
 }
 
-export async function gitBuffer(cwd: string, args: string[], opts?: { input?: Uint8Array }): Promise<Buffer> {
+export async function gitBuffer(
+  cwd: string,
+  args: string[],
+  opts?: { input?: Uint8Array },
+): Promise<Buffer> {
   try {
     const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
       cwd,

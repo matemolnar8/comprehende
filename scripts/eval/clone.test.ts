@@ -3,13 +3,13 @@ import { mkdtemp, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { git } from "../../src/git/exec.ts";
 import { initEmptyRepo } from "../../src/test/init-repo.ts";
 import { cloneCaseBundle, writeCaseBundle } from "./clone.ts";
 
 const roots: string[] = [];
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -41,8 +41,14 @@ describe("case bundle", () => {
     assert.equal((await git(bare, ["rev-list", "--count", `${base}..${head}`])).trim(), "2");
     assert.equal((await git(bare, ["merge-base", base, head])).trim(), base);
     assert.equal((await git(bare, ["rev-list", "--count", head])).trim(), "3");
-    assert.deepEqual((await git(bare, ["diff", "--name-only", `${base}...${head}`])).trim().split("\n"), ["b.txt", "c.txt"]);
-    assert.equal((await git(bare, ["config", "--get", "remote.origin.url"])).trim(), "https://github.com/o/r.git");
+    assert.deepEqual(
+      (await git(bare, ["diff", "--name-only", `${base}...${head}`])).trim().split("\n"),
+      ["b.txt", "c.txt"],
+    );
+    assert.equal(
+      (await git(bare, ["config", "--get", "remote.origin.url"])).trim(),
+      "https://github.com/o/r.git",
+    );
   });
 
   it("refuses a base that is not an ancestor of head", async () => {
@@ -51,6 +57,9 @@ describe("case bundle", () => {
     await initEmptyRepo(root);
     const first = await commit(root, "a.txt", "first");
     const second = await commit(root, "b.txt", "second");
-    await assert.rejects(writeCaseBundle(root, second, first, join(root, "x.bundle")), /not an ancestor/);
+    await assert.rejects(
+      writeCaseBundle(root, second, first, join(root, "x.bundle")),
+      /not an ancestor/,
+    );
   });
 });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { storyNav } from "./story-nav.ts";
 
 const cookie = {
@@ -19,8 +19,14 @@ const docs = {
 describe("storyNav", () => {
   it("lists dependsOn and Needed by hops", () => {
     const groups = [login, cookie, docs];
-    assert.deepEqual(storyNav(groups, "cookie").dependents.map((hop) => hop.id), ["login"]);
-    assert.deepEqual(storyNav(groups, "login").dependsOn.map((hop) => hop.id), ["cookie"]);
+    assert.deepEqual(
+      storyNav(groups, "cookie").dependents.map((hop) => hop.id),
+      ["login"],
+    );
+    assert.deepEqual(
+      storyNav(groups, "login").dependsOn.map((hop) => hop.id),
+      ["cookie"],
+    );
     assert.deepEqual(storyNav(groups, "docs"), { dependsOn: [], dependents: [] });
   });
 

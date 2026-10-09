@@ -3,7 +3,7 @@ import { mkdtemp, readFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { cmdIndex, cmdReview, cmdValidate } from "../cli/commands.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { coverReview } from "./coverage.ts";
@@ -11,7 +11,7 @@ import { skeletonDocument, skeletonPaths } from "./skeleton.ts";
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }

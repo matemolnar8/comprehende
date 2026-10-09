@@ -4,7 +4,7 @@ import { access, chmod, mkdir, mkdtemp, readFile, writeFile } from "node:fs/prom
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { cmdDigest, cmdIndex, cmdPregroup, cmdReview, cmdShow, cmdValidate } from "./commands.ts";
 import { skeletonPaths } from "../review/skeleton.ts";
 import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
@@ -13,13 +13,13 @@ import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 const REAL_GIT = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-describe("cmdReview git work", { concurrency: false }, () => {
+describe("cmdReview git work", { concurrent: false }, () => {
   it("pins the range once and writes a skeleton validate accepts", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-git-"));
     roots.push(root);
@@ -30,13 +30,23 @@ describe("cmdReview git work", { concurrency: false }, () => {
     await withGitLog(join(root, "shim"), async (log) => {
       const { document, index: reviewed } = await cmdReview(repo.root, dataPath, repo.base, "main");
       const calls = await log.read();
-      assert.deepEqual(tally(calls), { revParse: 2, nameStatus: 1, unified: 1, numstat: 0, mergeBase: 0, other: 0 });
+      assert.deepEqual(tally(calls), {
+        revParse: 2,
+        nameStatus: 1,
+        unified: 1,
+        numstat: 0,
+        mergeBase: 0,
+        other: 0,
+      });
       assert.deepEqual(
         calls.filter((argv) => gitCommand(argv) === "rev-parse").map((argv) => argv.at(-1)),
         [`${repo.base}^{commit}`, "main^{commit}"],
       );
       const unified = calls.find((argv) => gitCommand(argv) === "diff" && argv.includes("-U3"));
-      assert.equal(unified?.find((arg) => arg.includes("...")), `${repo.base}...${repo.head}`);
+      assert.equal(
+        unified?.find((arg) => arg.includes("...")),
+        `${repo.base}...${repo.head}`,
+      );
       assert.equal(document.source.baseRef, repo.base);
       assert.equal(document.source.headRef, "main");
       assert.equal(document.source.range, `${repo.base}...main`);
@@ -46,7 +56,9 @@ describe("cmdReview git work", { concurrency: false }, () => {
         document.groups[0]?.hunkRefs,
         skeletonPaths(index).map((path) => ({ path })),
       );
-      assert.ok(reviewed.skipped.some((item) => item.path === "assets/dot.bin" && item.reason === "binary"));
+      assert.ok(
+        reviewed.skipped.some((item) => item.path === "assets/dot.bin" && item.reason === "binary"),
+      );
 
       await log.clear();
       const validated = await cmdValidate(repo.root, dataPath);
@@ -74,9 +86,20 @@ describe("cmdReview git work", { concurrency: false }, () => {
         other: 0,
       });
       assert.equal(JSON.stringify(document).includes(LOCKFILE_SECRET), false);
-      assert.equal(index.hunks.some((hunk) => hunk.path === "package-lock.json"), false);
-      assert.ok(index.skipped.some((item) => item.path === "package-lock.json" && item.reason === "lockfile"));
-      assert.ok(index.skipped.some((item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile"));
+      assert.equal(
+        index.hunks.some((hunk) => hunk.path === "package-lock.json"),
+        false,
+      );
+      assert.ok(
+        index.skipped.some(
+          (item) => item.path === "package-lock.json" && item.reason === "lockfile",
+        ),
+      );
+      assert.ok(
+        index.skipped.some(
+          (item) => item.path === "apps/web/yarn.lock" && item.reason === "lockfile",
+        ),
+      );
       assert.ok(index.skipped.some((item) => item.path === "bun.lockb"));
       await cmdValidate(repo.root, dataPath);
     });
@@ -89,7 +112,10 @@ describe("cmdReview git work", { concurrency: false }, () => {
     const dataPath = join(root, "review.json");
 
     await withGitLog(join(root, "shim"), async (log) => {
-      await assert.rejects(() => cmdReview(repo.root, dataPath, "-evil", repo.head), /invalid git ref/);
+      await assert.rejects(
+        () => cmdReview(repo.root, dataPath, "-evil", repo.head),
+        /invalid git ref/,
+      );
       assert.deepEqual(await log.read(), []);
       await assert.rejects(access(dataPath));
     });
@@ -113,9 +139,15 @@ describe("cmdReview git work", { concurrency: false }, () => {
     const repo = await createExampleRepo(join(root, "repo"));
     const patch = await cmdShow(repo.root, repo.base, repo.head, { file: "src/types.ts" });
     assert.match(patch, /string \| number/);
-    await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, { file: "nope.ts" }), /no diff for path/);
+    await assert.rejects(
+      () => cmdShow(repo.root, repo.base, repo.head, { file: "nope.ts" }),
+      /no diff for path/,
+    );
     await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, {}), /--hunk/);
-    await assert.rejects(() => cmdShow(repo.root, repo.base, repo.head, { hunk: "bogus" }), /invalid hunk ref|no diff for path/);
+    await assert.rejects(
+      () => cmdShow(repo.root, repo.base, repo.head, { hunk: "bogus" }),
+      /invalid hunk ref|no diff for path/,
+    );
   });
 
   it("pregroups a draft that validate accepts", async () => {

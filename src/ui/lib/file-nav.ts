@@ -19,7 +19,11 @@ export function readStoredRailCollapsed(): boolean | null {
 }
 
 /** Query wins, then a stored choice, then the narrow default. */
-export function initialRailCollapsed(search: string, stored: boolean | null, narrowRail: boolean): boolean {
+export function initialRailCollapsed(
+  search: string,
+  stored: boolean | null,
+  narrowRail: boolean,
+): boolean {
   const rail = new URLSearchParams(search).get("rail");
   if (rail === "collapsed") {
     return true;

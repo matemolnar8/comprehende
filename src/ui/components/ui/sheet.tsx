@@ -74,7 +74,13 @@ function SheetContent({
 }
 
 function SheetHeader({ className, ...props }: ComponentProps<"div">) {
-  return <div data-slot="sheet-header" className={cn("flex flex-col gap-1 px-4 py-3", className)} {...props} />;
+  return (
+    <div
+      data-slot="sheet-header"
+      className={cn("flex flex-col gap-1 px-4 py-3", className)}
+      {...props}
+    />
+  );
 }
 
 function SheetTitle({ className, ...props }: ComponentProps<typeof DialogPrimitive.Title>) {
@@ -87,7 +93,10 @@ function SheetTitle({ className, ...props }: ComponentProps<typeof DialogPrimiti
   );
 }
 
-function SheetDescription({ className, ...props }: ComponentProps<typeof DialogPrimitive.Description>) {
+function SheetDescription({
+  className,
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Description>) {
   return (
     <DialogPrimitive.Description
       data-slot="sheet-description"

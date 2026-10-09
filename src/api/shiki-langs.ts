@@ -33,7 +33,10 @@ export function parseShikiLangsManifest(input: unknown): ShikiLangsManifest | un
   return { version: 1, chunks, files, lookup };
 }
 
-export function highlightLangFromPath(path: string, lookup: Record<string, string>): string | undefined {
+export function highlightLangFromPath(
+  path: string,
+  lookup: Record<string, string>,
+): string | undefined {
   const fileName = path.split(/[/\\]/).pop() ?? path;
   if (lookup[fileName] !== undefined) {
     return lookup[fileName];
@@ -46,7 +49,10 @@ export function highlightLangFromPath(path: string, lookup: Record<string, strin
   return lookup[simple];
 }
 
-export function highlightLangsForPaths(paths: readonly string[], lookup: Record<string, string>): string[] {
+export function highlightLangsForPaths(
+  paths: readonly string[],
+  lookup: Record<string, string>,
+): string[] {
   const langs = new Set<string>();
   for (const path of paths) {
     const lang = highlightLangFromPath(path, lookup);
@@ -57,7 +63,9 @@ export function highlightLangsForPaths(paths: readonly string[], lookup: Record<
   return [...langs];
 }
 
-export function highlightPathsFromFiles(files: readonly { path: string; oldPath?: string }[]): string[] {
+export function highlightPathsFromFiles(
+  files: readonly { path: string; oldPath?: string }[],
+): string[] {
   const paths: string[] = [];
   for (const file of files) {
     paths.push(file.path);
@@ -78,7 +86,10 @@ export function chunksToKeep(manifest: ShikiLangsManifest, langs: readonly strin
   return [...keep];
 }
 
-export async function pruneUnusedHighlighterChunks(outDir: string, paths: readonly string[]): Promise<string[]> {
+export async function pruneUnusedHighlighterChunks(
+  outDir: string,
+  paths: readonly string[],
+): Promise<string[]> {
   const manifest = await loadManifest(join(outDir, SHIKI_LANGS_FILE));
   if (manifest === undefined) {
     return [];

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { looksLikeSha, reviewRef } from "./review-ref.ts";
 
 const sha = "4657d0f3dcab95c1ac79d1a93c13397c6e646758";

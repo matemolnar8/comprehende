@@ -26,6 +26,7 @@ jobs:
           cache: true
           install: false
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec vp check
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm pack:smoke

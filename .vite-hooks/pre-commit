@@ -1,6 +1,7 @@
 #!/bin/sh
 root=$(git rev-parse --show-toplevel)
 cd "$root" || exit 1
+vp staged
 changed=$(git diff --cached --name-only -- package.json src/schema/review.schema.json skills-next/comprehende skills/comprehende .agents/skills/comprehende)
 [ -z "$changed" ] && exit 0
 exec pnpm check:skill --staged

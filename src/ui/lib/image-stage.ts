@@ -29,7 +29,12 @@ export function fitTwoColumnStage(
   hostWidth: number,
   maxHeight: number,
 ): ImageStageSize {
-  return fitImageStage(naturalWidth, naturalHeight, Math.floor(Math.max(0, hostWidth - 1) / 2), maxHeight);
+  return fitImageStage(
+    naturalWidth,
+    naturalHeight,
+    Math.floor(Math.max(0, hostWidth - 1) / 2),
+    maxHeight,
+  );
 }
 
 export function stageCaption(naturalWidth: number, naturalHeight: number, scale: number): string {

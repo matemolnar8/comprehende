@@ -60,7 +60,9 @@ export function groupParts(groups: readonly PartGroup[]): Part[] {
       sortKey: ids[0] ?? "",
     };
   });
-  parts.sort((a, b) => a.minOrder - b.minOrder || (a.title ?? a.sortKey).localeCompare(b.title ?? b.sortKey));
+  parts.sort(
+    (a, b) => a.minOrder - b.minOrder || (a.title ?? a.sortKey).localeCompare(b.title ?? b.sortKey),
+  );
 
   return parts.map((part, index) => ({
     colorIndex: index % PART_PALETTE_SIZE,
@@ -82,7 +84,11 @@ export function groupOrderIndex(parts: readonly Part[], id: string): number {
   return 0;
 }
 
-export function dependsOnDepth(groups: readonly PartGroup[], id: string, partIds: ReadonlySet<string>): number {
+export function dependsOnDepth(
+  groups: readonly PartGroup[],
+  id: string,
+  partIds: ReadonlySet<string>,
+): number {
   const byId = new Map(groups.map((group) => [group.id, group]));
   const walk = (current: string, path: ReadonlySet<string>): number => {
     if (path.has(current)) {
@@ -134,7 +140,8 @@ function sortIds(ids: string[], byId: Map<string, { group: PartGroup; index: num
     const left = byId.get(a);
     const right = byId.get(b);
     return (
-      suggestedOrder(left?.group, left?.index ?? 0) - suggestedOrder(right?.group, right?.index ?? 0) || a.localeCompare(b)
+      suggestedOrder(left?.group, left?.index ?? 0) -
+        suggestedOrder(right?.group, right?.index ?? 0) || a.localeCompare(b)
     );
   };
 

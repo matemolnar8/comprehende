@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
@@ -15,7 +15,7 @@ import { showFile } from "../git/show.ts";
 const roots: string[] = [];
 const servers: { close: (cb: (error?: Error) => void) => void }[] = [];
 
-after(async () => {
+afterAll(async () => {
   await Promise.all(
     servers.map(
       (server) =>
@@ -66,7 +66,9 @@ describe("serve API", () => {
 
     const group = document.groups[0];
     assert.ok(group);
-    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: group.id }), `${running.url}/`));
+    const hunksRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: group.id }), `${running.url}/`),
+    );
     assert.equal(hunksRes.status, 200);
     const payload = (await hunksRes.json()) as {
       hunks: { path: string; lines: { text: string }[] }[];
@@ -74,35 +76,53 @@ describe("serve API", () => {
     };
     assert.ok(payload.hunks.length > 0);
     assert.ok(payload.files.length > 0);
-    assert.equal(payload.files.every((file) => file.complete), true);
+    assert.equal(
+      payload.files.every((file) => file.complete),
+      true,
+    );
     assert.equal(payload.files[0]?.patch.startsWith("diff --git "), true);
-    assert.equal(payload.files.some((file) => file.patch.includes("\nindex ")), true);
+    assert.equal(
+      payload.files.some((file) => file.patch.includes("\nindex ")),
+      true,
+    );
 
-    const appGroup = document.groups.find((item) => item.hunkRefs.some((ref) => ref.path === "src/app.ts"));
+    const appGroup = document.groups.find((item) =>
+      item.hunkRefs.some((ref) => ref.path === "src/app.ts"),
+    );
     assert.ok(appGroup);
-    const appHunks = await fetch(new URL(apiHref({ kind: "hunks", group: appGroup.id }), `${running.url}/`));
+    const appHunks = await fetch(
+      new URL(apiHref({ kind: "hunks", group: appGroup.id }), `${running.url}/`),
+    );
     const appPayload = (await appHunks.json()) as {
       hunks: { lines: { kind: string; text: string }[] }[];
       files: { path: string; patch: string }[];
     };
-    const texts = appPayload.hunks.flatMap((hunk) => hunk.lines.map((line) => line.text)).join("\n");
+    const texts = appPayload.hunks
+      .flatMap((hunk) => hunk.lines.map((line) => line.text))
+      .join("\n");
     assert.equal(texts.includes(SECRET_ADD), true);
     const appPatch = appPayload.files.find((file) => file.path === "src/app.ts")?.patch;
     assert.ok(appPatch);
     assert.equal(appPatch.includes(`+${SECRET_ADD}`) || appPatch.includes(SECRET_ADD), true);
     assert.equal(appPatch.startsWith("diff --git "), true);
 
-    const fileRes = await fetch(new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`));
+    const fileRes = await fetch(
+      new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`),
+    );
     assert.equal(fileRes.status, 200);
     const file = (await fileRes.json()) as { content: string };
     assert.equal(file.content.includes(SECRET_ADD), true);
 
-    const blameRes = await fetch(new URL(apiHref({ kind: "blame", path: "src/app.ts", side: "new" }), `${running.url}/`));
+    const blameRes = await fetch(
+      new URL(apiHref({ kind: "blame", path: "src/app.ts", side: "new" }), `${running.url}/`),
+    );
     assert.equal(blameRes.status, 200);
     const blame = (await blameRes.json()) as { lines: unknown[] };
     assert.ok(blame.lines.length > 0);
 
-    const overviewMd = await fetch(new URL(apiHref({ kind: "agent-md", target: "overview" }), `${running.url}/`));
+    const overviewMd = await fetch(
+      new URL(apiHref({ kind: "agent-md", target: "overview" }), `${running.url}/`),
+    );
     assert.equal(overviewMd.status, 200);
     assert.match(overviewMd.headers.get("content-type") ?? "", /text\/markdown/);
     const overviewText = await overviewMd.text();
@@ -146,7 +166,9 @@ describe("serve API", () => {
     assert.equal(review.resolved.headRef, "HEAD");
     assert.equal(review.resolved.headSha, repo.head);
 
-    const fileRes = await fetch(new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`));
+    const fileRes = await fetch(
+      new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${running.url}/`),
+    );
     assert.equal(fileRes.status, 200);
     const file = (await fileRes.json()) as { content: string; ref: string };
     assert.equal(file.content, original);
@@ -154,7 +176,9 @@ describe("serve API", () => {
     assert.equal(file.content.includes("hijacked"), false);
     assert.equal(file.content.includes(SECRET_ADD), true);
 
-    const hunksRes = await fetch(new URL(apiHref({ kind: "hunks", group: document.groups[0]!.id }), `${running.url}/`));
+    const hunksRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: document.groups[0]!.id }), `${running.url}/`),
+    );
     assert.equal(hunksRes.status, 200);
     const payload = (await hunksRes.json()) as { files: { path: string; patch: string }[] };
     const appPatch = payload.files.find((item) => item.path === "src/app.ts")?.patch;
@@ -197,12 +221,18 @@ describe("serve API", () => {
     const running = await startServer({ cwd: repo.root, dataPath, port: 0 });
     servers.push(running.server);
 
-    const firstRes = await fetch(new URL(apiHref({ kind: "hunks", group: "app-first" }), `${running.url}/`));
+    const firstRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: "app-first" }), `${running.url}/`),
+    );
     assert.equal(firstRes.status, 200);
-    const firstPayload = (await firstRes.json()) as { files: { path: string; complete: boolean }[] };
+    const firstPayload = (await firstRes.json()) as {
+      files: { path: string; complete: boolean }[];
+    };
     assert.equal(firstPayload.files.find((file) => file.path === "src/app.ts")?.complete, false);
 
-    const restRes = await fetch(new URL(apiHref({ kind: "hunks", group: "app-rest" }), `${running.url}/`));
+    const restRes = await fetch(
+      new URL(apiHref({ kind: "hunks", group: "app-rest" }), `${running.url}/`),
+    );
     assert.equal(restRes.status, 200);
     const restPayload = (await restRes.json()) as { files: { path: string; complete: boolean }[] };
     assert.equal(restPayload.files.find((file) => file.path === "src/app.ts")?.complete, false);

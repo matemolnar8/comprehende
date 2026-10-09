@@ -8,7 +8,9 @@ export { assertSafePath, isSafePath };
 export async function assertWorkTree(cwd: string): Promise<void> {
   const inside = await git(cwd, ["rev-parse", "--is-inside-work-tree"], { allowFail: true });
   if (inside.trim() !== "true") {
-    throw new Error("cwd is not a git work tree. Run comprehende inside the repository under review.");
+    throw new Error(
+      "cwd is not a git work tree. Run comprehende inside the repository under review.",
+    );
   }
 }
 
@@ -58,7 +60,9 @@ export async function gitCommonDir(cwd: string): Promise<string> {
 }
 
 export async function readRepoIdentity(cwd: string): Promise<RepoIdentity> {
-  const originText = (await git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true })).trim();
+  const originText = (
+    await git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true })
+  ).trim();
   const origin = originText === "" ? null : stripRemoteCredentials(originText);
   const fromOrigin = origin !== null ? nameFromRemoteUrl(origin) : null;
   if (fromOrigin !== null) {
@@ -87,7 +91,11 @@ export function stripRemoteCredentials(url: string): string {
 }
 
 /** Resolve refs to commits once. Later checkout or branch motion does not move these SHAs. */
-export async function pinRange(cwd: string, baseRef: string, headRef: string): Promise<PinnedRange> {
+export async function pinRange(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+): Promise<PinnedRange> {
   const baseSha = await resolveCommit(cwd, baseRef);
   const headSha = await resolveCommit(cwd, headRef);
   const mergeBaseSha = await mergeBase(cwd, baseSha, headSha);
@@ -95,7 +103,9 @@ export async function pinRange(cwd: string, baseRef: string, headRef: string): P
 }
 
 export async function defaultBaseRef(cwd: string): Promise<string> {
-  const remoteHead = await git(cwd, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], { allowFail: true });
+  const remoteHead = await git(cwd, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"], {
+    allowFail: true,
+  });
   const trimmed = remoteHead.trim();
   if (trimmed.startsWith("refs/remotes/")) {
     return trimmed.slice("refs/remotes/".length);

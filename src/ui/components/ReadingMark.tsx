@@ -13,7 +13,12 @@ export function ReadingMark(props: {
     return null;
   }
   return (
-    <span className={cn("mt-px shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground", props.className)}>
+    <span
+      className={cn(
+        "mt-px shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground",
+        props.className,
+      )}
+    >
       {props.noun === true ? status.filesLabel : status.label}
     </span>
   );

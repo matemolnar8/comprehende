@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
-import { loadStagedSkillSync, loadWorkingTreeSkillSync, skillSyncErrors } from "../src/schema/skill-sync.ts";
+import {
+  loadStagedSkillSync,
+  loadWorkingTreeSkillSync,
+  skillSyncErrors,
+} from "../src/schema/skill-sync.ts";
 
 const staged = process.argv.includes("--staged");
 const input = staged ? loadStagedSkillSync() : await loadWorkingTreeSkillSync();

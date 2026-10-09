@@ -28,14 +28,19 @@ export function WaitMark(props: {
       role={inline ? undefined : "status"}
       aria-live={inline ? undefined : "polite"}
     >
-      <span className={cn("flex shrink-0 gap-[0.28rem]", inline ? "h-[1.1rem]" : "h-7")} aria-hidden>
+      <span
+        className={cn("flex shrink-0 gap-[0.28rem]", inline ? "h-[1.1rem]" : "h-7")}
+        aria-hidden
+      >
         <Rail kind="del" inline={inline} />
         <Rail kind="add" inline={inline} />
       </span>
       {inline ? (
         <span className="sr-only">{props.label}</span>
       ) : (
-        <p className="m-0 font-mono text-[11px] tracking-wide text-muted-foreground">{props.label}</p>
+        <p className="m-0 font-mono text-[11px] tracking-wide text-muted-foreground">
+          {props.label}
+        </p>
       )}
     </Tag>
   );

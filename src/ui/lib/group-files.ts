@@ -58,5 +58,7 @@ export function filesFromPayload(
 }
 
 export function fileIndexAtHunk(files: GroupFile[], hunkIndex: number): number {
-  return files.findIndex((file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount);
+  return files.findIndex(
+    (file) => hunkIndex >= file.firstIndex && hunkIndex < file.firstIndex + file.hunkCount,
+  );
 }

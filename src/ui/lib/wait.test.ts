@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { WAIT_REVEAL_MS, waitVisible } from "./wait.ts";
 
 describe("waitVisible", () => {
   it("shows only for an active request past the delay", () => {
-    const cases: Array<[active: boolean, elapsed: number, delay: number | undefined, expected: boolean]> = [
+    const cases: Array<
+      [active: boolean, elapsed: number, delay: number | undefined, expected: boolean]
+    > = [
       [true, 0, undefined, false],
       [true, WAIT_REVEAL_MS - 1, undefined, false],
       [true, WAIT_REVEAL_MS, undefined, true],

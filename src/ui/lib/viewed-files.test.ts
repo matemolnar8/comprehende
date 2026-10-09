@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { parseViewed, serializeViewed, setPathViewed, viewedStorageKey } from "./viewed-files.ts";
 
 describe("viewed files", () => {
@@ -18,7 +18,7 @@ describe("viewed files", () => {
     assert.equal(parseViewed(null).size, 0);
     assert.equal(parseViewed("").size, 0);
     assert.equal(parseViewed("{").size, 0);
-    assert.equal(parseViewed("{\"path\":true}").size, 0);
+    assert.equal(parseViewed('{"path":true}').size, 0);
     assert.equal(parseViewed("[1]").size, 0);
   });
 

@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { listEvalCases, parseEvalCaseJson, selectEvalCases } from "./case.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 
 const roots: string[] = [];
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -32,7 +32,9 @@ describe("eval case schema", () => {
     }`);
     assert.equal(spec.id, "comprehende-47");
     assert.equal(spec.expect?.why, "present");
-    assert.throws(() => parseEvalCaseJson(`{"id":"x","repo":"r","pr":1,"base":"a","head":"b","extra":true}`));
+    assert.throws(() =>
+      parseEvalCaseJson(`{"id":"x","repo":"r","pr":1,"base":"a","head":"b","extra":true}`),
+    );
   });
 
   it("defaults tags and lists folders that match --case and --tag", async () => {

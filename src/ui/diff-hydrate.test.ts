@@ -1,12 +1,24 @@
 import { hydratePartialDiff, parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { EXPANSION_LINE_COUNT } from "./lib/gap-style.ts";
 
 const PAD = Array.from({ length: 40 }, (_, i) => `const pad${i} = ${i};`);
 
-const OLD = ["const head = 1;", 'const a = "old";', ...PAD, 'const b = "old";', "const tail = 1;"].join("\n");
-const NEXT = ["const head = 1;", 'const a = "new";', ...PAD, 'const b = "new";', "const tail = 1;"].join("\n");
+const OLD = [
+  "const head = 1;",
+  'const a = "old";',
+  ...PAD,
+  'const b = "old";',
+  "const tail = 1;",
+].join("\n");
+const NEXT = [
+  "const head = 1;",
+  'const a = "new";',
+  ...PAD,
+  'const b = "new";',
+  "const tail = 1;",
+].join("\n");
 
 const PATCH = `diff --git a/gap.ts b/gap.ts
 --- a/gap.ts
@@ -43,9 +55,18 @@ describe("partial patch hydration", () => {
     assert.equal(hydrated.isPartial, false);
     assert.equal(hydrated.hunks.length, 2);
     assert.equal(hydrated.hunks[1]?.collapsedBefore, collapsed);
-    assert.equal(hydrated.additionLines.some((line) => line.includes('const a = "new"')), true);
-    assert.equal(hydrated.additionLines.some((line) => line.includes("const pad20 = 20")), true);
-    assert.equal(hydrated.deletionLines.some((line) => line.includes('const b = "old"')), true);
+    assert.equal(
+      hydrated.additionLines.some((line) => line.includes('const a = "new"')),
+      true,
+    );
+    assert.equal(
+      hydrated.additionLines.some((line) => line.includes("const pad20 = 20")),
+      true,
+    );
+    assert.equal(
+      hydrated.deletionLines.some((line) => line.includes('const b = "old"')),
+      true,
+    );
     assert.ok(hydrated.additionLines.length > 40);
   });
 });

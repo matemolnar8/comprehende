@@ -53,18 +53,32 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-3 py-2">
         {both ? (
           <div className="flex overflow-hidden rounded-md border border-input">
-            <ModeButton active={mode === "side-by-side"} onClick={() => setMode("side-by-side")} hint="Old and new at the same size">
+            <ModeButton
+              active={mode === "side-by-side"}
+              onClick={() => setMode("side-by-side")}
+              hint="Old and new at the same size"
+            >
               Side by side
             </ModeButton>
-            <ModeButton active={mode === "slider"} onClick={() => setMode("slider")} hint="Drag to reveal new over old">
+            <ModeButton
+              active={mode === "slider"}
+              onClick={() => setMode("slider")}
+              hint="Drag to reveal new over old"
+            >
               Slider
             </ModeButton>
-            <ModeButton active={mode === "diff"} onClick={() => setMode("diff")} hint="Pixels that differ">
+            <ModeButton
+              active={mode === "diff"}
+              onClick={() => setMode("diff")}
+              hint="Pixels that differ"
+            >
               Diff
             </ModeButton>
           </div>
         ) : (
-          <span className="font-mono text-[11px] text-muted-foreground">{status === "added" ? "Added" : "Deleted"}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">
+            {status === "added" ? "Added" : "Deleted"}
+          </span>
         )}
         {ready ? (
           <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
@@ -73,64 +87,75 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
         ) : null}
       </div>
       {missing !== null ? <p className="px-3 py-2 text-sm text-warn">{missing}</p> : null}
-      {!ready && missing === null ? <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p> : null}
+      {!ready && missing === null ? (
+        <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p>
+      ) : null}
       <div className="flex w-full justify-center">
-      {ready && (mode === "side-by-side" || !both) ? (
-        <div className="flex">
-          {hasOld ? (
-            <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
-              {oldUrl !== undefined && !oldImage.error ? (
-                <StageImage src={oldUrl} alt="Old" width={stage.width} height={stage.height} />
-              ) : (
-                <Missing />
-              )}
-            </LabeledStage>
-          ) : (
-            <LabeledStage label="Old" width={stage.width} height={stage.height}>
-              <Missing text="Added — no old image" />
-            </LabeledStage>
-          )}
-          {hasNew ? (
-            <LabeledStage label="New" width={stage.width} height={stage.height}>
-              {newUrl !== undefined && !newImage.error ? (
-                <StageImage src={newUrl} alt="New" width={stage.width} height={stage.height} />
-              ) : (
-                <Missing />
-              )}
-            </LabeledStage>
-          ) : (
-            <LabeledStage label="New" width={stage.width} height={stage.height}>
-              <Missing text="Deleted — no new image" />
-            </LabeledStage>
-          )}
-        </div>
-      ) : null}
-      {ready && mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
-        <WipeStage
-          oldUrl={oldUrl}
-          newUrl={newUrl}
-          width={stage.width}
-          height={stage.height}
-          wipe={wipe}
-          onWipe={setWipe}
-        />
-      ) : null}
-      {ready && mode === "diff" && both && oldImage.element !== null && newImage.element !== null ? (
-        <PixelStage
-          oldImage={oldImage.element}
-          newImage={newImage.element}
-          naturalWidth={naturalWidth}
-          naturalHeight={naturalHeight}
-          width={stage.width}
-          height={stage.height}
-        />
-      ) : null}
+        {ready && (mode === "side-by-side" || !both) ? (
+          <div className="flex">
+            {hasOld ? (
+              <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
+                {oldUrl !== undefined && !oldImage.error ? (
+                  <StageImage src={oldUrl} alt="Old" width={stage.width} height={stage.height} />
+                ) : (
+                  <Missing />
+                )}
+              </LabeledStage>
+            ) : (
+              <LabeledStage label="Old" width={stage.width} height={stage.height}>
+                <Missing text="Added — no old image" />
+              </LabeledStage>
+            )}
+            {hasNew ? (
+              <LabeledStage label="New" width={stage.width} height={stage.height}>
+                {newUrl !== undefined && !newImage.error ? (
+                  <StageImage src={newUrl} alt="New" width={stage.width} height={stage.height} />
+                ) : (
+                  <Missing />
+                )}
+              </LabeledStage>
+            ) : (
+              <LabeledStage label="New" width={stage.width} height={stage.height}>
+                <Missing text="Deleted — no new image" />
+              </LabeledStage>
+            )}
+          </div>
+        ) : null}
+        {ready && mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
+          <WipeStage
+            oldUrl={oldUrl}
+            newUrl={newUrl}
+            width={stage.width}
+            height={stage.height}
+            wipe={wipe}
+            onWipe={setWipe}
+          />
+        ) : null}
+        {ready &&
+        mode === "diff" &&
+        both &&
+        oldImage.element !== null &&
+        newImage.element !== null ? (
+          <PixelStage
+            oldImage={oldImage.element}
+            newImage={newImage.element}
+            naturalWidth={naturalWidth}
+            naturalHeight={naturalHeight}
+            width={stage.width}
+            height={stage.height}
+          />
+        ) : null}
       </div>
     </div>
   );
 }
 
-function ModeButton(props: { active: boolean; onClick: () => void; children: string; hint: string }) {
+function ModeButton(props: {
+  active: boolean;
+  onClick: () => void;
+  children: string;
+  hint: string;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -150,10 +175,18 @@ function ModeButton(props: { active: boolean; onClick: () => void; children: str
   );
 }
 
-function LabeledStage(props: { label: string; width: number; height: number; children: ReactNode; rule?: boolean }) {
+function LabeledStage(props: {
+  label: string;
+  width: number;
+  height: number;
+  children: ReactNode;
+  rule?: boolean;
+}) {
   return (
     <figure className={cn("w-fit shrink-0", props.rule === true && "border-r border-border")}>
-      <figcaption className="border-b border-border px-3 py-1 font-mono text-[11px] text-muted-foreground">{props.label}</figcaption>
+      <figcaption className="border-b border-border px-3 py-1 font-mono text-[11px] text-muted-foreground">
+        {props.label}
+      </figcaption>
       <StageFrame width={props.width} height={props.height}>
         {props.children}
       </StageFrame>
@@ -191,14 +224,21 @@ function StageImage(props: { src: string; alt: string; width: number; height: nu
       width={props.width}
       height={props.height}
       className="absolute top-0 left-0 max-w-none"
-      style={{ width: props.width, height: props.height, objectFit: "contain", objectPosition: "left top" }}
+      style={{
+        width: props.width,
+        height: props.height,
+        objectFit: "contain",
+        objectPosition: "left top",
+      }}
     />
   );
 }
 
 function Missing(props: { text?: string }) {
   return (
-    <p className="flex h-full items-center px-3 text-sm text-muted-foreground">{props.text ?? "Image missing"}</p>
+    <p className="flex h-full items-center px-3 text-sm text-muted-foreground">
+      {props.text ?? "Image missing"}
+    </p>
   );
 }
 
@@ -253,12 +293,19 @@ function WipeStage(props: {
         <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${wipe}%` }}>
           <StageImage src={newUrl} alt="New" width={width} height={height} />
         </div>
-        <div className="pointer-events-none absolute inset-y-0" style={{ left: `${wipe}%` }} aria-hidden>
+        <div
+          className="pointer-events-none absolute inset-y-0"
+          style={{ left: `${wipe}%` }}
+          aria-hidden
+        >
           <span className="absolute inset-y-0 left-0 w-px -translate-x-1/2 bg-primary" />
           <span className="absolute top-1/2 left-0 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-card" />
         </div>
       </StageFrame>
-      <label className="flex w-full items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground" htmlFor={id}>
+      <label
+        className="flex w-full items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground"
+        htmlFor={id}
+      >
         Old
         <input
           id={id}

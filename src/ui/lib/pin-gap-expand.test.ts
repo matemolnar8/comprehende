@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import {
   adjustScroll,
   isPlainDownClick,
@@ -26,9 +26,7 @@ function host(sepTop: number | undefined) {
   return {
     shadowRoot: {
       querySelector: () =>
-        sepTop === undefined
-          ? null
-          : { getBoundingClientRect: () => ({ top: sepTop }) },
+        sepTop === undefined ? null : { getBoundingClientRect: () => ({ top: sepTop }) },
     },
   } as unknown as HTMLElement;
 }
@@ -38,7 +36,7 @@ function target(hits: Record<string, boolean>) {
     closest(selector: string) {
       return hits[selector] === true ? this : null;
     },
-  };
+  } as unknown as EventTarget;
 }
 
 describe("gap pin", () => {
@@ -46,7 +44,10 @@ describe("gap pin", () => {
     assert.equal(isPlainDownClick([target({ "[data-expand-down]": true })], false), true);
     assert.equal(isPlainDownClick([target({ "[data-expand-down]": true })], true), false);
     assert.equal(
-      isPlainDownClick([target({ "[data-expand-all-button]": true, "[data-expand-down]": true })], false),
+      isPlainDownClick(
+        [target({ "[data-expand-all-button]": true, "[data-expand-down]": true })],
+        false,
+      ),
       false,
     );
     assert.equal(isPlainDownClick([target({ "[data-expand-up]": true })], false), false);

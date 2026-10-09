@@ -3,7 +3,7 @@ import { mkdtemp } from "node:fs/promises";
 import { realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { createExampleRepo } from "../test/example-repo.ts";
 import { createImageRepo } from "../test/image-repo.ts";
 import { readImageBlob } from "./blob.ts";
@@ -13,7 +13,7 @@ import { assertWorkTree, gitCommonDir, readRepoIdentity } from "./repo.ts";
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -28,7 +28,10 @@ describe("linked git worktree", () => {
     await git(repo.root, ["worktree", "add", "--detach", linked, "HEAD"]);
 
     await assertWorkTree(linked);
-    assert.equal(realpathSync(await gitCommonDir(linked)), realpathSync(await gitCommonDir(repo.root)));
+    assert.equal(
+      realpathSync(await gitCommonDir(linked)),
+      realpathSync(await gitCommonDir(repo.root)),
+    );
 
     const identity = await readRepoIdentity(linked);
     assert.equal(identity.origin, null);

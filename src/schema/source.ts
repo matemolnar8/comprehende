@@ -8,7 +8,10 @@ function escapeRegExp(value: string): string {
 }
 
 function sourceLinkPattern(): RegExp {
-  return new RegExp(`\\]\\(\\s*${escapeRegExp(SOURCE_HREF_PREFIX)}([^)\\s]+)(?:\\s+"[^"]*")?\\s*\\)`, "g");
+  return new RegExp(
+    `\\]\\(\\s*${escapeRegExp(SOURCE_HREF_PREFIX)}([^)\\s]+)(?:\\s+"[^"]*")?\\s*\\)`,
+    "g",
+  );
 }
 
 export function isLinePinned(source: Source): source is LinePinnedSource {
@@ -93,13 +96,18 @@ export function linePinnedSources(sources: readonly Source[] | undefined): LineP
   return (sources ?? []).filter(isLinePinned);
 }
 
-export function groupIdForPinnedSource(document: ReviewDocument, source: Source): string | undefined {
+export function groupIdForPinnedSource(
+  document: ReviewDocument,
+  source: Source,
+): string | undefined {
   if (!isLinePinned(source)) {
     return undefined;
   }
   const named = document.groups.filter((group) => (group.sources ?? []).includes(source.id));
   const covering = document.groups.filter((group) =>
-    group.hunkRefs.some((ref) => ref.path === source.path || (isLocatedHunkRef(ref) && ref.oldPath === source.path)),
+    group.hunkRefs.some(
+      (ref) => ref.path === source.path || (isLocatedHunkRef(ref) && ref.oldPath === source.path),
+    ),
   );
   const both = covering.filter((group) => named.some((item) => item.id === group.id));
   return (both[0] ?? covering[0] ?? named[0])?.id;

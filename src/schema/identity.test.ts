@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { formatStoredHunkRef, parseHunkRefString } from "./identity.ts";
 
 describe("parseHunkRefString", () => {
@@ -40,9 +40,17 @@ describe("parseHunkRefString", () => {
 
   it("formats a stored ref the way it was written", () => {
     assert.equal(formatStoredHunkRef({ path: "src/app.ts" }), "src/app.ts");
-    assert.equal(formatStoredHunkRef({ path: "src/app.ts", oldStart: 1, newStart: 10 }), "src/app.ts@1+10");
     assert.equal(
-      formatStoredHunkRef({ path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 }),
+      formatStoredHunkRef({ path: "src/app.ts", oldStart: 1, newStart: 10 }),
+      "src/app.ts@1+10",
+    );
+    assert.equal(
+      formatStoredHunkRef({
+        path: "src/helpers.ts",
+        oldPath: "src/util.ts",
+        oldStart: 4,
+        newStart: 4,
+      }),
       "src/util.ts -> src/helpers.ts@4+4",
     );
   });

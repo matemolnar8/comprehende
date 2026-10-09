@@ -14,7 +14,9 @@ export async function loadDotEnv(packageRoot: string): Promise<void> {
     if (trimmed === "" || trimmed.startsWith("#")) {
       continue;
     }
-    const assignment = trimmed.startsWith("export ") ? trimmed.slice("export ".length).trim() : trimmed;
+    const assignment = trimmed.startsWith("export ")
+      ? trimmed.slice("export ".length).trim()
+      : trimmed;
     const eq = assignment.indexOf("=");
     if (eq === -1) {
       continue;

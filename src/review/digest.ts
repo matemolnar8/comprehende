@@ -41,7 +41,10 @@ export function buildDigest(files: DiffFile[]): ChangeDigest {
     .filter((file) => !file.binary || file.image)
     .map((file) => digestFile(file));
   markMirrors(digests, files);
-  return { files: digests, totalHunks: digests.reduce((total, file) => total + file.hunks.length, 0) };
+  return {
+    files: digests,
+    totalHunks: digests.reduce((total, file) => total + file.hunks.length, 0),
+  };
 }
 
 function digestFile(file: DiffFile): DigestFile {
@@ -121,7 +124,12 @@ function isDocsPath(path: string): boolean {
 }
 
 function isGeneratedPath(path: string): boolean {
-  return /(^|\/)(dist|build|coverage)\//.test(path) || /\.(min\.js|bundle\.js|snap)$/i.test(path) || /(^|\/)(__snapshots__|snapshots?)\//.test(path) || /\.gen\./.test(path);
+  return (
+    /(^|\/)(dist|build|coverage)\//.test(path) ||
+    /\.(min\.js|bundle\.js|snap)$/i.test(path) ||
+    /(^|\/)(__snapshots__|snapshots?)\//.test(path) ||
+    /\.gen\./.test(path)
+  );
 }
 
 /** Same directory, same stem without the test affix. A prefix: the extension may differ. */
@@ -194,11 +202,14 @@ export function digestHunkRefs(file: DigestFile): string[] {
   }
   return file.hunks.map((hunk) => {
     const at = `${hunk.oldStart}+${hunk.newStart}`;
-    return file.oldPath === undefined ? `${file.path}@${at}` : `${file.oldPath} -> ${file.path}@${at}`;
+    return file.oldPath === undefined
+      ? `${file.path}@${at}`
+      : `${file.oldPath} -> ${file.path}@${at}`;
   });
 }
 
-export function formatDigest(digest: ChangeDigest, range: string): string {  const files = digest.files.length;
+export function formatDigest(digest: ChangeDigest, range: string): string {
+  const files = digest.files.length;
   const header = `# Digest ${range} — ${files} file${files === 1 ? "" : "s"}, ${digest.totalHunks} hunk${digest.totalHunks === 1 ? "" : "s"}`;
   return [header, ...digest.files.map(formatFile)].join("\n");
 }

@@ -67,7 +67,12 @@ export function parseNumstat(stdout: string): Map<string, NumstatEntry> {
       continue;
     }
     const match = /^(-|\d+)\t(-|\d+)\t(.*)$/.exec(field);
-    if (match === null || match[1] === undefined || match[2] === undefined || match[3] === undefined) {
+    if (
+      match === null ||
+      match[1] === undefined ||
+      match[2] === undefined ||
+      match[3] === undefined
+    ) {
       break;
     }
     index += 1;

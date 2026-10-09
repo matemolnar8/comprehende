@@ -26,7 +26,9 @@ type ReviewPayload = {
   };
 };
 
-export async function runFixtureSmoke(packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..")): Promise<string> {
+export async function runFixtureSmoke(
+  packageRoot = join(dirname(fileURLToPath(import.meta.url)), ".."),
+): Promise<string> {
   const ui = join(packageRoot, "dist/ui/index.html");
   if (!existsSync(ui)) {
     execFileSync("pnpm", ["build"], { cwd: packageRoot, stdio: "inherit" });
@@ -71,7 +73,10 @@ export async function runFixtureSmoke(packageRoot = join(dirname(fileURLToPath(i
       throw new Error("review.json missing a dependsOn group");
     }
 
-    const overviewMdHref = new URL(apiHref({ kind: "agent-md", target: "overview" }), `${running.url}/`);
+    const overviewMdHref = new URL(
+      apiHref({ kind: "agent-md", target: "overview" }),
+      `${running.url}/`,
+    );
     const overviewMd = await fetch(overviewMdHref);
     assertStatus(overviewMd, overviewMdHref.href, 200);
     const overviewText = await overviewMd.text();
@@ -90,15 +95,27 @@ export async function runFixtureSmoke(packageRoot = join(dirname(fileURLToPath(i
       throw new Error(`group ${MIXED_GROUP_APP} markdown missing part or lookFor`);
     }
 
-    const relocationsHref = new URL(apiHref({ kind: "hunks", group: MIXED_GROUP_RELOCATIONS }), `${running.url}/`);
+    const relocationsHref = new URL(
+      apiHref({ kind: "hunks", group: MIXED_GROUP_RELOCATIONS }),
+      `${running.url}/`,
+    );
     const relocationsRes = await fetch(relocationsHref);
     assertStatus(relocationsRes, relocationsHref.href, 200);
     const relocations = (await relocationsRes.json()) as {
-      files: { path: string; oldPath?: string; relocation?: { kind: string; similarity?: number }; patch: string }[];
+      files: {
+        path: string;
+        oldPath?: string;
+        relocation?: { kind: string; similarity?: number };
+        patch: string;
+      }[];
     };
     const keep = relocations.files.find((file) => file.path === "lib/keep.ts");
     const copy = relocations.files.find((file) => file.path === "src/beta.copy.ts");
-    if (keep?.relocation?.kind !== "rename" || keep.relocation.similarity !== 100 || keep.oldPath !== "src/keep.ts") {
+    if (
+      keep?.relocation?.kind !== "rename" ||
+      keep.relocation.similarity !== 100 ||
+      keep.oldPath !== "src/keep.ts"
+    ) {
       throw new Error("pure move is missing git rename metadata");
     }
     if (copy?.relocation?.kind !== "copy" || copy.relocation.similarity !== 100) {
@@ -108,18 +125,26 @@ export async function runFixtureSmoke(packageRoot = join(dirname(fileURLToPath(i
       throw new Error("pure move or copy patch includes a line hunk");
     }
 
-    const moveHref = new URL(apiHref({ kind: "hunks", group: MIXED_GROUP_MOVE }), `${running.url}/`);
+    const moveHref = new URL(
+      apiHref({ kind: "hunks", group: MIXED_GROUP_MOVE }),
+      `${running.url}/`,
+    );
     const moveRes = await fetch(moveHref);
     assertStatus(moveRes, moveHref.href, 200);
     const move = (await moveRes.json()) as {
       files: { path: string; hunks: { lines: { text: string; moved?: { path: string } }[] }[] }[];
     };
     const beta = move.files.find((file) => file.path === "src/beta.ts");
-    const movedLine = beta?.hunks.flatMap((hunk) => hunk.lines).find((line) => line.text.includes("movedBlock"));
+    const movedLine = beta?.hunks
+      .flatMap((hunk) => hunk.lines)
+      .find((line) => line.text.includes("movedBlock"));
     if (movedLine?.moved?.path !== "src/alpha.ts") {
       throw new Error("moved block is not linked to src/alpha.ts");
     }
-    const betaFileHref = new URL(apiHref({ kind: "file", path: "src/beta.ts", side: "new" }), `${running.url}/`);
+    const betaFileHref = new URL(
+      apiHref({ kind: "file", path: "src/beta.ts", side: "new" }),
+      `${running.url}/`,
+    );
     const betaFileRes = await fetch(betaFileHref);
     assertStatus(betaFileRes, betaFileHref.href, 200);
     const betaFile = (await betaFileRes.json()) as { path: string; content: string };

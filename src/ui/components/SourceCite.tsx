@@ -45,7 +45,9 @@ export function SourceCite(props: {
         </p>
         <p className="font-medium text-foreground">{source.label}</p>
         {source.gist !== undefined ? <p className="text-muted-foreground">{source.gist}</p> : null}
-        {stale ? <p className="text-warn">This source id is missing from the review document.</p> : null}
+        {stale ? (
+          <p className="text-warn">This source id is missing from the review document.</p>
+        ) : null}
         {source.url !== undefined ? (
           <a
             className="inline-flex items-center gap-0.5 text-primary hover:underline"

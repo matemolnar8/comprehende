@@ -27,7 +27,10 @@ export function FileStrip(props: {
   const activeIndex = Math.max(0, fileIndexAtHunk(files, activeHunk));
   return (
     <div className="mt-3">
-      <nav aria-label="Files in group" className="-mx-4 mb-4 overflow-x-auto border-y border-border bg-card">
+      <nav
+        aria-label="Files in group"
+        className="-mx-4 mb-4 overflow-x-auto border-y border-border bg-card"
+      >
         <ul className="flex gap-1 px-3 py-2">
           {files.map((file, i) => {
             const viewed = viewedPaths.has(file.path);
@@ -70,7 +73,8 @@ function FileCounters(props: { file: GroupFile }) {
       {pure || file.kind === "image" ? null : (
         <>
           {word !== undefined ? " " : null}
-          <span className="text-del">−{file.removed}</span> <span className="text-add">+{file.added}</span>
+          <span className="text-del">−{file.removed}</span>{" "}
+          <span className="text-add">+{file.added}</span>
         </>
       )}
       {word !== undefined && file.relocation?.similarity !== undefined ? (
@@ -142,8 +146,17 @@ export function FileRail(props: {
     return (
       <div className="mt-4 flex min-h-0 gap-0 max-sm:flex-col">
         <div className="flex min-w-0 flex-1 flex-col gap-5">{props.children}</div>
-        <div className="sticky top-4 flex h-[calc(100vh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3" style={{ width: "44px" }}>
-          <Button size="icon-sm" variant="ghost" className="size-7" aria-label="Expand file list" onClick={toggle}>
+        <div
+          className="sticky top-4 flex h-[calc(100vh-8rem)] shrink-0 self-start flex-col items-center gap-3 border-l border-border bg-card py-3"
+          style={{ width: "44px" }}
+        >
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="size-7"
+            aria-label="Expand file list"
+            onClick={toggle}
+          >
             <ChevronRightIcon className="size-4 rotate-180" />
           </Button>
           <div className="font-mono text-[10px] leading-none text-muted-foreground [writing-mode:vertical-lr]">
@@ -164,9 +177,17 @@ export function FileRail(props: {
       >
         <div className="flex items-center gap-2 border-b border-border px-2 py-1.5">
           <p className="flex-1 font-mono text-[11px] tabular-nums text-muted-foreground">
-            {reading === null ? null : <ReadingMark paths={filePaths} viewed={viewedPaths} noun className="mt-0" />}
+            {reading === null ? null : (
+              <ReadingMark paths={filePaths} viewed={viewedPaths} noun className="mt-0" />
+            )}
           </p>
-          <Button size="icon-sm" variant="ghost" className="size-7 shrink-0" aria-label="Collapse file list" onClick={toggle}>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            className="size-7 shrink-0"
+            aria-label="Collapse file list"
+            onClick={toggle}
+          >
             <ChevronRightIcon className="size-4" />
           </Button>
         </div>
@@ -182,12 +203,19 @@ export function FileRail(props: {
                     onClick={() => props.onSelect(file.firstIndex)}
                     className={cn(
                       "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors",
-                      active ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                      active
+                        ? "bg-accent text-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                   >
                     <FileIcon className="mt-0.5 size-3.5 shrink-0" />
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block truncate font-mono text-xs leading-tight", viewed && "opacity-60")}>
+                      <span
+                        className={cn(
+                          "block truncate font-mono text-xs leading-tight",
+                          viewed && "opacity-60",
+                        )}
+                      >
                         {fileBasename(file.path)}
                       </span>
                       {file.oldPath !== undefined ? (
@@ -202,7 +230,9 @@ export function FileRail(props: {
                       <span className="mt-0.5 flex items-center gap-1.5">
                         <FileCounters file={file} />
                         {file.hunkCount > 1 ? (
-                          <span className="font-mono text-[10px] text-muted-foreground">{file.hunkCount} hunks</span>
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {file.hunkCount} hunks
+                          </span>
                         ) : null}
                       </span>
                     </span>

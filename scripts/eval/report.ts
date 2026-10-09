@@ -1,12 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Finding, GraderResult } from "./graders.ts";
-import {
-  caseFailed,
-  formatCaseLine,
-  type CaseResult,
-  type RunSummary,
-} from "./result.ts";
+import { caseFailed, formatCaseLine, type CaseResult, type RunSummary } from "./result.ts";
 
 export async function writeEvalReport(runDir: string, summary: RunSummary): Promise<string> {
   const path = evalReportPath(runDir);
@@ -98,8 +93,8 @@ li { margin: 0.2rem 0; }
 <header>
 <h1>Eval ${escapeHtml(summary.stamp)}</h1>
 <p class="meta">producer ${escapeHtml(summary.producerModel)} · ${
-  summary.graders ? `grader ${escapeHtml(summary.graderModel)}` : "graders off"
-} · skill ${escapeHtml(summary.skillTree.slice(0, 7))}</p>
+    summary.graders ? `grader ${escapeHtml(summary.graderModel)}` : "graders off"
+  } · skill ${escapeHtml(summary.skillTree.slice(0, 7))}</p>
 <p class="headline">${escapeHtml(headline)}</p>
 <nav>
 ${summary.cases
@@ -154,14 +149,18 @@ function caseHtml(result: CaseResult): string {
   }
   const lints = result.checks?.lints ?? [];
   if (lints.length > 0) {
-    parts.push(block("Lint", `<ul>${lints.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`));
+    parts.push(
+      block("Lint", `<ul>${lints.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`),
+    );
   }
   if (result.claims !== undefined) {
     const missing =
       result.claims.missing.length === 0
         ? ""
         : `<ul>${result.claims.missing.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
-    parts.push(block("Claims", `<p>${result.claims.stated} of ${result.claims.total} stated.</p>${missing}`));
+    parts.push(
+      block("Claims", `<p>${result.claims.stated} of ${result.claims.total} stated.</p>${missing}`),
+    );
   }
   const grouping = graderHtml("Grouping", result.grouping);
   if (grouping !== undefined) {

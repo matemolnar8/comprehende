@@ -1,4 +1,11 @@
-export type CommandName = "review" | "validate" | "serve" | "export" | "digest" | "show" | "pregroup";
+export type CommandName =
+  | "review"
+  | "validate"
+  | "serve"
+  | "export"
+  | "digest"
+  | "show"
+  | "pregroup";
 
 export type CliRequest =
   | { kind: "help" }

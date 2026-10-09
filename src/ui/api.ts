@@ -1,5 +1,14 @@
 import { apiHref, type ApiResource } from "../api/paths.ts";
-import type { ApiBlame, ApiFile, ApiHunk, ApiHunks, ApiGroupFile, ApiReview, FileKind, FileSide } from "../api/types.ts";
+import type {
+  ApiBlame,
+  ApiFile,
+  ApiHunk,
+  ApiHunks,
+  ApiGroupFile,
+  ApiReview,
+  FileKind,
+  FileSide,
+} from "../api/types.ts";
 import type { FileStatus } from "../schema/types.ts";
 
 // UI LiveHunk is ApiHunk (adds language, omits patch), not schema LiveHunk (adds patch, omits language).

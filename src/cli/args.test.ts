@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { readPackageVersion } from "../package-root.ts";
 import { parseArgv, DEFAULT_PORT } from "./args.ts";
 import { isCliEntry, run } from "./main.ts";
@@ -40,7 +40,10 @@ describe("parseArgv", () => {
   });
 
   it("parses review flags", () => {
-    const req = parseArgv(["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"], "/repo");
+    const req = parseArgv(
+      ["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"],
+      "/repo",
+    );
     assert.deepEqual(req, {
       kind: "command",
       command: "review",

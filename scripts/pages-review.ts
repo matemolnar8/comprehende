@@ -164,22 +164,27 @@ export async function prunePagesReviews(opts: PrunePagesOpts): Promise<PagesResu
       return { removed: [], pushed: false };
     }
     const removed: PagesDest[] = [];
-    const pushed = await applyAndPush(pages, ctx, () => pruneMessage(removed), async () => {
-      removed.length = 0;
-      const sites = await listPublished(pages);
-      for (const site of sites) {
-        if (matchesPrune(site, opts, now)) {
-          removed.push(destOf(site));
+    const pushed = await applyAndPush(
+      pages,
+      ctx,
+      () => pruneMessage(removed),
+      async () => {
+        removed.length = 0;
+        const sites = await listPublished(pages);
+        for (const site of sites) {
+          if (matchesPrune(site, opts, now)) {
+            removed.push(destOf(site));
+          }
         }
-      }
-      if (removed.length === 0) {
-        return;
-      }
-      for (const dest of removed) {
-        await rm(destDir(pages, dest), { recursive: true, force: true });
-      }
-      await writeScaffold(pages);
-    });
+        if (removed.length === 0) {
+          return;
+        }
+        for (const dest of removed) {
+          await rm(destDir(pages, dest), { recursive: true, force: true });
+        }
+        await writeScaffold(pages);
+      },
+    );
     return { removed, pushed };
   });
 }
@@ -191,12 +196,18 @@ function publishMessage(dest: PagesDest): string {
 function pruneMessage(removed: PagesDest[]): string {
   const dest = removed[0];
   if (removed.length === 1 && dest !== undefined) {
-    return dest.kind === "pr" ? `Remove Pages review for PR #${dest.pr}` : `Remove Pages site ${dest.name}`;
+    return dest.kind === "pr"
+      ? `Remove Pages review for PR #${dest.pr}`
+      : `Remove Pages site ${dest.name}`;
   }
   return `Remove Pages sites ${removed.map(destLabel).join(", ")}`;
 }
 
-export async function initPagesBranch(opts: { repo: string; remote?: string; branch?: string }): Promise<PagesResult> {
+export async function initPagesBranch(opts: {
+  repo: string;
+  remote?: string;
+  branch?: string;
+}): Promise<PagesResult> {
   const ctx = { ...opts, createIfMissing: true };
   return withPagesWorktree(ctx, async (pagesDir) => {
     const pages = requirePages(pagesDir);
@@ -224,10 +235,16 @@ async function withPagesWorktree<T>(
   const branch = opts.branch ?? PAGES_BRANCH;
   const remoteUrl = (await git(repo, ["remote", "get-url", remote])).trim();
   await ensureGitIdentity(repo);
-  await git(repo, ["fetch", remote, `${branch}:refs/remotes/${remote}/${branch}`], { allowFail: true });
+  await git(repo, ["fetch", remote, `${branch}:refs/remotes/${remote}/${branch}`], {
+    allowFail: true,
+  });
   await git(repo, ["worktree", "prune"]);
 
-  const hasRemoteBranch = await gitOk(repo, ["rev-parse", "--verify", `refs/remotes/${remote}/${branch}`]);
+  const hasRemoteBranch = await gitOk(repo, [
+    "rev-parse",
+    "--verify",
+    `refs/remotes/${remote}/${branch}`,
+  ]);
   if (!hasRemoteBranch && !opts.createIfMissing) {
     return fn(undefined, remoteUrl);
   }
@@ -317,8 +334,14 @@ async function applyAndPush(
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt++) {
     if (attempt > 0) {
-      await git(pages, ["fetch", remote, `${branch}:refs/remotes/${remote}/${branch}`], { allowFail: true });
-      const hasRemote = await gitOk(pages, ["rev-parse", "--verify", `refs/remotes/${remote}/${branch}`]);
+      await git(pages, ["fetch", remote, `${branch}:refs/remotes/${remote}/${branch}`], {
+        allowFail: true,
+      });
+      const hasRemote = await gitOk(pages, [
+        "rev-parse",
+        "--verify",
+        `refs/remotes/${remote}/${branch}`,
+      ]);
       if (!hasRemote) {
         break;
       }
@@ -424,7 +447,11 @@ function comparePublished(a: PublishedMeta, b: PublishedMeta): number {
 }
 
 function escapeHtml(text: string): string {
-  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

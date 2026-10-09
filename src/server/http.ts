@@ -2,7 +2,13 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { createReadStream, existsSync, statSync } from "node:fs";
 import { extname, join } from "node:path";
 import { ApiError } from "../api/error.ts";
-import { openReview, pinReviewSource, renderResource, snapshotJson, type Snapshot } from "../api/live.ts";
+import {
+  openReview,
+  pinReviewSource,
+  renderResource,
+  snapshotJson,
+  type Snapshot,
+} from "../api/live.ts";
 import { isSafePath, parseApiPath } from "../api/paths.ts";
 import { GitError } from "../git/exec.ts";
 import { resolveInsideRoot, type PinnedRange } from "../git/repo.ts";
@@ -171,7 +177,10 @@ export async function startStaticSite(root: string, port = 0): Promise<RunningSe
         }
         const host = req.headers.host ?? LOOPBACK_HOST;
         const url = new URL(req.url ?? "/", `http://${host}`);
-        const relative = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+        const relative =
+          url.pathname === "/"
+            ? "index.html"
+            : decodeURIComponent(url.pathname.replace(/^\/+/, ""));
         await serveFileFromRoot(res, root, relative);
       } catch (error) {
         const status = error instanceof ApiError ? error.status : 500;

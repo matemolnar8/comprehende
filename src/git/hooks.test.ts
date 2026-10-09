@@ -4,13 +4,13 @@ import { chmod, cp, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises
 import { existsSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
-import { after, describe, it } from "node:test";
+import { afterAll, describe, it } from "vite-plus/test";
 import { findPackageRoot } from "../package-root.ts";
 import { git } from "./exec.ts";
 
 const roots: string[] = [];
 
-after(() => {
+afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
@@ -52,7 +52,10 @@ async function initHookRepo(repo: string, token: string): Promise<void> {
   await git(repo, ["config", "user.email", "comprehende@example.com"]);
   await git(repo, ["config", "user.name", "Comprehende Fixture"]);
   await git(repo, ["config", "commit.gpgsign", "false"]);
-  await cp(join(findPackageRoot(), "scripts/install-git-hooks.js"), join(repo, "scripts/install-git-hooks.js"));
+  await cp(
+    join(findPackageRoot(), "scripts/install-git-hooks.js"),
+    join(repo, "scripts/install-git-hooks.js"),
+  );
   await writeHook(repo, token);
   await git(repo, ["add", "."]);
   await git(repo, ["commit", "-m", "seed", "-n"]);

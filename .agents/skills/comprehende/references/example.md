@@ -52,9 +52,7 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
       "why": "The login route needs one helper to apply the session cookie options.",
       "summary": "`setSessionCookie` applies the required options to session cookies, and its test checks them.",
       "part": "Session cookie",
-      "lookFor": [
-        "Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."
-      ],
+      "lookFor": ["Breaking. `setSessionCookie` throws when the caller passes `httpOnly: false`."],
       "suggestedOrder": 0,
       "hunkRefs": ["src/auth/session.ts", "src/auth/session.test.ts"]
     },

@@ -1,6 +1,15 @@
 import { basename } from "./types.ts";
 
-export const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "ico"] as const;
+export const IMAGE_EXTENSIONS = [
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "webp",
+  "bmp",
+  "avif",
+  "ico",
+] as const;
 
 const IMAGE_EXT = new Set<string>(IMAGE_EXTENSIONS);
 

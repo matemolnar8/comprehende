@@ -49,4 +49,3 @@
 **Skill.** Grouping instructions. Does not talk to git.
 
 **CLI.** review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
-

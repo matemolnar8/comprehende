@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vite-plus/test";
 import { groupingPrompt, parseGraderJson, prosePrompt } from "./graders.ts";
-import { caseFailed, formatCaseLine, formatDuration, formatRunTotals, formatTokens, type CaseResult } from "./result.ts";
+import {
+  caseFailed,
+  formatCaseLine,
+  formatDuration,
+  formatRunTotals,
+  formatTokens,
+  type CaseResult,
+} from "./result.ts";
 import type { AgentRunResult } from "./musecode.ts";
 
 const finishedRun: AgentRunResult = {
@@ -36,7 +43,9 @@ Short sentences.
 
 describe("grader JSON", () => {
   it("parses fenced objects", () => {
-    const output = parseGraderJson(`Here you go\n\`\`\`json\n{"findings":[{"check":"concern","severity":"minor","where":"g1","note":"Directory grouped."}]}\n\`\`\``);
+    const output = parseGraderJson(
+      `Here you go\n\`\`\`json\n{"findings":[{"check":"concern","severity":"minor","where":"g1","note":"Directory grouped."}]}\n\`\`\``,
+    );
     assert.equal(output.findings.length, 1);
     assert.equal(output.findings[0]?.check, "concern");
   });
@@ -72,7 +81,10 @@ describe("eval result line", () => {
         apartOk: 1,
         apartTotal: 1,
       },
-      grouping: { run: finishedRun, output: { findings: [{ check: "x", severity: "major", where: "g", note: "n" }] } },
+      grouping: {
+        run: finishedRun,
+        output: { findings: [{ check: "x", severity: "major", where: "g", note: "n" }] },
+      },
       prose: { run: finishedRun, output: { findings: [] } },
       claims: { stated: 4, total: 5, missing: ["one"] },
     };
@@ -131,7 +143,11 @@ describe("eval result line", () => {
     assert.match(grouping, /git work tree/);
     assert.doesNotMatch(grouping, /Do not use tools/);
     assert.doesNotMatch(grouping, /packetPath/);
-    const prose = prosePrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a", claims: ["claim one"] });
+    const prose = prosePrompt({
+      skillMd: skillStub,
+      packet: "PACKET_UNIQUE_7f3a",
+      claims: ["claim one"],
+    });
     assert.match(prose, /PACKET_UNIQUE_7f3a/);
     assert.match(prose, /Start from this packet/);
     assert.match(prose, /Ask whether document why/);
@@ -165,7 +181,10 @@ describe("eval result line", () => {
         },
       ],
     });
-    assert.match(line, /producer 2k tok  producer-tools 1  input 1k tok  cache-read 800 tok  output 200 tok  graders 1k tok/);
+    assert.match(
+      line,
+      /producer 2k tok  producer-tools 1  input 1k tok  cache-read 800 tok  output 200 tok  graders 1k tok/,
+    );
     assert.match(line, /cli-hunt 1\/1 producer tools/);
     assert.match(line, /grader-tools 0/);
   });
