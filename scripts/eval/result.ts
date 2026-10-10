@@ -40,7 +40,7 @@ export function caseFailed(result: CaseResult): boolean {
 
 const REASON_MAX = 120;
 
-function producerFailureReason(error: string): string {
+export function producerFailureReason(error: string): string {
   const firstLine = (error.split("\n")[0] ?? "").trim();
   return firstLine.length > REASON_MAX ? `${firstLine.slice(0, REASON_MAX)}...` : firstLine;
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { groupingPrompt, parseGraderJson, prosePrompt } from "./graders.ts";
+import { groupingPrompt, parseGraderJson, prosePrompt, shouldRetryGraderRun } from "./graders.ts";
 import {
   caseFailed,
   formatCaseLine,
@@ -52,6 +52,16 @@ describe("grader JSON", () => {
 
   it("rejects junk", () => {
     assert.throws(() => parseGraderJson("no json here"));
+  });
+
+  it("retries only when the model returned text", () => {
+    assert.equal(shouldRetryGraderRun({ ...finishedRun, text: "not json" }), true);
+    assert.equal(shouldRetryGraderRun({ ...finishedRun, text: "   " }), false);
+    assert.equal(shouldRetryGraderRun({ ...finishedRun, text: "" }), false);
+    assert.equal(
+      shouldRetryGraderRun({ ...finishedRun, status: "error", text: "not json" }),
+      false,
+    );
   });
 });
 

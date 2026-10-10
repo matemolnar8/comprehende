@@ -35,6 +35,7 @@ import {
   formatBaselineDelta,
   formatCaseLine,
   formatRunTotals,
+  producerFailureReason,
   writeCaseArtifacts,
   type CaseResult,
   type RunSummary,
@@ -169,26 +170,47 @@ async function evalOneCase(opts: {
       }
       const skillDir = join(tmp, "skill");
       await copySkillForEval(opts.packageRoot, skillDir, cliPath);
-      const producer = await runProducer({
+      const prompt = producerPrompt({
         repoCwd,
-        model: opts.producerModel,
-        apiKey: opts.apiKey,
-        prompt: producerPrompt({
-          repoCwd,
-          skillMd: join(skillDir, "SKILL.md"),
-          sourcesDir,
-          outPath: reviewPath,
-          base: opts.spec.base,
-          head: opts.spec.head,
-          cliPath,
-        }),
+        skillMd: join(skillDir, "SKILL.md"),
+        sourcesDir,
+        outPath: reviewPath,
+        base: opts.spec.base,
+        head: opts.spec.head,
+        cliPath,
       });
-      result.producer = producer;
-      await writeFile(join(caseOut, "producer.md"), producer.text);
-      if (producer.status !== "finished" || producer.error !== undefined) {
-        result.producerError = producer.error ?? `producer status ${producer.status}`;
-      } else if (!existsSync(reviewPath)) {
-        result.producerError = `producer did not write ${reviewPath}`;
+      const runProducerOnce = (): Promise<
+        Awaited<ReturnType<typeof runProducer>> | { thrown: string }
+      > =>
+        runProducer({ repoCwd, model: opts.producerModel, apiKey: opts.apiKey, prompt }).catch(
+          (error: unknown) => ({
+            thrown: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      let producer = await runProducerOnce();
+      // Retry once when the agent run itself failed and wrote no review.
+      // Validate and size gates still fail the case without a retry.
+      const attemptFailed =
+        "thrown" in producer || producer.status !== "finished" || producer.error !== undefined;
+      if (attemptFailed && !existsSync(reviewPath)) {
+        console.error(`${opts.spec.id} producer attempt 1 failed, retrying once`);
+        producer = await runProducerOnce();
+      }
+      if ("thrown" in producer) {
+        result.producerError = producer.thrown;
+      } else {
+        result.producer = producer;
+        await writeFile(join(caseOut, "producer.md"), producer.text);
+        if (producer.status !== "finished" || producer.error !== undefined) {
+          result.producerError = producer.error ?? `producer status ${producer.status}`;
+        } else if (!existsSync(reviewPath)) {
+          result.producerError = `producer did not write ${reviewPath}`;
+        }
+      }
+      if (result.producerError !== undefined) {
+        console.error(
+          `${opts.spec.id} producer FAIL: ${producerFailureReason(result.producerError)}`,
+        );
       }
     }
 
