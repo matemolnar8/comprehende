@@ -12,8 +12,9 @@ Producer and graders run in Muse Code (`muse exec`). Both default to `muse-spark
 ## Long runs
 
 - Start the run in tmux with output going to a log file. Wait with `AwaitShell`. Do not poll with repeated `grep` or `ps` calls.
-- A case that fails with `[canceled] This operation was aborted` can end the whole suite (issue #123). Re-run only the cases that did not finish with `--case <id>`. Do not re-run the full suite.
-- Each run writes `eval/runs/<stamp>/summary.json`. Read the failed case's `result.json` there for the full error.
+- Run one eval process at a time. Parallel runs share one `node_modules` and race `pnpm` and the shared esbuild store.
+- A failed producer retries once when it wrote no `review.json`. Validate and size failures do not retry. Graders retry only when the model returned text that is not JSON, so a stall does not spend another full timeout.
+- Each run writes `eval/runs/<stamp>/summary.json`. Read the failed case's `result.json` there for the full error. Producer failures also print to stderr as soon as the producer returns, before the graders finish.
 
 ## Muse setup
 

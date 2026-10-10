@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { GRADER_TIMEOUT_MS } from "./constants.ts";
 import { runMuseCodeAgent, type AgentRunResult } from "./musecode.ts";
 import { skillSection } from "./skill.ts";
 
@@ -112,6 +113,10 @@ export function prosePrompt(opts: { skillMd: string; packet: string; claims: str
   ].join("\n");
 }
 
+export function shouldRetryGraderRun(run: AgentRunResult): boolean {
+  return run.status === "finished" && run.text.trim() !== "";
+}
+
 export async function runGrader(opts: {
   repoCwd: string;
   model: string;
@@ -125,11 +130,22 @@ export async function runGrader(opts: {
       prompt,
       apiKey: opts.apiKey,
       readOnly: true,
+      timeoutMs: GRADER_TIMEOUT_MS,
     });
   const first = await runOnce(opts.prompt);
   try {
     return { run: first, output: parseGraderJson(first.text) };
   } catch {
+    // Retry only when the model returned text that is not JSON. A stall or
+    // a transport error leaves empty text or an error status; retrying that
+    // would spend another full grader timeout for the same outcome.
+    if (!shouldRetryGraderRun(first)) {
+      return {
+        run: first,
+        output: { findings: [] },
+        parseError: first.error ?? "grader returned no text",
+      };
+    }
     const retry = await runOnce(
       `${opts.prompt}\n\nYour previous reply was not valid JSON. Return only the JSON object, no markdown.`,
     );
