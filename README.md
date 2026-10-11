@@ -36,7 +36,17 @@ This tool is for preventing this cognitive surrender while trying to maintain mo
 
 ## Develop
 
-[pnpm](https://pnpm.io/).
+This repo uses [Vite+](https://viteplus.dev/), so install the global `vp`
+command-line tool once. T3 Code worktrees need it: `t3.json` runs
+`node scripts/setup-worktree.ts` for new worktrees, which installs
+dependencies with `vp i`.
+
+```sh
+curl -fsSL https://vite.plus | bash
+```
+
+On Windows: `irm https://vite.plus/ps1 | iex`. See https://viteplus.dev/guide/
+for more information.
 
 `pnpm build` emits `dist/cli` and `dist/ui`. `prepack` runs that build, so `pnpm pack` / `pnpm publish` always ship the UI.
 
