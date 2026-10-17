@@ -27,7 +27,7 @@ import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib
 import { lookForClaims, openTargetForSource } from "./lib/look-for.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
-import { useNarrow } from "./lib/narrow.ts";
+import { resolveWrap, useNarrow } from "./lib/narrow.ts";
 import { linePinnedSources } from "../schema/source.ts";
 import type { Source } from "../schema/types.ts";
 import {
@@ -45,7 +45,7 @@ export function App() {
   const [payloadFiles, setPayloadFiles] = useState<ApiGroupFile[]>([]);
   const [hunksKey, setHunksKey] = useState<string | null>(null);
   const [hunkError, setHunkError] = useState<string | null>(null);
-  const [wrap, setWrap] = useState(false);
+  const [wrapOverride, setWrapOverride] = useState<boolean | null>(null);
   const [split, setSplit] = useState(false);
   const [splitRatio, setSplitRatio] = useState(0.5);
   const [showComments, setShowComments] = useState(true);
@@ -58,6 +58,8 @@ export function App() {
   const hashReady = useRef(false);
   const appliedHash = useRef<string | null>(null);
   const narrow = useNarrow();
+  const wrap = resolveWrap(wrapOverride, narrow);
+  const toggleWrap = useCallback(() => setWrapOverride(!wrap), [wrap]);
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell-overlay",
     panelIds: ["stack", "main"],
@@ -234,7 +236,7 @@ export function App() {
         return;
       }
       if (event.key === "w") {
-        setWrap((value) => !value);
+        toggleWrap();
       } else if (event.key === "c") {
         const pinned = linePinnedSources(meta?.document.sources);
         if (pinned.length > 0) {
@@ -304,6 +306,7 @@ export function App() {
     selectFromNav,
     selection,
     setFileViewed,
+    toggleWrap,
     viewedPaths,
   ]);
 
@@ -439,7 +442,7 @@ export function App() {
               onSelect={selectFromNav}
               viewedPaths={viewedPaths}
               wrap={wrap}
-              onWrap={() => setWrap((value) => !value)}
+              onWrap={toggleWrap}
               comments={showComments}
               onComments={
                 pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
@@ -455,7 +458,7 @@ export function App() {
                 onSelect={selectFromNav}
                 wrap={wrap}
                 split={split}
-                onWrap={() => setWrap((value) => !value)}
+                onWrap={toggleWrap}
                 onUnified={() => setSplit(false)}
                 onSplit={() => {
                   setSplit(true);

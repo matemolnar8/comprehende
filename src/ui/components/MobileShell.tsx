@@ -13,7 +13,7 @@ import type { Part } from "../lib/parts.ts";
 import { reviewReadingPaths } from "../lib/reading-progress.ts";
 import { selectionCaption, type Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
-import { ThemeToggle } from "./Header.tsx";
+import { MonoFontToggle, ThemeToggle } from "./Header.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
 import { Sidebar } from "./Sidebar.tsx";
 
@@ -86,6 +86,7 @@ export function MobileShell(props: {
               <MessageSquareIcon />
             </Button>
           ) : null}
+          <MonoFontToggle />
           <ThemeToggle system={<SmartphoneIcon />} />
         </div>
       </header>

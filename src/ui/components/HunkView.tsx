@@ -157,7 +157,7 @@ export function HunkView(props: {
                 type="button"
                 variant="link"
                 className={cn(
-                  "h-auto min-w-0 max-w-full shrink justify-start truncate p-0 text-left font-mono text-sm transition-colors",
+                  "h-auto min-w-0 max-w-full shrink justify-start truncate p-0 text-left font-mono text-xs transition-colors min-[800px]:text-sm",
                   motion,
                   viewed && "text-muted-foreground",
                 )}
@@ -170,7 +170,7 @@ export function HunkView(props: {
           </Tooltip>
           <div className="ml-auto flex shrink-0 items-center gap-3">
             {pure ? null : (
-              <code className="font-mono text-xs text-muted-foreground">
+              <code className="font-mono text-xs text-muted-foreground max-[799px]:hidden">
                 {file.kind === "image"
                   ? "image"
                   : file.kind === "lockfile"

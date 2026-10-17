@@ -47,6 +47,8 @@ const PIERRE_UNSAFE_CSS = `
 [data-virtualizer-buffer] {
   --diffs-header-font-family: var(--font-sans) !important;
   --diffs-font-family: var(--font-mono) !important;
+  --diffs-font-size: var(--diff-font-size) !important;
+  --diffs-line-height: var(--diff-line-height) !important;
   --diffs-bg: var(--diff-canvas) !important;
   --diffs-light-bg: var(--diff-canvas) !important;
   --diffs-dark-bg: var(--diff-canvas) !important;
@@ -83,6 +85,21 @@ const PIERRE_UNSAFE_CSS = `
 
 [data-diff-type="split"][data-overflow="scroll"] {
   grid-template-columns: minmax(0, var(--comprehende-split-left, 1fr)) minmax(0, var(--comprehende-split-right, 1fr)) !important;
+}
+
+@media (max-width: 799px) {
+  [data-column-number] {
+    padding-left: 1ch !important;
+  }
+  [data-line],
+  [data-column-number],
+  [data-no-newline] {
+    padding-inline: 0.5ch !important;
+  }
+  [data-gutter-buffer] {
+    padding-left: 1ch !important;
+    padding-right: 0.5ch !important;
+  }
 }
 
 [data-diff-type="split"][data-overflow="wrap"],

@@ -70,6 +70,8 @@
   --warn: #9a6700;
   --add-bg: color-mix(in srgb, #1a7f37 16%, transparent);
   --del-bg: color-mix(in srgb, #cf222e 16%, transparent);
+  --diff-font-size: 13px;
+  --diff-line-height: 20px;
   --diff-canvas: #ffffff;
   --diff-fg: #1f2328;
   --diff-add-line: #e6ffec;
@@ -129,6 +131,23 @@
   --strand-3: #6ed0d6;
   --strand-4: #e399c0;
   --strand-5: #9ab0c2;
+}
+
+@media (max-width: 799px) {
+  :root {
+    --diff-font-size: 11px;
+    --diff-line-height: 17px;
+  }
+}
+
+/* Pierre reads font size and leading on its host. Inner rules never reach it. */
+diffs-container {
+  --diffs-font-size: var(--diff-font-size);
+  --diffs-line-height: var(--diff-line-height);
+}
+
+:root[data-mono-font="iosevka"] {
+  --font-mono: "Iosevka", "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 @layer base {
