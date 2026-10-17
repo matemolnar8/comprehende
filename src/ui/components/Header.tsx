@@ -8,6 +8,7 @@ import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
+import { useMonoFont } from "@/lib/MonoFontProvider.tsx";
 import type { Selection } from "../lib/selection.ts";
 import { GroupNav } from "./GroupNav.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
@@ -129,6 +130,7 @@ export function Header(props: {
           </div>
           <Kbd className="max-sm:hidden">s</Kbd>
         </div>
+        <MonoFontToggle />
         <ThemeToggle />
         {busy ? <WaitMark layout="inline" label={waitCopy.review} /> : null}
         <Tooltip>
@@ -190,6 +192,30 @@ function CopyRef(props: { display: string; copy: string; tooltip: string }) {
       <TooltipContent className="max-w-[min(24rem,calc(100vw-2rem))] font-mono">
         {props.tooltip}
       </TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function MonoFontToggle() {
+  const { font, toggleMonoFont } = useMonoFont();
+  const iosevka = font === "iosevka";
+  const label = iosevka ? "Use IBM Plex Mono for code" : "Use Iosevka for code";
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          size="icon-sm"
+          variant="outline"
+          aria-label={label}
+          aria-pressed={iosevka}
+          onClick={toggleMonoFont}
+        >
+          <span aria-hidden className="text-[11px] leading-none" style={{ fontFamily: "var(--font-mono)" }}>
+            Aa
+          </span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }

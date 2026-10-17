@@ -27,7 +27,7 @@ export const GAP_CSS = `
     width: max-content;
     background: transparent;
     color: var(--diffs-fg-number);
-    font-size: 0.75rem;
+    font-size: var(--diff-font-size, 0.75rem);
     margin-left: calc(-2ch - 2px);
   }
 
