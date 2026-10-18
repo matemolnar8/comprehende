@@ -210,7 +210,11 @@ export function MonoFontToggle() {
           aria-pressed={iosevka}
           onClick={toggleMonoFont}
         >
-          <span aria-hidden className="text-[11px] leading-none" style={{ fontFamily: "var(--font-mono)" }}>
+          <span
+            aria-hidden
+            className="text-[11px] leading-none"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
             Aa
           </span>
         </Button>
