@@ -72,3 +72,4 @@ jobs:
           name: eval-run
           path: eval/runs
           if-no-files-found: ignore
+          retention-days: 7
