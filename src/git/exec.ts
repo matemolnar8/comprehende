@@ -3,7 +3,6 @@ import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
 
-/** Mirrored in scripts/install-git-hooks.js, which runs as plain node without tsx. Update both. */
 const GIT_DIR_VARS = new Set([
   "GIT_DIR",
   "GIT_WORK_TREE",
