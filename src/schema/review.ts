@@ -54,6 +54,12 @@ const reviewSourceSchema = z.strictObject(
     baseRef: nonemptyString(),
     headRef: nonemptyString(),
     range: nonemptyString().optional(),
+    baseSha: nonemptyString(
+      "Commit baseRef resolved to when this document was written. refresh diffs from it.",
+    ).optional(),
+    headSha: nonemptyString(
+      "Commit headRef resolved to when this document was written. refresh diffs from it.",
+    ).optional(),
   },
   { error: objectError },
 );

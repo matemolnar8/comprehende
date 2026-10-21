@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { toHunkRef } from "../git/diff.ts";
-import { formatStoredHunkRef, hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
+import { hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
+import { reviewFileBody } from "../review/write.ts";
 import type { HunkIndex, HunkRef, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 
 export const MIXED_PART_APP = "App name";
@@ -191,16 +192,7 @@ export async function writeMixedCoveringDocument(
   return writeReview(dataPath, mixedCoveringDocument(index));
 }
 
-export function reviewFileBody(document: ReviewDocument): string {
-  const written = {
-    ...document,
-    groups: document.groups.map((group) => ({
-      ...group,
-      hunkRefs: group.hunkRefs.map((ref) => formatStoredHunkRef(ref)),
-    })),
-  };
-  return `${JSON.stringify(written, null, 2)}\n`;
-}
+export { reviewFileBody };
 
 async function writeReview(dataPath: string, document: ReviewDocument): Promise<ReviewDocument> {
   await writeFile(dataPath, reviewFileBody(document));

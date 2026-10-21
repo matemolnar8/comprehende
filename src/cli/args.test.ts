@@ -39,6 +39,13 @@ describe("parseArgv", () => {
     });
   });
 
+  it("parses refresh flags", () => {
+    const req = parseArgv(["refresh", "--data", "review.json", "--head", "origin/feat"], "/repo");
+    assert.equal(req.kind, "command");
+    assert.equal(req.kind === "command" && req.command, "refresh");
+    assert.equal(req.kind === "command" && req.head, "origin/feat");
+  });
+
   it("parses review flags", () => {
     const req = parseArgv(
       ["review", "--data", "review.json", "--base", "origin/main", "--head", "HEAD"],

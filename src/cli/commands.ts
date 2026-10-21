@@ -12,10 +12,18 @@ import { coverReview, coverageErrors } from "../review/coverage.ts";
 import { buildDigest, digestHunkRefs, formatDigest } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
+import { formatRefresh, refreshDocument } from "../review/refresh.ts";
 import { skeletonDocument } from "../review/skeleton.ts";
+import { writeDocument } from "../review/write.ts";
+import { listNewSubjects } from "../git/log.ts";
 import { parseHunkRefString } from "../schema/identity.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
-import type { HunkIndex, ReviewDocument } from "../schema/types.ts";
+import {
+  shortSha,
+  type HunkIndex,
+  type ReviewDocument,
+  type ReviewSource,
+} from "../schema/types.ts";
 
 export async function cmdIndex(
   cwd: string,
@@ -207,4 +215,68 @@ export async function cmdPregroup(
   await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
   const loaded = await loadDocument(dataPath);
   return { document: loaded, index };
+}
+
+/**
+ * Carry an existing review over to the range's current commits. Refs follow their hunks,
+ * refs whose hunk left the diff are dropped, and new hunks land in a draft update group.
+ * Returns the report; `changed` is false when both commits are the ones the document names.
+ */
+export async function cmdRefresh(
+  cwd: string,
+  dataPath: string,
+  base: string | undefined,
+  head: string | undefined,
+): Promise<{ document: ReviewDocument; report: string; changed: boolean }> {
+  const document = await loadDocument(dataPath);
+  const previous = document.source;
+  if (previous.baseSha === undefined || previous.headSha === undefined) {
+    throw new Error(
+      `refresh needs source.baseSha and source.headSha in ${dataPath}; an older comprehende wrote this document. Run pregroup again.`,
+    );
+  }
+  const { source, baseSha, headSha } = await resolveSource(
+    cwd,
+    base ?? previous.baseRef,
+    head ?? previous.headRef,
+  );
+  if (baseSha === previous.baseSha && headSha === previous.headSha) {
+    return {
+      document,
+      report: `nothing to refresh: ${source.range} still resolves to ${shortSha(baseSha)}...${shortSha(headSha)}`,
+      changed: false,
+    };
+  }
+  const previousFiles = await readDiff(cwd, previous.baseSha, previous.headSha);
+  const nextFiles = await readDiff(cwd, baseSha, headSha);
+  const result = refreshDocument(document, previousFiles, nextFiles, source);
+  const commits = await listNewSubjects(cwd, previous.headSha, baseSha, headSha);
+  const stalePins = (await staleCommentPins(cwd, result.document, { baseSha, headSha })).map(
+    (pin) => pin.id,
+  );
+  await writeDocument(dataPath, result.document);
+  return {
+    document: result.document,
+    report: formatRefresh(result, nextFiles, { commits, stalePins }),
+    changed: true,
+  };
+}
+
+/** A note when the refs no longer resolve to the commits the document was written for. */
+export function sourceDrift(
+  source: ReviewSource,
+  live: { baseSha: string; headSha: string },
+  dataPath: string,
+): string | undefined {
+  const moved: string[] = [];
+  if (source.baseSha !== undefined && source.baseSha !== live.baseSha) {
+    moved.push(`base ${shortSha(source.baseSha)} -> ${shortSha(live.baseSha)}`);
+  }
+  if (source.headSha !== undefined && source.headSha !== live.headSha) {
+    moved.push(`head ${shortSha(source.headSha)} -> ${shortSha(live.headSha)}`);
+  }
+  if (moved.length === 0) {
+    return undefined;
+  }
+  return `${moved.join(", ")} since this review was written. Run: comprehende refresh --data ${dataPath}`;
 }

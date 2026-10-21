@@ -46,6 +46,8 @@
 
 **Stale ref.** Pointer that does not match live git. Serve still starts. Do not invent a replacement.
 
+**Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood.
+
 **Skill.** Grouping instructions. Does not talk to git.
 
-**CLI.** review, validate, serve, export. Cwd is the repo. `review` writes a covering skeleton only; the skill fills interpretation.
+**CLI.** review, pregroup, digest, show, refresh, validate, serve, export. Cwd is the repo. `review` and `pregroup` write a covering draft only; the skill fills interpretation.

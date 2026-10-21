@@ -5,7 +5,8 @@ export type CommandName =
   | "export"
   | "digest"
   | "show"
-  | "pregroup";
+  | "pregroup"
+  | "refresh";
 
 export type CliRequest =
   | { kind: "help" }
@@ -33,6 +34,7 @@ const COMMANDS: ReadonlySet<string> = new Set<CommandName>([
   "digest",
   "show",
   "pregroup",
+  "refresh",
 ]);
 
 export const DEFAULT_PORT = 4567;
@@ -63,6 +65,11 @@ Commands:
   pregroup  [--base <ref>] [--head <ref>] --data <review.json>
             Write a draft review: identical copies, mechanical files, and one
             change group for the rest. Accept, split, and write the prose.
+
+  refresh   [--base <ref>] [--head <ref>] --data <review.json>
+            Carry a review over to the commits its refs resolve to now. Refs
+            follow their hunks, gone refs are dropped, new hunks land in a draft
+            update group. Prints what changed, then rewrite the prose it names.
 
   validate  --data <review.json>
             Check schema, ref resolution, hunk coverage, and source citations

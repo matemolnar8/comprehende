@@ -92,6 +92,14 @@ comprehende pregroup --base <ref> --head <ref> --data review.json
 
 `digest` prints one line per changed file (kind, hunks, symbols), `show` prints the patch for one hunk or file, and `pregroup` writes a draft review (identical copies, mechanical files, one change group).
 
+When the branch gets new commits or a rebase, the review does not start over:
+
+```sh
+comprehende refresh --data review.json
+```
+
+`review` and `pregroup` record the commits the refs resolved to in `source.baseSha` and `source.headSha`. `refresh` resolves the refs again, keeps every hunk whose path and changed lines are unchanged (re-pointing its ref when only the start moved), keeps an edited hunk in its group and marks it changed, drops refs whose hunk left the diff, and puts hunks no group covers into a draft `update` group. It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
+
 ## Release
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.
