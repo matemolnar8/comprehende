@@ -117,7 +117,7 @@ export async function run(argv: string[]): Promise<number> {
         console.log(report);
         if (changed) {
           console.error(
-            `wrote ${dataPath}  ${document.groups.length} groups\nRewrite the prose of the groups named above. Then:\n  comprehende validate --data ${dataPath}`,
+            `wrote ${dataPath}  ${document.groups.length} groups\nCheck the prose of the groups named above against their new hunks. Then:\n  comprehende validate --data ${dataPath}`,
           );
         }
         return 0;

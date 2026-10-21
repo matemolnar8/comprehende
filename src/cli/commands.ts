@@ -17,6 +17,7 @@ import { skeletonDocument } from "../review/skeleton.ts";
 import { writeDocument } from "../review/write.ts";
 import { listNewSubjects } from "../git/log.ts";
 import { parseHunkRefString } from "../schema/identity.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import {
   shortSha,
@@ -108,7 +109,13 @@ export async function cmdShow(
   if (parsed === undefined) {
     throw new Error(`invalid hunk ref: ${target}`);
   }
-  const file = await readPathDiff(cwd, baseRef, headRef, parsed.path);
+  const file = await readPathDiff(
+    cwd,
+    baseRef,
+    headRef,
+    parsed.path,
+    parsed.kind === "hunk" ? parsed.oldPath : undefined,
+  );
   if (file === undefined) {
     throw new Error(`no diff for path: ${parsed.path}`);
   }
@@ -149,6 +156,9 @@ export async function cmdPregroup(
   const mechanical: string[] = [];
   const change: string[] = [];
   for (const digest of digests) {
+    if (isLockfilePath(digest.path)) {
+      continue;
+    }
     const refs = digestHunkRefs(digest);
     if (digest.mirrorOf !== undefined || mirrorRoots.has(digest.path)) {
       const root = digest.mirrorOf ?? digest.path;
