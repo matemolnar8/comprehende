@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify ae1bc763799faf6e9cb24702f6267c2807d6d72f` and `git rev-parse --verify 98f0fc86e7a373cabf4c55004f7e66825a40b5a6` in this repository.
+   Run `git rev-parse --verify ae1bc763799faf6e9cb24702f6267c2807d6d72f` and `git rev-parse --verify e340814958bfa548fa7175750c2639ca225b0dca` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,17 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  ae1bc763799faf6e9cb24702f6267c2807d6d72f
 
-head               98f0fc86e7a373cabf4c55004f7e66825a40b5a6
+head               e340814958bfa548fa7175750c2639ca225b0dca
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames ae1bc763799faf6e9cb24702f6267c2807d6d72f 98f0fc86e7a373cabf4c55004f7e66825a40b5a6
+git diff --find-renames ae1bc763799faf6e9cb24702f6267c2807d6d72f e340814958bfa548fa7175750c2639ca225b0dca
 
 Commits:
+- e340814 Refresh: tell a reformat apart from an edit
+- d188fa0 Refresh: fix show on renamed hunk refs, keep prose when a named group only reformats
 - 98f0fc8 Add refresh: carry a review over to new commits without starting over
 
 Sources:
@@ -71,7 +73,7 @@ Look for:
 
 ### 02 Match hunks across ranges and rewrite the refs (`refresh-engine`)
 
-`matchHunks` in `src/review/refresh.ts` pairs old and new hunks, `refreshDocument` re-points or drops refs and drafts an `update` group for uncovered hunks, `formatRefresh` prints the delta digest, `listNewSubjects` in `src/git/log.ts` lists the new commit subjects, and `reviewFileBody` moves from the test helper into `src/review/write.ts`.
+`matchHunks` in `src/review/refresh.ts` pairs old and new hunks as same, changed, or reformat, `refreshDocument` re-points or drops refs and drafts an `update` group for uncovered hunks, `formatRefresh` prints the delta digest, `listNewSubjects` in `src/git/log.ts` lists the new commit subjects, and `reviewFileBody` moves from the test helper into `src/review/write.ts`.
 
 Depends on:
 - 01 Record the resolved commits in source (`pinned-shas`)
@@ -80,7 +82,7 @@ Depends on:
 
 ### 03 The refresh command and the drift note (`cli`)
 
-`cmdRefresh` in `src/cli/commands.ts` loads the document, resolves the refs again, diffs both ranges, writes the result, and returns the report; `sourceDrift` builds the note that `serve` and `export` print in `src/cli/main.ts`; `src/cli/args.ts` adds the command and its usage text.
+`cmdRefresh` in `src/cli/commands.ts` loads the document, resolves the refs again, diffs both ranges, writes the result, and returns the report; `sourceDrift` builds the note that `serve` and `export` print in `src/cli/main.ts`; `src/cli/args.ts` adds the command and its usage text. Two fixes from the simulation runs ride along: `cmdShow` keeps the old path of a renamed hunk ref, and `cmdPregroup` leaves lockfiles out of the draft.
 
 Depends on:
 - 02 Match hunks across ranges and rewrite the refs (`refresh-engine`)
@@ -89,7 +91,7 @@ Depends on:
 
 ### 04 The Refresh branch in the skill (`skill`)
 
-`skills-next/comprehende/SKILL.md` gains a Refresh section, a trigger in the description, a pointer at the top of the Workflow, and a stale-ref bullet that names `refresh`; `.agents/skills/comprehende/SKILL.md` is the identical synced copy and `src/schema/skill-sync.test.ts` pins the new sentence.
+`skills-next/comprehende/SKILL.md` gains a Refresh section, a trigger in the description, a pointer at the top of the Workflow, and a stale-ref bullet that names `refresh`; `.agents/skills/comprehende/SKILL.md` is the identical synced copy and `src/schema/skill-sync.test.ts` pins the new sentence. After the simulation runs the `show` examples carry `--base` and `--head`, the refresh fetch budget counts the files the report lists, `same` and `reformat` hunks are fetched only when a kept bullet rests on them, and a named group whose hunks keep their meaning keeps its prose.
 
 Depends on:
 - 03 The refresh command and the drift note (`cli`)
