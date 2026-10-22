@@ -199,7 +199,9 @@ export function refreshDocument(
         for (const path of paths) {
           change.changed.push(...(changedByPath.get(path) ?? []));
           change.reformatted.push(...(reformatByPath.get(path) ?? []));
-          change.newHunks.push(...(addedByPath.get(path) ?? []));
+          if (!isDirHunkRef(ref)) {
+            change.newHunks.push(...(addedByPath.get(path) ?? []));
+          }
         }
         continue;
       }
@@ -244,7 +246,19 @@ export function refreshDocument(
   });
 
   const refreshed: ReviewDocument = { ...document, source, groups: nextGroups };
-  const uncovered = joinCoverage(refreshed, nextLive).unassigned;
+  // A new hunk under a directory ref goes to update too, so it is read rather than absorbed.
+  const coverage = joinCoverage(refreshed, nextLive);
+  const addedKeys = new Set(delta.added.map(hunkKey));
+  const uncovered = [
+    ...new Map(
+      [
+        ...coverage.unassigned,
+        ...coverage.groups
+          .flatMap((group) => group.dirHunks)
+          .filter((hunk) => addedKeys.has(hunkKey(hunk))),
+      ].map((hunk) => [hunkKey(hunk), hunk]),
+    ).values(),
+  ];
   if (uncovered.length === 0) {
     return { document: refreshed, previous: document.source, delta, groups, unchanged };
   }

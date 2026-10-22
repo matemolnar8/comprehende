@@ -96,15 +96,17 @@ export function linePinnedSources(sources: readonly Source[] | undefined): LineP
   return (sources ?? []).filter(isLinePinned);
 }
 
+/** `renames` maps an old path to its new one, so an old-side pin finds a directory ref. */
 export function groupIdForPinnedSource(
   document: ReviewDocument,
   source: Source,
+  renames: ReadonlyMap<string, string> = new Map(),
 ): string | undefined {
   if (!isLinePinned(source)) {
     return undefined;
   }
   const named = document.groups.filter((group) => (group.sources ?? []).includes(source.id));
-  const pinned = source.path;
+  const pinned = source.side === "old" ? (renames.get(source.path) ?? source.path) : source.path;
   const covering = document.groups.filter((group) =>
     group.hunkRefs.some((ref) => refCoversPath(ref, pinned)),
   );

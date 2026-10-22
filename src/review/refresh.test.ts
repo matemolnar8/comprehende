@@ -137,6 +137,37 @@ describe("matchHunks", () => {
 });
 
 describe("refreshDocument", () => {
+  it("drafts a new hunk under a directory ref into update", () => {
+    const previous = [file("shots/a.png", [hunk("shots/a.png", 1, 1, ["a"])])];
+    const next = [
+      file("shots/a.png", [hunk("shots/a.png", 1, 1, ["a"])]),
+      file("shots/logic.ts", [hunk("shots/logic.ts", 1, 1, ["code"])], { status: "added" }),
+    ];
+    const before = document([
+      {
+        id: "mechanical",
+        title: "M",
+        why: "w",
+        summary: "s",
+        suggestedOrder: 0,
+        hunkRefs: [{ dir: "shots/" }],
+      },
+    ]);
+    const result = refreshDocument(before, previous, next, before.source);
+    assert.deepEqual(
+      result.update?.hunks.map((item) => item.path),
+      ["shots/logic.ts"],
+    );
+    assert.deepEqual(
+      result.document.groups.map((group) => [group.id, group.hunkRefs]),
+      [
+        ["mechanical", [{ dir: "shots/" }]],
+        ["update", [{ path: "shots/logic.ts" }]],
+      ],
+    );
+    assert.deepEqual(result.groups, []);
+  });
+
   it("re-points located refs, keeps path refs, drops gone refs, and drafts an update group", () => {
     const previous = [
       file("a.ts", [hunk("a.ts", 10, 10, ["x"]), hunk("a.ts", 40, 40, ["y"])]),

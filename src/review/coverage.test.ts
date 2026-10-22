@@ -5,11 +5,11 @@ import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { readHunkIndex } from "../git/diff.ts";
-import { coverReview, joinCoverage } from "./coverage.ts";
+import { coverReview, dirRefErrors, joinCoverage } from "./coverage.ts";
 import { cmdValidate } from "../cli/commands.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
-import type { LiveHunk, ReviewDocument, ReviewHunkRef } from "../schema/types.ts";
+import type { DiffFile, LiveHunk, ReviewDocument, ReviewHunkRef } from "../schema/types.ts";
 
 const roots: string[] = [];
 
@@ -57,6 +57,67 @@ describe("coverage join", () => {
       ["src/app.ts"],
     );
     assert.deepEqual(coverage.stale, [{ dir: "gone/" }]);
+  });
+
+  it("lets a path ref or a deeper directory ref take a file from a directory ref", () => {
+    const at = (path: string): LiveHunk => ({
+      path,
+      oldStart: 0,
+      oldLines: 0,
+      newStart: 0,
+      newLines: 0,
+      header: "",
+      lines: [],
+      patch: "",
+    });
+    const groupWith = (id: string, hunkRefs: ReviewHunkRef[]) => ({
+      id,
+      title: id,
+      why: "w",
+      summary: "",
+      suggestedOrder: 0,
+      hunkRefs,
+    });
+    const live = [at("shots/a.png"), at("shots/b.png"), at("shots/linux/c.png")];
+    const coverage = joinCoverage(
+      {
+        version: 1,
+        source: { baseRef: "a", headRef: "b" },
+        size: "small",
+        title: "Most specific ref",
+        summary: "s",
+        groups: [
+          groupWith("mechanical", [{ dir: "shots/" }]),
+          groupWith("story", [{ path: "shots/b.png" }]),
+          groupWith("linux", [{ dir: "shots/linux/" }]),
+        ],
+      },
+      live,
+    );
+    const paths = (id: string) =>
+      coverage.groups.find((item) => item.group.id === id)?.hunks.map((hunk) => hunk.path);
+    assert.deepEqual(paths("mechanical"), ["shots/a.png"]);
+    assert.deepEqual(paths("story"), ["shots/b.png"]);
+    assert.deepEqual(paths("linux"), ["shots/linux/c.png"]);
+    assert.equal(coverage.unassigned.length, 0);
+
+    const logic: DiffFile = {
+      path: "shots/a.png",
+      status: "modified",
+      binary: false,
+      image: false,
+      headerPatch: "",
+      patch: "",
+      hunks: [],
+    };
+    assert.match(dirRefErrors(coverage, [logic])[0] ?? "", /group mechanical[\s\S]*shots\/a\.png/);
+    const renamed: DiffFile = {
+      ...logic,
+      status: "renamed",
+      oldPath: "old/a.png",
+      relocation: { kind: "rename" },
+    };
+    assert.deepEqual(dirRefErrors(coverage, [renamed]), []);
   });
 
   it("reports unassigned and stale refs without inventing hunks", () => {

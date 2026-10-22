@@ -32,7 +32,7 @@ export type DigestFile = {
 };
 
 /**
- * A directory whose changed files are all mechanical, most of them pure renames.
+ * A directory whose changed files are all mechanical, at least half of them pure renames.
  * One digest line and one directory ref stand for the renames; other files keep their lines.
  */
 export type DigestDir = {
@@ -40,8 +40,7 @@ export type DigestDir = {
   dir: string;
   renames: number;
   /** Shared move of every rename, when each kept its file name. */
-  from?: string;
-  to?: string;
+  move?: { from: string; to: string };
 };
 
 export type ChangeDigest = {
@@ -50,7 +49,7 @@ export type ChangeDigest = {
   totalHunks: number;
 };
 
-const MIN_DIR_FILES = 5;
+const MIN_DIR_RENAMES = 5;
 
 /** One line per file. No patch text, so this stays small on large diffs. */
 export function buildDigest(files: DiffFile[]): ChangeDigest {
@@ -239,8 +238,8 @@ function dirName(path: string): string {
 }
 
 /**
- * Shallowest directories whose changed files are all mechanical and hold at least
- * MIN_DIR_FILES pure renames, narrowed to the deepest directory with the same files.
+ * Shallowest directories whose changed files are all mechanical, at least half of them and at
+ * least MIN_DIR_RENAMES pure renames, narrowed to the deepest directory with the same files.
  * Root-level files never collapse.
  */
 function mechanicalDirs(files: DigestFile[]): DigestDir[] {
@@ -262,8 +261,11 @@ function mechanicalDirs(files: DigestFile[]): DigestDir[] {
       }
     }
   }
-  const qualifies = (dir: string): boolean =>
-    mechanical.get(dir) === total.get(dir) && (renames.get(dir) ?? 0) >= MIN_DIR_FILES;
+  const qualifies = (dir: string): boolean => {
+    const count = total.get(dir) ?? 0;
+    const pure = renames.get(dir) ?? 0;
+    return mechanical.get(dir) === count && pure >= MIN_DIR_RENAMES && pure * 2 >= count;
+  };
   const dirs: DigestDir[] = [];
   for (const top of total.keys()) {
     if (!qualifies(top) || parentDirs(top.slice(0, -1)).some(qualifies)) {
@@ -287,11 +289,11 @@ function mechanicalDirs(files: DigestFile[]): DigestDir[] {
     const [move] = moves;
     const [from, to] =
       moves.size === 1 && move !== undefined && move !== "" ? move.split("\0") : [];
-    dirs.push(
-      from !== undefined && to !== undefined
-        ? { dir, renames: renames.get(top) ?? 0, from, to }
-        : { dir, renames: renames.get(top) ?? 0 },
-    );
+    const entry: DigestDir = { dir, renames: renames.get(top) ?? 0 };
+    if (from !== undefined && to !== undefined) {
+      entry.move = { from, to };
+    }
+    dirs.push(entry);
   }
   return dirs;
 }
@@ -321,8 +323,8 @@ export function formatDigest(digest: ChangeDigest, range: string): string {
 
 function formatDir(dir: DigestDir): string {
   const bits = [`- ${dir.dir}`, `${dir.renames} files renamed +0/-0`, "rename"];
-  if (dir.from !== undefined && dir.to !== undefined) {
-    bits.push(`moved from ${dir.from} to ${dir.to}`);
+  if (dir.move !== undefined) {
+    bits.push(`moved from ${dir.move.from} to ${dir.move.to}`);
   }
   return bits.join(" · ");
 }

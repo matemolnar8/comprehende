@@ -8,7 +8,7 @@ import {
   resolveSource,
 } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
-import { coverReview, coverageErrors } from "../review/coverage.ts";
+import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
 import { buildDigest, digestDirOf, formatDigest, isMechanicalKind } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
@@ -60,10 +60,11 @@ export async function cmdValidate(
 ): Promise<{ document: ReviewDocument; warnings: string[]; assignedHunks: number }> {
   const document = await loadDocument(dataPath);
   const resolved = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
-  const { coverage } = await coverReview(cwd, document);
+  const { files, coverage } = await coverReview(cwd, document);
   const pins = await staleCommentPins(cwd, document, resolved);
   const errors = [
     ...coverageErrors(coverage),
+    ...dirRefErrors(coverage, files),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
   ];

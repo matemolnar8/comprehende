@@ -104,7 +104,7 @@ describe("buildDigest", () => {
       file("src/app.ts", [hunk("src/app.ts", 1, 1, [add("x")])]),
     ]);
     assert.deepEqual(digest.dirs, [
-      { dir: "snapshots/linux/", renames: 5, from: "snapshots/", to: "snapshots/linux/" },
+      { dir: "snapshots/linux/", renames: 5, move: { from: "snapshots/", to: "snapshots/linux/" } },
     ]);
     const text = formatDigest(digest, "base...head");
     assert.match(

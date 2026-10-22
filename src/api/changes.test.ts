@@ -28,6 +28,36 @@ function document(extra: Partial<ReviewDocument>): ReviewDocument {
 }
 
 describe("changesPayload", () => {
+  it("lists the files a directory ref holds, not the directory", () => {
+    const at = (path: string) => ({
+      path,
+      oldStart: 1,
+      oldLines: 1,
+      newStart: 1,
+      newLines: 1,
+      header: "",
+      lines: [],
+      patch: "",
+    });
+    const before = document({
+      groups: [
+        group("mechanical", { hunkRefs: [{ path: "shots/a.png" }, { path: "shots/b.png" }] }),
+      ],
+    });
+    const after = document({
+      groups: [group("mechanical", { hunkRefs: [{ dir: "shots/" }] })],
+    });
+    const same = [at("shots/a.png"), at("shots/b.png")].map((hunk) => ({
+      previous: hunk,
+      next: hunk,
+    }));
+    const payload = changesPayload(before, after, {
+      delta: { same, changed: [], reformat: [], added: [], removed: [] },
+      groups: new Map(),
+    });
+    assert.deepEqual(payload.groups, []);
+  });
+
   it("lists the prose, bullets, sources, and groups that differ", () => {
     const previous = document({
       lookFor: ["Old claim."],

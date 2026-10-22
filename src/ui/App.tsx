@@ -344,15 +344,24 @@ export function App() {
     () => (meta === null ? [] : lookForClaims(meta.document, meta.groups)),
     [meta],
   );
+  const renames = useMemo(
+    () =>
+      new Map(
+        (meta?.files ?? []).flatMap((file) =>
+          file.oldPath === undefined ? [] : [[file.oldPath, file.path] as const],
+        ),
+      ),
+    [meta],
+  );
   const targetForSource = useCallback(
     (source: Source) => {
       if (meta === null) {
         return undefined;
       }
       const currentGroupId = selection?.kind === "group" ? selection.id : undefined;
-      return openTargetForSource(source, claims, meta.document, currentGroupId);
+      return openTargetForSource(source, claims, meta.document, currentGroupId, renames);
     },
-    [claims, meta, selection],
+    [claims, meta, renames, selection],
   );
   const openSource = useCallback(
     (source: Source) => {

@@ -1,5 +1,5 @@
 import type { HunkDelta } from "../review/refresh.ts";
-import { hunkKey, isDirHunkRef } from "../schema/identity.ts";
+import { hunkKey, isDirHunkRef, refCoversPath } from "../schema/identity.ts";
 import type { LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 import type {
   ApiChanges,
@@ -23,6 +23,12 @@ export function changesPayload(
   code: CodeChanges | undefined,
 ): ApiChanges {
   const count = code === undefined ? undefined : hunkCounter(code.delta);
+  const delta = code?.delta;
+  const matched = delta === undefined ? [] : [...delta.same, ...delta.changed, ...delta.reformat];
+  const pathsBefore = (group: ReviewGroup) =>
+    groupPaths(group, previous, delta && [...matched.map((m) => m.previous), ...delta.removed]);
+  const pathsAfter = (group: ReviewGroup) =>
+    groupPaths(group, current, delta && [...matched.map((m) => m.next), ...delta.added]);
   const before = new Map(previous.groups.map((group) => [group.id, group]));
   const after = new Set(current.groups.map((group) => group.id));
   const groups: ApiGroupChange[] = [];
@@ -35,7 +41,7 @@ export function changesPayload(
       title: group.title,
       text: old === undefined ? {} : groupText(old, group),
       lookFor: old === undefined ? noList() : listChange(old.lookFor, group.lookFor),
-      files: old === undefined ? noList() : listChange(groupPaths(old), groupPaths(group)),
+      files: old === undefined ? noList() : listChange(pathsBefore(old), pathsAfter(group)),
       ...(hunks === undefined ? {} : { hunks }),
     };
     if (change.state === "added" || hasChange(change)) {
@@ -141,8 +147,30 @@ function noList(): ApiListChange {
   return { added: [], removed: [] };
 }
 
-function groupPaths(group: ReviewGroup): string[] {
-  return [...new Set(group.hunkRefs.map((ref) => (isDirHunkRef(ref) ? ref.dir : ref.path)))];
+/** A directory ref lists the live paths it holds: under it and named by no path or hunk ref. */
+function groupPaths(
+  group: ReviewGroup,
+  document: ReviewDocument,
+  live: readonly LiveHunk[] | undefined,
+): string[] {
+  const named = new Set(
+    document.groups.flatMap((item) =>
+      item.hunkRefs.flatMap((ref) => (isDirHunkRef(ref) ? [] : [ref.path])),
+    ),
+  );
+  const paths = [...new Set(live?.map((hunk) => hunk.path))];
+  return [
+    ...new Set(
+      group.hunkRefs.flatMap((ref) => {
+        if (!isDirHunkRef(ref)) {
+          return [ref.path];
+        }
+        return live === undefined
+          ? [ref.dir]
+          : paths.filter((path) => refCoversPath(ref, path) && !named.has(path));
+      }),
+    ),
+  ];
 }
 
 function hasChange(change: ApiGroupChange): boolean {

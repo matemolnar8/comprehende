@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { git, gitOk } from "../../src/git/exec.ts";
-import { refCoversPath } from "../../src/schema/identity.ts";
+import { isDirHunkRef, refCoversPath } from "../../src/schema/identity.ts";
 import type { ReviewDocument, ReviewGroup, Source } from "../../src/schema/types.ts";
 import type { EvalExpect } from "./case.ts";
 import {
@@ -184,9 +184,26 @@ function distinctParts(groups: ReviewGroup[]): number {
 }
 
 function someGroupCovers(groups: ReviewGroup[], paths: readonly string[]): boolean {
-  return groups.some((group) =>
-    paths.every((path) => group.hunkRefs.some((ref) => refCoversPath(ref, path))),
+  return groups.some((group) => paths.every((path) => groupHolds(groups, group, path)));
+}
+
+/** Coverage's rule at path level: a path or hunk ref anywhere beats a directory ref. */
+function groupHolds(groups: ReviewGroup[], group: ReviewGroup, path: string): boolean {
+  const named = (item: ReviewGroup) =>
+    item.hunkRefs.some((ref) => !isDirHunkRef(ref) && refCoversPath(ref, path));
+  if (named(group)) {
+    return true;
+  }
+  if (groups.some(named)) {
+    return false;
+  }
+  const dirs = groups.flatMap((item) =>
+    item.hunkRefs.flatMap((ref) =>
+      isDirHunkRef(ref) && refCoversPath(ref, path) ? [ref.dir] : [],
+    ),
   );
+  const deepest = dirs.reduce((best, dir) => (dir.length > best.length ? dir : best), "");
+  return group.hunkRefs.some((ref) => isDirHunkRef(ref) && ref.dir === deepest);
 }
 
 function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
