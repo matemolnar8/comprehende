@@ -46,7 +46,7 @@
 
 **Stale ref.** Pointer that does not match live git. Serve still starts. Do not invent a replacement.
 
-**Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood.
+**Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood. The last review stays beside the new one, named in `previous`; the UI's What changed page compares the two.
 
 **Skill.** Grouping instructions. Does not talk to git.
 

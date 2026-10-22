@@ -1,3 +1,4 @@
+import { dirname, join } from "node:path";
 import { loadDocument } from "../review/load.ts";
 import { blameFile } from "../git/blame.ts";
 import { readImageBlob } from "../git/blob.ts";
@@ -5,6 +6,7 @@ import {
   fileLanguage,
   filePatchFromGit,
   findDiffFile,
+  readDiff,
   readPathDiff,
   toHunkRef,
 } from "../git/diff.ts";
@@ -14,14 +16,18 @@ import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from 
 import { showFile } from "../git/show.ts";
 import { coverReview, coverageErrors, type ReviewCoverage } from "../review/coverage.ts";
 import { commentPinErrors, staleCommentPins, type StaleCommentPin } from "../review/pins.ts";
+import { matchHunks } from "../review/refresh.ts";
+import { storedDocument } from "../review/write.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
+import { changesPayload, type CodeChanges } from "./changes.ts";
 import { ApiError } from "./error.ts";
 import type { ApiResource } from "./paths.ts";
 import type {
   ApiBlame,
+  ApiChanges,
   ApiFile,
   ApiHunk,
   ApiHunks,
@@ -47,6 +53,8 @@ export type Snapshot = JsonSnapshot | BytesSnapshot;
 export type ReviewContext = {
   cwd: string;
   document: ReviewDocument;
+  /** The review this one was refreshed from, when its file is still there. */
+  previous?: ReviewDocument;
   repo: RepoIdentity;
   resolved: ApiReview["resolved"];
   files: DiffFile[];
@@ -64,6 +72,7 @@ export async function pinReviewSource(
   return pinRange(cwd, document.source.baseRef, document.source.headRef);
 }
 
+/** Pass the path when there is a file: the `previous` review resolves next to it. */
 export async function openReview(
   cwd: string,
   data: string | ReviewDocument,
@@ -75,9 +84,14 @@ export async function openReview(
   const pins = await staleCommentPins(cwd, document, range);
   const commits = await listCommits(cwd, range.baseSha, range.headSha);
   const repo = await readRepoIdentity(cwd);
+  const previous =
+    typeof data === "string" && document.previous !== undefined
+      ? await loadPrevious(join(dirname(data), document.previous))
+      : undefined;
   return {
     cwd,
     document,
+    ...(previous === undefined ? {} : { previous }),
     repo,
     resolved: {
       baseRef: document.source.baseRef,
@@ -94,11 +108,53 @@ export async function openReview(
   };
 }
 
+/** A hosted document copied for refresh names a file that only existed where it was written. */
+async function loadPrevious(path: string): Promise<ReviewDocument | undefined> {
+  try {
+    return await loadDocument(path);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function reviewChanges(ctx: ReviewContext): Promise<ApiChanges | undefined> {
+  if (ctx.previous === undefined) {
+    return undefined;
+  }
+  return changesPayload(ctx.previous, ctx.document, await codeChanges(ctx, ctx.previous));
+}
+
+async function codeChanges(
+  ctx: ReviewContext,
+  previous: ReviewDocument,
+): Promise<CodeChanges | undefined> {
+  const { baseSha, headSha } = previous.source;
+  if (baseSha === undefined || headSha === undefined) {
+    return undefined;
+  }
+  let before: DiffFile[];
+  try {
+    before = await readDiff(ctx.cwd, baseSha, headSha);
+  } catch (error) {
+    if (error instanceof GitError) {
+      return undefined;
+    }
+    throw error;
+  }
+  return {
+    delta: matchHunks(before, ctx.files),
+    groups: new Map(ctx.coverage.groups.map((group) => [group.group.id, group.hunks])),
+  };
+}
+
 export function reviewPayload(ctx: ReviewContext): ApiReview {
   const { document, repo, resolved, files, coverage, staleCommentPins, commits } = ctx;
   const lockfiles = lockfileFiles(files);
   return {
-    document,
+    document: storedDocument(document),
     repo,
     resolved,
     coverage: {
@@ -245,8 +301,11 @@ export async function imagePayload(
 
 export async function renderResource(ctx: ReviewContext, resource: ApiResource): Promise<Snapshot> {
   switch (resource.kind) {
-    case "review":
-      return { encoding: "json", body: reviewPayload(ctx) };
+    case "review": {
+      const changes = await reviewChanges(ctx);
+      const body = reviewPayload(ctx);
+      return { encoding: "json", body: changes === undefined ? body : { ...body, changes } };
+    }
     case "agent-md": {
       const body = agentMd(reviewPayload(ctx), resource);
       if (body === null) {

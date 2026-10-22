@@ -9,7 +9,7 @@ import { cmdIndex } from "../cli/commands.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
 import { writeCoveringDocument } from "../test/covering-document.ts";
 import { createImageRepo } from "../test/image-repo.ts";
-import { listResources, openReview } from "./live.ts";
+import { listResources } from "./live.ts";
 import { apiHref } from "./paths.ts";
 import { exportStaticSite } from "./snapshot.ts";
 
@@ -107,8 +107,7 @@ describe("image diffs", () => {
     assert.equal(payload.files.find((file) => file.path === "shots/home.png")?.kind, "image");
 
     const outDir = join(root, "site");
-    const ctx = await openReview(repo.root, dataPath);
-    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot, ctx });
+    const { ctx } = await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
     const frozen = await startStaticSite(outDir, 0);
     servers.push(frozen.server);
 

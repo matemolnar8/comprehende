@@ -4,11 +4,13 @@ import { groupOrderIndex, groupParts, isMixedReview, type Part, type PartGroup }
 
 export type Selection =
   | { kind: "overview" }
+  | { kind: "changes" }
   | { kind: "group"; id: string }
   | { kind: ReviewBucket };
 
 export type SelectionStackSource = {
   groups: PartGroup[];
+  changes?: object;
   unassigned: { hunkCount: number };
   lockfiles?: { fileCount: number };
 };
@@ -42,6 +44,9 @@ export function parseHash(hash: string): Selection | null {
   if (path === "overview") {
     return { kind: "overview" };
   }
+  if (path === "changes") {
+    return { kind: "changes" };
+  }
   if (path === REVIEW_BUCKETS.unassigned) {
     return { kind: REVIEW_BUCKETS.unassigned };
   }
@@ -69,9 +74,6 @@ export function parseHash(hash: string): Selection | null {
 export function serializeHash(selection: Selection): string {
   if (selection.kind === "group") {
     return `#${GROUP_HASH_PREFIX}${encodeURIComponent(selection.id)}`;
-  }
-  if (selection.kind === "overview") {
-    return "#overview";
   }
   return `#${selection.kind}`;
 }
@@ -112,6 +114,9 @@ export function restoreSelection(
     return defaultSelection(source);
   }
   if (stored.kind === "group" && !source.groups.some((group) => group.id === stored.id)) {
+    return defaultSelection(source);
+  }
+  if (stored.kind === "changes" && source.changes === undefined) {
     return defaultSelection(source);
   }
   if (
@@ -156,7 +161,8 @@ export function neighborSelection(
     return undefined;
   }
   const walk = partWalk(source, selection);
-  const current = walk.findIndex((item) => sameSelection(item, selection));
+  const from: Selection | null = selection?.kind === "changes" ? { kind: "overview" } : selection;
+  const current = walk.findIndex((item) => sameSelection(item, from));
   if (current >= 0) {
     return walk[current + delta];
   }
@@ -239,16 +245,10 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
   if (b === null) {
     return false;
   }
-  if (a.kind === "overview") {
-    return b.kind === "overview";
+  if (a.kind === "group") {
+    return b.kind === "group" && b.id === a.id;
   }
-  if (a.kind === REVIEW_BUCKETS.unassigned) {
-    return b.kind === REVIEW_BUCKETS.unassigned;
-  }
-  if (a.kind === REVIEW_BUCKETS.lockfiles) {
-    return b.kind === REVIEW_BUCKETS.lockfiles;
-  }
-  return a.kind === "group" && b.kind === "group" && b.id === a.id;
+  return a.kind === b.kind;
 }
 
 export function selectionNavLabel(meta: SelectionCaptionMeta, selection: Selection): string {
@@ -271,6 +271,9 @@ export function selectionCaption(
       index: index > 0 ? padIndex(index) : undefined,
       title: group?.title ?? "Group",
     };
+  }
+  if (selection.kind === "changes") {
+    return { title: "What changed" };
   }
   if (selection.kind === REVIEW_BUCKETS.unassigned) {
     return { title: "Unassigned" };

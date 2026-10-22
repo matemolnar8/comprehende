@@ -160,9 +160,9 @@ function sampleReview(): ApiReview {
           part: "Session cookie",
           suggestedOrder: 0,
           hunkRefs: [
-            { path: "src/auth/session.ts", oldStart: 1, newStart: 1 },
-            { path: "assets/dot.png" },
-            { path: "src/helpers.ts", oldPath: "src/util.ts", oldStart: 4, newStart: 4 },
+            "src/auth/session.ts@1+1",
+            "assets/dot.png",
+            "src/util.ts -> src/helpers.ts@4+4",
           ],
         },
         {
@@ -172,7 +172,7 @@ function sampleReview(): ApiReview {
           summary: "The login route uses setSessionCookie.",
           dependsOn: ["cookie"],
           suggestedOrder: 1,
-          hunkRefs: [{ path: "src/api/login.ts", oldStart: 10, newStart: 10 }],
+          hunkRefs: ["src/api/login.ts@10+10"],
         },
       ],
     },

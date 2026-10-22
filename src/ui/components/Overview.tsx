@@ -14,10 +14,13 @@ import {
   type Part,
 } from "../lib/parts.ts";
 import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
+import type { Selection } from "../lib/selection.ts";
+import { shortSha } from "../api.ts";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
-import { HashLink } from "./HashLink.tsx";
+import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
+import { Kbd } from "./Kbd.tsx";
 import { BriefField, briefProse } from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
@@ -47,10 +50,12 @@ export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
   viewedPaths: ReadonlySet<string>;
-  onOpenGroup: (id: string) => void;
+  onSelect: (selection: Selection) => void;
   focusLookForKey?: string;
 }) {
-  const { meta, parts, viewedPaths, onOpenGroup, focusLookForKey } = props;
+  const { meta, parts, viewedPaths, onSelect, focusLookForKey } = props;
+  const onOpenGroup = (id: string) => onSelect({ kind: "group", id });
+  const since = meta.changes?.since.headSha;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
   const why = meta.document.why;
@@ -65,6 +70,19 @@ export function Overview(props: {
           <>
             {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
             {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
+            {meta.changes !== undefined ? (
+              <>
+                {" · "}
+                <HashLink
+                  selection={{ kind: "changes" }}
+                  onSelect={onSelect}
+                  className={hashLinkText}
+                >
+                  {since === undefined ? "What changed" : `What changed since ${shortSha(since)}`}
+                </HashLink>
+                <Kbd className="ml-1.5 max-sm:hidden">h</Kbd>
+              </>
+            ) : null}
           </>
         }
         title={meta.document.title}

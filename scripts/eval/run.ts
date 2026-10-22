@@ -266,7 +266,7 @@ async function evalOneCase(opts: {
           await writeFile(join(caseOut, "prose.json"), `${JSON.stringify(prose, null, 2)}\n`);
           result.claims = claimsFromGrader(opts.spec.expect?.claims, prose);
           const site = join(caseOut, "site");
-          await exportStaticSite({ cwd: repoCwd, dataPath: reviewPath, outDir: site, ctx });
+          await exportStaticSite({ cwd: repoCwd, dataPath: reviewPath, outDir: site });
           result.site = site;
         } catch (error) {
           result.artifactError = error instanceof Error ? error.message : String(error);

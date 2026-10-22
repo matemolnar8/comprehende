@@ -8,7 +8,7 @@ import { cmdIndex } from "../cli/commands.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
 import { writeCoveringDocument } from "../test/covering-document.ts";
 import { APP_SECRET, createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
-import { listResources, openReview } from "./live.ts";
+import { listResources } from "./live.ts";
 import { apiHref } from "./paths.ts";
 import { exportStaticSite } from "./snapshot.ts";
 
@@ -108,8 +108,7 @@ describe("lockfile payloads", () => {
     assert.equal(missing.status, 404);
 
     const outDir = join(root, "site");
-    const ctx = await openReview(repo.root, dataPath);
-    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot, ctx });
+    const { ctx } = await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
     const frozen = await startStaticSite(outDir, 0);
     servers.push(frozen.server);
 

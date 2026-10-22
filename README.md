@@ -52,7 +52,7 @@ for more information.
 
 `pnpm sync:skill` copies the JSON Schema into `skills-next/comprehende/`, pins `npx comprehende@<version>` there, and mirrors that tree into `.agents/skills/comprehende` so agents in this checkout use the next skill. It does not touch `skills/comprehende/`.
 
-`comprehende serve` and `comprehende export` share one UI and one git payload. Serve resolves refs to commit SHAs when it starts, then computes those payloads from the objects on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review. The URL hash is the UI location (`#overview`, `#group/<id>`, `#unassigned`, `#lockfiles`), so a refresh or a shared link opens the same view in either mode.
+`comprehende serve` and `comprehende export` share one UI and one git payload. Serve resolves refs to commit SHAs when it starts, then computes those payloads from the objects on each request. Export writes the same JSON (and image bytes) next to the UI so any static file server can host the review. The URL hash is the UI location (`#overview`, `#changes`, `#group/<id>`, `#unassigned`, `#lockfiles`), so a refresh or a shared link opens the same view in either mode.
 
 This repository publishes those exports to GitHub Pages. A pull request review lives at `https://matemolnar8.github.io/comprehende/pr/<number>/`. A named site lives at `https://matemolnar8.github.io/comprehende/site/<name>/`. Enable Pages once. In the GitHub repo, open Settings, Pages, Deploy from a branch, branch `gh-pages`, folder `/`. A workflow removes the pull request folder when that pull request closes, and drops sites older than 30 days.
 
@@ -98,7 +98,7 @@ When the branch gets new commits or a rebase, the review does not start over:
 comprehende refresh --data review.json
 ```
 
-`review` and `pregroup` record the commits the refs resolved to in `source.baseSha` and `source.headSha`. `refresh` resolves the refs again, keeps every hunk whose path and changed lines are unchanged (re-pointing its ref when only the start moved), keeps an edited hunk in its group and marks it changed (or reformat when only whitespace moved), drops refs whose hunk left the diff, and puts hunks no group covers into a draft `update` group. It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
+`review` and `pregroup` record the commits the refs resolved to in `source.baseSha` and `source.headSha`. `refresh` resolves the refs again, keeps every hunk whose path and changed lines are unchanged (re-pointing its ref when only the start moved), keeps an edited hunk in its group and marks it changed (or reformat when only whitespace moved), drops refs whose hunk left the diff, and puts hunks no group covers into a draft `update` group. It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. The old document stays beside the new one as `review.<old head>.json`, and `previous` names it; the UI's What changed page (`#changes`, or `h`) shows the groups, prose, and hunks that differ from it. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
 
 ## Release
 

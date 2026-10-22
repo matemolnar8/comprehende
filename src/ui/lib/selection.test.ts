@@ -89,6 +89,17 @@ describe("selection hash", () => {
     );
   });
 
+  it("opens what changed only when the review has a previous one", () => {
+    assert.deepEqual(selectionFromHash({ ...source, changes: {} }, "#changes"), {
+      kind: "changes",
+    });
+    assert.deepEqual(selectionFromHash(source, "#changes"), { kind: "overview" });
+    assert.deepEqual(neighborSelection(source, { kind: "changes" }, 1), {
+      kind: "group",
+      id: "auth",
+    });
+  });
+
   it("falls back from lockfiles when none remain", () => {
     assert.deepEqual(
       restoreSelection(
