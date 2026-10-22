@@ -87,7 +87,7 @@ The most common defect here is a change that fixes one layer and misses the rest
 
 Most code changes do not need a docs change. Agents can read the code.
 
-- `README.md` is for people who use the tool. Change it when a command, install step, or other user-visible behavior changes. Leave it alone for internal implementation.
+- `README.md` is for people who use the tool, and npm shows it on the package page. Change it when a command, install step, or other user-visible behavior changes. Development, release, and internal behavior go in `CONTRIBUTING.md`.
 - `docs/` is for decisions and traps that code alone does not show: why a rule exists, what spans components, what is easy to get wrong. If reading the code answers the question, leave it out.
 - Do not list every field, narrate control flow, keep file catalogs, or append PR summaries. Link to source instead of copying it.
 - When a documented decision changes, rewrite or remove the old text. Do not append a second account of the new behavior.
@@ -97,7 +97,7 @@ Most code changes do not need a docs change. Agents can read the code.
 - Do not commit implementation plans, research notes, or agent scratch files. Keep temporary work outside the worktree.
 - A merged PR is the implementation record. Do not keep a second checklist in the repo.
 
-Releases happen manually. Do not change `package.json` version unless the user asks for a release. When they do, follow the Release section in [README.md](./README.md). The release commit subject is the version. The body is the release notes: every user-visible CLI, UI, and skill change since the previous version, taken from `git log <previous>..HEAD`.
+Releases happen manually. Do not change `package.json` version unless the user asks for a release. When they do, follow the Release section in [CONTRIBUTING.md](./CONTRIBUTING.md). The release commit subject is the version. The body is the release notes: every user-visible CLI, UI, and skill change since the previous version, taken from `git log <previous>..HEAD`.
 
 ## Pull requests
 
