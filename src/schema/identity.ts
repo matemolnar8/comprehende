@@ -45,6 +45,26 @@ export function formatHunkRef(ref: HunkRef): string {
 }
 
 /** Path string, or `path@oldStart+newStart`, or `old -> new@oldStart+newStart`. */
+/** A ref as review.json writes it, read back. Throws on a string the schema would reject. */
+export function parseStoredHunkRef(value: string): ReviewHunkRef {
+  const parsed = parseHunkRefString(value);
+  if (parsed === undefined) {
+    throw new Error(`invalid hunk ref string: ${value}`);
+  }
+  if (parsed.kind === "file") {
+    return { path: parsed.path };
+  }
+  if (parsed.oldPath === undefined) {
+    return { path: parsed.path, oldStart: parsed.oldStart, newStart: parsed.newStart };
+  }
+  return {
+    path: parsed.path,
+    oldPath: parsed.oldPath,
+    oldStart: parsed.oldStart,
+    newStart: parsed.newStart,
+  };
+}
+
 export function parseHunkRefString(value: string): ParsedHunkString | undefined {
   const text = value.trim();
   if (text === "") {

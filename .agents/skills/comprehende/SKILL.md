@@ -126,7 +126,7 @@ REVIEW_DIR=$(mktemp -d) && curl -fsSL "<site-url>/api/review.json" | jq .documen
 
 4. Edit `review.json` in place with your edit tool; untouched groups stay verbatim. Move each `update` ref into the group that holds its concern, or into a new group, then delete `update`. In a group the report names: rewrite `summary` when the new or changed hunks change what the group is; drop each `lookFor` bullet whose hunk is `gone`; re-check each bullet on a `changed` hunk against the fetched hunk. A named group whose hunks keep their meaning, such as one with only `reformat` hunks, keeps its prose as it is. Delete a group that is `now empty`, and every `dependsOn` that names it. Retire a document `lookFor` bullet that a new commit resolves; a new comment asking for work the change does not do is a new bullet. `size` moves with the new burden; `title` and `why` change only when a source did. Done when `update` is gone, no group is empty, no stub prose remains, and every named group's prose matches the code at head.
 
-5. Steps 6 and 7 of the Workflow: validate, then serve or export to the same place as before.
+5. Steps 6 and 7 of the Workflow: validate, then serve or export to the same place as before. Give the user the URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.
 
 ## The title
 

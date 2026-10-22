@@ -50,6 +50,11 @@
       ],
       "additionalProperties": false
     },
+    "previous": {
+      "type": "string",
+      "minLength": 1,
+      "description": "File name of the review this one was refreshed from, in the same directory. refresh writes it; the UI compares the two."
+    },
     "title": {
       "type": "string",
       "minLength": 1,

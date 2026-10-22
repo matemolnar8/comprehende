@@ -6,10 +6,11 @@ import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
+import { parseReviewJson } from "../schema/parse.ts";
 import { startServer, startStaticSite } from "../server/http.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
-import { listResources, openReview } from "./live.ts";
+import { listResources } from "./live.ts";
 import { apiHref } from "./paths.ts";
 import { exportStaticSite } from "./snapshot.ts";
 
@@ -47,8 +48,7 @@ describe("export static site", () => {
     servers.push(live.server);
 
     const outDir = join(root, "site");
-    const ctx = await openReview(repo.root, dataPath);
-    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot, ctx });
+    const { ctx } = await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
 
     assert.equal(existsSync(join(outDir, ".git")), false);
     assert.equal(existsSync(join(outDir, "index.html")), true);
@@ -100,6 +100,8 @@ describe("export static site", () => {
     assert.equal(reviewText.includes(SECRET_ADD), false);
     assert.equal(reviewText.includes(SECRET_DEL), false);
     assert.ok((review.groups[0]?.hunkCount ?? 0) >= 4);
+    const saved = parseReviewJson(reviewText);
+    assert.ok(saved.ok, "the hosted document is a review.json refresh can read");
 
     const app = await fetch(
       new URL(apiHref({ kind: "file", path: "src/app.ts", side: "new" }), `${frozen.url}/`),

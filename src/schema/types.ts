@@ -8,6 +8,7 @@ export type {
   ReviewPart,
   ReviewSource,
   Source,
+  StoredReviewDocument,
 } from "./review.ts";
 
 export const REVIEW_SIZES = ["trivial", "small", "medium", "large", "very-large"] as const;

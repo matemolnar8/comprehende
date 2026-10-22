@@ -3,10 +3,10 @@ import type {
   FileStatus,
   HunkRef,
   Relocation,
-  ReviewDocument,
   ReviewHunkRef,
   SkippedFile,
   SourceSide,
+  StoredReviewDocument,
 } from "../schema/types.ts";
 
 /** Single home for the git side union. SourceSide in schema is the same fact. */
@@ -65,7 +65,8 @@ export type ApiBlameLine = {
 };
 
 export type ApiReview = {
-  document: ReviewDocument;
+  /** The on-disk form, so it can be saved as a review.json again. */
+  document: StoredReviewDocument;
   repo: {
     name: string;
     origin: string | null;
@@ -112,6 +113,45 @@ export type ApiReview = {
   }[];
   skipped: SkippedFile[];
   commits: ApiCommit[];
+  /** Set when the document names the review it was refreshed from. */
+  changes?: ApiChanges;
+};
+
+export type ApiTextChange = { before: string; after: string };
+
+export type ApiTextChanges = {
+  title?: ApiTextChange;
+  summary?: ApiTextChange;
+  why?: ApiTextChange;
+};
+
+export type ApiListChange = { added: string[]; removed: string[] };
+
+/** Live hunks, counted the way refresh tags them. */
+export type ApiHunkCounts = { new: number; changed: number; reformat: number };
+
+export type ApiGroupChange = {
+  id: string;
+  state: "added" | "removed" | "kept";
+  title: string;
+  text: ApiTextChanges;
+  lookFor: ApiListChange;
+  files: ApiListChange;
+  /** Missing when git no longer has the previous commits. */
+  hunks?: ApiHunkCounts;
+};
+
+/** What the review says now that it did not say before. Interpretation only; live git stays the how. */
+export type ApiChanges = {
+  since: { baseSha?: string; headSha?: string };
+  text: ApiTextChanges;
+  lookFor: ApiListChange;
+  /** Source labels. */
+  sources: ApiListChange;
+  /** Groups that changed, in reading order; removed groups last. */
+  groups: ApiGroupChange[];
+  /** Missing when git no longer has the previous commits. */
+  hunks?: ApiHunkCounts & { gone: number };
 };
 
 export type ApiFile = {

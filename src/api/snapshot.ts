@@ -19,12 +19,12 @@ export type ExportOptions = {
   dataPath: string;
   outDir: string;
   uiRoot?: string;
-  ctx?: ReviewContext;
 };
 
 export type ExportResult = {
   outDir: string;
   apiFiles: string[];
+  ctx: ReviewContext;
 };
 
 export async function exportStaticSite(opts: ExportOptions): Promise<ExportResult> {
@@ -39,7 +39,7 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     throw new Error(`refusing to write export into a git repository: ${outDir}`);
   }
 
-  const ctx = opts.ctx ?? (await openReview(opts.cwd, opts.dataPath));
+  const ctx = await openReview(opts.cwd, opts.dataPath);
   await mkdir(outDir, { recursive: true });
   await rm(join(outDir, "assets"), { recursive: true, force: true });
   await rm(join(outDir, "api"), { recursive: true, force: true });
@@ -67,5 +67,5 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     apiFiles.push(rel);
   }
   await pruneUnusedHighlighterChunks(outDir, highlightPathsFromFiles(ctx.files));
-  return { outDir, apiFiles };
+  return { outDir, apiFiles, ctx };
 }
