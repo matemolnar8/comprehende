@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify ff6d7f109cd247a1f1d2c63c557b1a9614b0868e` in this repository.
+   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify b4c1ba2871ee5a36e4ba71f77ec63a535ea67317` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  36118c1676746e323b265ebc0ebdebb7db1c88e2
 
-head               ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
+head               b4c1ba2871ee5a36e4ba71f77ec63a535ea67317
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
+git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 b4c1ba2871ee5a36e4ba71f77ec63a535ea67317
 
 Commits:
+- b4c1ba2 Point agent and Bugbot docs at vp check and vp test
 - ff6d7f1 Run typecheck through vp check, drop the duplicate CI step
 - 36118c1 Merge pull request #147 from matemolnar8/t3/issue-72-non-obtrusive-ux
 - b594a7c Give UI tests their own tsconfig so staged checks find node types
@@ -54,7 +55,7 @@ A commit that stages a UI test fails the pre-commit hook with TS2591 on `node:as
 
 The what (small):
 
-`src/ui/tsconfig.json` becomes a solution file that references `tsconfig.app.json` (the old UI config) and a new `tsconfig.test.json` that adds node types for UI tests. `pnpm typecheck` becomes `vp check --no-fmt --no-lint`, and CI drops its duplicate type-check step.
+`src/ui/tsconfig.json` becomes a solution file that references `tsconfig.app.json` (the old UI config) and a new `tsconfig.test.json` that adds node types for UI tests. `pnpm typecheck` becomes `vp check --no-fmt --no-lint`, CI drops its duplicate type-check step, and `AGENTS.md` and `.cursor/BUGBOT.md` name `vp check` and `vp test`.
 
 ## Review concerns
 
@@ -64,9 +65,9 @@ The solution `tsconfig.json` points tsgolint and editors at the app and test pro
 
 [groups/test-project.md](groups/test-project.md)
 
-### 02 typecheck runs through vp check (`typecheck-via-vp`)
+### 02 Type checks and docs use the vp toolchain (`typecheck-via-vp`)
 
-`pnpm typecheck` becomes `vp check --no-fmt --no-lint`, and CI drops the `vp run typecheck` step that followed `vp check`.
+`pnpm typecheck` becomes `vp check --no-fmt --no-lint`, CI drops the `vp run typecheck` step that followed `vp check`, and `AGENTS.md` and `.cursor/BUGBOT.md` name `vp check` and `vp test` in place of `pnpm typecheck` and `pnpm test`.
 
 Depends on:
 - 01 UI tests get their own TypeScript project (`test-project`)
