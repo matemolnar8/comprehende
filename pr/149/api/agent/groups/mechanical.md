@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 2ef0a645c3de4340edc92ab04a1519a7801252ef` and `git rev-parse --verify b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6` in this repository.
+   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify ff6d7f109cd247a1f1d2c63c557b1a9614b0868e` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 2ef0a645c3de4340edc92ab04a1519a7801252ef b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 ff6d7f109cd247a1f1d2c63c557b1a9614b0868e -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -23,17 +23,17 @@ When no question follows this paste, explain this review concern.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  2ef0a645c3de4340edc92ab04a1519a7801252ef
+base (merge-base)  36118c1676746e323b265ebc0ebdebb7db1c88e2
 
-head               b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6
+head               ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 2ef0a645c3de4340edc92ab04a1519a7801252ef b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6
+git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
 
-Review concern 02 of 02: Old UI config moves to tsconfig.app.json (`mechanical`)
+Review concern 03 of 03: Old UI config moves to tsconfig.app.json (`mechanical`)
 
 The why:
 

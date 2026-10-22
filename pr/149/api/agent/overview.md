@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 2ef0a645c3de4340edc92ab04a1519a7801252ef` and `git rev-parse --verify b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6` in this repository.
+   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify ff6d7f109cd247a1f1d2c63c557b1a9614b0868e` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,20 +22,24 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  2ef0a645c3de4340edc92ab04a1519a7801252ef
+base (merge-base)  36118c1676746e323b265ebc0ebdebb7db1c88e2
 
-head               b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6
+head               ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 2ef0a645c3de4340edc92ab04a1519a7801252ef b594a7c6ac4cfd391229272daf9b7b0ff53e5fa6
+git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 ff6d7f109cd247a1f1d2c63c557b1a9614b0868e
 
 Commits:
+- ff6d7f1 Run typecheck through vp check, drop the duplicate CI step
+- 36118c1 Merge pull request #147 from matemolnar8/t3/issue-72-non-obtrusive-ux
 - b594a7c Give UI tests their own tsconfig so staged checks find node types
+- 92f83f0 Merge remote-tracking branch 'origin/main' into t3/issue-72-non-obtrusive-ux
 - 2ef0a64 Merge pull request #148 from matemolnar8/t3/trim-npm-readme
 - 2d9a156 Move developer docs out of the README
+- d86dd95 Add a What changed page that compares a refreshed review with the previous one
 
 Sources:
 - transcript Claude Code session · Oct 22 Máté reports that `vp staged` fails on UI tests that import `node:assert`, and asks for the root cause and the smallest fix that does not weaken the check.
@@ -50,17 +54,26 @@ A commit that stages a UI test fails the pre-commit hook with TS2591 on `node:as
 
 The what (small):
 
-`src/ui/tsconfig.json` becomes a solution file that references `tsconfig.app.json` (the old UI config) and a new `tsconfig.test.json` that adds node types for UI tests. `pnpm typecheck` checks both projects.
+`src/ui/tsconfig.json` becomes a solution file that references `tsconfig.app.json` (the old UI config) and a new `tsconfig.test.json` that adds node types for UI tests. `pnpm typecheck` becomes `vp check --no-fmt --no-lint`, and CI drops its duplicate type-check step.
 
 ## Review concerns
 
 ### 01 UI tests get their own TypeScript project (`test-project`)
 
-The solution `tsconfig.json` points tsgolint and editors at the app and test projects. The test project extends the app options and adds `node` to `types`. `typecheck` runs `tsc` on each project.
+The solution `tsconfig.json` points tsgolint and editors at the app and test projects. The test project extends the app options and adds `node` to `types`.
 
 [groups/test-project.md](groups/test-project.md)
 
-### 02 Old UI config moves to tsconfig.app.json (`mechanical`)
+### 02 typecheck runs through vp check (`typecheck-via-vp`)
+
+`pnpm typecheck` becomes `vp check --no-fmt --no-lint`, and CI drops the `vp run typecheck` step that followed `vp check`.
+
+Depends on:
+- 01 UI tests get their own TypeScript project (`test-project`)
+
+[groups/typecheck-via-vp.md](groups/typecheck-via-vp.md)
+
+### 03 Old UI config moves to tsconfig.app.json (`mechanical`)
 
 A pure rename with no content change. You can skip it.
 
