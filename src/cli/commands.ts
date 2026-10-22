@@ -133,7 +133,7 @@ export async function cmdShow(
 }
 
 /**
- * Draft review.json from deterministic rules: identical-copy clusters,
+ * Draft review.json from deterministic rules: clusters of files with the same change,
  * mechanical files (rename, copy, move, generated), and one change group
  * for the rest. The skill accepts, splits, and writes the prose.
  */
@@ -188,7 +188,7 @@ export async function cmdPregroup(
     groups.push({
       id: "change",
       title: "Change",
-      why: "Draft: the change minus copies and mechanical files. Split by concern.",
+      why: "Draft: the change minus repeats and mechanical files. Split by concern.",
       summary: "Fill this group.",
       suggestedOrder: 0,
       hunkRefs: change,
@@ -198,8 +198,8 @@ export async function cmdPregroup(
   for (const [root, paths] of mirrors) {
     groups.push({
       id: `mirrors-${order}`,
-      title: "Synced copies",
-      why: `Draft: identical copies of ${root}. Read one, skip the rest.`,
+      title: "Same change in several files",
+      why: `Draft: the same change as in ${root}. Read one, skip the rest.`,
       summary: "Fill this group.",
       suggestedOrder: order,
       hunkRefs: [...new Set(paths)],

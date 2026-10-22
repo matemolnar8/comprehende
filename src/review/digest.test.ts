@@ -59,7 +59,7 @@ describe("buildDigest", () => {
     assert.equal(digest.files[2]?.kind, "docs");
   });
 
-  it("marks pure moves and identical copies", () => {
+  it("marks pure moves and files with the same change", () => {
     const moved = hunk("b.ts", 1, 5, [
       { ...del("const value = 42;", 1), moved: { path: "a.ts", line: 9 } },
       { ...add("const value = 42;", 5), moved: { path: "a.ts", line: 9 } },

@@ -64,7 +64,7 @@ Commands:
             Print the patch for one hunk (path@oldStart+newStart) or one file.
 
   pregroup  [--base <ref>] [--head <ref>] --data <review.json>
-            Write a draft review: identical copies, mechanical files, and one
+            Write a draft review: repeated changes, mechanical files, and one
             change group for the rest. Accept, split, and write the prose.
 
   refresh   [--base <ref>] [--head <ref>] --data <review.json>

@@ -27,7 +27,7 @@ export type DigestFile = {
   hunks: DigestHunk[];
   /** Test file whose source candidate lives next to it. Verify with show. */
   pairsWith?: string;
-  /** First path of an identical-copy cluster. Trust it; do not read both. */
+  /** First path of a cluster of files that received the same change. Trust it; read one. */
   mirrorOf?: string;
 };
 
@@ -345,7 +345,7 @@ function formatFile(file: DigestFile): string {
     bits.push(`pairs with ${file.pairsWith}.*`);
   }
   if (file.mirrorOf !== undefined) {
-    bits.push(`identical copy of ${file.mirrorOf}`);
+    bits.push(`same change as ${file.mirrorOf}`);
   }
   return bits.join(" · ");
 }
