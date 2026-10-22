@@ -1,1 +1,0 @@
-{"path":"src/ui/tsconfig.test.json","ref":"3b600231ea55599a9d3a2124aed0c0a49624a45d","side":"new","content":"{\n  \"extends\": \"./tsconfig.app.json\",\n  \"compilerOptions\": {\n    \"types\": [\"vite/client\", \"node\"]\n  },\n  \"include\": [\"**/*.test.ts\"],\n  \"exclude\": []\n}\n","language":"json"}
