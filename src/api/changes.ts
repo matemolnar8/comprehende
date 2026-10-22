@@ -1,5 +1,5 @@
 import type { HunkDelta } from "../review/refresh.ts";
-import { hunkKey } from "../schema/identity.ts";
+import { hunkKey, isDirHunkRef } from "../schema/identity.ts";
 import type { LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 import type {
   ApiChanges,
@@ -142,7 +142,7 @@ function noList(): ApiListChange {
 }
 
 function groupPaths(group: ReviewGroup): string[] {
-  return [...new Set(group.hunkRefs.map((ref) => ref.path))];
+  return [...new Set(group.hunkRefs.map((ref) => (isDirHunkRef(ref) ? ref.dir : ref.path)))];
 }
 
 function hasChange(change: ApiGroupChange): boolean {

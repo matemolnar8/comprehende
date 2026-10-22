@@ -56,8 +56,9 @@ Commands:
             invent a review. Fill title, groups, and summaries, then validate.
 
   digest    [--base <ref>] [--head <ref>]
-            Print one line per changed file (kind, hunks, symbols). No patch
-            text. Group from this; fetch patch with show.
+            Print one line per changed file (kind, hunks, symbols), and one
+            line per directory of renames. No patch text. Group from this;
+            fetch patch with show.
 
   show      [--base <ref>] [--head <ref>] --hunk <ref> | --file <path>
             Print the patch for one hunk (path@oldStart+newStart) or one file.

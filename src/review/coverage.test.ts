@@ -20,6 +20,45 @@ afterAll(() => {
 });
 
 describe("coverage join", () => {
+  it("covers every live hunk under a directory ref", () => {
+    const at = (path: string): LiveHunk => ({
+      path,
+      oldStart: 0,
+      oldLines: 0,
+      newStart: 0,
+      newLines: 0,
+      header: "",
+      lines: [],
+      patch: "",
+    });
+    const coverage = joinCoverage(
+      {
+        version: 1,
+        source: { baseRef: "a", headRef: "b" },
+        size: "small",
+        title: "Directory refs",
+        summary: "Covers a directory.",
+        groups: [
+          {
+            id: "g",
+            title: "G",
+            why: "Covers a directory.",
+            summary: "",
+            suggestedOrder: 0,
+            hunkRefs: [{ dir: "snapshots/" }, { dir: "gone/" }],
+          },
+        ],
+      },
+      [at("snapshots/linux/a.png"), at("snapshots/b.png"), at("src/app.ts")],
+    );
+    assert.equal(coverage.assignedHunks, 2);
+    assert.deepEqual(
+      coverage.unassigned.map((hunk) => hunk.path),
+      ["src/app.ts"],
+    );
+    assert.deepEqual(coverage.stale, [{ dir: "gone/" }]);
+  });
+
   it("reports unassigned and stale refs without inventing hunks", () => {
     const live: LiveHunk[] = [
       {

@@ -56,7 +56,7 @@ describe("parseReviewDocument", () => {
     if (!empty.ok) {
       assert.match(
         empty.errors.join("\n"),
-        /hunkRefs\[0\] must be a path or path@oldStart\+newStart/,
+        /hunkRefs\[0\] must be a path, dir\/, or path@oldStart\+newStart/,
       );
     }
     const object = parseReviewDocument({

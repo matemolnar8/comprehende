@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
 import { cmdIndex } from "../cli/commands.ts";
+import { refCoversPath } from "../schema/identity.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
 import { apiHref } from "../api/paths.ts";
@@ -87,7 +88,7 @@ describe("serve API", () => {
     );
 
     const appGroup = document.groups.find((item) =>
-      item.hunkRefs.some((ref) => ref.path === "src/app.ts"),
+      item.hunkRefs.some((ref) => refCoversPath(ref, "src/app.ts")),
     );
     assert.ok(appGroup);
     const appHunks = await fetch(

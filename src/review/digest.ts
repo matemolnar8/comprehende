@@ -1,5 +1,6 @@
 import { addedSymbols, lineDelta } from "../schema/hunk-meta.ts";
 import { formatStoredHunkRef } from "../schema/identity.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import type { DiffFile, FileStatus } from "../schema/types.ts";
 
 export type DigestKind = "logic" | "test" | "docs" | "generated" | "rename" | "copy" | "move";
@@ -30,10 +31,26 @@ export type DigestFile = {
   mirrorOf?: string;
 };
 
+/**
+ * A directory whose changed files are all mechanical, most of them pure renames.
+ * One digest line and one directory ref stand for the renames; other files keep their lines.
+ */
+export type DigestDir = {
+  /** Ends in `/`, the same syntax as a directory hunk ref. */
+  dir: string;
+  renames: number;
+  /** Shared move of every rename, when each kept its file name. */
+  from?: string;
+  to?: string;
+};
+
 export type ChangeDigest = {
   files: DigestFile[];
+  dirs: DigestDir[];
   totalHunks: number;
 };
+
+const MIN_DIR_FILES = 5;
 
 /** One line per file. No patch text, so this stays small on large diffs. */
 export function buildDigest(files: DiffFile[]): ChangeDigest {
@@ -43,6 +60,7 @@ export function buildDigest(files: DiffFile[]): ChangeDigest {
   markMirrors(digests, files);
   return {
     files: digests,
+    dirs: mechanicalDirs(digests),
     totalHunks: digests.reduce((total, file) => total + file.hunks.length, 0),
   };
 }
@@ -56,7 +74,14 @@ function digestFile(file: DiffFile): DigestFile {
       ref: formatStoredHunkRef(
         hunk.oldStart === 0 && hunk.newStart === 0
           ? { path: file.path }
-          : { path: file.path, oldStart: hunk.oldStart, newStart: hunk.newStart },
+          : file.oldPath === undefined
+            ? { path: file.path, oldStart: hunk.oldStart, newStart: hunk.newStart }
+            : {
+                path: file.path,
+                oldPath: file.oldPath,
+                oldStart: hunk.oldStart,
+                newStart: hunk.newStart,
+              },
       ),
       oldStart: hunk.oldStart,
       newStart: hunk.newStart,
@@ -195,23 +220,111 @@ function markMirrors(digests: DigestFile[], files: DiffFile[]): void {
   }
 }
 
-/** Covering refs for one digest file: a path when that covers every hunk, else located refs. */
-export function digestHunkRefs(file: DigestFile): string[] {
-  if (file.oldPath === undefined && file.hunks.length <= 1) {
-    return [file.path];
+/** Kinds the draft puts in its `mechanical` group. */
+export function isMechanicalKind(kind: DigestKind): boolean {
+  return kind === "rename" || kind === "copy" || kind === "move" || kind === "generated";
+}
+
+function isPureRename(file: DigestFile): boolean {
+  return file.kind === "rename" && file.added === 0 && file.removed === 0;
+}
+
+function parentDirs(path: string): string[] {
+  const parts = path.split("/").slice(0, -1);
+  return parts.map((_, i) => `${parts.slice(0, i + 1).join("/")}/`);
+}
+
+function dirName(path: string): string {
+  return path.slice(0, path.lastIndexOf("/") + 1);
+}
+
+/**
+ * Shallowest directories whose changed files are all mechanical and hold at least
+ * MIN_DIR_FILES pure renames, narrowed to the deepest directory with the same files.
+ * Root-level files never collapse.
+ */
+function mechanicalDirs(files: DigestFile[]): DigestDir[] {
+  const listed = files.filter((file) => !isLockfilePath(file.path));
+  const total = new Map<string, number>();
+  const mechanical = new Map<string, number>();
+  const renames = new Map<string, number>();
+  const bump = (counts: Map<string, number>, dir: string): void => {
+    counts.set(dir, (counts.get(dir) ?? 0) + 1);
+  };
+  for (const file of listed) {
+    for (const dir of parentDirs(file.path)) {
+      bump(total, dir);
+      if (isMechanicalKind(file.kind) && file.mirrorOf === undefined) {
+        bump(mechanical, dir);
+      }
+      if (isPureRename(file)) {
+        bump(renames, dir);
+      }
+    }
   }
-  return file.hunks.map((hunk) => {
-    const at = `${hunk.oldStart}+${hunk.newStart}`;
-    return file.oldPath === undefined
-      ? `${file.path}@${at}`
-      : `${file.oldPath} -> ${file.path}@${at}`;
-  });
+  const qualifies = (dir: string): boolean =>
+    mechanical.get(dir) === total.get(dir) && (renames.get(dir) ?? 0) >= MIN_DIR_FILES;
+  const dirs: DigestDir[] = [];
+  for (const top of total.keys()) {
+    if (!qualifies(top) || parentDirs(top.slice(0, -1)).some(qualifies)) {
+      continue;
+    }
+    const held = listed.filter((file) => file.path.startsWith(top));
+    const dir =
+      parentDirs(held[0]?.path ?? top)
+        .filter((candidate) => held.every((file) => file.path.startsWith(candidate)))
+        .at(-1) ?? top;
+    const moves = new Set(
+      held
+        .filter(isPureRename)
+        .map((file) =>
+          file.oldPath !== undefined &&
+          file.oldPath.split("/").at(-1) === file.path.split("/").at(-1)
+            ? `${dirName(file.oldPath)}\0${dirName(file.path)}`
+            : "",
+        ),
+    );
+    const [move] = moves;
+    const [from, to] =
+      moves.size === 1 && move !== undefined && move !== "" ? move.split("\0") : [];
+    dirs.push(
+      from !== undefined && to !== undefined
+        ? { dir, renames: renames.get(top) ?? 0, from, to }
+        : { dir, renames: renames.get(top) ?? 0 },
+    );
+  }
+  return dirs;
+}
+
+/** The collapsed directory whose ref covers `path`, if any. */
+export function digestDirOf(digest: ChangeDigest, path: string): DigestDir | undefined {
+  return digest.dirs.find((item) => path.startsWith(item.dir));
 }
 
 export function formatDigest(digest: ChangeDigest, range: string): string {
   const files = digest.files.length;
   const header = `# Digest ${range} — ${files} file${files === 1 ? "" : "s"}, ${digest.totalHunks} hunk${digest.totalHunks === 1 ? "" : "s"}`;
-  return [header, ...digest.files.map(formatFile)].join("\n");
+  const lines = [header];
+  const printed = new Set<DigestDir>();
+  for (const file of digest.files) {
+    const dir = digestDirOf(digest, file.path);
+    if (dir !== undefined && !printed.has(dir)) {
+      printed.add(dir);
+      lines.push(formatDir(dir));
+    }
+    if (dir === undefined || !isPureRename(file)) {
+      lines.push(formatFile(file));
+    }
+  }
+  return lines.join("\n");
+}
+
+function formatDir(dir: DigestDir): string {
+  const bits = [`- ${dir.dir}`, `${dir.renames} files renamed +0/-0`, "rename"];
+  if (dir.from !== undefined && dir.to !== undefined) {
+    bits.push(`moved from ${dir.from} to ${dir.to}`);
+  }
+  return bits.join(" · ");
 }
 
 function formatFile(file: DigestFile): string {

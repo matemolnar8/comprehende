@@ -42,10 +42,10 @@ function addIssue(
 }
 
 const hunkRefStringSchema = nonemptyString(
-  "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart.",
+  "A git path (every live hunk of that file), a directory ending in / (every live hunk under it), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart.",
 ).check((ctx) => {
   if (parseHunkRefString(ctx.value) === undefined) {
-    addIssue(ctx, "must be a path or path@oldStart+newStart");
+    addIssue(ctx, "must be a path, dir/, or path@oldStart+newStart");
   }
 });
 

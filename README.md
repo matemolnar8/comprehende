@@ -39,7 +39,7 @@ The skill runs these commands for you. Run them inside the repository under revi
 | Command                                                          | What it does                                                                                                                             |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `comprehende review [--base <ref>] [--head <ref>] --data <file>` | Writes a review skeleton for `base...head` with one entry per changed file. The base defaults to `origin/HEAD`, then `main` or `master`. |
-| `comprehende digest --base <ref> --head <ref>`                   | Prints one line per changed file: kind, hunks, and symbols.                                                                              |
+| `comprehende digest --base <ref> --head <ref>`                   | Prints one line per changed file: kind, hunks, and symbols. A directory of renames gets one line.                                        |
 | `comprehende show --hunk <path@oldStart+newStart>`               | Prints the patch for one hunk or file.                                                                                                   |
 | `comprehende pregroup --base <ref> --head <ref> --data <file>`   | Writes a draft review that already groups identical copies and mechanical files.                                                         |
 | `comprehende validate --data <file>`                             | Checks that every hunk ref points into live git and that every hunk is in a group.                                                       |

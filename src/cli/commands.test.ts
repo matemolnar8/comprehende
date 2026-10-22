@@ -183,7 +183,7 @@ describe("cmdReview git work", { concurrent: false }, () => {
     const repo = await createLockfileRepo(join(root, "repo"));
     const dataPath = join(root, "review.json");
     const { document } = await cmdPregroup(repo.root, dataPath, repo.base, repo.head);
-    const refs = document.groups.flatMap((group) => group.hunkRefs.map((ref) => ref.path));
+    const refs = document.groups.flatMap((group) => group.hunkRefs.map(formatStoredHunkRef));
     assert.ok(refs.length > 0);
     assert.deepEqual(refs.filter(isLockfilePath), []);
     await cmdValidate(repo.root, dataPath);

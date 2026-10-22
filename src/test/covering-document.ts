@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { toHunkRef } from "../git/diff.ts";
-import { hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
+import { hunkKey, isLocatedHunkRef, refCoversPath } from "../schema/identity.ts";
 import { reviewFileBody } from "../review/write.ts";
 import type { HunkIndex, HunkRef, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 
@@ -212,7 +212,7 @@ function assertFullCoverage(index: HunkIndex, document: ReviewDocument): void {
   for (const ref of document.groups.flatMap((group) => group.hunkRefs)) {
     if (!isLocatedHunkRef(ref)) {
       for (const hunk of index.hunks) {
-        if (hunk.path === ref.path) {
+        if (refCoversPath(ref, hunk.path)) {
           assigned.add(hunkKey(hunk));
         }
       }

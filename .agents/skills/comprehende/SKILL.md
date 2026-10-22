@@ -23,10 +23,10 @@ Work from the digest, not the diff. The digest is one line per file: kind, hunks
 
 When a review document for this change already exists, follow Refresh instead; it reuses steps 3, 6, and 7.
 
-Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch, one sources call, one show batch, one write, validate. Further calls only fix what validate names.
+Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch with its sources, one show batch, one write, validate. Further calls only fix what validate names.
 
 1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. Fetch a ref that is missing from the local clone. Done when both ref names are chosen. The next shell call verifies them.
-2. One shell call: verify the refs, write the draft, print the digest and the draft, log, and stat. `$REVIEW_DIR` comes from `mktemp -d` in that call (outside the repository; the work tree stays untouched, with no new gitignore entries). `&&` stops the shell before `pregroup` when a ref does not resolve. Stop and tell the user which ref failed, rather than guess a ref.
+2. One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources (step 3). `$REVIEW_DIR` comes from `mktemp -d` in that call (outside the repository; the work tree stays untouched, with no new gitignore entries). `&&` stops the shell before `pregroup` when a ref does not resolve. Stop and tell the user which ref failed, rather than guess a ref.
 
    ```sh
    REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
@@ -35,7 +35,7 @@ Each step is one tool call where the step says so. Batch the commands as written
      npx comprehende@0.10.1 digest --base <base> --head <head>
      cat "$REVIEW_DIR/review.json"
      git log --format='%s' --end-of-options <base>...<head>
-     git diff --stat <base>...<head>
+     <source fetches from step 3>
    }
    ```
 
@@ -43,13 +43,13 @@ Each step is one tool call where the step says so. Batch the commands as written
 
    If that version is newer than this pin (`npx comprehende@0.10.1`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Defaults: `--head` is `HEAD`; `--base` is `origin/HEAD`, falling back to `main` or `master`. `pregroup` writes a draft: identical-copy clusters, one `mechanical` group (renames, copies, moves, generated output), and one `change` group for the rest, with stub prose. It does not invent a review. Done when that file exists and the digest and draft are in context. Trust the `identical copy` and `pairs with` hints; never fetch patch to confirm them. Never read the draft from disk; the `cat` above already printed it.
 
-3. One tool call for all sources, truncated at fetch time. Files on disk go through one shell call that caps each file, never a read per file:
+3. Sources, truncated at fetch time, ride in the step-2 shell call. Files on disk get one loop that caps each file:
 
    ```sh
    for f in "<sourcesDir>"/*; do echo "=== $f"; head -n 40 "$f"; done
    ```
 
-   Sources behind a host CLI or MCP go in one parallel block, one fetch each: PR or ticket body to 15 lines, each review comment to 10 lines with whether its thread is resolved, whether the comment is outdated, and its current line, commit log subjects only. Never run a full `git diff`; the digest line is the file. Full bodies stay out of context; the caps above are the source. Done when the digest, the draft, and those sources are in context.
+   A host CLI fetch joins that call too. Sources only an MCP reaches go in one parallel block after it, one fetch each. Caps: PR or ticket body to 15 lines, each review comment to 10 lines with whether its thread is resolved, whether the comment is outdated, and its current line, commit log subjects only. Never run a full `git diff`; the digest line is the file. Full bodies stay out of context; the caps above are the source. Done when the digest, the draft, and those sources are in context.
 
 4. Recover the why, write the title, write the what, and check each source item against the digest and the fetched hunks (see lookFor). Then write document `title` (always), document `summary` (always), document `why` (only when a source names the motive), and document `lookFor` (only when an item diverges; see lookFor). Summaries come from the digest symbols and kinds, plus fetched hunks where fetched. Replace the stub title and summary. Done when every source item has a verdict, every divergence is a document `lookFor` bullet, every ticket item a later comment changes is a bullet, and every lookFor bullet matches the code at head.
 5. Group the hunks by review concern, starting from the draft. Accept a draft group that already holds one concern. Split the `change` group where a reader would stop and review the first piece alone. Merge draft groups that serve one concern. A path covers every hunk of its file: keep the draft's path refs, and write hunk refs only for a file split across groups. Fetch patch only to decide a split: state the decision first ("`login.ts` hunks may belong apart"), then batch every fetch in the one show call below. Fetch at most one hunk per 3 files in the digest (at least 2, at most 8). Draft `mirrors`, `mechanical`, and one-concern groups need no fetch:
@@ -120,7 +120,7 @@ REVIEW_DIR=$(mktemp -d) && curl -fsSL "<site-url>/api/review.json" | jq .documen
 
    `refresh` keeps a hunk whose path and changed lines are the same, wherever it now starts, and re-points its ref. A hunk edited in place (same file, same region, other lines) is `changed` and keeps its group; when only whitespace moved it is `reformat`. A ref whose hunk left the diff is dropped. Every hunk no group covers lands in a draft `update` group with stub prose. The report prints the new commit subjects, one line per file whose hunks changed (`new`, `changed`, `reformat`, `same`, `gone`, and the groups it sits in), and per group what moved. "nothing to refresh" means the refs still resolve to the commits the document names: fetch the right remote or name the head, then run it again. Done when the report and the document are in context.
 
-2. Sources, one call as in step 3 of the Workflow. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read a new comment to its cap. Commit subjects are in the report. Done when every new comment and subject is in context.
+2. Sources as in step 3 of the Workflow, appended to the step-1 shell call. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read a new comment to its cap. Commit subjects are in the report. Done when every new comment and subject is in context.
 
 3. One `show` batch, with `--base` and `--head` set to the new range, for the hunks the report marks `new` or `changed`. The step-5 budget counts the files the report lists. A `same` or `reformat` hunk is fetched only when a kept `lookFor` bullet rests on it.
 
@@ -174,7 +174,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Lockfiles have no hunk refs; the CLI leaves them out of the draft and the UI gives them their own closed bucket. Hunk refs exist only for hunks the draft lists.
 - A path stays valid when a rebase only shifts line numbers. `path@oldStart+newStart` goes stale when those starts move, and that fails `validate`. `serve` still starts, shows git at those SHAs, and flags the broken pointer. `refresh` re-points a stale ref to the hunk's new start (see Refresh). A dirty work tree does not make refs stale.
 
-A `hunkRefs` entry is a path string when the group holds every live hunk of that file. Copy the path from the draft. When a file is split across groups, name each hunk as `path@oldStart+newStart`, or `old/path -> new/path@oldStart+newStart` when that hunk is a rename. Take `oldStart` and `newStart` from the digest `show` of that file, or from the hunk's `@@ -oldStart,oldLines +newStart,newLines @@` header. Identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Image files are paths. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
+A `hunkRefs` entry is a path string when the group holds every live hunk of that file. Copy the path from the draft. A path ending in `/` holds every live hunk under that directory. The digest prints one line for a directory of mechanical files, most of them pure renames; the draft holds it as that one ref, and the files listed below it are already inside it. When a file is split across groups, name each hunk as `path@oldStart+newStart`, or `old/path -> new/path@oldStart+newStart` when that hunk is a rename. Take `oldStart` and `newStart` from the digest `show` of that file, or from the hunk's `@@ -oldStart,oldLines +newStart,newLines @@` header. Identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Image files are paths. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
 
 ## lookFor
 

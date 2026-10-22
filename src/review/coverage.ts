@@ -1,6 +1,12 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
 import { pinRange, type PinnedRange } from "../git/repo.ts";
-import { formatStoredHunkRef, hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
+import {
+  formatStoredHunkRef,
+  hunkKey,
+  isDirHunkRef,
+  isLocatedHunkRef,
+  refCoversPath,
+} from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import type { LiveHunk, ReviewDocument, ReviewGroup, ReviewHunkRef } from "../schema/types.ts";
 
@@ -50,12 +56,14 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
     const seen = new Set<string>();
     const stale: ReviewHunkRef[] = [];
     for (const ref of group.hunkRefs) {
-      if (isLockfilePath(ref.path)) {
+      if (!isDirHunkRef(ref) && isLockfilePath(ref.path)) {
         continue;
       }
-      const matches = isLocatedHunkRef(ref)
-        ? matchLocated(ref, liveByKey)
-        : (liveByPath.get(ref.path) ?? []);
+      const matches = isDirHunkRef(ref)
+        ? live.filter((hunk) => refCoversPath(ref, hunk.path) && !isLockfilePath(hunk.path))
+        : isLocatedHunkRef(ref)
+          ? matchLocated(ref, liveByKey)
+          : (liveByPath.get(ref.path) ?? []);
       if (matches.length === 0) {
         stale.push(ref);
         allStale.push(ref);

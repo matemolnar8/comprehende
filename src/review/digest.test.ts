@@ -88,6 +88,47 @@ describe("buildDigest", () => {
     assert.equal(digest.files[0]?.kind, "rename");
   });
 
+  it("collapses a directory of mechanical files with pure renames into one ref", () => {
+    const names = ["a", "b", "c", "d", "e"];
+    const digest = buildDigest([
+      ...names.map((name) =>
+        file(`snapshots/linux/${name}.png`, [], {
+          oldPath: `snapshots/${name}.png`,
+          status: "renamed",
+          relocation: { kind: "rename" },
+        }),
+      ),
+      file("snapshots/linux/f.png", [hunk("snapshots/linux/f.png", 0, 1, [add("x")])], {
+        status: "added",
+      }),
+      file("src/app.ts", [hunk("src/app.ts", 1, 1, [add("x")])]),
+    ]);
+    assert.deepEqual(digest.dirs, [
+      { dir: "snapshots/linux/", renames: 5, from: "snapshots/", to: "snapshots/linux/" },
+    ]);
+    const text = formatDigest(digest, "base...head");
+    assert.match(
+      text,
+      /- snapshots\/linux\/ · 5 files renamed \+0\/-0 · rename · moved from snapshots\/ to snapshots\/linux\//,
+    );
+    assert.match(text, /- snapshots\/linux\/f\.png · added/);
+    assert.equal(text.includes("snapshots/linux/a.png"), false);
+  });
+
+  it("keeps per-file lines when a directory also holds logic", () => {
+    const digest = buildDigest([
+      ...["a", "b", "c", "d", "e"].map((name) =>
+        file(`lib/${name}.ts`, [], {
+          oldPath: `old/${name}.ts`,
+          status: "renamed",
+          relocation: { kind: "rename" },
+        }),
+      ),
+      file("lib/index.ts", [hunk("lib/index.ts", 1, 1, [add("export {}")])]),
+    ]);
+    assert.deepEqual(digest.dirs, []);
+  });
+
   it("prints one line per file with no patch text", () => {
     const secret = "SECRET_LINE_BODY";
     const text = formatDigest(

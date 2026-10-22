@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { formatStoredHunkRef, parseHunkRefString } from "./identity.ts";
+import { formatStoredHunkRef, parseHunkRefString, refCoversPath } from "./identity.ts";
 
 describe("parseHunkRefString", () => {
   it("reads a path, one hunk, and a rename", () => {
@@ -36,6 +36,18 @@ describe("parseHunkRefString", () => {
     assert.equal(parseHunkRefString("@1+2"), undefined);
     assert.equal(parseHunkRefString("src/a.ts -> @1+2"), undefined);
     assert.equal(parseHunkRefString(""), undefined);
+  });
+
+  it("reads a directory ref and covers the paths under it", () => {
+    assert.deepEqual(parseHunkRefString("e2e/snapshots/"), { kind: "dir", dir: "e2e/snapshots/" });
+    assert.equal(parseHunkRefString("/"), undefined);
+    assert.equal(formatStoredHunkRef({ dir: "e2e/snapshots/" }), "e2e/snapshots/");
+    assert.equal(refCoversPath({ dir: "e2e/snapshots/" }, "e2e/snapshots/linux/a.png"), true);
+    assert.equal(refCoversPath({ dir: "e2e/snapshots/" }, "e2e/snapshots-old/a.png"), false);
+    assert.equal(
+      refCoversPath({ path: "b.ts", oldPath: "a.ts", oldStart: 1, newStart: 1 }, "a.ts"),
+      true,
+    );
   });
 
   it("formats a stored ref the way it was written", () => {
