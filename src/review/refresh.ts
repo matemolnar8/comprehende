@@ -25,6 +25,8 @@ export type HunkDelta = {
   same: HunkMatch[];
   /** Same path, overlapping old-side lines, different changed lines: the hunk was edited. */
   changed: HunkMatch[];
+  /** Like changed, but the added and removed text is the same once whitespace is dropped. */
+  reformat: HunkMatch[];
   added: LiveHunk[];
   removed: LiveHunk[];
 };
@@ -37,6 +39,8 @@ export type GroupRefresh = {
   moved: number;
   /** Hunks of this group that were edited since the previous review. */
   changed: LiveHunk[];
+  /** Hunks of this group that only changed whitespace since the previous review. */
+  reformatted: LiveHunk[];
   /** Added hunks a path ref of this group now covers. */
   newHunks: LiveHunk[];
   empty: boolean;
@@ -79,6 +83,7 @@ export function matchHunks(previous: DiffFile[], next: DiffFile[]): HunkDelta {
   }
   const removed = [...pool.values()].flat();
   const changed: HunkMatch[] = [];
+  const reformat: HunkMatch[] = [];
   const added: LiveHunk[] = [];
   for (const hunk of unmatched) {
     const at = removed.findIndex((item) => item.path === hunk.path && overlapsOldSide(item, hunk));
@@ -87,11 +92,27 @@ export function matchHunks(previous: DiffFile[], next: DiffFile[]): HunkDelta {
       continue;
     }
     const [previous] = removed.splice(at, 1);
-    if (previous !== undefined) {
-      changed.push({ previous, next: hunk });
+    if (previous === undefined) {
+      continue;
+    }
+    const match = { previous, next: hunk };
+    if (squashedText(previous) === squashedText(hunk)) {
+      reformat.push(match);
+    } else {
+      changed.push(match);
     }
   }
-  return { same, changed, added, removed };
+  return { same, changed, reformat, added, removed };
+}
+
+/** Added text and removed text with every whitespace character dropped. */
+function squashedText(hunk: LiveHunk): string {
+  const text = (kind: "add" | "del"): string =>
+    hunk.lines
+      .filter((line) => line.kind === kind)
+      .map((line) => line.text.replace(/\s+/g, ""))
+      .join("");
+  return `${text("add")}\0${text("del")}`;
 }
 
 function overlapsOldSide(a: LiveHunk, b: LiveHunk): boolean {
@@ -124,12 +145,17 @@ export function refreshDocument(
   const nextByPath = groupByPath(nextLive);
   const addedByPath = groupByPath(delta.added);
   const changedByPath = groupByPath(delta.changed.map((match) => match.next));
-  const carried = new Map<string, { next: LiveHunk; edited: boolean } | undefined>();
+  const reformatByPath = groupByPath(delta.reformat.map((match) => match.next));
+  type Carried = { next: LiveHunk; kind: "same" | "changed" | "reformat" };
+  const carried = new Map<string, Carried | undefined>();
   for (const match of delta.same) {
-    carried.set(hunkKey(match.previous), { next: match.next, edited: false });
+    carried.set(hunkKey(match.previous), { next: match.next, kind: "same" });
   }
   for (const match of delta.changed) {
-    carried.set(hunkKey(match.previous), { next: match.next, edited: true });
+    carried.set(hunkKey(match.previous), { next: match.next, kind: "changed" });
+  }
+  for (const match of delta.reformat) {
+    carried.set(hunkKey(match.previous), { next: match.next, kind: "reformat" });
   }
   for (const hunk of delta.removed) {
     carried.set(hunkKey(hunk), undefined);
@@ -143,6 +169,7 @@ export function refreshDocument(
       dropped: [],
       moved: 0,
       changed: [],
+      reformatted: [],
       newHunks: [],
       empty: false,
     };
@@ -164,6 +191,7 @@ export function refreshDocument(
         if (nextByPath.has(ref.path)) {
           keep(ref);
           change.changed.push(...(changedByPath.get(ref.path) ?? []));
+          change.reformatted.push(...(reformatByPath.get(ref.path) ?? []));
           change.newHunks.push(...(addedByPath.get(ref.path) ?? []));
         } else {
           change.dropped.push(ref);
@@ -181,8 +209,10 @@ export function refreshDocument(
         if (hunkKey(moved) !== key) {
           change.moved += 1;
         }
-        if (to.edited) {
+        if (to.kind === "changed") {
           change.changed.push(to.next);
+        } else if (to.kind === "reformat") {
+          change.reformatted.push(to.next);
         }
         keep(moved);
         continue;
@@ -198,6 +228,7 @@ export function refreshDocument(
       change.dropped.length > 0 ||
       change.moved > 0 ||
       change.changed.length > 0 ||
+      change.reformatted.length > 0 ||
       change.newHunks.length > 0
     ) {
       groups.push(change);
@@ -307,10 +338,13 @@ export function formatRefresh(
   const previousPaths = new Set([
     ...delta.same.map((match) => match.previous.path),
     ...delta.changed.map((match) => match.previous.path),
+    ...delta.reformat.map((match) => match.previous.path),
     ...delta.removed.map((hunk) => hunk.path),
   ]);
   const addedByPath = groupByPath(delta.added);
-  const changedByPath = groupByPath(delta.changed.map((match) => match.next));
+  const changedByPath = groupByPath(
+    [...delta.changed, ...delta.reformat].map((match) => match.next),
+  );
   const removedByPath = groupByPath(delta.removed);
   const digests = buildDigest(next).files;
   const gone = [...removedByPath.keys()].filter(
@@ -339,8 +373,15 @@ export function formatRefresh(
       .map((group) => group.group.id);
   const sameKeys = new Set(delta.same.map((match) => hunkKey(match.next)));
   const changedKeys = new Set(delta.changed.map((match) => hunkKey(match.next)));
+  const reformatKeys = new Set(delta.reformat.map((match) => hunkKey(match.next)));
   const tag = (key: string): string =>
-    sameKeys.has(key) ? "same" : changedKeys.has(key) ? "changed" : "new";
+    sameKeys.has(key)
+      ? "same"
+      : changedKeys.has(key)
+        ? "changed"
+        : reformatKeys.has(key)
+          ? "reformat"
+          : "new";
   const wasIn = (path: string): string[] =>
     result.groups
       .filter((group) => group.dropped.some((ref) => ref.path === path))
@@ -398,6 +439,9 @@ export function formatRefresh(
     const bits: string[] = [];
     if (group.changed.length > 0) {
       bits.push(`${count(group.changed.length, "hunk")} changed`);
+    }
+    if (group.reformatted.length > 0) {
+      bits.push(`${count(group.reformatted.length, "hunk")} reformatted`);
     }
     if (group.newHunks.length > 0) {
       bits.push(count(group.newHunks.length, "new hunk"));

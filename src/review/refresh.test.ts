@@ -85,6 +85,35 @@ describe("matchHunks", () => {
     assert.deepEqual(delta.removed, []);
   });
 
+  it("marks an edit that only moves whitespace as a reformat", () => {
+    const previous = [file("a.ts", [hunk("a.ts", 10, 10, ["foo(a, b);"])])];
+    const next = [file("a.ts", [hunk("a.ts", 10, 10, ["foo(", "  a,", "  b", ");"])])];
+    const delta = matchHunks(previous, next);
+    assert.equal(delta.reformat.length, 1);
+    assert.equal(delta.changed.length, 0);
+    const before = document([
+      {
+        id: "a",
+        title: "A",
+        why: "w",
+        summary: "s",
+        suggestedOrder: 0,
+        hunkRefs: [{ path: "a.ts" }],
+      },
+    ]);
+    const result = refreshDocument(before, previous, next, before.source);
+    assert.deepEqual(
+      result.groups.map((group) => [group.id, group.changed.length, group.reformatted.length]),
+      [["a", 0, 1]],
+    );
+    const text = formatRefresh(result, next, { commits: [], stalePins: [] });
+    assert.match(
+      text,
+      /^- a\.ts · modified \+4\/-0 · logic · hunks: a\.ts@10\+10 reformat · in a$/m,
+    );
+    assert.match(text, /^- a: 1 hunk reformatted$/m);
+  });
+
   it("treats a hunk in another region of the file as new, and the old one as gone", () => {
     const previous = [file("a.ts", [hunk("a.ts", 10, 10, ["x"])])];
     const next = [file("a.ts", [hunk("a.ts", 80, 80, ["z"])])];
@@ -160,13 +189,14 @@ describe("refreshDocument", () => {
         group.dropped.length,
         group.moved,
         group.changed.length,
+        group.reformatted.length,
         group.newHunks.length,
         group.empty,
       ]),
       [
-        ["update", 1, 1, 0, 0, false],
-        ["b", 0, 0, 1, 1, false],
-        ["g", 1, 0, 0, 0, true],
+        ["update", 1, 1, 0, 0, 0, false],
+        ["b", 0, 0, 1, 0, 1, false],
+        ["g", 1, 0, 0, 0, 0, true],
       ],
     );
     assert.deepEqual(result.unchanged, []);
