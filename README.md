@@ -47,4 +47,4 @@ The skill runs these commands for you. Run them inside the repository under revi
 | `comprehende export --data <file> --out <dir>`                   | Writes a static copy of the UI that any static file server can host.                                                                     |
 | `comprehende refresh --data <file>`                              | Moves a review to new commits. Keeps unchanged hunks in their groups and puts new hunks in a draft group.                                |
 
-The URL hash holds the UI location, so a shared link opens the same view in `serve` and `export`.
+The URL hash holds the UI location, so a shared link opens the same view in `serve` and `export`. After `refresh`, the What changed page (`#changes`, or `h`) compares the review with the old one.

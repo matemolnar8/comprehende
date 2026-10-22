@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { cmdIndex, cmdRefresh, cmdValidate, sourceDrift } from "../cli/commands.ts";
+import { apiFsRel } from "../api/paths.ts";
+import { exportStaticSite } from "../api/snapshot.ts";
+import type { ApiReview } from "../api/types.ts";
 import { git } from "../git/exec.ts";
 import { parseReviewJson } from "../schema/parse.ts";
-import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
+import { shortSha, type DiffFile, type LiveHunk, type ReviewDocument } from "../schema/types.ts";
 import {
   MIXED_GROUP_APP,
   MIXED_GROUP_DOCS,
@@ -297,6 +300,37 @@ describe("cmdRefresh", () => {
     assert.equal(written.ok, true, written.ok ? "" : written.errors.join("\n"));
     const validated = await cmdValidate(repo.root, dataPath);
     assert.equal(validated.document.groups.length, document.groups.length);
+
+    const kept = `review.${shortSha(before.source.headSha ?? "")}.json`;
+    assert.equal(document.previous, kept);
+    assert.equal(await readFile(join(root, kept), "utf8"), reviewFileBody(before));
+
+    const uiRoot = join(root, "ui");
+    await mkdir(uiRoot);
+    await writeFile(join(uiRoot, "index.html"), "<!doctype html>\n");
+    const site = join(root, "site");
+    await exportStaticSite({ cwd: repo.root, dataPath, outDir: site, uiRoot });
+    const hosted = JSON.parse(
+      await readFile(join(site, ...apiFsRel({ kind: "review" }).split("/")), "utf8"),
+    ) as ApiReview;
+
+    // The skill's hosted Refresh path: `jq .document` saves the review.json back.
+    const saved = `${JSON.stringify(hosted.document, null, 2)}\n`;
+    assert.deepEqual(JSON.parse(saved), JSON.parse(await readFile(dataPath, "utf8")));
+    const copied = join(root, "hosted", "review.json");
+    await mkdir(dirname(copied));
+    await writeFile(copied, saved);
+    const again = await cmdRefresh(repo.root, copied, undefined, undefined);
+    assert.equal(again.changed, false, "the kept review is not copied, and that is fine");
+
+    const changes = hosted.changes;
+    assert.deepEqual(changes?.since, { baseSha: repo.base, headSha: before.source.headSha });
+    assert.deepEqual(changes?.hunks, { new: 1, changed: 1, reformat: 0, gone: 1 });
+    const groups = new Map(changes?.groups.map((group) => [group.id, group]));
+    assert.deepEqual(groups.get(MIXED_GROUP_APP)?.hunks, { new: 0, changed: 1, reformat: 0 });
+    assert.deepEqual(groups.get(MIXED_GROUP_DOCS)?.files, { added: [], removed: ["README.md"] });
+    assert.equal(groups.get("update")?.state, "added");
+    assert.equal(groups.has("helpers"), false, "unchanged groups stay out");
   });
 
   it("refuses a document without pinned commits", async () => {

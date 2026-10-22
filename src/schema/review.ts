@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { parseHunkRefString, type ReviewHunkRef } from "./identity.ts";
+import { parseHunkRefString, parseStoredHunkRef } from "./identity.ts";
 import { sourceCitationErrors } from "./source.ts";
 import { REVIEW_SIZES, SOURCE_KINDS } from "./types.ts";
 
@@ -182,6 +182,9 @@ const reviewDocumentObject = z
           description: "Human review burden of this change.",
         }),
       source: reviewSourceSchema,
+      previous: nonemptyString(
+        "File name of the review this one was refreshed from, in the same directory. refresh writes it; the UI compares the two.",
+      ).optional(),
       title: nonemptyString(
         "Short name of the whole change. Prefer a user-created title when it names this change.",
       ),
@@ -225,29 +228,10 @@ export const reviewDocumentSchema = reviewDocumentInput
       ...next,
       groups: next.groups.map((group) => ({
         ...group,
-        hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
+        hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
       })),
     };
   });
-
-function normalizeWrittenHunkRef(value: string): ReviewHunkRef {
-  const parsed = parseHunkRefString(value);
-  if (parsed === undefined) {
-    throw new Error(`invalid hunk ref string: ${value}`);
-  }
-  if (parsed.kind === "file") {
-    return { path: parsed.path };
-  }
-  if (parsed.oldPath === undefined) {
-    return { path: parsed.path, oldStart: parsed.oldStart, newStart: parsed.newStart };
-  }
-  return {
-    path: parsed.path,
-    oldPath: parsed.oldPath,
-    oldStart: parsed.oldStart,
-    newStart: parsed.newStart,
-  };
-}
 
 function ticketToSource(ticket: z.infer<typeof legacyTicketSchema>): Source {
   const source: Source = { id: ticket.id, kind: "ticket", label: ticket.id };
@@ -312,7 +296,7 @@ function documentRules(ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInp
     sources,
     groups: rest.groups.map((group) => ({
       ...group,
-      hunkRefs: group.hunkRefs.map(normalizeWrittenHunkRef),
+      hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
     })),
   })) {
     addIssue(ctx, error);
@@ -373,6 +357,8 @@ export type ReviewSource = z.infer<typeof reviewSourceSchema>;
 export type Source = z.infer<typeof sourceSchema>;
 export type ReviewPart = z.infer<typeof reviewPartSchema>;
 export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
+/** The on-disk form: hunk refs as strings. */
+export type StoredReviewDocument = z.infer<typeof reviewDocumentObject>;
 export type ReviewGroup = ReviewDocument["groups"][number];
 
 export function reviewJsonSchema(): Record<string, unknown> {

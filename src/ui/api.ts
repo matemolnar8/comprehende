@@ -9,10 +9,14 @@ import type {
   FileKind,
   FileSide,
 } from "../api/types.ts";
-import type { FileStatus } from "../schema/types.ts";
+import { parseStoredHunkRef } from "../schema/identity.ts";
+import type { FileStatus, ReviewDocument } from "../schema/types.ts";
 
 // UI LiveHunk is ApiHunk (adds language, omits patch), not schema LiveHunk (adds patch, omits language).
-export type { ApiHunk as LiveHunk, ApiGroupFile, ApiReview as ReviewMeta, FileKind, FileStatus };
+export type { ApiHunk as LiveHunk, ApiGroupFile, FileKind, FileStatus };
+
+/** The review payload with its document's hunk refs parsed. */
+export type ReviewMeta = Omit<ApiReview, "document"> & { document: ReviewDocument };
 export { shortSha } from "../schema/types.ts";
 
 export function resourceHref(resource: ApiResource): string {
@@ -39,8 +43,18 @@ async function getJson<T>(resource: ApiResource): Promise<T> {
   return data as T;
 }
 
-export function fetchReview(): Promise<ApiReview> {
-  return getJson<ApiReview>({ kind: "review" });
+export async function fetchReview(): Promise<ReviewMeta> {
+  const review = await getJson<ApiReview>({ kind: "review" });
+  return {
+    ...review,
+    document: {
+      ...review.document,
+      groups: review.document.groups.map((group) => ({
+        ...group,
+        hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
+      })),
+    },
+  };
 }
 
 export function fetchHunks(group: string): Promise<ApiHunks> {

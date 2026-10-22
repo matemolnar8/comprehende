@@ -41,7 +41,7 @@ This repository publishes exports to GitHub Pages. A pull request review is at `
 - drops refs whose hunk left the diff
 - puts hunks that no group covers into a draft `update` group
 
-It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
+It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. The old document stays beside the new one as `review.<old head>.json`, and `previous` names it; `serve` and `export` load it for the What changed page. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
 
 ## Release
 

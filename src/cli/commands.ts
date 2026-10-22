@@ -1,5 +1,5 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 import {
   filePatchFromGit,
   readDiff,
@@ -230,6 +230,7 @@ export async function cmdPregroup(
 /**
  * Carry an existing review over to the range's current commits. Refs follow their hunks,
  * refs whose hunk left the diff are dropped, and new hunks land in a draft update group.
+ * The old document is kept beside it under its head SHA, and `previous` names that file.
  * Returns the report; `changed` is false when both commits are the ones the document names.
  */
 export async function cmdRefresh(
@@ -264,9 +265,12 @@ export async function cmdRefresh(
   const stalePins = (await staleCommentPins(cwd, result.document, { baseSha, headSha })).map(
     (pin) => pin.id,
   );
-  await writeDocument(dataPath, result.document);
+  const kept = `${basename(dataPath, ".json")}.${shortSha(previous.headSha)}.json`;
+  await copyFile(dataPath, join(dirname(dataPath), kept));
+  const refreshed = { ...result.document, previous: kept };
+  await writeDocument(dataPath, refreshed);
   return {
-    document: result.document,
+    document: refreshed,
     report: formatRefresh(result, nextFiles, { commits, stalePins }),
     changed: true,
   };

@@ -5,6 +5,7 @@ import type { GroupFile } from "../lib/group-files.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import type { InspectorState } from "./Inspector.tsx";
 import { Inspector } from "./Inspector.tsx";
+import { Changes } from "./Changes.tsx";
 import { Overview } from "./Overview.tsx";
 import { Group } from "./Group.tsx";
 import { cn } from "@/lib/utils.ts";
@@ -62,8 +63,14 @@ export function ReviewStage(props: {
           meta={props.meta}
           parts={props.parts}
           viewedPaths={props.viewedPaths}
-          onOpenGroup={(id) => props.onSelect({ kind: "group", id })}
+          onSelect={props.onSelect}
           focusLookForKey={props.focusLookForKey}
+        />
+      ) : props.selection?.kind === "changes" && props.meta.changes !== undefined ? (
+        <Changes
+          changes={props.meta.changes}
+          groups={props.meta.groups}
+          onSelect={props.onSelect}
         />
       ) : (
         <Group

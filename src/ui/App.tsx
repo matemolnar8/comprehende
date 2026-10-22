@@ -253,6 +253,8 @@ export function App() {
         void load();
       } else if (event.key === "o") {
         selectFromNav({ kind: "overview" });
+      } else if (event.key === "h" && meta?.changes !== undefined) {
+        selectFromNav({ kind: "changes" });
       } else if (event.key === "u") {
         selectFromNav({ kind: REVIEW_BUCKETS.unassigned });
       } else if (event.key === "Escape") {

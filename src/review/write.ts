@@ -1,18 +1,21 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { formatStoredHunkRef } from "../schema/identity.ts";
-import type { ReviewDocument } from "../schema/types.ts";
+import type { ReviewDocument, StoredReviewDocument } from "../schema/types.ts";
 
-/** The on-disk form: hunk refs as strings, two-space indent. */
-export function reviewFileBody(document: ReviewDocument): string {
-  const written = {
+export function storedDocument(document: ReviewDocument): StoredReviewDocument {
+  return {
     ...document,
     groups: document.groups.map((group) => ({
       ...group,
       hunkRefs: group.hunkRefs.map((ref) => formatStoredHunkRef(ref)),
     })),
   };
-  return `${JSON.stringify(written, null, 2)}\n`;
+}
+
+/** The on-disk form, two-space indent. */
+export function reviewFileBody(document: ReviewDocument): string {
+  return `${JSON.stringify(storedDocument(document), null, 2)}\n`;
 }
 
 export async function writeDocument(dataPath: string, document: ReviewDocument): Promise<void> {
