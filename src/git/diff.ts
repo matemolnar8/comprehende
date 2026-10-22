@@ -29,7 +29,7 @@ export async function resolveSource(
   const baseSha = await resolveCommit(cwd, baseRef);
   const headSha = await resolveCommit(cwd, headRef);
   return {
-    source: { baseRef, headRef, range: rangeLabel(baseRef, headRef) },
+    source: { baseRef, headRef, range: rangeLabel(baseRef, headRef), baseSha, headSha },
     baseSha,
     headSha,
   };

@@ -34,6 +34,25 @@ export async function listCommits(
     .map(parseCommitRecord);
 }
 
+/** Subjects of commits reachable from `headRef` but not from `previousHead` or `baseRef`. A rebased commit with the same patch does not count. */
+export async function listNewSubjects(
+  cwd: string,
+  previousHead: string,
+  baseRef: string,
+  headRef: string,
+): Promise<string[]> {
+  const stdout = await git(cwd, [
+    "log",
+    "--format=%s",
+    "--right-only",
+    "--cherry-pick",
+    "--end-of-options",
+    `${previousHead}...${headRef}`,
+    `^${baseRef}`,
+  ]);
+  return stdout.split("\n").filter((line) => line !== "");
+}
+
 function parseCommitRecord(record: string): CommitInfo {
   const [sha, shortSha, subject, author, date, ...bodyParts] = record.split(FIELD_SEP);
   return {

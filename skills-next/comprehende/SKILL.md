@@ -1,6 +1,6 @@
 ---
 name: comprehende
-description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, or when the user asks to run comprehende or to upload the report.
+description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, when a reviewed change has new commits, or when the user asks to run comprehende or to upload the report.
 license: MIT
 compatibility: Requires Node.js 24+, git, and a git work tree as the current working directory.
 ---
@@ -20,6 +20,8 @@ The review document is interpretation only. It holds a title, groups, summaries,
 Work from the digest, not the diff. The digest is one line per file: kind, hunks, symbols, pairing and copy hints. Grouping needs that line; only ambiguity needs patch text. Fetch patch with `show`, batched in one call and scaled to the digest.
 
 ## Workflow
+
+When a review document for this change already exists, follow Refresh instead; it reuses steps 3, 6, and 7.
 
 Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch, one sources call, one show batch, one write, validate. Further calls only fix what validate names.
 
@@ -53,7 +55,7 @@ Each step is one tool call where the step says so. Batch the commands as written
 5. Group the hunks by review concern, starting from the draft. Accept a draft group that already holds one concern. Split the `change` group where a reader would stop and review the first piece alone. Merge draft groups that serve one concern. A path covers every hunk of its file: keep the draft's path refs, and write hunk refs only for a file split across groups. Fetch patch only to decide a split: state the decision first ("`login.ts` hunks may belong apart"), then batch every fetch in the one show call below. Fetch at most one hunk per 3 files in the digest (at least 2, at most 8). Draft `mirrors`, `mechanical`, and one-concern groups need no fetch:
 
    ```sh
-   npx comprehende@0.10.1 show --hunk "<ref>"; npx comprehende@0.10.1 show --file "<path>"
+   npx comprehende@0.10.1 show --base <base> --head <head> --hunk "<ref>"; npx comprehende@0.10.1 show --base <base> --head <head> --file "<path>"
    ```
 
    Copy each ref from the draft into the group that holds it, verbatim; the draft refs already match live git. When one file's hunks belong in different groups, name each hunk as in the hunk identity paragraph. Set document `size` from review burden, not `git diff --stat`. Write the whole `review.json` in one write from the field shape below. Keep `version` and `source` from the draft. Done when every ref from the draft is in at least one group, every live hunk of a split file is named, every group has its `why`, stub prose is gone, and every named `part` has a matching document `parts[]` entry. Also done when each unit test sits in the group of the code it checks, each new harness sits with the build or CI that runs it, each feature spec sits with its seed and helpers, each one-line call site or declaration sits with the code it serves, unasked work that could have been its own PR has its own `part`, related enabling work stays one part, each `dependsOn` id names a group in the same `part`, and each mechanical summary says what the reader can skip. When a story builds on another part, `suggestedOrder` puts that part first.
@@ -96,6 +98,35 @@ npx comprehende@0.10.1 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DI
 ```
 
 `$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when they have the URL or path they named. If `review.json` is still a draft, finish the Workflow through validate, then export.
+
+## Refresh
+
+Carry an existing review over to new commits or a rebase. Prose for a hunk that did not change stays as it is; only the groups the report names get new words.
+
+The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
+
+```sh
+REVIEW_DIR=$(mktemp -d) && curl -fsSL "<site-url>/api/review.json" | jq .document > "$REVIEW_DIR/review.json"
+```
+
+1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another.
+
+   ```sh
+   git fetch --quiet <remote> && {
+     npx comprehende@0.10.1 refresh --data "$REVIEW_DIR/review.json"
+     cat "$REVIEW_DIR/review.json"
+   }
+   ```
+
+   `refresh` keeps a hunk whose path and changed lines are the same, wherever it now starts, and re-points its ref. A hunk edited in place (same file, same region, other lines) is `changed` and keeps its group; when only whitespace moved it is `reformat`. A ref whose hunk left the diff is dropped. Every hunk no group covers lands in a draft `update` group with stub prose. The report prints the new commit subjects, one line per file whose hunks changed (`new`, `changed`, `reformat`, `same`, `gone`, and the groups it sits in), and per group what moved. "nothing to refresh" means the refs still resolve to the commits the document names: fetch the right remote or name the head, then run it again. Done when the report and the document are in context.
+
+2. Sources, one call as in step 3 of the Workflow. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read a new comment to its cap. Commit subjects are in the report. Done when every new comment and subject is in context.
+
+3. One `show` batch, with `--base` and `--head` set to the new range, for the hunks the report marks `new` or `changed`. The step-5 budget counts the files the report lists. A `same` or `reformat` hunk is fetched only when a kept `lookFor` bullet rests on it.
+
+4. Edit `review.json` in place with your edit tool; untouched groups stay verbatim. Move each `update` ref into the group that holds its concern, or into a new group, then delete `update`. In a group the report names: rewrite `summary` when the new or changed hunks change what the group is; drop each `lookFor` bullet whose hunk is `gone`; re-check each bullet on a `changed` hunk against the fetched hunk. A named group whose hunks keep their meaning, such as one with only `reformat` hunks, keeps its prose as it is. Delete a group that is `now empty`, and every `dependsOn` that names it. Retire a document `lookFor` bullet that a new commit resolves; a new comment asking for work the change does not do is a new bullet. `size` moves with the new burden; `title` and `why` change only when a source did. Done when `update` is gone, no group is empty, no stub prose remains, and every named group's prose matches the code at head.
+
+5. Steps 6 and 7 of the Workflow: validate, then serve or export to the same place as before.
 
 ## The title
 
@@ -141,7 +172,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`. A new component plus follow-up changes across existing screens is `medium`. A new contract that later groups depend on is `large`. That `size` stays when those groups merge. The digest header (file and hunk counts) sets the starting point; the group count and dependencies adjust it.
 - Coverage: every live hunk sits in at least one group. A path covers every live hunk of that file. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI. Every ref in the draft already covers its hunks; splitting a file across groups needs hunk refs, everything else keeps the draft's paths.
 - Lockfiles have no hunk refs; the CLI leaves them out of the draft and the UI gives them their own closed bucket. Hunk refs exist only for hunks the draft lists.
-- A path stays valid when a rebase only shifts line numbers. `path@oldStart+newStart` goes stale when those starts move, and that fails `validate`. `serve` still starts, shows git at those SHAs, and flags the broken pointer. Re-run `pregroup` and copy fresh refs. A dirty work tree does not make refs stale.
+- A path stays valid when a rebase only shifts line numbers. `path@oldStart+newStart` goes stale when those starts move, and that fails `validate`. `serve` still starts, shows git at those SHAs, and flags the broken pointer. `refresh` re-points a stale ref to the hunk's new start (see Refresh). A dirty work tree does not make refs stale.
 
 A `hunkRefs` entry is a path string when the group holds every live hunk of that file. Copy the path from the draft. When a file is split across groups, name each hunk as `path@oldStart+newStart`, or `old/path -> new/path@oldStart+newStart` when that hunk is a rename. Take `oldStart` and `newStart` from the digest `show` of that file, or from the hunk's `@@ -oldStart,oldLines +newStart,newLines @@` header. Identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Image files are paths. Git LFS images are read from `.git/lfs/objects` in the clone; a missing object leaves the image slot empty.
 

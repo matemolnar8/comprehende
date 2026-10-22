@@ -7,6 +7,8 @@ import { delimiter, join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { cmdDigest, cmdIndex, cmdPregroup, cmdReview, cmdShow, cmdValidate } from "./commands.ts";
 import { skeletonPaths } from "../review/skeleton.ts";
+import { formatStoredHunkRef } from "../schema/identity.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
 import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
@@ -150,6 +152,20 @@ describe("cmdReview git work", { concurrent: false }, () => {
     );
   });
 
+  it("shows a renamed hunk by the ref the draft writes", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-show-rename-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const index = await cmdIndex(repo.root, repo.base, repo.head);
+    const renamed = index.hunks.find((hunk) => hunk.path === "src/helpers.ts");
+    assert.ok(renamed);
+    const ref = formatStoredHunkRef(renamed);
+    assert.match(ref, / -> /);
+    const patch = await cmdShow(repo.root, repo.base, repo.head, { hunk: ref });
+    assert.match(patch, /rename from src\/util\.ts/);
+    assert.match(patch, /"helpers"/);
+  });
+
   it("pregroups a draft that validate accepts", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-pregroup-"));
     roots.push(root);
@@ -158,6 +174,18 @@ describe("cmdReview git work", { concurrent: false }, () => {
     const { document } = await cmdPregroup(repo.root, dataPath, repo.base, repo.head);
     assert.ok(document.groups.some((group) => group.id === "change"));
     assert.ok(document.groups.some((group) => group.id === "mechanical"));
+    await cmdValidate(repo.root, dataPath);
+  });
+
+  it("leaves lockfiles out of the draft", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-pregroup-lock-"));
+    roots.push(root);
+    const repo = await createLockfileRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    const { document } = await cmdPregroup(repo.root, dataPath, repo.base, repo.head);
+    const refs = document.groups.flatMap((group) => group.hunkRefs.map((ref) => ref.path));
+    assert.ok(refs.length > 0);
+    assert.deepEqual(refs.filter(isLockfilePath), []);
     await cmdValidate(repo.root, dataPath);
   });
 });

@@ -8,10 +8,12 @@ import { parseArgv, USAGE } from "./args.ts";
 import {
   cmdDigest,
   cmdPregroup,
+  cmdRefresh,
   cmdReview,
   cmdShow,
   cmdValidate,
   resolveOutPath,
+  sourceDrift,
 } from "./commands.ts";
 import { loadDocument, resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
@@ -19,6 +21,7 @@ import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
 import { assertWorkTree } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
 import { startServer } from "../server/http.ts";
+import type { ReviewDocument } from "../schema/types.ts";
 
 export async function run(argv: string[]): Promise<number> {
   const request = parseArgv(argv);
@@ -65,6 +68,7 @@ export async function run(argv: string[]): Promise<number> {
         const document = await loadDocument(dataPath);
         const pin = await pinReviewSource(request.cwd, document);
         const ctx = await openReview(request.cwd, document, pin);
+        warnDrift(document, pin, dataPath);
         warnReview(ctx, "serve continues; git wins, unassigned/stale are visible");
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
@@ -80,6 +84,7 @@ export async function run(argv: string[]): Promise<number> {
         const outDir = resolveOutPath(request.out, request.cwd);
         const document = await loadDocument(dataPath);
         const ctx = await openReview(request.cwd, document);
+        warnDrift(document, ctx.resolved, dataPath);
         warnReview(ctx, "export continues; git wins, unassigned/stale are visible");
         const result = await exportStaticSite({ cwd: request.cwd, dataPath, outDir, ctx });
         console.log(result.outDir);
@@ -101,6 +106,22 @@ export async function run(argv: string[]): Promise<number> {
         );
         return 0;
       }
+      case "refresh": {
+        const dataPath = resolveDataPath(request.data, request.cwd);
+        const { document, report, changed } = await cmdRefresh(
+          request.cwd,
+          dataPath,
+          request.base,
+          request.head,
+        );
+        console.log(report);
+        if (changed) {
+          console.error(
+            `wrote ${dataPath}  ${document.groups.length} groups\nCheck the prose of the groups named above against their new hunks. Then:\n  comprehende validate --data ${dataPath}`,
+          );
+        }
+        return 0;
+      }
       case "pregroup": {
         const dataPath = resolveDataPath(request.data, request.cwd);
         const { document } = await cmdPregroup(request.cwd, dataPath, request.base, request.head);
@@ -114,6 +135,17 @@ export async function run(argv: string[]): Promise<number> {
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     return 1;
+  }
+}
+
+function warnDrift(
+  document: ReviewDocument,
+  live: { baseSha: string; headSha: string },
+  dataPath: string,
+): void {
+  const drift = sourceDrift(document.source, live, dataPath);
+  if (drift !== undefined) {
+    console.error(drift);
   }
 }
 
