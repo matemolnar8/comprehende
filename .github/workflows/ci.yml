@@ -28,7 +28,6 @@ jobs:
             args:
               - --frozen-lockfile
       - run: vp check
-      - run: vp run typecheck
       - run: vp run test
       - run: vp run pack:smoke
 
