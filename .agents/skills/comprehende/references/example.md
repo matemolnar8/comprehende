@@ -1,6 +1,6 @@
 # Example review.json
 
-Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
+Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from the `pregroup` draft, and so does `source`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
 
 - `login` depends on `cookie`. Both use `part` "Session cookie". The helper's test sits in `cookie` with the helper it checks.
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
@@ -15,7 +15,9 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
   "source": {
     "baseRef": "origin/main",
     "headRef": "HEAD",
-    "range": "origin/main...HEAD"
+    "range": "origin/main...HEAD",
+    "baseSha": "3f1c0a9d2b8e4c6f7a1b2c3d4e5f60718293a4b5",
+    "headSha": "9b8a7c6d5e4f30211fedcba9876543210fedcba9"
   },
   "size": "small",
   "title": "HttpOnly session cookies",
