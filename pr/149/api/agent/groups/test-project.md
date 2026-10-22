@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify 1386f170249935873c781b3dbd4e1e32db3df2bc` in this repository.
+   Run `git rev-parse --verify 36118c1676746e323b265ebc0ebdebb7db1c88e2` and `git rev-parse --verify 3b600231ea55599a9d3a2124aed0c0a49624a45d` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 1386f170249935873c781b3dbd4e1e32db3df2bc -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 3b600231ea55599a9d3a2124aed0c0a49624a45d -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  36118c1676746e323b265ebc0ebdebb7db1c88e2
 
-head               1386f170249935873c781b3dbd4e1e32db3df2bc
+head               3b600231ea55599a9d3a2124aed0c0a49624a45d
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 1386f170249935873c781b3dbd4e1e32db3df2bc
+git diff --find-renames 36118c1676746e323b265ebc0ebdebb7db1c88e2 3b600231ea55599a9d3a2124aed0c0a49624a45d
 
 Review concern 01 of 03: UI tests get their own TypeScript project (`test-project`)
 

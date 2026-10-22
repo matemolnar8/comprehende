@@ -1,1 +1,1 @@
-{"path":"src/ui/tsconfig.json","ref":"1386f170249935873c781b3dbd4e1e32db3df2bc","side":"new","content":"{\n  \"files\": [],\n  \"references\": [{ \"path\": \"./tsconfig.app.json\" }, { \"path\": \"./tsconfig.test.json\" }]\n}\n","language":"json"}
+{"path":"src/ui/tsconfig.json","ref":"3b600231ea55599a9d3a2124aed0c0a49624a45d","side":"new","content":"{\n  \"files\": [],\n  \"references\": [{ \"path\": \"./tsconfig.app.json\" }, { \"path\": \"./tsconfig.test.json\" }]\n}\n","language":"json"}
