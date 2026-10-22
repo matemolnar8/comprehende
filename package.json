@@ -35,7 +35,7 @@
     "build": "tsc -p tsconfig.build.json && vp build",
     "prepack": "pnpm run build",
     "dev": "tsx src/cli/main.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/tsconfig.app.json && tsc --noEmit -p src/ui/tsconfig.test.json && tsc --noEmit -p scripts/tsconfig.json",
     "test": "vp test run",
     "eval": "pnpm build && tsx scripts/eval/run.ts",
     "eval:add": "tsx scripts/eval/add-case.ts",

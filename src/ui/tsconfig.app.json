@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["vite/client"],
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    ".",
+    "../api/types.ts",
+    "../api/paths.ts",
+    "../schema/types.ts",
+    "../schema/hunk-meta.ts",
+    "../schema/blame-runs.ts",
+    "../schema/image.ts",
+    "../schema/image-diff.ts"
+  ],
+  "exclude": ["**/*.test.ts"]
+}
