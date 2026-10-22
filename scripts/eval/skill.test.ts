@@ -23,7 +23,8 @@ describe("next skill workflow", () => {
       md,
       /One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources/,
     );
-    assert.match(md, /Write the whole `review\.json` in one write/);
+    assert.match(md, /Write the whole `review\.json` in one shell call/);
+    assert.match(md, /<<'EOF'\n   <the document>\n   EOF\n   npx comprehende@[\d.]+ validate/);
     assert.match(md, /`label` is that subject line, or a SHA from the same log/);
     assert.match(
       md,
