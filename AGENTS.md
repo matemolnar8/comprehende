@@ -78,8 +78,8 @@ The most common defect here is a change that fixes one layer and misses the rest
 
 ## Verifying
 
-- Smallest proof that the change works. Focused tests for the files you touched, targeted typecheck for the scope you changed.
-- Do not run repo-wide checks unless asked. No full `pnpm test`, no full `typecheck`, no full `pnpm eval`. CI owns the full suite.
+- Smallest proof that the change works. Focused tests for the files you touched (`vp test run <files>`), and `vp check <files>` for format, lint, and types on the files you changed.
+- Do not run repo-wide checks unless asked. No full `vp test`, no full `vp check`, no full `pnpm eval`. CI owns the full suite.
 - Test observable behavior, not implementation. Do not render components to static markup to assert props, and do not add tests that only mirror the code.
 - Ask before you verify with a browser or computer use. Do not spin up extra dev servers from subagents.
 

@@ -47,7 +47,7 @@ It prints the new commit subjects and one line per changed file, so the skill re
 
 Edit the skill in `skills-next/comprehende/`. `npx skills add` reads `skills/comprehende/` only.
 
-Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the next skill pin matches. Pre-commit and `pnpm test` fail if the staged package version and the next skill pin differ. Do not bump for skill-only edits. Use the number the user names. If they name none, use the next semver: patch for fixes, minor for new features, major for breaking changes.
+Bump `version` in `package.json` when the CLI or UI changes, then run `pnpm sync:skill` so the next skill pin matches. Pre-commit and `vp test` fail if the staged package version and the next skill pin differ. Do not bump for skill-only edits. Use the number the user names. If they name none, use the next semver: patch for fixes, minor for new features, major for breaking changes.
 
 When the next skill should ship with `npx skills add`, run `pnpm release:skill`. It copies `skills-next/comprehende/` onto `skills/comprehende/`. Run it in the same change that publishes a new CLI, so `npx skills add` installs instructions that match the package they pin.
 
