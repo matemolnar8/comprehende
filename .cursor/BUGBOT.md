@@ -1,6 +1,6 @@
 # Review rules
 
-Bugbot reads this file. Each rule here is a judgement call. A fixed pattern belongs in a check (`pnpm typecheck`, `pnpm test`, `actionlint` in CI), not in this file. PR numbers show where a rule came from.
+Bugbot reads this file. Each rule here is a judgement call. A fixed pattern belongs in a check (`vp check`, `vp test`, `actionlint` in CI), not in this file. PR numbers show where a rule came from.
 
 ## Smallest fix
 
