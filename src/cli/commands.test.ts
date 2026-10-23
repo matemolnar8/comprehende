@@ -37,6 +37,7 @@ describe("cmdReview git work", { concurrent: false }, () => {
         nameStatus: 1,
         unified: 1,
         numstat: 0,
+        grep: 1,
         mergeBase: 0,
         other: 0,
       });
@@ -84,6 +85,7 @@ describe("cmdReview git work", { concurrent: false }, () => {
         nameStatus: 1,
         unified: 1,
         numstat: 1,
+        grep: 1,
         mergeBase: 0,
         other: 0,
       });
@@ -235,6 +237,9 @@ function gitCommand(argv: string[]): string | undefined {
       i += 1;
       continue;
     }
+    if (arg === "--literal-pathspecs") {
+      continue;
+    }
     return arg;
   }
   return undefined;
@@ -245,10 +250,19 @@ function tally(calls: string[][]): {
   nameStatus: number;
   unified: number;
   numstat: number;
+  grep: number;
   mergeBase: number;
   other: number;
 } {
-  const counts = { revParse: 0, nameStatus: 0, unified: 0, numstat: 0, mergeBase: 0, other: 0 };
+  const counts = {
+    revParse: 0,
+    nameStatus: 0,
+    unified: 0,
+    numstat: 0,
+    grep: 0,
+    mergeBase: 0,
+    other: 0,
+  };
   for (const argv of calls) {
     const command = gitCommand(argv);
     if (command === "rev-parse") {
@@ -261,6 +275,8 @@ function tally(calls: string[][]): {
       counts.numstat += 1;
     } else if (command === "diff") {
       counts.unified += 1;
+    } else if (command === "grep") {
+      counts.grep += 1;
     } else {
       counts.other += 1;
     }

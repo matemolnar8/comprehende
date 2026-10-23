@@ -122,6 +122,9 @@ function classifyKind(file: DiffFile, hunks: DigestHunk[]): DigestKind {
   if (file.relocation?.kind === "copy") {
     return "copy";
   }
+  if (file.generated === true) {
+    return "generated";
+  }
   if (isTestPath(file.path)) {
     return "test";
   }
