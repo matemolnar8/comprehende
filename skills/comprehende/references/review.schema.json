@@ -32,6 +32,16 @@
         "range": {
           "type": "string",
           "minLength": 1
+        },
+        "baseSha": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit baseRef resolved to when this document was written. refresh diffs from it."
+        },
+        "headSha": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Commit headRef resolved to when this document was written. refresh diffs from it."
         }
       },
       "required": [
@@ -39,6 +49,11 @@
         "headRef"
       ],
       "additionalProperties": false
+    },
+    "previous": {
+      "type": "string",
+      "minLength": 1,
+      "description": "File name of the review this one was refreshed from, in the same directory. refresh writes it; the UI compares the two."
     },
     "title": {
       "type": "string",
@@ -153,7 +168,7 @@
             "items": {
               "type": "string",
               "minLength": 1,
-              "description": "A git path (every live hunk of that file), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart."
+              "description": "A git path (every live hunk of that file), a directory ending in / (every live hunk under it), or path@oldStart+newStart. A rename is old -> new@oldStart+newStart."
             },
             "description": "A path string covers every live hunk of that file. path@oldStart+newStart is one hunk. old -> new@oldStart+newStart is a renamed hunk."
           }

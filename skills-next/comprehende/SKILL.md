@@ -12,7 +12,7 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Cwd is the repo. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.10.1 <command>
+npx comprehende@0.11.0 <command>
 ```
 
 The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. `serve` reads the diff from git.
@@ -31,8 +31,8 @@ Each step is one tool call where the step says so. Batch the commands as written
    ```sh
    REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
      npm view comprehende version || true
-     npx comprehende@0.10.1 pregroup --base <base> --head <head> --data "$REVIEW_DIR/review.json"
-     npx comprehende@0.10.1 digest --base <base> --head <head>
+     npx comprehende@0.11.0 pregroup --base <base> --head <head> --data "$REVIEW_DIR/review.json"
+     npx comprehende@0.11.0 digest --base <base> --head <head>
      cat "$REVIEW_DIR/review.json"
      git log --format='%s' --end-of-options <base>..<head>
      for f in "<sourcesDir>"/*; do echo "=== $f"; head -c 10000 "$f"; done
@@ -41,14 +41,14 @@ Each step is one tool call where the step says so. Batch the commands as written
 
    Sources are the request or ticket body, each review comment with whether its thread is resolved, whether the comment is outdated, and its current line, and the commit subjects. Files on disk get the loop above; a host CLI fetch joins the call through the same `head -c 10000`. Sources only an MCP reaches go in one parallel block after this call, one fetch each. A ticket number in the request, the branch name, or a commit subject names a ticket to read here.
 
-   When the user names a local executable, use that command as written in place of `npx comprehende@0.10.1`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version. If that version is newer than this pin (`npx comprehende@0.10.1`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
+   When the user names a local executable, use that command as written in place of `npx comprehende@0.11.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version. If that version is newer than this pin (`npx comprehende@0.11.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
 
    `pregroup` writes a draft: `mirrors-<n>` groups of files that received the same change, one `mechanical` group (renames, copies, moves, generated output), and one `change` group for the rest, with stub prose. The `cat` prints the draft. Trust the `same change as`, `pairs with`, and `replaces` hints; a file that `replaces` a deleted one, and the file it `replaced`, are a new version, not a move, and read with their story. Done when the digest, the draft, the log, and the sources are in context.
 
 3. Group the hunks by review concern, starting from the draft, and fetch the patch the decision needs. Accept a draft group that already holds one concern. Split the `change` group where a reader would stop and review the first piece alone. Merge draft groups that serve one concern. Name each story that could have been its own PR: the asked story, and each dependency policy change (exact versions loosened to ranges, or the reverse), standalone document, refactor of files the asked story does not need, or production code in a PR about tests. Each story is a `part` on its groups; one story means no `part`. Up to six files in the digest: fetch every file that is not mechanical or a copy. Past six: fetch only the hunks that decide a split or earn a lookFor bullet, eight fetches at most, and state each reason first ("`login.ts` hunks may belong apart"). Draft `mirrors-<n>` and `mechanical` groups need no fetch. One show call:
 
    ```sh
-   npx comprehende@0.10.1 show --base <base> --head <head> --hunk "<ref>"; npx comprehende@0.10.1 show --base <base> --head <head> --file "<path>"
+   npx comprehende@0.11.0 show --base <base> --head <head> --hunk "<ref>"; npx comprehende@0.11.0 show --base <base> --head <head> --file "<path>"
    ```
 
    Done when every story has a `part` name or there is one story, and the show output is in context or nothing needs a fetch.
@@ -59,7 +59,7 @@ Each step is one tool call where the step says so. Batch the commands as written
    cat > "$REVIEW_DIR/review.json" <<'EOF'
    <the document>
    EOF
-   npx comprehende@0.10.1 validate --data "$REVIEW_DIR/review.json"
+   npx comprehende@0.11.0 validate --data "$REVIEW_DIR/review.json"
    ```
 
    Done when every source item has a verdict and every divergence is a document `lookFor` bullet; every behavior change a fetched hunk shows is a group `lookFor` bullet; every ref from the draft is in at least one group; every live hunk of a split file is named; stub prose is gone; every named `part` has a document `parts[]` entry; each `dependsOn` id names a group in the same `part`; every citation rests on a sentence its source says. Also done when each unit test sits in the group of the code it checks, each helper several groups call sits in the foundation group they share, each new harness sits with the build or CI that runs it, each feature spec sits with its seed and helpers, each one-line call site or declaration sits with the code it serves, unasked work that could have been its own PR has its own `part`, related enabling work stays one part, and each mechanical summary says what the reader can skip. When a story builds on another part, `suggestedOrder` puts that part first.
@@ -88,8 +88,8 @@ Each step is one tool call where the step says so. Batch the commands as written
 
    Add a field when the section that defines it says to write it: document `why`, `lookFor`, and `parts` (`name`, `summary`); `sources` (`id`, `kind` of `ticket`, `pr`, `pr-comment`, `commit`, or `transcript`, `label`, plus `url`, `title`, `gist`, and `part` when you have them). On a group: `part`, `sources` (those ids), `lookFor`, `dependsOn` (group ids). A `pr-comment` source also has `author` and `body`, and a pin (`path`, `side`, `line`) when PR comments under The why say so. `size` is `trivial`, `small`, `medium`, `large`, or `very-large`.
 
-5. `validate` ends the step-4 call; after a fix or a Refresh edit, run `npx comprehende@0.10.1 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every directory ref holds only mechanical files, every group `part` has a `parts[]` entry, every `dependsOn` names a group in the same `part`, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
-6. When the user asks to upload the report, follow Export. Otherwise run `npx comprehende@0.10.1 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+5. `validate` ends the step-4 call; after a fix or a Refresh edit, run `npx comprehende@0.11.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every directory ref holds only mechanical files, every group `part` has a `parts[]` entry, every `dependsOn` names a group in the same `part`, every PR comment pin (`path`, `side`, `line`) matches a live line, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
+6. When the user asks to upload the report, follow Export. Otherwise run `npx comprehende@0.11.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 `references/example.md` is an optional filled sample of the field shape.
 
@@ -98,7 +98,7 @@ Each step is one tool call where the step says so. Batch the commands as written
 Write a static site and put that folder where the user asked.
 
 ```sh
-npx comprehende@0.10.1 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
+npx comprehende@0.11.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
 ```
 
 `$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when the user has the URL or path they named. If `review.json` is still a draft, finish the Workflow through validate, then export.
@@ -117,7 +117,7 @@ REVIEW_DIR=$(mktemp -d) && curl -fsSL "<site-url>/api/review.json" | jq .documen
 
    ```sh
    git fetch --quiet <remote> && {
-     npx comprehende@0.10.1 refresh --data "$REVIEW_DIR/review.json"
+     npx comprehende@0.11.0 refresh --data "$REVIEW_DIR/review.json"
      cat "$REVIEW_DIR/review.json"
    }
    ```
