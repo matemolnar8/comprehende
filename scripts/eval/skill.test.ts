@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { findPackageRoot } from "../../src/package-root.ts";
-import { copySkillForEval, readNextSkillMd, skillSection } from "./skill.ts";
+import { skillPaths } from "../../src/schema/skill-paths.ts";
+import { copySkillForEval } from "./skill.ts";
 
 const roots: string[] = [];
 afterAll(() => {
@@ -16,8 +17,7 @@ afterAll(() => {
 
 describe("next skill workflow", () => {
   it("batches commands, names validate checks, and drops the schema pointer", async () => {
-    const md = await readNextSkillMd(findPackageRoot());
-    const grouping = skillSection(md, "Grouping rules");
+    const md = await readFile(join(skillPaths(findPackageRoot()).nextSkill, "SKILL.md"), "utf8");
     assert.match(md, /Each step is one tool call where the step says so/);
     assert.match(
       md,
@@ -59,10 +59,10 @@ describe("next skill workflow", () => {
     assert.doesNotMatch(md, /Cargo\.lock/);
     assert.doesNotMatch(md, /poetry\.lock/);
     assert.doesNotMatch(md, /go\.sum/);
-    assert.match(grouping, /Lockfiles have no hunk refs/);
-    assert.match(grouping, /path@oldStart\+newStart/);
-    assert.match(grouping, /A path covers every live hunk of that file/);
-    assert.doesNotMatch(grouping, /Lockfiles stay in `skipped`/);
+    assert.match(md, /Lockfiles have no hunk refs/);
+    assert.match(md, /path@oldStart\+newStart/);
+    assert.match(md, /A path covers every live hunk of that file/);
+    assert.doesNotMatch(md, /Lockfiles stay in `skipped`/);
     const example = await readFile(
       join(findPackageRoot(), "skills-next/comprehende/references/example.md"),
       "utf8",
@@ -72,7 +72,7 @@ describe("next skill workflow", () => {
 });
 
 describe("eval skill copy", () => {
-  it("rewrites the pin and extracts grouping rules", async () => {
+  it("rewrites the pin", async () => {
     const root = findPackageRoot();
     const dest = await mkdtemp(join(tmpdir(), "eval-skill-"));
     roots.push(dest);
@@ -80,8 +80,5 @@ describe("eval skill copy", () => {
     const md = await readFile(join(dest, "SKILL.md"), "utf8");
     assert.match(md, /node \/tmp\/dist\/cli\/main\.js/);
     assert.doesNotMatch(md, /npx comprehende@/);
-    const grouping = skillSection(md, "Grouping rules");
-    assert.match(grouping, /Group by review concern/);
-    assert.doesNotMatch(grouping, /^## /m);
   });
 });

@@ -10,9 +10,9 @@
     "groups": { "min": 2, "max": 3 },
     "size": ["trivial", "small"],
     "together": [["skills-next/comprehende/SKILL.md", ".agents/skills/comprehende/SKILL.md"]],
-    "apart": [["AGENTS.md", "skills-next/comprehende/SKILL.md"]],
-    "claims": [
-      "the PR says agents publish with VibeDrop, but AGENTS.md at head uses an anonymous Netlify deploy and puts the URL and password in the PR body"
+    "apart": [
+      ["AGENTS.md", "skills-next/comprehende/SKILL.md"],
+      ["AGENTS.md", ".agents/skills/comprehende/SKILL.md"]
     ]
   }
 }

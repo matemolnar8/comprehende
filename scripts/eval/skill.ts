@@ -18,27 +18,3 @@ export async function copySkillForEval(
   }
   await writeFile(skillMd, rewritten);
 }
-
-export function skillSection(markdown: string, heading: string): string {
-  const lines = markdown.split("\n");
-  const start = lines.findIndex((line) => line === `## ${heading}`);
-  if (start === -1) {
-    throw new Error(`SKILL.md missing ## ${heading}`);
-  }
-  let end = lines.length;
-  for (let i = start + 1; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (line !== undefined && line.startsWith("## ")) {
-      end = i;
-      break;
-    }
-  }
-  return lines
-    .slice(start + 1, end)
-    .join("\n")
-    .trim();
-}
-
-export async function readNextSkillMd(packageRoot: string): Promise<string> {
-  return readFile(join(skillPaths(packageRoot).nextSkill, "SKILL.md"), "utf8");
-}

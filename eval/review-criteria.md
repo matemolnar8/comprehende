@@ -1,6 +1,6 @@
 # Review criteria for eval cases
 
-Each case has an `expected.md` next to its `case.json`. It says what a good review of that pull request looks like. `case.json` holds the parts of it the harness can check. The rest is for humans and graders.
+Each case has an `expected.md` next to its `case.json`. It says what a good review of that pull request looks like. The harness reads the `Must`, `Good`, and `Must not` lists straight from `expected.md`, so edit the list and the grader follows. `case.json` holds the shape checks the harness can run without a model: why, parts, groups, size, source kinds, mechanical paths, and the `together` and `apart` pairs taken from the `Groups` section.
 
 ## Criteria
 
@@ -16,14 +16,23 @@ Each case has an `expected.md` next to its `case.json`. It says what a good revi
 10. Every claim is true at head. A wrong claim is worse than a missing one.
 11. Short, plain sentences in Simplified Technical English. Detail belongs in "Ask an AI about this", not in the review.
 
+## Must or Good
+
+A claim goes in `Must` when the diff and the sources show it on their own, and a reader who misses it misjudges the change. That covers a source that says one thing while head does another, a behavior change that hides in a hunk, production code in a test PR, and a script that deletes or overwrites a file the developer owns.
+
+A claim goes in `Good` when a reviewer has to read past the diff to find it: trace callers that the diff does not touch, run the code in their head across several files, or check a generated fixture line by line against the implementation. A fixture that matches its implementation is `Good`, not `Must`. A mismatch is `Must`, because the diff shows it.
+
+Each item is one sentence and true at head. Write the fact, not the instruction: "the test sets `os.Args` directly, so it takes the real `os.Args` path", not "check that the test uses `os.Args`". A review states an item when it gives the same fact in its own words. It does not need the same symbols or the same sentence.
+
 ## Expected outcome template
 
-Each `expected.md` uses these sections, in this order:
+Each `expected.md` uses these sections, in this order. The first line is `# <case id>: <title>`, then one or two lines of context (PR, ticket, comment count, what kind of change).
 
 - **Story**: title, why (present or absent, and from which source), size, parts, and group count.
-- **Groups**: the groups a good review has, with the files in each.
-- **Must state**: claims a reader must come away with. These go in `case.json` `claims`.
-- **Good to state**: claims that make the review better but do not fail it.
-- **Must not**: mistakes seen in runs or likely for this change.
-- **Baseline**: what the six runs on `main` at `a6c2a1cd` did (issue #117), in a few bullets.
-- **case.json**: what changed in the expects and why. The `groups` range comes from the Story group count, with some slack.
+- **Groups**: a numbered list of the groups a good review has, with the paths in each and one sentence on why they read together. `case.json` `together` and `apart` pairs come from here.
+- **Must**: one bullet per claim the review must state.
+- **Good**: one bullet per claim that improves the review but does not fail it.
+- **Must not**: one bullet per mistake a review can make on this change: a stale PR claim repeated as fact, a false `dependsOn`, a split that criterion 2 forbids.
+- **Notes**: optional free text. Why a claim is `Good` and not `Must`, what past runs got wrong, and why a `case.json` range has slack.
+
+The harness parses the bullets under `Must`, `Good`, and `Must not`. Each bullet is one line that starts with `- `. Other sections are for humans.

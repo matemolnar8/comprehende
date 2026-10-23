@@ -13,7 +13,7 @@ import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { loadDocument } from "../../src/review/load.ts";
 import { EVAL_USAGE, parseEvalArgv } from "./args.ts";
-import { listEvalCases, selectEvalCases, type EvalCase } from "./case.ts";
+import { listEvalCases, selectEvalCases, type EvalCase, type Rubric } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
 import { loadDotEnv } from "./env.ts";
 import {
@@ -25,13 +25,12 @@ import {
   removeWorktree,
   thisRepoMirror,
 } from "./clone.ts";
-import { groupingPrompt, prosePrompt, runGrader } from "./graders.ts";
+import { lookForBullets, runRubricGrader } from "./graders.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
 import { producerPrompt, runProducer } from "./producer.ts";
 import {
   caseFailed,
-  claimsFromGrader,
   formatBaselineDelta,
   formatCaseLine,
   formatRunTotals,
@@ -41,7 +40,7 @@ import {
   type RunSummary,
 } from "./result.ts";
 import { writeEvalReport } from "./report.ts";
-import { copySkillForEval, readNextSkillMd } from "./skill.ts";
+import { copySkillForEval } from "./skill.ts";
 
 export async function runEval(argv: string[], packageRoot = findPackageRoot()): Promise<number> {
   const request = parseEvalArgv(argv);
@@ -57,8 +56,9 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   await loadDotEnv(packageRoot);
   const apiKey = process.env.MUSE_CODE_API_KEY ?? "";
-  const gradersOn = rescoreDir === undefined && request.graders;
-  if (rescoreDir === undefined && apiKey === "" && !request.cliLogin) {
+  const gradersOn = request.graders;
+  const needsModel = rescoreDir === undefined || gradersOn;
+  if (needsModel && apiKey === "" && !request.cliLogin) {
     console.error("MUSE_CODE_API_KEY is not set (or pass --cli-login to use the muse CLI login)");
     return 1;
   }
@@ -75,7 +75,6 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const runDir = join(packageRoot, "eval/runs", stamp);
   await mkdir(runDir, { recursive: true });
   const skillTree = (await git(packageRoot, ["rev-parse", "HEAD:skills-next/comprehende"])).trim();
-  const skillMd = await readNextSkillMd(packageRoot);
   const summary: RunSummary = {
     stamp,
     skillTree,
@@ -89,8 +88,8 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       packageRoot,
       runDir,
       spec: item.spec,
+      rubric: item.rubric,
       caseDir: item.dir,
-      skillMd,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
       graders: gradersOn,
@@ -117,8 +116,8 @@ async function evalOneCase(opts: {
   packageRoot: string;
   runDir: string;
   spec: EvalCase;
+  rubric: Rubric;
   caseDir: string;
-  skillMd: string;
   producerModel: string;
   graderModel: string;
   graders: boolean;
@@ -242,29 +241,21 @@ async function evalOneCase(opts: {
           const ctx = await openReview(repoCwd, document);
           const packetPath = join(caseOut, "packet.md");
           const packet = await writeGradingPacket(ctx, frozen, packetPath);
-          const [grouping, prose] = await Promise.all([
-            runGrader({
+          const bullets = lookForBullets(document);
+          const rubricSize =
+            opts.rubric.must.length + opts.rubric.good.length + opts.rubric.mustNot.length;
+          if (rubricSize + bullets.length > 0) {
+            const rubric = await runRubricGrader({
               repoCwd,
               model: opts.graderModel,
               apiKey: opts.apiKey,
-              prompt: groupingPrompt({ skillMd: opts.skillMd, packet }),
-            }),
-            runGrader({
-              repoCwd,
-              model: opts.graderModel,
-              apiKey: opts.apiKey,
-              prompt: prosePrompt({
-                skillMd: opts.skillMd,
-                packet,
-                claims: opts.spec.expect?.claims ?? [],
-              }),
-            }),
-          ]);
-          result.grouping = grouping;
-          result.prose = prose;
-          await writeFile(join(caseOut, "grouping.json"), `${JSON.stringify(grouping, null, 2)}\n`);
-          await writeFile(join(caseOut, "prose.json"), `${JSON.stringify(prose, null, 2)}\n`);
-          result.claims = claimsFromGrader(opts.spec.expect?.claims, prose);
+              rubric: opts.rubric,
+              bullets,
+              packet,
+            });
+            result.rubric = rubric;
+            await writeFile(join(caseOut, "rubric.json"), `${JSON.stringify(rubric, null, 2)}\n`);
+          }
           const site = join(caseOut, "site");
           await exportStaticSite({ cwd: repoCwd, dataPath: reviewPath, outDir: site });
           result.site = site;
@@ -282,10 +273,7 @@ async function evalOneCase(opts: {
     await rm(tmp, { recursive: true, force: true });
   }
   result.ok = !caseFailed(result);
-  result.tokens =
-    (result.producer?.tokens ?? 0) +
-    (result.grouping?.run.tokens ?? 0) +
-    (result.prose?.run.tokens ?? 0);
+  result.tokens = (result.producer?.tokens ?? 0) + (result.rubric?.run.tokens ?? 0);
   result.durationMs = Date.now() - started;
   await writeCaseArtifacts(caseOut, result, {});
   return result;

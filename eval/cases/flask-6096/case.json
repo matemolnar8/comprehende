@@ -14,10 +14,6 @@
     "together": [
       ["src/flask/app.py", "tests/test_basic.py"],
       ["src/flask/testing.py", "tests/test_testing.py"]
-    ],
-    "claims": [
-      "SERVER_NAME with an IPv6 address and port parses to the right host and int port in Flask.run, covered for [::1]:8080",
-      "session_transaction keeps cookies for IPv6 base URLs because the cookie domain falls back to localhost instead of an empty string"
     ]
   }
 }

@@ -2,23 +2,23 @@ import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
-Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. Two read-only graders also score unless --no-graders. LLM findings do not change the exit code.
+Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each lookFor bullet against head. Grader verdicts do not change the exit code.
 
-Producer and graders run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}.
+Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}.
 
 Options:
   --case <id>             Run this case (repeatable)
   --tag <tag>             Run cases with this tag
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
-  --rescore <dir>         Re-check eval/runs/<stamp> reviews. No producer, no graders, no API key
+  --rescore <dir>         Re-check and regrade eval/runs/<stamp> reviews. No producer
   --json                  Also print summary.json to stdout
   --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
   --cli-login             Use the muse CLI login instead of MUSE_CODE_API_KEY
-  --no-graders            Skip grouping and prose graders
+  --no-graders            Skip the rubric grader
   -h, --help
 
-Needs MUSE_CODE_API_KEY in the environment or .env unless --rescore. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs MUSE_CODE_API_KEY in the environment or .env unless --rescore with --no-graders. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>

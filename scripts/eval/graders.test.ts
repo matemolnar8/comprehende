@@ -1,8 +1,17 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { groupingPrompt, parseGraderJson, prosePrompt, shouldRetryGraderRun } from "./graders.ts";
+import {
+  emptyRubricOutput,
+  lookForBullets,
+  parseRubricReply,
+  rubricCounts,
+  rubricPrompt,
+  shouldRetryGraderRun,
+  type RubricOutput,
+} from "./graders.ts";
 import {
   caseFailed,
+  formatBaselineDelta,
   formatCaseLine,
   formatDuration,
   formatRunTotals,
@@ -10,6 +19,7 @@ import {
   type CaseResult,
 } from "./result.ts";
 import type { AgentRunResult } from "./musecode.ts";
+import type { ReviewDocument } from "../../src/schema/types.ts";
 
 const finishedRun: AgentRunResult = {
   text: "",
@@ -20,38 +30,104 @@ const finishedRun: AgentRunResult = {
   toolCalls: [],
 };
 
-const skillStub = `## Grouping rules
+const rubric = {
+  must: ["copies args"],
+  good: ["names the reviewer"],
+  mustNot: ["three-index slice"],
+};
+const bullets = [
+  { where: "document", bullet: "PR says slice, head copies." },
+  { where: "group fix", bullet: "append writes into os.Args." },
+];
 
-Group by review concern.
+const rubricOutput: RubricOutput = {
+  must: [{ item: "copies args", yes: true, quote: "copies trimmedArgs" }],
+  good: [{ item: "names the reviewer", yes: false }],
+  mustNot: [{ item: "three-index slice", yes: false }],
+  bullets: [
+    { where: "document", bullet: "PR says slice, head copies.", holds: true },
+    { where: "group fix", bullet: "append writes into os.Args.", holds: false, note: "no" },
+  ],
+};
 
-## The why
-
-Document why.
-
-## The what
-
-Document summary.
-
-## lookFor
-
-Claims the live diff does not make obvious.
-
-## Write the prose
-
-Short sentences.
-`;
-
-describe("grader JSON", () => {
-  it("parses fenced objects", () => {
-    const output = parseGraderJson(
-      `Here you go\n\`\`\`json\n{"findings":[{"check":"concern","severity":"minor","where":"g1","note":"Directory grouped."}]}\n\`\`\``,
+describe("rubric grader", () => {
+  it("zips a fenced reply onto the rubric and bullets by position", () => {
+    const output = parseRubricReply(
+      `Here you go\n\`\`\`json\n{"must":[{"yes":true,"quote":"copies trimmedArgs"}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":false,"note":"no"}]}\n\`\`\``,
+      rubric,
+      bullets,
     );
-    assert.equal(output.findings.length, 1);
-    assert.equal(output.findings[0]?.check, "concern");
+    assert.deepEqual(output, rubricOutput);
+    assert.deepEqual(rubricCounts(output), {
+      must: { yes: 1, total: 1 },
+      good: { yes: 0, total: 1 },
+      mustNot: { yes: 0, total: 1 },
+      bullets: { holds: 1, total: 2 },
+    });
   });
 
-  it("rejects junk", () => {
-    assert.throws(() => parseGraderJson("no json here"));
+  it("rejects junk and a reply with the wrong entry count", () => {
+    assert.throws(() => parseRubricReply("no json here", rubric, bullets));
+    assert.throws(
+      () =>
+        parseRubricReply(
+          '{"must":[],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":true}]}',
+          rubric,
+          bullets,
+        ),
+      /must has 0 verdicts for 1 items/,
+    );
+  });
+
+  it("lists document bullets before group bullets", () => {
+    const document: ReviewDocument = {
+      version: 1,
+      source: { baseRef: "a", headRef: "b" },
+      size: "small",
+      title: "t",
+      summary: "s",
+      lookFor: ["doc one"],
+      groups: [
+        {
+          id: "g1",
+          title: "g",
+          why: "w",
+          summary: "s",
+          suggestedOrder: 1,
+          hunkRefs: [{ path: "a.ts" }],
+          lookFor: ["in g1"],
+        },
+        {
+          id: "g2",
+          title: "g",
+          why: "w",
+          summary: "s",
+          suggestedOrder: 2,
+          hunkRefs: [{ path: "b.ts" }],
+        },
+      ],
+    };
+    assert.deepEqual(lookForBullets(document), [
+      { where: "document", bullet: "doc one" },
+      { where: "group g1", bullet: "in g1" },
+    ]);
+  });
+
+  it("inlines the rubric, the bullets, the packet, and the entry counts", () => {
+    const prompt = rubricPrompt({ rubric, bullets, packet: "PACKET_UNIQUE_7f3a" });
+    assert.match(prompt, /1\. copies args/);
+    assert.match(prompt, /1\. three-index slice/);
+    assert.match(prompt, /2\. \(group fix\) append writes into os\.Args\./);
+    assert.match(prompt, /PACKET_UNIQUE_7f3a/);
+    assert.match(prompt, /Start from this packet/);
+    assert.match(prompt, /git work tree/);
+    assert.match(prompt, /must has exactly 1 entries, good 1, mustNot 1, bullets 2/);
+    const empty = rubricPrompt({
+      rubric: { must: [], good: [], mustNot: [] },
+      bullets: [],
+      packet: "p",
+    });
+    assert.match(empty, /Must \(facts the review must state\):\n\(none\)/);
   });
 
   it("retries only when the model returned text", () => {
@@ -91,22 +167,43 @@ describe("eval result line", () => {
         apartOk: 1,
         apartTotal: 1,
       },
-      grouping: {
-        run: finishedRun,
-        output: { findings: [{ check: "x", severity: "major", where: "g", note: "n" }] },
-      },
-      prose: { run: finishedRun, output: { findings: [] } },
-      claims: { stated: 4, total: 5, missing: ["one"] },
+      rubric: { run: { ...finishedRun, tokens: 40_000 }, output: rubricOutput },
     };
     const line = formatCaseLine(result);
     assert.match(line, /comprehende-47/);
     assert.match(line, /validate ok/);
-    assert.match(line, /claims 4\/5/);
-    assert.match(line, /grouping 1M 0m/);
+    assert.match(line, /must 1\/1  good 0\/1  mustNot 0\/1  bullets 1\/2 true/);
     assert.match(line, /4m12s/);
-    assert.match(line, /g-tools 0/);
-    assert.match(line, /p-tools 0/);
+    assert.match(line, /grader 40k tok  grader-tools 0/);
     assert.doesNotMatch(line, /producer-tools/);
+    const failed = formatCaseLine({
+      ...result,
+      rubric: { run: finishedRun, output: emptyRubricOutput(), parseError: "bad" },
+    });
+    assert.match(failed, /rubric parse FAIL/);
+  });
+
+  it("prints rubric deltas against a baseline", () => {
+    const base: CaseResult = {
+      id: "c",
+      ok: true,
+      durationMs: 1,
+      tokens: 1,
+      rubric: { run: finishedRun, output: rubricOutput },
+    };
+    const better: CaseResult = {
+      ...base,
+      rubric: {
+        run: finishedRun,
+        output: {
+          ...rubricOutput,
+          good: [{ item: "names the reviewer", yes: true }],
+          bullets: [{ where: "document", bullet: "x", holds: true }],
+        },
+      },
+    };
+    assert.equal(formatBaselineDelta(base, base), undefined);
+    assert.equal(formatBaselineDelta(better, base), "c  good 0->1/1  bullets 1/2->1/1");
   });
 
   it("prints why the producer failed", () => {
@@ -145,26 +242,6 @@ describe("eval result line", () => {
     assert.doesNotMatch(line, /14 steps 3 tools/);
   });
 
-  it("inlines the packet and keeps targeted work-tree reads", () => {
-    const grouping = groupingPrompt({ skillMd: skillStub, packet: "PACKET_UNIQUE_7f3a" });
-    assert.match(grouping, /PACKET_UNIQUE_7f3a/);
-    assert.match(grouping, /Start from this packet/);
-    assert.match(grouping, /Read only the files that check needs/);
-    assert.match(grouping, /git work tree/);
-    assert.doesNotMatch(grouping, /Do not use tools/);
-    assert.doesNotMatch(grouping, /packetPath/);
-    const prose = prosePrompt({
-      skillMd: skillStub,
-      packet: "PACKET_UNIQUE_7f3a",
-      claims: ["claim one"],
-    });
-    assert.match(prose, /PACKET_UNIQUE_7f3a/);
-    assert.match(prose, /Start from this packet/);
-    assert.match(prose, /Ask whether document why/);
-    assert.match(prose, /git work tree/);
-    assert.doesNotMatch(prose, /Do not use tools/);
-  });
-
   it("prints run totals with grader tool counts", () => {
     const line = formatRunTotals({
       stamp: "t",
@@ -186,8 +263,7 @@ describe("eval result line", () => {
             outputTokens: 200,
             toolCalls: [{ name: "glob", detail: "**/dist/**" }],
           },
-          grouping: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
-          prose: { run: { ...finishedRun, tokens: 500 }, output: { findings: [] } },
+          rubric: { run: { ...finishedRun, tokens: 1000 }, output: emptyRubricOutput() },
         },
       ],
     });
@@ -221,8 +297,8 @@ describe("eval result line", () => {
     });
     assert.match(line, /comprehende-50/);
     assert.match(line, /validate ok/);
-    assert.doesNotMatch(line, /grouping/);
-    assert.doesNotMatch(line, /prose/);
+    assert.doesNotMatch(line, /must/);
+    assert.doesNotMatch(line, /grader/);
   });
 
   it("does not fail the case on prose lint alone", () => {

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { rmSync } from "node:fs";
-import { listEvalCases, parseEvalCaseJson, selectEvalCases } from "./case.ts";
+import { listEvalCases, parseEvalCaseJson, parseExpectedMd, selectEvalCases } from "./case.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 
 const roots: string[] = [];
@@ -56,6 +56,7 @@ describe("eval case schema", () => {
       ["comprehende-47", "comprehende-50"],
     );
     assert.deepEqual(listed[0]?.spec.tags, []);
+    assert.deepEqual(listed[0]?.rubric, { must: [], good: [], mustNot: [] });
     assert.equal(selectEvalCases(listed, { tag: "smoke" }).length, 1);
     assert.equal(selectEvalCases(listed, { ids: ["comprehende-47"] }).length, 1);
     await mkdir(join(root, "mismatch"));
@@ -77,5 +78,39 @@ describe("eval case schema", () => {
     const full = selectEvalCases(listed, {}).map((item) => item.spec.id);
     assert.deepEqual(full, ids);
     assert.equal(full.includes("vitadeck-24"), true);
+  });
+
+  it("reads the rubric lists from expected.md bullets", () => {
+    const rubric = parseExpectedMd(`# cobra-2356: title
+
+## Story
+
+- Title: the PR title.
+
+## Groups
+
+1. One group: \`a.go\`, \`a_test.go\`.
+
+## Must
+
+- The fix copies \`args\` at the top.
+- The test sets \`os.Args\` directly.
+
+## Good
+
+## Must not
+
+- Describe the fix as a three-index slice.
+
+## Notes
+
+- Not a rubric item.
+`);
+    assert.deepEqual(rubric, {
+      must: ["The fix copies `args` at the top.", "The test sets `os.Args` directly."],
+      good: [],
+      mustNot: ["Describe the fix as a three-index slice."],
+    });
+    assert.throws(() => parseExpectedMd("# x\n\n## Must\n\n- a\n"), /missing ## Good/);
   });
 });

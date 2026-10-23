@@ -1,6 +1,11 @@
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Finding, GraderResult } from "./graders.ts";
+import {
+  rubricCounts,
+  type BulletVerdict,
+  type ItemVerdict,
+  type RubricResult,
+} from "./graders.ts";
 import { caseFailed, formatCaseLine, type CaseResult, type RunSummary } from "./result.ts";
 
 export async function writeEvalReport(runDir: string, summary: RunSummary): Promise<string> {
@@ -79,12 +84,12 @@ nav a { color: inherit; }
 .line { white-space: pre-wrap; margin: 0.35rem 0 0.75rem; color: var(--muted); }
 ul { margin: 0; padding: 0 0 0 1.1rem; }
 li { margin: 0.2rem 0; }
-.finding { margin: 0.55rem 0; padding: 0.45rem 0 0.15rem; border-top: 1px solid var(--line); }
-.finding:first-child { border-top: 0; padding-top: 0; }
-.finding p { margin: 0.15rem 0; }
-.sev { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; }
-.sev.major { color: var(--fail); }
-.sev.minor { color: var(--warn); }
+.verdict { margin: 0.55rem 0; padding: 0.45rem 0 0.15rem; border-top: 1px solid var(--line); }
+.verdict:first-child { border-top: 0; padding-top: 0; }
+.verdict p { margin: 0.15rem 0; }
+.quote { color: var(--muted); font-style: italic; }
+.yes { color: var(--ok); }
+.no { color: var(--fail); }
 .files { display: flex; flex-wrap: wrap; gap: 0.7rem; margin: 0.9rem 0 0; }
 .files a { color: inherit; }
 </style>
@@ -153,22 +158,8 @@ function caseHtml(result: CaseResult): string {
       block("Lint", `<ul>${lints.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`),
     );
   }
-  if (result.claims !== undefined) {
-    const missing =
-      result.claims.missing.length === 0
-        ? ""
-        : `<ul>${result.claims.missing.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
-    parts.push(
-      block("Claims", `<p>${result.claims.stated} of ${result.claims.total} stated.</p>${missing}`),
-    );
-  }
-  const grouping = graderHtml("Grouping", result.grouping);
-  if (grouping !== undefined) {
-    parts.push(grouping);
-  }
-  const prose = graderHtml("Prose", result.prose);
-  if (prose !== undefined) {
-    parts.push(prose);
+  if (result.rubric !== undefined) {
+    parts.push(...rubricHtml(result.rubric));
   }
   const links = fileLinks(result);
   if (links !== undefined) {
@@ -178,23 +169,60 @@ function caseHtml(result: CaseResult): string {
   return parts.join("\n");
 }
 
-function graderHtml(title: string, grader: GraderResult | undefined): string | undefined {
-  if (grader === undefined) {
-    return undefined;
+function rubricHtml(rubric: RubricResult): string[] {
+  if (rubric.parseError !== undefined) {
+    return [block("Rubric", `<p>Parse failed. ${escapeHtml(rubric.parseError)}</p>`)];
   }
-  if (grader.parseError !== undefined) {
-    return block(title, `<p>Parse failed. ${escapeHtml(grader.parseError)}</p>`);
+  const counts = rubricCounts(rubric.output);
+  const sections: string[] = [];
+  const items = (
+    title: string,
+    list: ItemVerdict[],
+    count: { yes: number; total: number },
+    yesIsGood: boolean,
+  ): void => {
+    if (list.length === 0) {
+      return;
+    }
+    sections.push(
+      block(
+        `${title} ${count.yes} of ${count.total}`,
+        list.map((item) => itemHtml(item, yesIsGood)).join(""),
+      ),
+    );
+  };
+  items("Must", rubric.output.must, counts.must, true);
+  items("Good", rubric.output.good, counts.good, true);
+  items("Must not", rubric.output.mustNot, counts.mustNot, false);
+  if (rubric.output.bullets.length > 0) {
+    sections.push(
+      block(
+        `lookFor ${counts.bullets.holds} of ${counts.bullets.total} true`,
+        rubric.output.bullets.map((item) => bulletHtml(item)).join(""),
+      ),
+    );
   }
-  const findings = grader.output.findings;
-  if (findings.length === 0) {
-    return undefined;
-  }
-  return block(title, findings.map((item) => findingHtml(item)).join(""));
+  return sections;
 }
 
-function findingHtml(finding: Finding): string {
-  const hunk = finding.hunk !== undefined ? ` · <code>${escapeHtml(finding.hunk)}</code>` : "";
-  return `<div class="finding"><p><span class="sev ${escapeHtml(finding.severity)}">${escapeHtml(finding.severity)}</span> ${escapeHtml(finding.check)} · ${escapeHtml(finding.where)}${hunk}</p><p>${escapeHtml(finding.note)}</p></div>`;
+function itemHtml(item: ItemVerdict, yesIsGood: boolean): string {
+  const mark = item.yes ? "yes" : "no";
+  const tone = item.yes === yesIsGood ? "yes" : "no";
+  const quote =
+    item.quote !== undefined && item.quote !== ""
+      ? `<p class="quote">${escapeHtml(item.quote)}</p>`
+      : "";
+  return `<div class="verdict"><p><span class="mark ${tone}">${mark}</span> ${escapeHtml(item.item)}</p>${quote}</div>`;
+}
+
+function bulletHtml(item: BulletVerdict): string {
+  const mark = item.holds ? "true" : "false";
+  const tone = item.holds ? "yes" : "no";
+  const note =
+    item.note !== undefined && item.note !== ""
+      ? `<p class="quote">${escapeHtml(item.note)}</p>`
+      : "";
+  return `<div class="verdict"><p><span class="mark ${tone}">${mark}</span> ${escapeHtml(item.where)} · ${escapeHtml(item.bullet)}</p>${note}</div>`;
 }
 
 function fileLinks(result: CaseResult): string | undefined {

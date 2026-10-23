@@ -19,11 +19,6 @@
         "src/modules/pijul_channel.rs"
       ]
     ],
-    "apart": [["src/modules/vcs.rs", ".github/config-schema.json"]],
-    "claims": [
-      "At head the standalone VCS modules stay and $vcs is enabled but absent from the default prompt order, so the change is not breaking. The issue first proposed removing top level modules, and the PR body says they stay for the many VCS use case.",
-      "The issue motivates with jj colocated with git, but at head the dispatcher accepts only fossil, git, hg, and pijul. Unknown order entries are skipped, so jj in order gives no jj output until follow up work lands.",
-      "At head the module renders the matched inner modules inline, so segments cannot split across format and right_format. The docs note warns the format may change for right aligned prompts."
-    ]
+    "apart": [["src/modules/vcs.rs", ".github/config-schema.json"]]
   }
 }

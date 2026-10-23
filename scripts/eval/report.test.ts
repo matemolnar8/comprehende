@@ -47,7 +47,7 @@ describe("eval HTML report", () => {
             why: "present",
           },
           document: { title: "Export vs serve", size: "small", why: "Invented <why>." },
-          grouping: {
+          rubric: {
             run: {
               text: "",
               status: "finished",
@@ -57,12 +57,15 @@ describe("eval HTML report", () => {
               toolCalls: [],
             },
             output: {
-              findings: [
+              must: [{ item: "states the copy", yes: true, quote: "copies <b>args</b>" }],
+              good: [],
+              mustNot: [{ item: "three-index slice", yes: true, quote: "caps with [:len:len]" }],
+              bullets: [
                 {
-                  check: "concern",
-                  severity: "minor",
-                  where: "g1",
-                  note: "Directory grouped. <script>alert(1)</script>",
+                  where: "group g1",
+                  bullet: "Directory grouped. <script>alert(1)</script>",
+                  holds: false,
+                  note: "no such directory",
                 },
               ],
             },
@@ -91,6 +94,12 @@ describe("eval HTML report", () => {
     assert.equal(html.includes("<script>alert(1)</script>"), false);
     assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
     assert.match(html, /Invented &lt;why&gt;\./);
+    assert.match(html, /Must 1 of 1/);
+    assert.match(html, /copies &lt;b&gt;args&lt;\/b&gt;/);
+    assert.match(html, /Must not 1 of 1/);
+    assert.match(html, /lookFor 0 of 1 true/);
+    assert.match(html, /no such directory/);
+    assert.doesNotMatch(html, /<h3>Good/);
     assert.doesNotMatch(html, /comprehende-57\/site/);
   });
 

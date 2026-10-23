@@ -32,6 +32,8 @@ export type DeterministicReport = {
 };
 
 const EM_DASH = /[\u2013\u2014]/u;
+const PATH_TOKEN = /(?:[\w.-]+\/)+[\w.-]+|\b[\w-]{2,}\.[a-z]{1,5}\b/gu;
+const SUMMARY_PATHS_MAX = 3;
 
 export async function worktreeDirty(cwd: string): Promise<boolean> {
   const status = (await git(cwd, ["status", "--porcelain"])).trim();
@@ -299,7 +301,31 @@ export function proseLints(document: ReviewDocument): string[] {
       }
     }
   }
+  for (const field of summaryFields(document)) {
+    const count = sentences(field.text).length;
+    if (count > field.maxSentences) {
+      lints.push(`${field.where} has ${count} sentences`);
+    }
+    const paths = field.text.match(PATH_TOKEN)?.length ?? 0;
+    if (paths > SUMMARY_PATHS_MAX) {
+      lints.push(`${field.where} names ${paths} paths`);
+    }
+  }
   return lints;
+}
+
+/** The skill asks for one sentence per group summary and one or two for the document. */
+function summaryFields(
+  document: ReviewDocument,
+): { where: string; text: string; maxSentences: number }[] {
+  return [
+    { where: "summary", text: document.summary, maxSentences: 2 },
+    ...document.groups.map((group) => ({
+      where: `group ${group.id} summary`,
+      text: group.summary,
+      maxSentences: 1,
+    })),
+  ];
 }
 
 function documentFields(document: ReviewDocument): { where: string; text: string }[] {

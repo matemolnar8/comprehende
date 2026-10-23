@@ -7,15 +7,10 @@
   "tags": ["foreign", "lang-go", "type-cli", "shape-lookfor"],
   "expect": {
     "why": "present",
-    "parts": { "min": 0, "max": 2 },
+    "parts": { "min": 0, "max": 1 },
     "groups": { "min": 1, "max": 2 },
     "size": ["trivial", "small", "medium"],
     "sourceKinds": ["ticket", "pr", "pr-comment"],
-    "together": [["completions.go", "completions_test.go"]],
-    "claims": [
-      "at head getCompletions copies trimmedArgs with make plus copy, while the PR body still describes a three-index slice and the append of -- is unchanged",
-      "append of -- writes into the shared backing array when the args sub-slice has spare capacity, which corrupts os.Args and shows most with TraverseChildren",
-      "the regression test sets os.Args directly instead of using SetArgs so it takes the real os.Args path, and without the fix os.Args[2] changes from x to --"
-    ]
+    "together": [["completions.go", "completions_test.go"]]
   }
 }
