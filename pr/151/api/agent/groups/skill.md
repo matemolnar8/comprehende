@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify f8c3ec7e32977154f65bca52b8d4b71cf8c2f179` and `git rev-parse --verify 0efb2601f61faebda24d1cd6bc7e1c6de485b2da` in this repository.
+   Run `git rev-parse --verify f8c3ec7e32977154f65bca52b8d4b71cf8c2f179` and `git rev-parse --verify 874400fb8405fdc380f0c9911983ca94756f9214` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 0efb2601f61faebda24d1cd6bc7e1c6de485b2da -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 874400fb8405fdc380f0c9911983ca94756f9214 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  f8c3ec7e32977154f65bca52b8d4b71cf8c2f179
 
-head               0efb2601f61faebda24d1cd6bc7e1c6de485b2da
+head               874400fb8405fdc380f0c9911983ca94756f9214
 
-Named refs at pin: f8c3ec7 ... 0efb260
+Named refs at pin: f8c3ec7 ... 874400f
 
 Read the diff:
 
-git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 0efb2601f61faebda24d1cd6bc7e1c6de485b2da
+git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 874400fb8405fdc380f0c9911983ca94756f9214
 
 Review concern 02 of 02: Step 3 names the stories; the size rule loses its group count (`skill`)
 

@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify f8c3ec7e32977154f65bca52b8d4b71cf8c2f179` and `git rev-parse --verify 0efb2601f61faebda24d1cd6bc7e1c6de485b2da` in this repository.
+   Run `git rev-parse --verify f8c3ec7e32977154f65bca52b8d4b71cf8c2f179` and `git rev-parse --verify 874400fb8405fdc380f0c9911983ca94756f9214` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  f8c3ec7e32977154f65bca52b8d4b71cf8c2f179
 
-head               0efb2601f61faebda24d1cd6bc7e1c6de485b2da
+head               874400fb8405fdc380f0c9911983ca94756f9214
 
-Named refs at pin: f8c3ec7 ... 0efb260
+Named refs at pin: f8c3ec7 ... 874400f
 
 Read the diff:
 
-git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 0efb2601f61faebda24d1cd6bc7e1c6de485b2da
+git diff --find-renames f8c3ec7e32977154f65bca52b8d4b71cf8c2f179 874400fb8405fdc380f0c9911983ca94756f9214
 
 Commits:
+- 874400f Digest: a replacement pairs one added file with one deleted file
 - 0efb260 Digest: the deleted side of a replacement is not a move either
 - 312a368 Skill: name each story as a part in step 3; drop the group-count size hint
 - 0bd3c2d Digest: a new file that replaces a deleted one is not a move
