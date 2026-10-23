@@ -25,20 +25,22 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 
 ## Must
 
-- `src/lib/shared/useQRCodeSVG.ts` is production code in a test PR, and its effect now depends on `src`, `width`, `margin`, `dark`, and `light` instead of the `options` object, so the fresh object that `QRCode` passes on each render no longer makes a new QR code on each render.
-- The PR says `pnpm test:e2e:ui` sets `E2E_UI=1` and skips the webServer, but at head nothing reads `E2E_UI`, the script is only `playwright test --ui`, and the webServer still starts unless `E2E_HARNESS_ONLY=1`, so starting `pnpm dev` first as the PR says makes Playwright fail on the busy port 3000 unless `E2E_REUSE_SERVER=1` is set.
-- On a host run, `e2e/docker/server.sh` deletes the repo's `.env.local` when it starts and again when it exits, so a developer who kept Clerk keys or a Convex deployment in `.env.local` (where the old docs told them to put the Clerk keys) loses that file and must move the values to `.env`.
-- After the TV context closes, `tvConnected` changes only when something writes to the game document, so the spec waits 12.5 seconds and sends a `pause` playback command through `convexRun` to force the host out of the Remote shell, and without that write the app keeps the host in the Remote shell.
-- Every pinned dependency in `package.json` becomes a caret range and most of them move to newer versions (for example `convex` 1.39.1 to ^1.43.0 and `vite` 8.0.14 to ^8.2.1), with `.nvmrc` set to `lts/*`, and no source asks for this.
+- `src/lib/shared/useQRCodeSVG.ts` is production code in a test PR, and its effect now depends on the primitive option values instead of the `options` object, so a new `options` object on each render no longer regenerates the QR code.
+- The PR says `pnpm test:e2e:ui` sets `E2E_UI=1` and skips the webServer, but at head nothing reads `E2E_UI` and the webServer still starts unless `E2E_HARNESS_ONLY=1`.
+- `e2e/docker/server.sh` deletes the repo's `.env.local` when it starts and again when it exits, so a developer's local settings in that file are lost.
+- After the TV context closes, the host leaves the Remote shell only when something writes to the game, so the spec waits 12.5 seconds and sends a `pause` playback command to force that write.
+- Every pinned dependency in `package.json` becomes a caret range and most move to newer versions, and no source asks for this.
 
 ## Good
 
+- Starting `pnpm dev` first, as the PR note says, makes Playwright fail on the busy port 3000 unless `E2E_REUSE_SERVER=1` is set.
+- The old docs told developers to keep their Clerk keys in `.env.local`, and the new README moves them to `.env`.
 - `tv-lobby-landscape.png`, `tv-break-landscape.png`, and `remote-break-portrait.png` are deleted and added again under `e2e/snapshots/linux/` with new content, so they are changed goldens, not moves.
 - `useQRCodeSVG` now forwards only `width`, `margin`, and `color` to `QRCodeLib.toString` and drops a stale result through a `cancelled` flag, and its only caller `QRCode` passes just those options, so the dropped options change nothing today.
 - The host page passes `muted={tvConnected}` to `MusicPlayer`, so after the TV closes the host audio stays muted until the next game write, while the ticket asks for "mute off when TV gone" and the spec does not check the mute.
 - The ticket asks that root-cause sleeps and races be called out in the PR, and the PR body does not mention the 12.5 second wait or the forced playback write; only the spec comment does.
 - `src/routeTree.gen.ts` holds the same lines in a new order, so it is regenerated output with no route change.
-- `@types/node` moves down from 25.5.0 to ^24.13.3 inside the dependency refresh.
+- `.nvmrc` is set to `lts/*`, and `@types/node` moves down from 25.5.0 to ^24.13.3 inside the dependency refresh.
 
 ## Must not
 
@@ -56,4 +58,4 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 - The `.env.local` deletion affects host runs only. Docker runs copy the repo without `.env*` and mount only snapshots and reports.
 - Past runs often put the page objects in their own part while the living-room factory imports them, and often called the three changed goldens pure moves.
 - `parts` 3 to 8 has slack: the harness can fold into the story part, and the snapshot folders, the QR fix, or the visual-spec migration can stand alone. `groups` 6 to 11 has the same slack: groups 4 and 5 can merge, and groups 1 and 3 can merge.
-- `together` holds the living-room spec with its seed and factory, and the workflow with `compose.yaml` (both rename the `e2e` service). `apart` keeps the living-room spec away from the snapshot moves, the audit, and the migrated `admin.spec.ts`, the QR hook away from the snapshot moves, and the audit away from the page objects.
+- `together` holds the living-room spec with its seed and factory. `apart` keeps the living-room spec away from the snapshot moves, the audit, and the migrated `admin.spec.ts`, the QR hook away from the snapshot moves, and the audit away from the page objects.

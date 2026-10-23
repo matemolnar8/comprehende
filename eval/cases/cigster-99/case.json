@@ -15,8 +15,7 @@
       "e2e/snapshots/linux/admin-detail-populated-desktop.png"
     ],
     "together": [
-      ["e2e/live/living-room.spec.ts", "e2e/seed/living-room.ts", "e2e/pages/living-room.ts"],
-      [".github/workflows/e2e.yml", "compose.yaml"]
+      ["e2e/live/living-room.spec.ts", "e2e/seed/living-room.ts", "e2e/pages/living-room.ts"]
     ],
     "apart": [
       ["e2e/live/living-room.spec.ts", "e2e/snapshots/linux/admin-detail-empty-desktop.png"],

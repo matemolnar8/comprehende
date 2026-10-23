@@ -19,9 +19,9 @@ PR #6388 closes issue #5932. It adds a `vcs` module that tries the VCSes in `ord
 
 ## Must
 
-- The standalone VCS modules stay and `vcs` is not in `PROMPT_ORDER`, so the default `$all` prompt does not change and the change is not breaking, although issue #5932 proposed that the top level VCS modules disappear and the PR body and the docs note say they stay.
-- The `vcs` module renders the matched inner modules inline as its own segments, so a user cannot put some of them in `right_format` and keep the first-VCS choice, which is the trade-off davidkna raised and the docs note says may change for right aligned prompts.
-- `Vcs::try_from` accepts only `fossil`, `git`, `hg` or `mercurial`, and `pijul`, and `module` skips every other `order` entry with no warning, so the jj case that motivates issue #5932 gets no jj output until the follow-up work the author promises in the comments.
+- The standalone VCS modules stay and `vcs` is not in `PROMPT_ORDER`, so the default prompt does not change and the change is not breaking, although issue #5932 proposed removing the top level VCS modules.
+- The `vcs` module renders the matched inner modules inline as its own segments, so a user cannot move some of them to `right_format` and keep the first-VCS choice, a trade-off the docs note says may change.
+- `Vcs::try_from` accepts only `fossil`, `git`, `hg` or `mercurial`, and `pijul`, and `module` skips every other `order` entry with no warning, so jj, the case that motivates issue #5932, gets no output yet.
 - The `.github/config-schema.json` entry is not regenerated from head: it points to `#/definitions/VcsConfig` and `#/definitions/Vcs` while the file keeps its types under `$defs`, and it limits `order` to a `Vcs` enum without `mercurial`, while `VcsConfig.order` is a `Vec<&str>`.
 - `pijul_channel` changes behavior: it used to check only the current directory with `try_begin_scan`, and now `discover_repo_root` scans ancestor directories for `.pijul`, so the channel also shows in subdirectories of a Pijul repo.
 

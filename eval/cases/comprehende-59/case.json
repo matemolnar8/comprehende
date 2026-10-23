@@ -18,13 +18,9 @@
         "src/ui/components/GroupBrief.tsx",
         "src/ui/components/Overview.tsx",
         "src/ui/components/Inspector.tsx",
-        "src/ui/components/CopyPrompt.tsx",
-        "src/ui/styles.css"
+        "src/ui/components/CopyPrompt.tsx"
       ]
     ],
-    "apart": [
-      ["src/ui/components/MobileShell.tsx", "src/ui/styles.css"],
-      ["src/ui/components/MobileShell.tsx", "src/ui/components/GroupBrief.tsx"]
-    ]
+    "apart": [["src/ui/components/MobileShell.tsx", "src/ui/components/GroupBrief.tsx"]]
   }
 }

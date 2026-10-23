@@ -18,8 +18,8 @@ PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt 
 ## Must
 
 - Each name in `tls_automate_names` goes into the tls app `automate` loader, so Caddy manages its certificate with no site block and no HTTP route for that name.
-- Public names that have no policy get a new automation policy only when a global automation or ACME option is set (`newBaseAutomationPolicy` with `hasGlobalACMEDefaults(options)`, which counts `email`), because the catch-all policy is dropped and without their own policy the names miss the global issuer.
-- A listed name that already is a subject of an automation policy keeps that policy and stays in the `automate` loader, because a second policy for the same subject fails the adapt with "hostname appears in more than one automation policy", as the review comment asked.
+- Public names with no policy of their own get a new automation policy only when a global automation or ACME option such as `email` is set, because the catch-all policy is dropped and without their own policy the names miss the global issuer.
+- A listed name that is already a subject of an automation policy keeps that policy and stays in the `automate` loader, because a second policy for the same subject fails the adapt, as the review comment asked.
 - The `tls_automate_names` block is not gated on `auto_https off` or `disable_certs`, unlike the hostless-key block above it, so a listed name is still managed when `auto_https` is off.
 
 ## Good

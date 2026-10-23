@@ -146,7 +146,7 @@ export function rubricPrompt(opts: {
     "Must not (mistakes a review makes on this change):",
     list(opts.rubric.mustNot),
     "",
-    "For each Must and Good item, answer yes when the review states the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, or group lookFor. Different wording and different symbol names still count. Answer no when the review is silent, states the opposite, or states only a part that changes the meaning. On yes, quote the review sentence that states it.",
+    "For each Must and Good item, answer yes when the review gives the reader the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, or group lookFor. Different wording and different symbol names still count. An item may carry more detail than the review, such as a second reason, a consequence, or a symbol name; the review still states it when it gives the main fact and says nothing that contradicts the rest. Answer no when the review is silent on the main fact, states the opposite, or states a weaker version that changes what the reader would conclude. On yes, quote the review sentence that states it.",
     "For each Must not item, answer yes when the review makes that mistake. On yes, quote the review text that shows it.",
     "",
     "## lookFor bullets the review wrote",
