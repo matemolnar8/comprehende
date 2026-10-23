@@ -25,11 +25,13 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 
 ## Must
 
-- `src/lib/shared/useQRCodeSVG.ts` is production code in a test PR, and its effect now depends on the primitive option values instead of the `options` object, so a new `options` object on each render no longer regenerates the QR code.
+- `src/lib/shared/useQRCodeSVG.ts` is production code in a PR whose sources are about tests.
+- The `useQRCodeSVG` effect now depends on the primitive option values instead of the `options` object, so a new `options` object on each render no longer regenerates the QR code.
 - The PR says `pnpm test:e2e:ui` sets `E2E_UI=1` and skips the webServer, but at head nothing reads `E2E_UI` and the webServer still starts unless `E2E_HARNESS_ONLY=1`.
 - `e2e/docker/server.sh` deletes the repo's `.env.local` when it starts and again when it exits, so a developer's local settings in that file are lost.
 - After the TV context closes, the host leaves the Remote shell only when something writes to the game, so the spec waits 12.5 seconds and sends a `pause` playback command to force that write.
-- Every pinned dependency in `package.json` becomes a caret range and most move to newer versions, and no source asks for this.
+- Every pinned dependency in `package.json` becomes a caret range and most move to newer versions.
+- No source asks for the dependency refresh; it is policy work beside the ticket story.
 
 ## Good
 
