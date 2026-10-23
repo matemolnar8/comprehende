@@ -10,6 +10,7 @@ import type {
   ReviewSource,
 } from "../schema/types.ts";
 import { git } from "./exec.ts";
+import { generatedPaths } from "./generated.ts";
 import { markMovedLines } from "./moved.ts";
 import {
   parseNameStatus,
@@ -85,6 +86,7 @@ async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promis
   );
   if (lockEntries.length === 0) {
     markMovedLines(files);
+    await markGenerated(cwd, headRef, files);
     return files;
   }
   const stats = parseNumstat(
@@ -103,7 +105,24 @@ async function readDiffAt(cwd: string, baseRef: string, headRef: string): Promis
   const stubs = lockEntries.map((entry) => lockfileDiffFile(entry, stats.get(entry.path)));
   const merged = mergeDiffFiles(entries, files, stubs);
   markMovedLines(merged);
+  await markGenerated(cwd, headRef, merged);
   return merged;
+}
+
+async function markGenerated(cwd: string, headRef: string, files: DiffFile[]): Promise<void> {
+  const candidates = files.filter(
+    (file) => !file.binary && file.status !== "deleted" && !isLockfilePath(file.path),
+  );
+  const generated = await generatedPaths(
+    cwd,
+    headRef,
+    candidates.map((file) => file.path),
+  );
+  for (const file of candidates) {
+    if (generated.has(file.path)) {
+      file.generated = true;
+    }
+  }
 }
 
 export async function readPathDiff(

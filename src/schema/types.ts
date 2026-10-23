@@ -108,4 +108,6 @@ export type DiffFile = {
   /** Present on lockfile stubs that never loaded patch text. */
   added?: number;
   removed?: number;
+  /** The head blob says it is generated in its first lines. Set by readDiff. */
+  generated?: boolean;
 };

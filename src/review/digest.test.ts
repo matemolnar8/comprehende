@@ -59,6 +59,16 @@ describe("buildDigest", () => {
     assert.equal(digest.files[2]?.kind, "docs");
   });
 
+  it("classes a file git flagged as generated before its path says test or docs", () => {
+    const digest = buildDigest([
+      file("api/client.gen.ts", [hunk("api/client.gen.ts", 1, 1, [add("x")])]),
+      file("docs/api.md", [hunk("docs/api.md", 1, 1, [add("x")])], { generated: true }),
+    ]);
+    assert.equal(digest.files[0]?.kind, "generated");
+    assert.equal(digest.files[1]?.kind, "generated");
+    assert.ok(digest.files.every(isMechanicalFile));
+  });
+
   it("marks pure moves and files with the same change", () => {
     const moved = hunk("b.ts", 1, 5, [
       { ...del("const value = 42;", 1), moved: { path: "a.ts", line: 9 } },
