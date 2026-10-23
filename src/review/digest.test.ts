@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { buildDigest, formatDigest } from "./digest.ts";
+import { buildDigest, formatDigest, isMechanicalFile, type DigestFile } from "./digest.ts";
 import type { DiffFile, LiveHunk } from "../schema/types.ts";
 
 function hunk(
@@ -113,6 +113,35 @@ describe("buildDigest", () => {
     );
     assert.match(text, /- snapshots\/linux\/f\.png · added/);
     assert.equal(text.includes("snapshots/linux/a.png"), false);
+  });
+
+  it("marks a new file that replaces a deleted one and keeps it out of the directory ref", () => {
+    const names = ["a", "b", "c", "d", "e"];
+    const digest = buildDigest([
+      ...names.map((name) =>
+        file(`snapshots/linux/${name}.png`, [], {
+          oldPath: `snapshots/${name}.png`,
+          status: "renamed",
+          relocation: { kind: "rename" },
+        }),
+      ),
+      file("snapshots/linux/f.png", [], { status: "added" }),
+      file("snapshots/f.png", [], { status: "deleted" }),
+      file("snapshots/linux/g.png", [], { status: "added" }),
+    ]);
+    const byPath = new Map(digest.files.map((item) => [item.path, item]));
+    assert.equal(byPath.get("snapshots/linux/f.png")?.replaces, "snapshots/f.png");
+    assert.equal(byPath.get("snapshots/linux/g.png")?.replaces, undefined);
+    assert.equal(isMechanicalFile(byPath.get("snapshots/linux/f.png") as DigestFile), false);
+    assert.equal(isMechanicalFile(byPath.get("snapshots/linux/g.png") as DigestFile), true);
+    assert.deepEqual(
+      digest.dirs.map((dir) => dir.dir),
+      ["snapshots/"],
+    );
+    assert.match(
+      formatDigest(digest, "base...head"),
+      /- snapshots\/linux\/f\.png · added \+0\/-0 · generated · replaces snapshots\/f\.png, not a move/,
+    );
   });
 
   it("keeps per-file lines when a directory also holds logic", () => {

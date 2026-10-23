@@ -9,7 +9,7 @@ import {
 } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
 import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
-import { buildDigest, digestDirOf, formatDigest, isMechanicalKind } from "../review/digest.ts";
+import { buildDigest, digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
 import { formatRefresh, refreshDocument } from "../review/refresh.ts";
@@ -168,7 +168,7 @@ export async function cmdPregroup(
       mirrors.set(root, cluster);
       continue;
     }
-    if (isMechanicalKind(digest.kind)) {
+    if (isMechanicalFile(digest)) {
       mechanical.push(digestDirOf(changeDigest, digest.path)?.dir ?? digest.path);
       continue;
     }

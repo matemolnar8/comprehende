@@ -29,6 +29,8 @@ export type DigestFile = {
   pairsWith?: string;
   /** First path of a cluster of files that received the same change. Trust it; read one. */
   mirrorOf?: string;
+  /** Deleted file with the same name that git did not pair as a rename: a new version, not a move. */
+  replaces?: string;
 };
 
 /**
@@ -57,6 +59,7 @@ export function buildDigest(files: DiffFile[]): ChangeDigest {
     .filter((file) => !file.binary || file.image)
     .map((file) => digestFile(file));
   markMirrors(digests, files);
+  markReplaces(digests);
   return {
     files: digests,
     dirs: mechanicalDirs(digests),
@@ -219,9 +222,35 @@ function markMirrors(digests: DigestFile[], files: DiffFile[]): void {
   }
 }
 
+/** An added file whose name matches exactly one deleted file, with no rename detected. */
+function markReplaces(digests: DigestFile[]): void {
+  const deleted = new Map<string, string[]>();
+  for (const digest of digests) {
+    if (digest.status === "deleted") {
+      const name = digest.path.split("/").at(-1) ?? digest.path;
+      deleted.set(name, [...(deleted.get(name) ?? []), digest.path]);
+    }
+  }
+  for (const digest of digests) {
+    if (digest.status !== "added" || digest.oldPath !== undefined) {
+      continue;
+    }
+    const name = digest.path.split("/").at(-1) ?? digest.path;
+    const candidates = deleted.get(name) ?? [];
+    if (candidates.length === 1 && candidates[0] !== undefined) {
+      digest.replaces = candidates[0];
+    }
+  }
+}
+
 /** Kinds the draft puts in its `mechanical` group. */
-export function isMechanicalKind(kind: DigestKind): boolean {
+function isMechanicalKind(kind: DigestKind): boolean {
   return kind === "rename" || kind === "copy" || kind === "move" || kind === "generated";
+}
+
+/** Mechanical files go to the draft `mechanical` group; a file that replaces a deleted one does not. */
+export function isMechanicalFile(file: DigestFile): boolean {
+  return isMechanicalKind(file.kind) && file.replaces === undefined;
 }
 
 function isPureRename(file: DigestFile): boolean {
@@ -243,7 +272,7 @@ function dirName(path: string): string {
  * Root-level files never collapse.
  */
 function mechanicalDirs(files: DigestFile[]): DigestDir[] {
-  const listed = files.filter((file) => !isLockfilePath(file.path));
+  const listed = files.filter((file) => !isLockfilePath(file.path) && file.replaces === undefined);
   const total = new Map<string, number>();
   const mechanical = new Map<string, number>();
   const renames = new Map<string, number>();
@@ -253,7 +282,7 @@ function mechanicalDirs(files: DigestFile[]): DigestDir[] {
   for (const file of listed) {
     for (const dir of parentDirs(file.path)) {
       bump(total, dir);
-      if (isMechanicalKind(file.kind) && file.mirrorOf === undefined) {
+      if (isMechanicalFile(file) && file.mirrorOf === undefined) {
         bump(mechanical, dir);
       }
       if (isPureRename(file)) {
@@ -346,6 +375,9 @@ function formatFile(file: DigestFile): string {
   }
   if (file.mirrorOf !== undefined) {
     bits.push(`same change as ${file.mirrorOf}`);
+  }
+  if (file.replaces !== undefined) {
+    bits.push(`replaces ${file.replaces}, not a move`);
   }
   return bits.join(" · ");
 }

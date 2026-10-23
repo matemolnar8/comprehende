@@ -17,7 +17,7 @@ import type {
   ReviewGroup,
   ReviewHunkRef,
 } from "../schema/types.ts";
-import { buildDigest, isMechanicalKind } from "./digest.ts";
+import { buildDigest, isMechanicalFile } from "./digest.ts";
 
 export type GroupCoverage = {
   group: ReviewGroup;
@@ -186,7 +186,7 @@ function dirOwners(
  * in the group of its concern, which takes it out of the directory ref.
  */
 export function dirRefErrors(coverage: ReviewCoverage, files: DiffFile[]): string[] {
-  const kinds = new Map(buildDigest(files).files.map((file) => [file.path, file.kind]));
+  const digests = new Map(buildDigest(files).files.map((file) => [file.path, file]));
   const errors: string[] = [];
   for (const { group, dirHunks } of coverage.groups) {
     const paths = [
@@ -194,8 +194,8 @@ export function dirRefErrors(coverage: ReviewCoverage, files: DiffFile[]): strin
         dirHunks
           .map((hunk) => hunk.path)
           .filter((path) => {
-            const kind = kinds.get(path);
-            return kind !== undefined && !isMechanicalKind(kind);
+            const digest = digests.get(path);
+            return digest !== undefined && !isMechanicalFile(digest);
           }),
       ),
     ];
