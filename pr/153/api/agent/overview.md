@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify df677575fda82ed86e32754f10d70d9f5992cf23` and `git rev-parse --verify e7578d9f0cfb1119b603c616c364d2bb1e2436ac` in this repository.
+   Run `git rev-parse --verify df677575fda82ed86e32754f10d70d9f5992cf23` and `git rev-parse --verify 511489f774dfeab593a53dc40d0905e0a06d0ad2` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  df677575fda82ed86e32754f10d70d9f5992cf23
 
-head               e7578d9f0cfb1119b603c616c364d2bb1e2436ac
+head               511489f774dfeab593a53dc40d0905e0a06d0ad2
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames df677575fda82ed86e32754f10d70d9f5992cf23 e7578d9f0cfb1119b603c616c364d2bb1e2436ac
+git diff --find-renames df677575fda82ed86e32754f10d70d9f5992cf23 511489f774dfeab593a53dc40d0905e0a06d0ad2
 
 Commits:
+- 511489f Test: the review tally counts the one git grep readDiff adds
 - e7578d9 Digest: a generated marker is a statement about the file, not a mention
 - 74957ce Skill: citation, shared helper, and version pin rules as actions in the steps
 - 548bdd6 Digest: a file whose head blob says it is generated is generated
@@ -61,7 +62,7 @@ Look for:
 
 ### 01 readDiff flags generated files (`marker`)
 
-`generatedPaths` in `generated.ts` runs one `git grep` at head over the changed files, and `markGenerated` in `diff.ts` sets the new `generated` field on each `DiffFile` whose first 20 lines hold a marker.
+`generatedPaths` in `generated.ts` runs one `git grep` at head over the changed files, `markGenerated` in `diff.ts` sets the new `generated` field on each `DiffFile` whose first 20 lines hold a marker, and the git-call tally in `commands.test.ts` counts that one extra call.
 
 [groups/marker.md](groups/marker.md)
 
