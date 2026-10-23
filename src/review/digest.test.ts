@@ -128,11 +128,17 @@ describe("buildDigest", () => {
       file("snapshots/linux/f.png", [], { status: "added" }),
       file("snapshots/f.png", [], { status: "deleted" }),
       file("snapshots/linux/g.png", [], { status: "added" }),
+      file("a/index.ts", [], { status: "added" }),
+      file("b/index.ts", [], { status: "added" }),
+      file("old/index.ts", [], { status: "deleted" }),
     ]);
     const byPath = new Map(digest.files.map((item) => [item.path, item]));
     assert.equal(byPath.get("snapshots/linux/f.png")?.replaces, "snapshots/f.png");
     assert.equal(byPath.get("snapshots/linux/g.png")?.replaces, undefined);
     assert.equal(byPath.get("snapshots/f.png")?.replacedBy, "snapshots/linux/f.png");
+    assert.equal(byPath.get("a/index.ts")?.replaces, undefined);
+    assert.equal(byPath.get("b/index.ts")?.replaces, undefined);
+    assert.equal(byPath.get("old/index.ts")?.replacedBy, undefined);
     assert.equal(isMechanicalFile(byPath.get("snapshots/f.png") as DigestFile), false);
     assert.equal(isMechanicalFile(byPath.get("snapshots/linux/f.png") as DigestFile), false);
     assert.equal(isMechanicalFile(byPath.get("snapshots/linux/g.png") as DigestFile), true);

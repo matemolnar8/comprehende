@@ -224,24 +224,27 @@ function markMirrors(digests: DigestFile[], files: DiffFile[]): void {
   }
 }
 
-/** An added file whose name matches exactly one deleted file, with no rename detected. */
+/** One added and one deleted file with the same name, with no rename detected, pair up. */
 function markReplaces(digests: DigestFile[]): void {
-  const deleted = new Map<string, DigestFile[]>();
+  const byName = new Map<string, { added: DigestFile[]; deleted: DigestFile[] }>();
   for (const digest of digests) {
-    if (digest.status === "deleted") {
-      const name = baseName(digest.path);
-      deleted.set(name, [...(deleted.get(name) ?? []), digest]);
-    }
-  }
-  for (const digest of digests) {
-    if (digest.status !== "added" || digest.oldPath !== undefined) {
+    if (
+      digest.oldPath !== undefined ||
+      (digest.status !== "added" && digest.status !== "deleted")
+    ) {
       continue;
     }
-    const candidates = deleted.get(baseName(digest.path)) ?? [];
-    const [gone] = candidates;
-    if (candidates.length === 1 && gone !== undefined) {
-      digest.replaces = gone.path;
-      gone.replacedBy = digest.path;
+    const name = baseName(digest.path);
+    const entry = byName.get(name) ?? { added: [], deleted: [] };
+    entry[digest.status].push(digest);
+    byName.set(name, entry);
+  }
+  for (const { added, deleted } of byName.values()) {
+    const [fresh] = added;
+    const [gone] = deleted;
+    if (added.length === 1 && deleted.length === 1 && fresh !== undefined && gone !== undefined) {
+      fresh.replaces = gone.path;
+      gone.replacedBy = fresh.path;
     }
   }
 }
