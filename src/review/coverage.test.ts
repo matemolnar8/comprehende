@@ -118,6 +118,12 @@ describe("coverage join", () => {
       relocation: { kind: "rename" },
     };
     assert.deepEqual(dirRefErrors(coverage, [renamed]), []);
+    const replacement: DiffFile = { ...logic, status: "added" };
+    const gone: DiffFile = { ...logic, path: "old/a.png", status: "deleted" };
+    assert.match(
+      dirRefErrors(coverage, [replacement, gone])[0] ?? "",
+      /group mechanical[\s\S]*shots\/a\.png/,
+    );
   });
 
   it("reports unassigned and stale refs without inventing hunks", () => {
