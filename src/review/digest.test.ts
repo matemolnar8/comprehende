@@ -132,15 +132,21 @@ describe("buildDigest", () => {
     const byPath = new Map(digest.files.map((item) => [item.path, item]));
     assert.equal(byPath.get("snapshots/linux/f.png")?.replaces, "snapshots/f.png");
     assert.equal(byPath.get("snapshots/linux/g.png")?.replaces, undefined);
+    assert.equal(byPath.get("snapshots/f.png")?.replacedBy, "snapshots/linux/f.png");
+    assert.equal(isMechanicalFile(byPath.get("snapshots/f.png") as DigestFile), false);
     assert.equal(isMechanicalFile(byPath.get("snapshots/linux/f.png") as DigestFile), false);
     assert.equal(isMechanicalFile(byPath.get("snapshots/linux/g.png") as DigestFile), true);
     assert.deepEqual(
       digest.dirs.map((dir) => dir.dir),
-      ["snapshots/"],
+      ["snapshots/linux/"],
     );
     assert.match(
       formatDigest(digest, "base...head"),
       /- snapshots\/linux\/f\.png · added \+0\/-0 · generated · replaces snapshots\/f\.png, not a move/,
+    );
+    assert.match(
+      formatDigest(digest, "base...head"),
+      /- snapshots\/f\.png · deleted \+0\/-0 · generated · replaced by snapshots\/linux\/f\.png, not a move/,
     );
   });
 

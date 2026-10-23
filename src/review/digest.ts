@@ -31,6 +31,8 @@ export type DigestFile = {
   mirrorOf?: string;
   /** Deleted file with the same name that git did not pair as a rename: a new version, not a move. */
   replaces?: string;
+  /** The added file that replaces this deleted one. */
+  replacedBy?: string;
 };
 
 /**
@@ -224,23 +226,28 @@ function markMirrors(digests: DigestFile[], files: DiffFile[]): void {
 
 /** An added file whose name matches exactly one deleted file, with no rename detected. */
 function markReplaces(digests: DigestFile[]): void {
-  const deleted = new Map<string, string[]>();
+  const deleted = new Map<string, DigestFile[]>();
   for (const digest of digests) {
     if (digest.status === "deleted") {
-      const name = digest.path.split("/").at(-1) ?? digest.path;
-      deleted.set(name, [...(deleted.get(name) ?? []), digest.path]);
+      const name = baseName(digest.path);
+      deleted.set(name, [...(deleted.get(name) ?? []), digest]);
     }
   }
   for (const digest of digests) {
     if (digest.status !== "added" || digest.oldPath !== undefined) {
       continue;
     }
-    const name = digest.path.split("/").at(-1) ?? digest.path;
-    const candidates = deleted.get(name) ?? [];
-    if (candidates.length === 1 && candidates[0] !== undefined) {
-      digest.replaces = candidates[0];
+    const candidates = deleted.get(baseName(digest.path)) ?? [];
+    const [gone] = candidates;
+    if (candidates.length === 1 && gone !== undefined) {
+      digest.replaces = gone.path;
+      gone.replacedBy = digest.path;
     }
   }
+}
+
+function baseName(path: string): string {
+  return path.split("/").at(-1) ?? path;
 }
 
 /** Kinds the draft puts in its `mechanical` group. */
@@ -248,9 +255,11 @@ function isMechanicalKind(kind: DigestKind): boolean {
   return kind === "rename" || kind === "copy" || kind === "move" || kind === "generated";
 }
 
-/** Mechanical files go to the draft `mechanical` group; a file that replaces a deleted one does not. */
+/** Mechanical files go to the draft `mechanical` group; a replaced file and its replacement do not. */
 export function isMechanicalFile(file: DigestFile): boolean {
-  return isMechanicalKind(file.kind) && file.replaces === undefined;
+  return (
+    isMechanicalKind(file.kind) && file.replaces === undefined && file.replacedBy === undefined
+  );
 }
 
 function isPureRename(file: DigestFile): boolean {
@@ -272,7 +281,10 @@ function dirName(path: string): string {
  * Root-level files never collapse.
  */
 function mechanicalDirs(files: DigestFile[]): DigestDir[] {
-  const listed = files.filter((file) => !isLockfilePath(file.path) && file.replaces === undefined);
+  const listed = files.filter(
+    (file) =>
+      !isLockfilePath(file.path) && file.replaces === undefined && file.replacedBy === undefined,
+  );
   const total = new Map<string, number>();
   const mechanical = new Map<string, number>();
   const renames = new Map<string, number>();
@@ -378,6 +390,9 @@ function formatFile(file: DigestFile): string {
   }
   if (file.replaces !== undefined) {
     bits.push(`replaces ${file.replaces}, not a move`);
+  }
+  if (file.replacedBy !== undefined) {
+    bits.push(`replaced by ${file.replacedBy}, not a move`);
   }
   return bits.join(" · ");
 }
