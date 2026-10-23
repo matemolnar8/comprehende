@@ -106,6 +106,7 @@ export type ApiReview = {
   files: {
     path: string;
     oldPath?: string;
+    relocation?: Relocation;
     status: FileStatus;
     binary: boolean;
     image: boolean;

@@ -205,6 +205,9 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       if (file.oldPath !== undefined) {
         entry.oldPath = file.oldPath;
       }
+      if (file.relocation !== undefined) {
+        entry.relocation = file.relocation;
+      }
       return entry;
     }),
     skipped: files

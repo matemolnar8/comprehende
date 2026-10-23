@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { formatStoredHunkRef, parseHunkRefString, refCoversPath } from "./identity.ts";
+import {
+  formatStoredHunkRef,
+  groupsHoldingPath,
+  parseHunkRefString,
+  refCoversPath,
+} from "./identity.ts";
 
 describe("parseHunkRefString", () => {
   it("reads a path, one hunk, and a rename", () => {
@@ -48,6 +53,17 @@ describe("parseHunkRefString", () => {
       refCoversPath({ path: "b.ts", oldPath: "a.ts", oldStart: 1, newStart: 1 }, "a.ts"),
       true,
     );
+  });
+
+  it("gives a path to the group that names it, else to the deepest directory ref", () => {
+    const story = { id: "story", hunkRefs: [{ path: "e2e/linux/a.png" }] };
+    const outer = { id: "outer", hunkRefs: [{ dir: "e2e/" }] };
+    const inner = { id: "inner", hunkRefs: [{ dir: "e2e/linux/" }] };
+    const groups = [story, outer, inner];
+    assert.deepEqual(groupsHoldingPath(groups, "e2e/linux/a.png"), [story]);
+    assert.deepEqual(groupsHoldingPath(groups, "e2e/linux/b.png"), [inner]);
+    assert.deepEqual(groupsHoldingPath(groups, "e2e/mac/b.png"), [outer]);
+    assert.deepEqual(groupsHoldingPath(groups, "src/app.ts"), []);
   });
 
   it("formats a stored ref the way it was written", () => {

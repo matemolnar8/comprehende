@@ -1,5 +1,5 @@
 import type { HunkDelta } from "../review/refresh.ts";
-import { hunkKey, isDirHunkRef, refCoversPath } from "../schema/identity.ts";
+import { groupsHoldingPath, hunkKey, isDirHunkRef } from "../schema/identity.ts";
 import type { LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 import type {
   ApiChanges,
@@ -147,17 +147,12 @@ function noList(): ApiListChange {
   return { added: [], removed: [] };
 }
 
-/** A directory ref lists the live paths it holds: under it and named by no path or hunk ref. */
+/** A directory ref lists the live paths it holds: the ones `groupsHoldingPath` gives this group. */
 function groupPaths(
   group: ReviewGroup,
   document: ReviewDocument,
   live: readonly LiveHunk[] | undefined,
 ): string[] {
-  const named = new Set(
-    document.groups.flatMap((item) =>
-      item.hunkRefs.flatMap((ref) => (isDirHunkRef(ref) ? [] : [ref.path])),
-    ),
-  );
   const paths = [...new Set(live?.map((hunk) => hunk.path))];
   return [
     ...new Set(
@@ -167,7 +162,11 @@ function groupPaths(
         }
         return live === undefined
           ? [ref.dir]
-          : paths.filter((path) => refCoversPath(ref, path) && !named.has(path));
+          : paths.filter(
+              (path) =>
+                path.startsWith(ref.dir) &&
+                groupsHoldingPath(document.groups, path).includes(group),
+            );
       }),
     ),
   ];

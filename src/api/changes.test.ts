@@ -58,6 +58,38 @@ describe("changesPayload", () => {
     assert.deepEqual(payload.groups, []);
   });
 
+  it("lists a file under nested directory refs only in the deepest", () => {
+    const at = (path: string) => ({
+      path,
+      oldStart: 1,
+      oldLines: 1,
+      newStart: 1,
+      newLines: 1,
+      header: "",
+      lines: [],
+      patch: "",
+    });
+    const before = document({
+      groups: [group("outer", { hunkRefs: [{ dir: "shots/" }] })],
+    });
+    const after = document({
+      groups: [
+        group("outer", { hunkRefs: [{ dir: "shots/" }] }),
+        group("inner", { hunkRefs: [{ dir: "shots/linux/" }] }),
+      ],
+    });
+    const same = [at("shots/a.png"), at("shots/linux/b.png")].map((hunk) => ({
+      previous: hunk,
+      next: hunk,
+    }));
+    const payload = changesPayload(before, after, {
+      delta: { same, changed: [], reformat: [], added: [], removed: [] },
+      groups: new Map(),
+    });
+    const outer = payload.groups.find((item) => item.id === "outer");
+    assert.deepEqual(outer?.files, { added: [], removed: ["shots/linux/b.png"] });
+  });
+
   it("lists the prose, bullets, sources, and groups that differ", () => {
     const previous = document({
       lookFor: ["Old claim."],

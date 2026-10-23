@@ -245,6 +245,27 @@ describe("openTargetForSource", () => {
     });
   });
 
+  it("opens a pin on the story group that names a file under a directory ref", () => {
+    const moved: ReviewDocument = {
+      ...document,
+      groups: [
+        {
+          id: "mechanical",
+          title: "Moves",
+          why: "w",
+          summary: "s",
+          suggestedOrder: 2,
+          hunkRefs: [{ dir: "src/" }],
+        },
+        ...document.groups,
+      ],
+    };
+    assert.deepEqual(openTargetForSource(pin, [], moved), {
+      selection: { kind: "group", id: "cookie" },
+      commentId: "c1",
+    });
+  });
+
   it("opens a line pin on the group that covers the path", () => {
     assert.deepEqual(openTargetForSource(pin, claims, document), {
       selection: { kind: "group", id: "cookie" },

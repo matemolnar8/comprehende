@@ -348,7 +348,9 @@ export function App() {
     () =>
       new Map(
         (meta?.files ?? []).flatMap((file) =>
-          file.oldPath === undefined ? [] : [[file.oldPath, file.path] as const],
+          file.oldPath === undefined || file.relocation?.kind === "copy"
+            ? []
+            : [[file.oldPath, file.path] as const],
         ),
       ),
     [meta],

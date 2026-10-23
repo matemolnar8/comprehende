@@ -52,6 +52,36 @@ export function refCoversPath(ref: ReviewHunkRef, path: string): boolean {
   return ref.path === path || (isLocatedHunkRef(ref) && ref.oldPath === path);
 }
 
+/**
+ * The groups that hold `path`: a path or hunk ref in any group beats a directory ref, and the
+ * deepest directory ref beats a shallower one.
+ */
+export function groupsHoldingPath<Group extends { hunkRefs: readonly ReviewHunkRef[] }>(
+  groups: readonly Group[],
+  path: string,
+): Group[] {
+  const named = groups.filter((group) =>
+    group.hunkRefs.some((ref) => !isDirHunkRef(ref) && refCoversPath(ref, path)),
+  );
+  if (named.length > 0) {
+    return named;
+  }
+  const dirs = groups.flatMap((group) =>
+    group.hunkRefs.flatMap((ref) =>
+      isDirHunkRef(ref) && refCoversPath(ref, path) ? [ref.dir] : [],
+    ),
+  );
+  const deepest = dirs.reduce<string | undefined>(
+    (best, dir) => (best === undefined || dir.length > best.length ? dir : best),
+    undefined,
+  );
+  return deepest === undefined
+    ? []
+    : groups.filter((group) =>
+        group.hunkRefs.some((ref) => isDirHunkRef(ref) && ref.dir === deepest),
+      );
+}
+
 export function hunkKey(ref: Pick<HunkRef, "path" | "oldPath" | "oldStart" | "newStart">): string {
   const oldPath = ref.oldPath ?? "";
   return `${oldPath}\0${ref.path}\0${ref.oldStart}\0${ref.newStart}`;
