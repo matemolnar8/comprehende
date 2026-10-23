@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify a19cd266478558d40de20ddf11a948e8e7263d5d` in this repository.
+   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify 046cae0b9eba180c36d3e474dd24e1d9aff78852` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 a19cd266478558d40de20ddf11a948e8e7263d5d -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 046cae0b9eba180c36d3e474dd24e1d9aff78852 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8
 
-head               a19cd266478558d40de20ddf11a948e8e7263d5d
+head               046cae0b9eba180c36d3e474dd24e1d9aff78852
 
-Named refs at pin: 10dbe41 ... a19cd26
+Named refs at pin: 10dbe41 ... 046cae0
 
 Read the diff:
 
-git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 a19cd266478558d40de20ddf11a948e8e7263d5d
+git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 046cae0b9eba180c36d3e474dd24e1d9aff78852
 
 Review concern 02 of 07: Coverage: the most specific ref wins (`coverage`)
 
@@ -43,7 +43,7 @@ A directory ref must not swallow a file another group names, and must not hide a
 
 The what:
 
-`dirOwners` in `coverage.ts` gives each live hunk to the path ref that names it, else to the deepest directory ref, and `dirRefErrors` fails a directory ref that holds a file that is not mechanical; `checks.ts` repeats the same ownership rule for the eval cases, and the server and covering-document tests carry a directory ref.
+`dirOwners` in `coverage.ts` gives each live hunk to the path ref that names it, else to the deepest directory ref, and `dirRefErrors` fails a directory ref that holds a file that is not mechanical; `checks.ts` applies `groupsHoldingPath` for the eval together and apart checks, and the server and covering-document tests carry a directory ref.
 
 Look for:
 - Subtle: a path or hunk ref in any group takes the file out of every directory ref; a file named in two groups is still counted once per group, and a directory ref whose files are all named elsewhere matches nothing and is reported stale.

@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify a19cd266478558d40de20ddf11a948e8e7263d5d` in this repository.
+   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify 046cae0b9eba180c36d3e474dd24e1d9aff78852` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 a19cd266478558d40de20ddf11a948e8e7263d5d -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 046cae0b9eba180c36d3e474dd24e1d9aff78852 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8
 
-head               a19cd266478558d40de20ddf11a948e8e7263d5d
+head               046cae0b9eba180c36d3e474dd24e1d9aff78852
 
-Named refs at pin: 10dbe41 ... a19cd26
+Named refs at pin: 10dbe41 ... 046cae0
 
 Read the diff:
 
-git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 a19cd266478558d40de20ddf11a948e8e7263d5d
+git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 046cae0b9eba180c36d3e474dd24e1d9aff78852
 
 Review concern 01 of 07: A hunk ref can be a directory (`ref-contract`)
 
@@ -43,7 +43,7 @@ Coverage, refresh, the UI, and the eval checks all read refs through this contra
 
 The what:
 
-`DirHunkRef` joins `ReviewHunkRef` in `identity.ts`, `refCoversPath` says whether any ref holds a path, and the schema in `review.ts` accepts a string ending in `/`.
+`DirHunkRef` joins `ReviewHunkRef` in `identity.ts`, `refCoversPath` says whether one ref covers a path, `groupsHoldingPath` says which groups hold a path (a path or hunk ref beats a directory ref, the deepest directory wins), and the schema in `review.ts` accepts a string ending in `/`.
 
 Hunk refs for this concern:
 - src/schema/identity.ts

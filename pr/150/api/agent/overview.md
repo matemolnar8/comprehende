@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify a19cd266478558d40de20ddf11a948e8e7263d5d` in this repository.
+   Run `git rev-parse --verify 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8` and `git rev-parse --verify 046cae0b9eba180c36d3e474dd24e1d9aff78852` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,17 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8
 
-head               a19cd266478558d40de20ddf11a948e8e7263d5d
+head               046cae0b9eba180c36d3e474dd24e1d9aff78852
 
-Named refs at pin: 10dbe41 ... a19cd26
+Named refs at pin: 10dbe41 ... 046cae0
 
 Read the diff:
 
-git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 a19cd266478558d40de20ddf11a948e8e7263d5d
+git diff --find-renames 10dbe412c81b50b7b8c60b3bbbb87c2ce345a0c8 046cae0b9eba180c36d3e474dd24e1d9aff78852
 
 Commits:
+- 046cae0 One path-ownership rule for pins, What changed, and eval checks
+- f98a41c Skill: keep the 'Do not run that command' sentence
 - a19cd26 Digest: 'same change as', not 'identical copy'; sources capped at 10 kB
 - aa9caae Skill: the write step names both lookFor fields
 - 3031fcf Skill: apply the writing review
@@ -68,13 +70,13 @@ Look for:
 
 ### 01 A hunk ref can be a directory (`ref-contract`)
 
-`DirHunkRef` joins `ReviewHunkRef` in `identity.ts`, `refCoversPath` says whether any ref holds a path, and the schema in `review.ts` accepts a string ending in `/`.
+`DirHunkRef` joins `ReviewHunkRef` in `identity.ts`, `refCoversPath` says whether one ref covers a path, `groupsHoldingPath` says which groups hold a path (a path or hunk ref beats a directory ref, the deepest directory wins), and the schema in `review.ts` accepts a string ending in `/`.
 
 [groups/ref-contract.md](groups/ref-contract.md)
 
 ### 02 Coverage: the most specific ref wins (`coverage`)
 
-`dirOwners` in `coverage.ts` gives each live hunk to the path ref that names it, else to the deepest directory ref, and `dirRefErrors` fails a directory ref that holds a file that is not mechanical; `checks.ts` repeats the same ownership rule for the eval cases, and the server and covering-document tests carry a directory ref.
+`dirOwners` in `coverage.ts` gives each live hunk to the path ref that names it, else to the deepest directory ref, and `dirRefErrors` fails a directory ref that holds a file that is not mechanical; `checks.ts` applies `groupsHoldingPath` for the eval together and apart checks, and the server and covering-document tests carry a directory ref.
 
 Depends on:
 - 01 A hunk ref can be a directory (`ref-contract`)
@@ -101,7 +103,7 @@ Depends on:
 
 ### 05 Pins on renamed files and the What changed list (`ui-renames`)
 
-`App.tsx` builds an old-to-new path map from the file list and passes it through `openTargetForSource` to `groupIdForPinnedSource` in `source.ts`, which maps an `old` pin to the head path before matching refs, and `groupPaths` in `changes.ts` lists the files a directory ref holds on the What changed page.
+`groupIdForPinnedSource` in `source.ts` finds a pin's group through `groupsHoldingPath`, after `App.tsx` maps an `old` pin on a renamed file to its head path; the API file entry carries `relocation` so a copy stays out of that map, and `groupPaths` in `changes.ts` lists on the What changed page only the files a directory ref holds under the same rule.
 
 Depends on:
 - 02 Coverage: the most specific ref wins (`coverage`)
@@ -116,6 +118,6 @@ The same one-line description of a hunk ref repeats in three generated JSON file
 
 ### 07 The skill in three tool calls (`skill`)
 
-`skills-next/comprehende/SKILL.md` folds the source reads and `git log base..head` into the step-2 call, groups and fetches in one `show` call, writes `review.json` with a heredoc that ends in `validate`, names both `lookFor` fields in the write step, and caps each source at 10 kB; the `.agents` copies repeat it, `example.md` keeps the draft's `source` object, and `skill.test.ts` pins the new wording.
+`skills-next/comprehende/SKILL.md` folds the source reads and `git log base..head` into the step-2 call, groups and fetches in one `show` call, writes `review.json` with a heredoc that ends in `validate`, names both `lookFor` fields in the write step, and caps each source at 10 kB; the `.agents` copies repeat it, `example.md` keeps the draft's `source` object, `skill.test.ts` and `skill-sync.test.ts` pin the wording, and the `Do not run that command` sentence stays because `install-local-skill.ts` rewrites it.
 
 [groups/skill.md](groups/skill.md)
