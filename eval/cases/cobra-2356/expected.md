@@ -19,10 +19,11 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 - Before the fix, `trimmedArgs` is a sub-slice of the caller's args, so `append(finalArgs, "--")` in `getCompletions` can write `"--"` into the backing array of `os.Args` instead of a new array.
 - At head the fix copies `trimmedArgs` into a new slice with `make` plus `copy` at the top of `getCompletions`, while the PR body still describes a three-index slice (`finalArgs[:len:len]`) and the `append(finalArgs, "--")` line is unchanged.
 - The fix follows alexandear's review suggestion to copy `trimmedArgs` at the top, which replaced the three-index slice that ccoVeille and marckhouzam called cryptic.
-- `TestCompletionDoesNotMutateOsArgs` sets `os.Args` to `{"root", ShellCompNoDescRequestCmd, "x"}` and does not call `SetArgs`, so `ExecuteC` reads the real `os.Args[1:]`, and without the fix `os.Args[2]` changes from `"x"` to `"--"`.
+- `TestCompletionDoesNotMutateOsArgs` sets `os.Args` itself instead of calling `SetArgs`, so the completion runs through the real `os.Args` path and the test checks that `os.Args` is unchanged.
 
 ## Good
 
+- Without the fix the test fails because `os.Args[2]` changes from `"x"` to `"--"`.
 - The bug shows with `TraverseChildren` because `Traverse` returns `args[i+1:]`, a sub-slice of `os.Args`, while `Find` removes the `__complete` word through `argsMinusFirstX`, which builds a new slice.
 - The slot that `"--"` overwrites holds the word being completed (`x` in the ticket and the test), because `trimmedArgs` drops only that last argument and keeps its capacity.
 - The copy at the top also protects the flag value path, where `checkIfFlagCompletion` returns `args[:len(args)-1]`, another sub-slice with a spare slot.

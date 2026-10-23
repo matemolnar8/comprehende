@@ -18,9 +18,9 @@ One group that holds all four files is equally good, because both hunks fix the 
 
 ## Must
 
-- `Flask.run` now parses `SERVER_NAME` with `urlsplit(f"//{server_name}")`, so `[::1]:8080` gives host `::1` and int port `8080`, where the old `partition(":")` split at the first colon inside the brackets.
-- `session_transaction` now passes `urlsplit(ctx.request.host_url).hostname` as the cookie domain, so a base URL like `http://[::1]:8000/` stores the session cookie for `::1` and the next request sends it back, where the old `partition(":")[0]` gave `[`.
-- The new `test_run_from_config` case `(None, None, "[::1]:8080", "::1", 8080)` and the new `test_session_transaction_ipv6` are the two failing tests from issue #6093.
+- `Flask.run` now parses `SERVER_NAME` with `urlsplit`, so an IPv6 value like `[::1]:8080` gives host `::1` and port `8080` instead of a split at the first colon.
+- `session_transaction` now takes the cookie domain from `urlsplit(...).hostname`, so an IPv6 test host like `[::1]` keeps the session cookie across requests.
+- The new `[::1]:8080` case in `test_run_from_config` and the new `test_session_transaction_ipv6` cover the two failures from issue #6093.
 
 ## Good
 
@@ -40,6 +40,8 @@ One group that holds all four files is equally good, because both hunks fix the 
 - Do not present the "Development Versions" CI failure as a defect of this change.
 
 ## Notes
+
+The old `partition(":")` split at the first colon inside the brackets, so `Flask.run` raised `ValueError` from `int(":1]:8080")` and `session_transaction` used `[` as the cookie domain. These mechanics sit in the Must not list and here, not in the Must items, so a review that names the `urlsplit` fix without the old failure mode still states them.
 
 The old expected outcome had a claim that IPv6 cookies work "because the cookie domain falls back to localhost". That causation is wrong, and it is now a `Must not`. The three past runs missed that claim every time, partly because it was false.
 

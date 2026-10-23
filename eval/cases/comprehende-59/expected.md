@@ -21,7 +21,7 @@ PR #59. No linked ticket. One Bugbot review comment, not addressed at head. A UI
 
 - Bugbot says that hiding the "Viewed" label leaves only the `size-3.5` checkbox as a 14px tap target on phones, and at head `HunkView.tsx` still wraps the label text in `max-[799px]:hidden`.
 - Below 800px `App.tsx` renders `MobileShell` instead of `Header`, so phones lose the base...head range, the coverage count with its unassigned and stale warning, the Refresh button, and the split toggle; only the groups button, the selection caption, wrap, comments, and theme stay.
-- `ReviewStage.tsx` holds the main pane JSX that moved out of `App.tsx` with the same `Inspector`, `Overview`, and `Group` props; the new parts are the `compact` padding and `split` set to `split && !narrow`.
+- `ReviewStage.tsx` holds the main pane JSX that moved out of `App.tsx`, so it is a move with small prop changes (`compact` padding, `split && !narrow`), not new code.
 
 ## Good
 
