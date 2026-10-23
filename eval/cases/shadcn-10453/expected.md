@@ -16,7 +16,8 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 
 ## Must
 
-- `createProxyDispatcher` returns a SOCKS `Agent` only when `ALL_PROXY` or `all_proxy` holds a URL with scheme `socks`, `socks4`, `socks4a`, `socks5`, or `socks5h`. Any other `ALL_PROXY` value is ignored and the `HTTP_PROXY` and `HTTPS_PROXY` variables decide.
+- `createProxyDispatcher` returns a SOCKS `Agent` only for an `ALL_PROXY` or `all_proxy` URL with a `socks`, `socks4`, `socks4a`, `socks5`, or `socks5h` scheme.
+- An `ALL_PROXY` value with another scheme, such as `http://`, is ignored, and the `HTTP_PROXY` and `HTTPS_PROXY` variables decide.
 - SOCKS wins when `ALL_PROXY` holds a socks URL and an HTTP proxy variable is also set, because the factory checks `ALL_PROXY` first.
 - `fetchWithProxy`, `fetchOnce`, and `getFailureReason` are the same as at base apart from the module-level dispatcher now coming from `createProxyDispatcher()` and one comment in `fetchOnce`, so the cross-origin redirect handling from #11196 is untouched.
 - The SOCKS branch has no `NO_PROXY` bypass. Only `EnvHttpProxyAgent` honors `no_proxy`, and the factory returns the SOCKS `Agent` before that branch, so every request goes through the SOCKS proxy when `ALL_PROXY` is a socks URL.
