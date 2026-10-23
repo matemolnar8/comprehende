@@ -1,53 +1,117 @@
 import * as z from "zod";
+import type { ReviewDocument } from "../../src/schema/types.ts";
+import type { Rubric } from "./case.ts";
 import { GRADER_TIMEOUT_MS } from "./constants.ts";
 import { runMuseCodeAgent, type AgentRunResult } from "./musecode.ts";
-import { skillSection } from "./skill.ts";
 
-const findingSchema = z.object({
-  check: z.string().min(1),
-  severity: z.enum(["major", "minor"]),
-  where: z.string().min(1),
-  hunk: z.string().min(1).optional(),
-  note: z.string().min(1),
+const itemVerdictSchema = z.object({
+  yes: z.boolean(),
+  quote: z.string().optional(),
 });
 
-const claimSchema = z.object({
-  claim: z.string().min(1),
-  stated: z.boolean(),
-  where: z.string().min(1).optional(),
+const bulletVerdictSchema = z.object({
+  holds: z.boolean(),
+  note: z.string().optional(),
 });
 
-const graderOutputSchema = z.object({
-  findings: z.array(findingSchema),
-  claims: z.array(claimSchema).optional(),
+const rubricReplySchema = z.object({
+  must: z.array(itemVerdictSchema),
+  good: z.array(itemVerdictSchema),
+  mustNot: z.array(itemVerdictSchema),
+  bullets: z.array(bulletVerdictSchema),
 });
 
-const GRADER_PACKET_INTRO = [
-  "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources.",
-  "Start from this packet. Do not search for the review or the packet.",
-  "You may read files in the current git work tree to check a grouping, a summary, or a claim against the code.",
-  "Read only the files that check needs. Do not wander. Do not run shell commands. Do not write files.",
-].join(" ");
+export type ItemVerdict = z.infer<typeof itemVerdictSchema> & { item: string };
+export type BulletVerdict = z.infer<typeof bulletVerdictSchema> & { where: string; bullet: string };
 
-export type Finding = z.infer<typeof findingSchema>;
-export type ClaimVerdict = z.infer<typeof claimSchema>;
-export type GraderOutput = z.infer<typeof graderOutputSchema>;
+export type RubricOutput = {
+  must: ItemVerdict[];
+  good: ItemVerdict[];
+  mustNot: ItemVerdict[];
+  bullets: BulletVerdict[];
+};
 
-export type GraderResult = {
+export type RubricCounts = {
+  must: { yes: number; total: number };
+  good: { yes: number; total: number };
+  mustNot: { yes: number; total: number };
+  bullets: { holds: number; total: number };
+};
+
+export type RubricResult = {
   run: AgentRunResult;
-  output: GraderOutput;
+  output: RubricOutput;
   parseError?: string;
 };
 
-export function parseGraderJson(text: string): GraderOutput {
+export type LookForBullet = { where: string; bullet: string };
+
+export function lookForBullets(document: ReviewDocument): LookForBullet[] {
+  const bullets = (document.lookFor ?? []).map((bullet) => ({ where: "document", bullet }));
+  for (const group of document.groups) {
+    for (const bullet of group.lookFor ?? []) {
+      bullets.push({ where: `group ${group.id}`, bullet });
+    }
+  }
+  return bullets;
+}
+
+export function emptyRubricOutput(): RubricOutput {
+  return { must: [], good: [], mustNot: [], bullets: [] };
+}
+
+export function rubricCounts(output: RubricOutput): RubricCounts {
+  const yes = (items: ItemVerdict[]): { yes: number; total: number } => ({
+    yes: items.filter((item) => item.yes).length,
+    total: items.length,
+  });
+  return {
+    must: yes(output.must),
+    good: yes(output.good),
+    mustNot: yes(output.mustNot),
+    bullets: {
+      holds: output.bullets.filter((item) => item.holds).length,
+      total: output.bullets.length,
+    },
+  };
+}
+
+/** The model answers by position. Zip its arrays back onto the rubric text. */
+export function parseRubricReply(
+  text: string,
+  rubric: Rubric,
+  bullets: LookForBullet[],
+): RubricOutput {
+  const reply = rubricReplySchema.parse(parseJsonReply(text));
+  const zip = (
+    name: string,
+    items: string[],
+    verdicts: ItemVerdict[] | z.infer<typeof itemVerdictSchema>[],
+  ): ItemVerdict[] => {
+    if (verdicts.length !== items.length) {
+      throw new Error(`${name} has ${verdicts.length} verdicts for ${items.length} items`);
+    }
+    return items.map((item, i) => ({ item, ...verdicts[i]! }));
+  };
+  if (reply.bullets.length !== bullets.length) {
+    throw new Error(`bullets has ${reply.bullets.length} verdicts for ${bullets.length} bullets`);
+  }
+  return {
+    must: zip("must", rubric.must, reply.must),
+    good: zip("good", rubric.good, reply.good),
+    mustNot: zip("mustNot", rubric.mustNot, reply.mustNot),
+    bullets: bullets.map((bullet, i) => ({ ...bullet, ...reply.bullets[i]! })),
+  };
+}
+
+export function parseJsonReply(text: string): unknown {
   const candidates = [text.trim(), fencedJson(text), braceSlice(text)].filter(
     (item) => item !== "",
   );
   const errors: string[] = [];
   for (const candidate of candidates) {
     try {
-      const parsed: unknown = JSON.parse(candidate);
-      return graderOutputSchema.parse(parsed);
+      return JSON.parse(candidate) as unknown;
     } catch (error) {
       errors.push(error instanceof Error ? error.message : String(error));
     }
@@ -55,61 +119,53 @@ export function parseGraderJson(text: string): GraderOutput {
   throw new Error(`grader output is not valid JSON: ${errors[0] ?? "empty"}`);
 }
 
-export function groupingPrompt(opts: { skillMd: string; packet: string }): string {
-  const rules = skillSection(opts.skillMd, "Grouping rules");
+export function rubricPrompt(opts: {
+  rubric: Rubric;
+  bullets: LookForBullet[];
+  packet: string;
+}): string {
+  const list = (items: string[]): string =>
+    items.length === 0 ? "(none)" : items.map((item, i) => `${i + 1}. ${item}`).join("\n");
+  const n = {
+    must: opts.rubric.must.length,
+    good: opts.rubric.good.length,
+    mustNot: opts.rubric.mustNot.length,
+    bullets: opts.bullets.length,
+  };
   return [
-    "You grade a Comprehende review document against grouping rules. You do not rewrite the review.",
+    "You grade one Comprehende review document against a rubric. You do not rewrite the review. You answer yes or no per item and quote the review where it applies.",
     "",
-    "Rules:",
-    rules,
+    "## Rubric",
     "",
-    "For each group, ask whether each hunk belongs to the concern the title and summary name, whether any group is a directory rather than a concern, whether any dependsOn is a false chain across stories, and whether mechanical work is folded into a story group.",
+    "Must (facts the review must state):",
+    list(opts.rubric.must),
     "",
-    GRADER_PACKET_INTRO,
+    "Good (facts that improve the review):",
+    list(opts.rubric.good),
+    "",
+    "Must not (mistakes a review makes on this change):",
+    list(opts.rubric.mustNot),
+    "",
+    "For each Must and Good item, answer yes when the review states the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, or group lookFor. Different wording and different symbol names still count. Answer no when the review is silent, states the opposite, or states only a part that changes the meaning. On yes, quote the review sentence that states it.",
+    "For each Must not item, answer yes when the review makes that mistake. On yes, quote the review text that shows it.",
+    "",
+    "## lookFor bullets the review wrote",
+    "",
+    list(opts.bullets.map((item) => `(${item.where}) ${item.bullet}`)),
+    "",
+    "For each bullet, holds is true when every factual claim in it is true of the code at head and of the frozen sources. Read the files in the work tree when the diffs in the packet are not enough to decide. A bullet that says a source says X when the source says something else does not hold. A bullet that describes code that is not at head does not hold. On false, write one sentence on what head or the source actually does.",
+    "",
+    "## Packet",
+    "",
+    "The grading packet is below. It has the review document, live diffs for each group, and the frozen sources. Start from this packet. Do not search for the review or the packet. You may read files in the current git work tree to check a bullet against the code. Read only the files that check needs. Do not run shell commands. Do not write files.",
     "",
     opts.packet,
     "",
-    "Reply with a JSON object only, no markdown fence:",
-    '{"findings":[{"check":"concern|directory|dependsOn|mechanical|other","severity":"major|minor","where":"group id or document","hunk":"optional path","note":"one sentence"}]}',
-    "Use an empty findings array when you see no issues.",
-  ].join("\n");
-}
-
-export function prosePrompt(opts: { skillMd: string; packet: string; claims: string[] }): string {
-  const why = skillSection(opts.skillMd, "The why");
-  const what = skillSection(opts.skillMd, "The what");
-  const lookFor = skillSection(opts.skillMd, "lookFor");
-  const prose = skillSection(opts.skillMd, "Write the prose");
-  const claimBlock =
-    opts.claims.length === 0
-      ? "There are no required claims. Omit the claims array."
-      : `Required claims. For each, set stated true if the review states it, and quote where.\n${JSON.stringify(opts.claims, null, 2)}`;
-  return [
-    "You grade a Comprehende review document against the skill's prose rules. You do not rewrite the review.",
-    "",
-    "The why:",
-    why,
-    "",
-    "The what:",
-    what,
-    "",
-    "lookFor:",
-    lookFor,
-    "",
-    "Write the prose:",
-    prose,
-    "",
-    claimBlock,
-    "",
-    "Ask whether document why says anything the frozen sources do not say, whether summaries are path lists, whether lookFor is padded or missing, and whether the prose is readable.",
-    "",
-    GRADER_PACKET_INTRO,
-    "",
-    opts.packet,
+    "## Reply",
     "",
     "Reply with a JSON object only, no markdown fence:",
-    '{"findings":[{"check":"why|summary|lookFor|prose|claim|other","severity":"major|minor","where":"field or group id","note":"one sentence"}],"claims":[{"claim":"exact claim string","stated":true,"where":"optional location"}]}',
-    "Use an empty findings array when you see no issues.",
+    '{"must":[{"yes":true,"quote":"..."}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":false,"note":"..."}]}',
+    `must has exactly ${n.must} entries, good ${n.good}, mustNot ${n.mustNot}, bullets ${n.bullets}, each in the order listed above. An empty list stays an empty array.`,
   ].join("\n");
 }
 
@@ -117,45 +173,51 @@ export function shouldRetryGraderRun(run: AgentRunResult): boolean {
   return run.status === "finished" && run.text.trim() !== "";
 }
 
-export async function runGrader(opts: {
+export async function runRubricGrader(opts: {
   repoCwd: string;
   model: string;
   apiKey: string;
-  prompt: string;
-}): Promise<GraderResult> {
-  const runOnce = (prompt: string): Promise<AgentRunResult> =>
+  rubric: Rubric;
+  bullets: LookForBullet[];
+  packet: string;
+}): Promise<RubricResult> {
+  const prompt = rubricPrompt(opts);
+  const runOnce = (text: string): Promise<AgentRunResult> =>
     runMuseCodeAgent({
       cwd: opts.repoCwd,
       model: opts.model,
-      prompt,
+      prompt: text,
       apiKey: opts.apiKey,
       readOnly: true,
       timeoutMs: GRADER_TIMEOUT_MS,
     });
-  const first = await runOnce(opts.prompt);
+  const parse = (run: AgentRunResult): RubricOutput =>
+    parseRubricReply(run.text, opts.rubric, opts.bullets);
+  const first = await runOnce(prompt);
   try {
-    return { run: first, output: parseGraderJson(first.text) };
-  } catch {
-    // Retry only when the model returned text that is not JSON. A stall or
-    // a transport error leaves empty text or an error status; retrying that
-    // would spend another full grader timeout for the same outcome.
+    return { run: first, output: parse(first) };
+  } catch (error) {
+    // Retry only when the model returned text that is not the expected JSON.
+    // A stall or a transport error leaves empty text or an error status;
+    // retrying that would spend another full grader timeout for the same outcome.
     if (!shouldRetryGraderRun(first)) {
       return {
         run: first,
-        output: { findings: [] },
+        output: emptyRubricOutput(),
         parseError: first.error ?? "grader returned no text",
       };
     }
+    const reason = error instanceof Error ? error.message : String(error);
     const retry = await runOnce(
-      `${opts.prompt}\n\nYour previous reply was not valid JSON. Return only the JSON object, no markdown.`,
+      `${prompt}\n\nYour previous reply was rejected: ${reason}. Return only the JSON object, no markdown, with the exact entry counts.`,
     );
     try {
-      return { run: retry, output: parseGraderJson(retry.text) };
-    } catch (error) {
+      return { run: retry, output: parse(retry) };
+    } catch (retryError) {
       return {
         run: retry,
-        output: { findings: [] },
-        parseError: error instanceof Error ? error.message : String(error),
+        output: emptyRubricOutput(),
+        parseError: retryError instanceof Error ? retryError.message : String(retryError),
       };
     }
   }

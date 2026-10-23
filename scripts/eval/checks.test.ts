@@ -391,4 +391,33 @@ describe("eval deterministic checks", () => {
     });
     assert.deepEqual(onHead.failures, []);
   });
+
+  it("lints summaries that run past one sentence or read as a path list", () => {
+    const document = doc({
+      summary: "One. Two. Three sentences is one too many.",
+      groups: [
+        {
+          id: "core",
+          title: "Parser",
+          why: "The schema is the boundary.",
+          summary: "Touches src/a.ts, src/b.ts, lib/c.ts and main.go.",
+          suggestedOrder: 0,
+          hunkRefs: [hunk("src/a.ts")],
+        },
+        {
+          id: "docs",
+          title: "Docs",
+          why: "Docs.",
+          summary: "The README names the flag. The example shows it.",
+          suggestedOrder: 1,
+          hunkRefs: [hunk("README.md")],
+        },
+      ],
+    });
+    assert.deepEqual(proseLints(document), [
+      "summary has 3 sentences",
+      "group core summary names 4 paths",
+      "group docs summary has 2 sentences",
+    ]);
+  });
 });

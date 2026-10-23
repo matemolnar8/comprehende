@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 import type { DeterministicReport } from "./checks.ts";
 import { isCliHuntCall, type AgentRunResult } from "./musecode.ts";
-import type { Finding, GraderResult } from "./graders.ts";
+import { rubricCounts, type RubricCounts, type RubricResult } from "./graders.ts";
 
 export type CaseResult = {
   id: string;
@@ -16,9 +16,7 @@ export type CaseResult = {
   artifactError?: string;
   document?: Pick<ReviewDocument, "title" | "size" | "why">;
   checks?: DeterministicReport;
-  grouping?: GraderResult;
-  prose?: GraderResult;
-  claims?: { stated: number; total: number; missing: string[] };
+  rubric?: RubricResult;
   site?: string;
 };
 
@@ -73,14 +71,8 @@ export function formatCaseLine(result: CaseResult): string {
       bits.push(`lint ${checks.lints.length}`);
     }
   }
-  if (result.claims !== undefined) {
-    bits.push(`claims ${result.claims.stated}/${result.claims.total}`);
-  }
-  if (result.grouping !== undefined) {
-    bits.push(findingCounts("grouping", result.grouping));
-  }
-  if (result.prose !== undefined) {
-    bits.push(findingCounts("prose", result.prose));
+  if (result.rubric !== undefined) {
+    bits.push(...rubricBits(result.rubric));
   }
   if (result.artifactError !== undefined) {
     bits.push("artifact FAIL");
@@ -101,11 +93,9 @@ export function formatCaseLine(result: CaseResult): string {
       ),
     );
   }
-  if (result.grouping !== undefined) {
-    bits.push(`g-tools ${result.grouping.run.toolCalls.length}`);
-  }
-  if (result.prose !== undefined) {
-    bits.push(`p-tools ${result.prose.run.toolCalls.length}`);
+  if (result.rubric !== undefined) {
+    bits.push(`grader ${formatTokens(result.rubric.run.tokens)}`);
+    bits.push(`grader-tools ${result.rubric.run.toolCalls.length}`);
   }
   return bits.join("  ");
 }
@@ -126,15 +116,19 @@ export function formatBaselineDelta(
   if (curFail !== prevFail) {
     bits.push(`checks ${prevFail}->${curFail}`);
   }
-  const curG = countFindings(current.grouping);
-  const prevG = countFindings(previous.grouping);
-  if (curG.major !== prevG.major || curG.minor !== prevG.minor) {
-    bits.push(`grouping ${prevG.major}M${prevG.minor}m->${curG.major}M${curG.minor}m`);
-  }
-  const curP = countFindings(current.prose);
-  const prevP = countFindings(previous.prose);
-  if (curP.major !== prevP.major || curP.minor !== prevP.minor) {
-    bits.push(`prose ${prevP.major}M${prevP.minor}m->${curP.major}M${curP.minor}m`);
+  if (current.rubric !== undefined && previous.rubric !== undefined) {
+    const cur = rubricCounts(current.rubric.output);
+    const prev = rubricCounts(previous.rubric.output);
+    for (const key of ["must", "good", "mustNot"] as const) {
+      if (cur[key].yes !== prev[key].yes) {
+        bits.push(`${key} ${prev[key].yes}->${cur[key].yes}/${cur[key].total}`);
+      }
+    }
+    if (cur.bullets.holds !== prev.bullets.holds || cur.bullets.total !== prev.bullets.total) {
+      bits.push(
+        `bullets ${prev.bullets.holds}/${prev.bullets.total}->${cur.bullets.holds}/${cur.bullets.total}`,
+      );
+    }
   }
   if (bits.length === 0) {
     return undefined;
@@ -158,23 +152,20 @@ function failed(report: DeterministicReport, check: string): boolean {
   return report.failures.some((item) => item.check === check);
 }
 
-function findingCounts(label: string, grader: GraderResult | undefined): string {
-  if (grader === undefined) {
-    return `${label} -`;
+function rubricBits(rubric: RubricResult): string[] {
+  if (rubric.parseError !== undefined) {
+    return ["rubric parse FAIL"];
   }
-  if (grader.parseError !== undefined) {
-    return `${label} parse FAIL`;
-  }
-  const { major, minor } = countFindings(grader);
-  return `${label} ${major}M ${minor}m`;
+  return formatRubricCounts(rubricCounts(rubric.output));
 }
 
-function countFindings(grader: GraderResult | undefined): { major: number; minor: number } {
-  const findings: Finding[] = grader?.output.findings ?? [];
-  return {
-    major: findings.filter((item) => item.severity === "major").length,
-    minor: findings.filter((item) => item.severity === "minor").length,
-  };
+export function formatRubricCounts(counts: RubricCounts): string[] {
+  return [
+    `must ${counts.must.yes}/${counts.must.total}`,
+    `good ${counts.good.yes}/${counts.good.total}`,
+    `mustNot ${counts.mustNot.yes}/${counts.mustNot.total}`,
+    `bullets ${counts.bullets.holds}/${counts.bullets.total} true`,
+  ];
 }
 
 export function formatDuration(ms: number): string {
@@ -196,9 +187,7 @@ export function formatTokens(tokens: number): string {
 
 export function formatRunTotals(summary: RunSummary): string {
   const producerTokens = sum(summary.cases, (item) => item.producer?.tokens ?? 0);
-  const groupingTokens = sum(summary.cases, (item) => item.grouping?.run.tokens ?? 0);
-  const proseTokens = sum(summary.cases, (item) => item.prose?.run.tokens ?? 0);
-  const graderTokens = groupingTokens + proseTokens;
+  const graderTokens = sum(summary.cases, (item) => item.rubric?.run.tokens ?? 0);
   const producerHunt = sum(
     summary.cases,
     (item) => item.producer?.toolCalls.filter(isCliHuntCall).length ?? 0,
@@ -207,10 +196,7 @@ export function formatRunTotals(summary: RunSummary): string {
   const producerInput = sum(summary.cases, (item) => item.producer?.inputTokens ?? 0);
   const producerCacheRead = sum(summary.cases, (item) => item.producer?.cacheReadTokens ?? 0);
   const producerOutput = sum(summary.cases, (item) => item.producer?.outputTokens ?? 0);
-  const graderTools = sum(
-    summary.cases,
-    (item) => (item.grouping?.run.toolCalls.length ?? 0) + (item.prose?.run.toolCalls.length ?? 0),
-  );
+  const graderTools = sum(summary.cases, (item) => item.rubric?.run.toolCalls.length ?? 0);
   const bits = [
     "total",
     formatTokens(producerTokens + graderTokens),
@@ -234,25 +220,4 @@ function efficiencyBits(tools: number, input: number, cacheRead: number, output:
 
 function sum<T>(items: readonly T[], value: (item: T) => number): number {
   return items.reduce((total, item) => total + value(item), 0);
-}
-
-export function claimsFromGrader(
-  expected: string[] | undefined,
-  grader: GraderResult | undefined,
-): CaseResult["claims"] {
-  if (expected === undefined || expected.length === 0) {
-    return undefined;
-  }
-  const verdicts = grader?.output.claims ?? [];
-  const missing: string[] = [];
-  let stated = 0;
-  for (const claim of expected) {
-    const hit = verdicts.find((item) => item.claim === claim);
-    if (hit?.stated === true) {
-      stated += 1;
-    } else {
-      missing.push(claim);
-    }
-  }
-  return { stated, total: expected.length, missing };
 }
