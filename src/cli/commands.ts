@@ -8,8 +8,8 @@ import {
   resolveSource,
 } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
-import { coverReview, coverageErrors } from "../review/coverage.ts";
-import { buildDigest, digestHunkRefs, formatDigest } from "../review/digest.ts";
+import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
+import { buildDigest, digestDirOf, formatDigest, isMechanicalKind } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
 import { formatRefresh, refreshDocument } from "../review/refresh.ts";
@@ -60,10 +60,11 @@ export async function cmdValidate(
 ): Promise<{ document: ReviewDocument; warnings: string[]; assignedHunks: number }> {
   const document = await loadDocument(dataPath);
   const resolved = await resolveSource(cwd, document.source.baseRef, document.source.headRef);
-  const { coverage } = await coverReview(cwd, document);
+  const { files, coverage } = await coverReview(cwd, document);
   const pins = await staleCommentPins(cwd, document, resolved);
   const errors = [
     ...coverageErrors(coverage),
+    ...dirRefErrors(coverage, files),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
   ];
@@ -106,7 +107,7 @@ export async function cmdShow(
     request.hunk === undefined
       ? ({ kind: "file", path: target } as const)
       : parseHunkRefString(target);
-  if (parsed === undefined) {
+  if (parsed === undefined || parsed.kind === "dir") {
     throw new Error(`invalid hunk ref: ${target}`);
   }
   const file = await readPathDiff(
@@ -132,7 +133,7 @@ export async function cmdShow(
 }
 
 /**
- * Draft review.json from deterministic rules: identical-copy clusters,
+ * Draft review.json from deterministic rules: clusters of files with the same change,
  * mechanical files (rename, copy, move, generated), and one change group
  * for the rest. The skill accepts, splits, and writes the prose.
  */
@@ -146,7 +147,8 @@ export async function cmdPregroup(
   const headRef = head ?? "HEAD";
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
   const files = await readDiff(cwd, baseSha, headSha);
-  const { files: digests } = buildDigest(files);
+  const changeDigest = buildDigest(files);
+  const digests = changeDigest.files;
   const mirrorRoots = new Set(
     digests
       .filter((digest) => digest.mirrorOf !== undefined)
@@ -159,24 +161,18 @@ export async function cmdPregroup(
     if (isLockfilePath(digest.path)) {
       continue;
     }
-    const refs = digestHunkRefs(digest);
     if (digest.mirrorOf !== undefined || mirrorRoots.has(digest.path)) {
       const root = digest.mirrorOf ?? digest.path;
       const cluster = mirrors.get(root) ?? [];
-      cluster.push(...refs);
+      cluster.push(digest.path);
       mirrors.set(root, cluster);
       continue;
     }
-    if (
-      digest.kind === "rename" ||
-      digest.kind === "copy" ||
-      digest.kind === "move" ||
-      digest.kind === "generated"
-    ) {
-      mechanical.push(...refs);
+    if (isMechanicalKind(digest.kind)) {
+      mechanical.push(digestDirOf(changeDigest, digest.path)?.dir ?? digest.path);
       continue;
     }
-    change.push(...refs);
+    change.push(digest.path);
   }
   const index = await readHunkIndex(cwd, baseRef, headRef);
   const skeleton = skeletonDocument(index);
@@ -192,7 +188,7 @@ export async function cmdPregroup(
     groups.push({
       id: "change",
       title: "Change",
-      why: "Draft: the change minus copies and mechanical files. Split by concern.",
+      why: "Draft: the change minus repeats and mechanical files. Split by concern.",
       summary: "Fill this group.",
       suggestedOrder: 0,
       hunkRefs: change,
@@ -202,8 +198,8 @@ export async function cmdPregroup(
   for (const [root, paths] of mirrors) {
     groups.push({
       id: `mirrors-${order}`,
-      title: "Synced copies",
-      why: `Draft: identical copies of ${root}. Read one, skip the rest.`,
+      title: "Same change in several files",
+      why: `Draft: the same change as in ${root}. Read one, skip the rest.`,
       summary: "Fill this group.",
       suggestedOrder: order,
       hunkRefs: [...new Set(paths)],
@@ -217,7 +213,7 @@ export async function cmdPregroup(
       why: "Draft: renames, copies, moves, or generated output. Say what the reader can skip.",
       summary: "Fill this group.",
       suggestedOrder: order,
-      hunkRefs: mechanical,
+      hunkRefs: [...new Set(mechanical)],
     });
   }
   const document = { ...skeleton, source, groups };

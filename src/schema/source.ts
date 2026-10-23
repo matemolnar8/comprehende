@@ -1,4 +1,4 @@
-import { isLocatedHunkRef } from "./identity.ts";
+import { groupsHoldingPath } from "./identity.ts";
 import type { LinePinnedSource, ReviewDocument, Source } from "./types.ts";
 
 export const SOURCE_HREF_PREFIX = "source:";
@@ -96,19 +96,18 @@ export function linePinnedSources(sources: readonly Source[] | undefined): LineP
   return (sources ?? []).filter(isLinePinned);
 }
 
+/** `renames` maps an old path to its new one, so an old-side pin finds a directory ref. */
 export function groupIdForPinnedSource(
   document: ReviewDocument,
   source: Source,
+  renames: ReadonlyMap<string, string> = new Map(),
 ): string | undefined {
   if (!isLinePinned(source)) {
     return undefined;
   }
   const named = document.groups.filter((group) => (group.sources ?? []).includes(source.id));
-  const covering = document.groups.filter((group) =>
-    group.hunkRefs.some(
-      (ref) => ref.path === source.path || (isLocatedHunkRef(ref) && ref.oldPath === source.path),
-    ),
-  );
+  const pinned = source.side === "old" ? (renames.get(source.path) ?? source.path) : source.path;
+  const covering = groupsHoldingPath(document.groups, pinned);
   const both = covering.filter((group) => named.some((item) => item.id === group.id));
   return (both[0] ?? covering[0] ?? named[0])?.id;
 }

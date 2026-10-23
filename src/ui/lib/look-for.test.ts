@@ -221,6 +221,51 @@ describe("openTargetForSource", () => {
     };
   }
 
+  it("opens an old-side pin on the group whose directory ref holds the renamed file", () => {
+    const old: Source = { ...pin, path: "e2e/a.png", side: "old", line: 1 };
+    const moved: ReviewDocument = {
+      ...document,
+      sources: [old],
+      groups: [
+        ...document.groups,
+        {
+          id: "mechanical",
+          title: "Moves",
+          why: "w",
+          summary: "s",
+          suggestedOrder: 2,
+          hunkRefs: [{ dir: "e2e/linux/" }],
+        },
+      ],
+    };
+    const renames = new Map([["e2e/a.png", "e2e/linux/a.png"]]);
+    assert.deepEqual(openTargetForSource(old, [], moved, undefined, renames), {
+      selection: { kind: "group", id: "mechanical" },
+      commentId: "c1",
+    });
+  });
+
+  it("opens a pin on the story group that names a file under a directory ref", () => {
+    const moved: ReviewDocument = {
+      ...document,
+      groups: [
+        {
+          id: "mechanical",
+          title: "Moves",
+          why: "w",
+          summary: "s",
+          suggestedOrder: 2,
+          hunkRefs: [{ dir: "src/" }],
+        },
+        ...document.groups,
+      ],
+    };
+    assert.deepEqual(openTargetForSource(pin, [], moved), {
+      selection: { kind: "group", id: "cookie" },
+      commentId: "c1",
+    });
+  });
+
   it("opens a line pin on the group that covers the path", () => {
     assert.deepEqual(openTargetForSource(pin, claims, document), {
       selection: { kind: "group", id: "cookie" },

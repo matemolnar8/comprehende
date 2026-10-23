@@ -1,13 +1,13 @@
 # Example review.json
 
-Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from `comprehende review`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
+Optional filled sample. The field shape in `SKILL.md` is enough to write a document. Paths come from the `pregroup` draft, and so does `source`. When a file is split, `oldStart` and `newStart` come from that hunk's `@@` header.
 
 - `login` depends on `cookie`. Both use `part` "Session cookie". The helper's test sits in `cookie` with the helper it checks.
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `login` `lookFor` is a predicted trace. `docs` has no `lookFor`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and one claim about the whole change. Both cite `[#12](source:s1)`. Group `lookFor` stays inside its hunks.
-- Each group holds every hunk of its files, so each `hunkRefs` entry is a path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed).
+- Each group holds every hunk of its files, so each `hunkRefs` entry is a path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed). A directory of mechanical files the draft collapsed stays one `dir/` ref.
 
 ```json
 {
@@ -15,7 +15,9 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
   "source": {
     "baseRef": "origin/main",
     "headRef": "HEAD",
-    "range": "origin/main...HEAD"
+    "range": "origin/main...HEAD",
+    "baseSha": "3f1c0a9d2b8e4c6f7a1b2c3d4e5f60718293a4b5",
+    "headSha": "9b8a7c6d5e4f30211fedcba9876543210fedcba9"
   },
   "size": "small",
   "title": "HttpOnly session cookies",

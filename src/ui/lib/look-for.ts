@@ -122,9 +122,10 @@ export function openTargetForSource(
   claims: readonly LookForClaim[],
   document: ReviewDocument,
   currentGroupId?: string,
+  renames?: ReadonlyMap<string, string>,
 ): SourceOpenTarget {
   if (isLinePinned(source)) {
-    const groupId = groupIdForPinnedSource(document, source);
+    const groupId = groupIdForPinnedSource(document, source, renames);
     if (groupId !== undefined) {
       return { selection: { kind: "group", id: groupId }, commentId: source.id };
     }

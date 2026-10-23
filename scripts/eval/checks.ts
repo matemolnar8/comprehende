@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { git, gitOk } from "../../src/git/exec.ts";
-import { isLocatedHunkRef } from "../../src/schema/identity.ts";
+import { groupsHoldingPath } from "../../src/schema/identity.ts";
 import type { ReviewDocument, ReviewGroup, Source } from "../../src/schema/types.ts";
 import type { EvalExpect } from "./case.ts";
 import {
@@ -183,22 +183,10 @@ function distinctParts(groups: ReviewGroup[]): number {
   return new Set(groups.map((group) => group.part).filter((part) => part !== undefined)).size;
 }
 
-function groupPaths(group: ReviewGroup): Set<string> {
-  const paths = new Set<string>();
-  for (const hunk of group.hunkRefs) {
-    paths.add(hunk.path);
-    if (isLocatedHunkRef(hunk) && hunk.oldPath !== undefined) {
-      paths.add(hunk.oldPath);
-    }
-  }
-  return paths;
-}
-
 function someGroupCovers(groups: ReviewGroup[], paths: readonly string[]): boolean {
-  return groups.some((group) => {
-    const held = groupPaths(group);
-    return paths.every((path) => held.has(path));
-  });
+  return groups.some((group) =>
+    paths.every((path) => groupsHoldingPath(groups, path).includes(group)),
+  );
 }
 
 function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {

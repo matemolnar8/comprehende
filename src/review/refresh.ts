@@ -2,7 +2,9 @@ import { flattenHunks, toHunkRef } from "../git/diff.ts";
 import {
   formatStoredHunkRef,
   hunkKey,
+  isDirHunkRef,
   isLocatedHunkRef,
+  refCoversPath,
   type LocatedHunkRef,
 } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
@@ -176,25 +178,30 @@ export function refreshDocument(
     const refs: ReviewHunkRef[] = [];
     const seen = new Set<string>();
     const keep = (ref: ReviewHunkRef): void => {
-      const key = isLocatedHunkRef(ref) ? hunkKey(ref) : ref.path;
+      const key = isLocatedHunkRef(ref) ? hunkKey(ref) : formatStoredHunkRef(ref);
       if (!seen.has(key)) {
         seen.add(key);
         refs.push(ref);
       }
     };
     for (const ref of group.hunkRefs) {
-      if (isLockfilePath(ref.path)) {
+      if (!isDirHunkRef(ref) && isLockfilePath(ref.path)) {
         keep(ref);
         continue;
       }
       if (!isLocatedHunkRef(ref)) {
-        if (nextByPath.has(ref.path)) {
-          keep(ref);
-          change.changed.push(...(changedByPath.get(ref.path) ?? []));
-          change.reformatted.push(...(reformatByPath.get(ref.path) ?? []));
-          change.newHunks.push(...(addedByPath.get(ref.path) ?? []));
-        } else {
+        const paths = [...nextByPath.keys()].filter((path) => refCoversPath(ref, path));
+        if (paths.length === 0) {
           change.dropped.push(ref);
+          continue;
+        }
+        keep(ref);
+        for (const path of paths) {
+          change.changed.push(...(changedByPath.get(path) ?? []));
+          change.reformatted.push(...(reformatByPath.get(path) ?? []));
+          if (!isDirHunkRef(ref)) {
+            change.newHunks.push(...(addedByPath.get(path) ?? []));
+          }
         }
         continue;
       }
@@ -239,7 +246,19 @@ export function refreshDocument(
   });
 
   const refreshed: ReviewDocument = { ...document, source, groups: nextGroups };
-  const uncovered = joinCoverage(refreshed, nextLive).unassigned;
+  // A new hunk under a directory ref goes to update too, so it is read rather than absorbed.
+  const coverage = joinCoverage(refreshed, nextLive);
+  const addedKeys = new Set(delta.added.map(hunkKey));
+  const uncovered = [
+    ...new Map(
+      [
+        ...coverage.unassigned,
+        ...coverage.groups
+          .flatMap((group) => group.dirHunks)
+          .filter((hunk) => addedKeys.has(hunkKey(hunk))),
+      ].map((hunk) => [hunkKey(hunk), hunk]),
+    ).values(),
+  ];
   if (uncovered.length === 0) {
     return { document: refreshed, previous: document.source, delta, groups, unchanged };
   }
@@ -384,7 +403,11 @@ export function formatRefresh(
           : "new";
   const wasIn = (path: string): string[] =>
     result.groups
-      .filter((group) => group.dropped.some((ref) => ref.path === path))
+      .filter((group) =>
+        group.dropped.some((ref) =>
+          isDirHunkRef(ref) ? refCoversPath(ref, path) : ref.path === path,
+        ),
+      )
       .map((group) => group.id);
 
   if (changed.length > 0 || gone.length > 0) {

@@ -21,9 +21,10 @@ describe("next skill workflow", () => {
     assert.match(md, /Each step is one tool call where the step says so/);
     assert.match(
       md,
-      /One shell call: verify the refs, write the draft, print the digest and the draft, log, and stat/,
+      /One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources/,
     );
-    assert.match(md, /Write the whole `review\.json` in one write/);
+    assert.match(md, /Write the whole `review\.json` in one shell call/);
+    assert.match(md, /<<'EOF'\n   <the document>\n   EOF\n   npx comprehende@[\d.]+ validate/);
     assert.match(md, /`label` is that subject line, or a SHA from the same log/);
     assert.match(
       md,
@@ -32,8 +33,8 @@ describe("next skill workflow", () => {
     assert.match(md, /This shape is enough to write a valid document/);
     assert.match(md, /references\/example\.md` is an optional filled sample/);
     assert.match(md, /whose thread is open/);
-    assert.match(md, /A resolved thread \(`isResolved`\) has no pin/);
-    assert.match(md, /An outdated comment has no pin/);
+    assert.match(md, /an open thread has `isResolved` false/);
+    assert.match(md, /an outdated comment has `isOutdated` true/);
     assert.match(md, /original_line/);
     assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
@@ -49,7 +50,7 @@ describe("next skill workflow", () => {
     assert.match(batch, /npm view comprehende version/);
     assert.match(batch, /digest --base <base> --head <head>/);
     assert.match(batch, /git log --format=/);
-    assert.match(batch, /git diff --stat/);
+    assert.doesNotMatch(batch, /git diff --stat/);
     assert.match(md, /<executable> --version` in this same shell call/);
     assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);

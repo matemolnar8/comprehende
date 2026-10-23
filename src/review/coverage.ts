@@ -1,12 +1,29 @@
 import { flattenHunks, readDiff, toHunkRef } from "../git/diff.ts";
 import { pinRange, type PinnedRange } from "../git/repo.ts";
-import { formatStoredHunkRef, hunkKey, isLocatedHunkRef } from "../schema/identity.ts";
+import {
+  formatStoredHunkRef,
+  hunkKey,
+  isDirHunkRef,
+  isLocatedHunkRef,
+  refCoversPath,
+  type FileHunkRef,
+  type LocatedHunkRef,
+} from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
-import type { LiveHunk, ReviewDocument, ReviewGroup, ReviewHunkRef } from "../schema/types.ts";
+import type {
+  DiffFile,
+  LiveHunk,
+  ReviewDocument,
+  ReviewGroup,
+  ReviewHunkRef,
+} from "../schema/types.ts";
+import { buildDigest, isMechanicalKind } from "./digest.ts";
 
 export type GroupCoverage = {
   group: ReviewGroup;
   hunks: LiveHunk[];
+  /** The hunks this group holds only through a directory ref. */
+  dirHunks: LiveHunk[];
   stale: ReviewHunkRef[];
 };
 
@@ -43,19 +60,24 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
     }
   }
 
+  const dirOf = dirOwners(document, live, liveByKey, liveByPath);
   const assignedKeys = new Set<string>();
   const allStale: ReviewHunkRef[] = [];
   const groups: GroupCoverage[] = document.groups.map((group) => {
     const hunks: LiveHunk[] = [];
+    const dirHunks: LiveHunk[] = [];
     const seen = new Set<string>();
     const stale: ReviewHunkRef[] = [];
     for (const ref of group.hunkRefs) {
-      if (isLockfilePath(ref.path)) {
+      if (!isDirHunkRef(ref) && isLockfilePath(ref.path)) {
         continue;
       }
-      const matches = isLocatedHunkRef(ref)
-        ? matchLocated(ref, liveByKey)
-        : (liveByPath.get(ref.path) ?? []);
+      const matches = isDirHunkRef(ref)
+        ? live.filter((hunk) => dirOf.get(hunkKey(hunk)) === ref.dir)
+        : refMatches(ref, liveByKey, liveByPath);
+      if (isDirHunkRef(ref)) {
+        dirHunks.push(...matches);
+      }
       if (matches.length === 0) {
         stale.push(ref);
         allStale.push(ref);
@@ -71,7 +93,7 @@ export function joinCoverage(document: ReviewDocument, live: LiveHunk[]): Review
         hunks.push(match);
       }
     }
-    return { group, hunks, stale };
+    return { group, hunks, dirHunks, stale };
   });
 
   const unassigned = live.filter((hunk) => {
@@ -104,12 +126,86 @@ export function coverageErrors(coverage: ReviewCoverage): string[] {
   return errors;
 }
 
-function matchLocated(ref: ReviewHunkRef, liveByKey: Map<string, LiveHunk>): LiveHunk[] {
+function refMatches(
+  ref: FileHunkRef | LocatedHunkRef,
+  liveByKey: Map<string, LiveHunk>,
+  liveByPath: Map<string, LiveHunk[]>,
+): LiveHunk[] {
   if (!isLocatedHunkRef(ref)) {
-    return [];
+    return liveByPath.get(ref.path) ?? [];
   }
   const match = liveByKey.get(hunkKey(ref));
   return match === undefined ? [] : [match];
+}
+
+/**
+ * The most specific ref wins: a directory ref holds a hunk only when no path or hunk ref in any
+ * group names it, and then only the deepest directory ref above it does. Keys are hunk keys.
+ */
+function dirOwners(
+  document: ReviewDocument,
+  live: LiveHunk[],
+  liveByKey: Map<string, LiveHunk>,
+  liveByPath: Map<string, LiveHunk[]>,
+): Map<string, string> {
+  const named = new Set<string>();
+  const dirs: string[] = [];
+  for (const ref of document.groups.flatMap((group) => group.hunkRefs)) {
+    if (isDirHunkRef(ref)) {
+      dirs.push(ref.dir);
+      continue;
+    }
+    for (const hunk of refMatches(ref, liveByKey, liveByPath)) {
+      named.add(hunkKey(hunk));
+    }
+  }
+  const owners = new Map<string, string>();
+  if (dirs.length === 0) {
+    return owners;
+  }
+  for (const hunk of live) {
+    const key = hunkKey(hunk);
+    if (named.has(key) || isLockfilePath(hunk.path)) {
+      continue;
+    }
+    const deepest = dirs
+      .filter((dir) => refCoversPath({ dir }, hunk.path))
+      .reduce<string | undefined>(
+        (best, dir) => (best === undefined || dir.length > best.length ? dir : best),
+        undefined,
+      );
+    if (deepest !== undefined) {
+      owners.set(key, deepest);
+    }
+  }
+  return owners;
+}
+
+/**
+ * A directory ref stands for mechanical files only. Each other file under it needs a path ref
+ * in the group of its concern, which takes it out of the directory ref.
+ */
+export function dirRefErrors(coverage: ReviewCoverage, files: DiffFile[]): string[] {
+  const kinds = new Map(buildDigest(files).files.map((file) => [file.path, file.kind]));
+  const errors: string[] = [];
+  for (const { group, dirHunks } of coverage.groups) {
+    const paths = [
+      ...new Set(
+        dirHunks
+          .map((hunk) => hunk.path)
+          .filter((path) => {
+            const kind = kinds.get(path);
+            return kind !== undefined && !isMechanicalKind(kind);
+          }),
+      ),
+    ];
+    if (paths.length > 0) {
+      errors.push(
+        `dir ref: group ${group.id} holds files that are not mechanical through a directory ref. Name each path in the group of its concern:\n${paths.map((path) => `  ${path}`).join("\n")}`,
+      );
+    }
+  }
+  return errors;
 }
 
 function formatRefs(refs: ReviewHunkRef[]): string {

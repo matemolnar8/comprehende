@@ -24,14 +24,62 @@ export type LocatedHunkRef = {
   newStart: number;
 };
 
-export type ReviewHunkRef = FileHunkRef | LocatedHunkRef;
+/** Every live hunk under `dir`, written as a path ending in `/`. */
+export type DirHunkRef = {
+  dir: string;
+};
+
+export type ReviewHunkRef = FileHunkRef | LocatedHunkRef | DirHunkRef;
 
 export type ParsedHunkString =
   | { kind: "file"; path: string }
+  | { kind: "dir"; dir: string }
   | { kind: "hunk"; path: string; oldPath?: string; oldStart: number; newStart: number };
 
 export function isLocatedHunkRef(ref: ReviewHunkRef): ref is LocatedHunkRef {
   return "oldStart" in ref;
+}
+
+export function isDirHunkRef(ref: ReviewHunkRef): ref is DirHunkRef {
+  return "dir" in ref;
+}
+
+/** Whether `ref` covers hunks at `path`. A hunk ref covers its path and its old path. */
+export function refCoversPath(ref: ReviewHunkRef, path: string): boolean {
+  if (isDirHunkRef(ref)) {
+    return path.startsWith(ref.dir);
+  }
+  return ref.path === path || (isLocatedHunkRef(ref) && ref.oldPath === path);
+}
+
+/**
+ * The groups that hold `path`: a path or hunk ref in any group beats a directory ref, and the
+ * deepest directory ref beats a shallower one.
+ */
+export function groupsHoldingPath<Group extends { hunkRefs: readonly ReviewHunkRef[] }>(
+  groups: readonly Group[],
+  path: string,
+): Group[] {
+  const named = groups.filter((group) =>
+    group.hunkRefs.some((ref) => !isDirHunkRef(ref) && refCoversPath(ref, path)),
+  );
+  if (named.length > 0) {
+    return named;
+  }
+  const dirs = groups.flatMap((group) =>
+    group.hunkRefs.flatMap((ref) =>
+      isDirHunkRef(ref) && refCoversPath(ref, path) ? [ref.dir] : [],
+    ),
+  );
+  const deepest = dirs.reduce<string | undefined>(
+    (best, dir) => (best === undefined || dir.length > best.length ? dir : best),
+    undefined,
+  );
+  return deepest === undefined
+    ? []
+    : groups.filter((group) =>
+        group.hunkRefs.some((ref) => isDirHunkRef(ref) && ref.dir === deepest),
+      );
 }
 
 export function hunkKey(ref: Pick<HunkRef, "path" | "oldPath" | "oldStart" | "newStart">): string {
@@ -44,7 +92,6 @@ export function formatHunkRef(ref: HunkRef): string {
   return `${rename}${ref.path} @@ -${ref.oldStart},${ref.oldLines} +${ref.newStart},${ref.newLines} @@`;
 }
 
-/** Path string, or `path@oldStart+newStart`, or `old -> new@oldStart+newStart`. */
 /** A ref as review.json writes it, read back. Throws on a string the schema would reject. */
 export function parseStoredHunkRef(value: string): ReviewHunkRef {
   const parsed = parseHunkRefString(value);
@@ -53,6 +100,9 @@ export function parseStoredHunkRef(value: string): ReviewHunkRef {
   }
   if (parsed.kind === "file") {
     return { path: parsed.path };
+  }
+  if (parsed.kind === "dir") {
+    return { dir: parsed.dir };
   }
   if (parsed.oldPath === undefined) {
     return { path: parsed.path, oldStart: parsed.oldStart, newStart: parsed.newStart };
@@ -65,6 +115,7 @@ export function parseStoredHunkRef(value: string): ReviewHunkRef {
   };
 }
 
+/** Path string, `dir/`, `path@oldStart+newStart`, or `old -> new@oldStart+newStart`. */
 export function parseHunkRefString(value: string): ParsedHunkString | undefined {
   const text = value.trim();
   if (text === "") {
@@ -72,7 +123,10 @@ export function parseHunkRefString(value: string): ParsedHunkString | undefined 
   }
   const suffix = COMPACT_SUFFIX.exec(text);
   if (suffix === null) {
-    return { kind: "file", path: text };
+    if (!text.endsWith("/")) {
+      return { kind: "file", path: text };
+    }
+    return text === "/" ? undefined : { kind: "dir", dir: text };
   }
   const oldStart = Number(suffix[1]);
   const newStart = Number(suffix[2]);
@@ -96,6 +150,9 @@ export function parseHunkRefString(value: string): ParsedHunkString | undefined 
 }
 
 export function formatStoredHunkRef(ref: ReviewHunkRef): string {
+  if (isDirHunkRef(ref)) {
+    return ref.dir;
+  }
   if (!isLocatedHunkRef(ref)) {
     return ref.path;
   }
