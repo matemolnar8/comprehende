@@ -15,7 +15,7 @@ describe("skill schema sync", () => {
     assert.match(nextSkillMd, /npx skills update/);
     assert.match(nextSkillMd, /Do not run that command/);
     assert.match(nextSkillMd, /pregroup --base <base> --head <head> --data/);
-    assert.match(nextSkillMd, /`refresh` re-points a stale ref/);
+    assert.match(nextSkillMd, /`refresh` re-points it/);
     assert.doesNotMatch(nextSkillMd, /Re-run `index`/);
     assert.doesNotMatch(nextSkillMd, /comprehende@[^\s`]+ index /);
     const root = findPackageRoot();
