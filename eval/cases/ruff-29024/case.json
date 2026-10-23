@@ -9,7 +9,7 @@
     "why": "present",
     "parts": { "min": 0, "max": 1 },
     "groups": { "min": 1, "max": 2 },
-    "size": ["small", "medium"],
+    "size": ["trivial", "small"],
     "sourceKinds": ["pr"],
     "together": [
       [
@@ -17,10 +17,6 @@
         "crates/ty_python_semantic/resources/corpus/ty_4615_recursive_paramspec_legacy.py",
         "crates/ty_python_semantic/resources/corpus/ty_4615_recursive_paramspec_pep695.py"
       ]
-    ],
-    "claims": [
-      "the fix keeps Divergent cycle markers in ParamSpec calls instead of mapping them to unknown parameters. Unknown still falls back to unknown parameters.",
-      "the two new corpus files test recursive ParamSpec specialization with legacy and PEP 695 syntax for the generic specialization reproducer in ty issue 4615"
     ]
   }
 }

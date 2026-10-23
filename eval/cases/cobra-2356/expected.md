@@ -1,46 +1,45 @@
 # cobra-2356: Stop shell completion from changing os.Args
 
-PR #2356. Fixes ticket #2257. Five review comments and seven issue comments.
+PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A four-line Go bug fix in `completions.go` plus one regression test.
 
 ## Story
 
-- Title: the PR title.
-- Why: present, from ticket #2257. Completion inserts `"--"` into `os.Args`, so a `ValidArgsFunction` that reads `os.Args` sees wrong data. The PR body repeats this as fixes #2257.
-- Size: small. Two files, 59 added and 1 removed, one concern. Trivial is allowed since the burden reads that low.
-- Parts: 1. Groups: 1.
+- Title: the PR title, or a short name for "completion no longer changes `os.Args`".
+- Why: present, from ticket #2257. Completion inserts `"--"` into `os.Args`, so a `ValidArgsFunction` that reads `os.Args` sees wrong data.
+- Size: small. One subtle slice aliasing fix and one test. Trivial is also fine, since the code change is four lines.
+- Parts: one story. A review can name it as one part or omit parts.
+- Groups: 1.
 
 ## Groups
 
-1. Args copy plus regression test: `completions.go`, `completions_test.go`. The test checks only this fix, so it sits in the same group.
+1. Args copy and regression test: `completions.go`, `completions_test.go`. The test checks only this fix, so it reads with the fix.
 
-## Must state
+## Must
 
-- At head the fix copies `trimmedArgs` with `make` plus `copy` at the top of `getCompletions`. The PR body still describes a three index slice, but review discussion replaced it and the append of `"--"` is unchanged.
-- `append(finalArgs, "--")` can write `"--"` into the shared backing array when the sub slice has spare capacity. This corrupts `os.Args`. It shows most with `TraverseChildren`, since `Traverse` returns sub slices that share the array.
-- The new test `TestCompletionDoesNotMutateOsArgs` sets `os.Args` directly instead of `SetArgs`, so the code takes the real `os.Args[1:]` path. Without the fix `os.Args[2]` changes from `"x"` to `"--"`.
+- Before the fix, `trimmedArgs` is a sub-slice of the caller's args, so `append(finalArgs, "--")` in `getCompletions` can write `"--"` into the backing array of `os.Args` instead of a new array.
+- At head the fix copies `trimmedArgs` into a new slice with `make` plus `copy` at the top of `getCompletions`, while the PR body still describes a three-index slice (`finalArgs[:len:len]`) and the `append(finalArgs, "--")` line is unchanged.
+- The fix follows alexandear's review suggestion to copy `trimmedArgs` at the top, which replaced the three-index slice that ccoVeille and marckhouzam called cryptic.
+- `TestCompletionDoesNotMutateOsArgs` sets `os.Args` to `{"root", ShellCompNoDescRequestCmd, "x"}` and does not call `SetArgs`, so `ExecuteC` reads the real `os.Args[1:]`, and without the fix `os.Args[2]` changes from `"x"` to `"--"`.
 
-## Good to state
+## Good
 
-- The test uses program name `"root"`, not `"cobra.test"`, to bypass the test guard in `ExecuteC`. A review nit asked for this rename.
-- The maintainer asked for a test that checks `os.Args` itself. The author reworked an earlier `SetArgs` based test into the direct `os.Args` test.
-- Copying at the top guards all later appends, not just the `"--"` one. A reviewer proposed this as clearer than the three index slice.
+- The bug shows with `TraverseChildren` because `Traverse` returns `args[i+1:]`, a sub-slice of `os.Args`, while `Find` removes the `__complete` word through `argsMinusFirstX`, which builds a new slice.
+- The slot that `"--"` overwrites holds the word being completed (`x` in the ticket and the test), because `trimmedArgs` drops only that last argument and keeps its capacity.
+- The copy at the top also protects the flag value path, where `checkIfFlagCompletion` returns `args[:len(args)-1]`, another sub-slice with a spare slot.
+- The PR body test plan names `TestCompletionDoesNotMutateArgs`, but the test at head is `TestCompletionDoesNotMutateOsArgs`, reworked from an earlier `SetArgs` test after marckhouzam asked for a test that checks `os.Args` itself.
+- The guard in `ExecuteC` skips `os.Args` only when the program name is `cobra.test`, so the rename from `"prog"` to `"root"` is the consistency nit from marckhouzam and does not change what the test checks.
 
 ## Must not
 
-- Do not describe the fix as a three index slice. The PR body says that, but head uses `make` plus `copy`.
-- Do not split `completions.go` and `completions_test.go` into separate groups. The test checks only this fix.
-- Do not add document `lookFor` padding about manual QA or build steps. The stale slice wording is the one source mismatch, and Must state covers it.
+- Do not describe the fix at head as a three-index slice or as a change to the `append(finalArgs, "--")` line.
+- Do not split `completions.go` and `completions_test.go` into separate groups.
+- Do not say alexandear called the three-index slice cryptic, or that ccoVeille proposed copying `trimmedArgs` at the top of the function.
+- Do not cite ticket #2257 for the shared backing array cause; the ticket reports only the inserted `"--"`, and the PR body and review comments name the cause.
+- Do not say the copy changes the completions or the argument values that `ValidArgsFunction` receives; only `os.Args` stays untouched.
 
-## Baseline
+## Notes
 
-- First musecode run: 1 group, parts 0, size small, claims 1 of 3. No expects change.
-- Second musecode run: 1 group, parts 0, size trivial, claims 0 of 3. Size widened to trivial. The review stayed good, so the claims miss is grader strictness plus a thinner lookFor.
-- Third musecode run: 1 group, parts 0, size small, claims 1 of 3.
-
-## case.json
-
-- `why` present, from ticket #2257.
-- `parts` 0 to 2, `groups` 1 to 2, `size` trivial to medium. Slack around the best estimate of 1 group, small. 0 parts allows a review with no named parts.
-- `together`: `completions.go` with `completions_test.go`. No `apart` and no mechanical paths. Two files live in one group.
-- `sourceKinds`: ticket, pr, pr-comment. The issue, the PR body, and both comment threads all shape the review.
-- Added three claims: the stale slice wording, the aliasing mechanism, and the direct `os.Args` test.
+- The `TraverseChildren` trace is `Good` because it needs `Traverse`, `Find`, and `argsMinusFirstX` in `command.go`, which the diff does not touch. The PR body says only that the bug is "most visible" with `TraverseChildren`.
+- The test name mismatch is a true PR body divergence but minor, so it is `Good`. The three-index slice divergence is `Must` because it describes the fix itself.
+- Past runs missed the direct `os.Args` test in 22 of 23 runs and the aliasing mechanism in 21 of 23. Graders often flagged a `lookFor` that credited alexandear with "cryptic", and a `why` that cited the ticket for the backing array cause.
+- `parts` 0 to 1: one story, named or not. `groups` 1 to 2: one group is best; two is slack for a review that repeats a hunk in a second concern, such as the reviewer-driven rework. `size` trivial to medium: small is best, the slice aliasing reads harder than the line count.

@@ -1,57 +1,52 @@
-# starship-6388: Introduce the VCS meta module
+# starship-6388: feat(vcs): Introduce the VCS module
 
-PR #6388, closes issue #5932. Two review comments and 25 conversation comments.
+PR #6388 closes issue #5932. It adds a `vcs` module that tries the VCSes in `order` and renders the inner modules of the first one it finds. Four existing VCS modules move to a shared discovery helper. Two review comments and 25 conversation comments. The comments drop jj support and revert the default format change.
 
 ## Story
 
-- Title: the PR title.
-- Why: present, from issue #5932. Colocated repos show both git and jj output when the user wants one. The PR body repeats this and stops at the first VCS found.
-- Size: medium. 426 added and 34 removed across 11 files, one new module with tests.
-- Parts: 0 to 1. One story, so a review names no part or one. Groups: 3 in the merged shape, up to 5 when config splits from the dispatcher and docs split from the schema. Both shapes are good.
-- Diff: PR head `c28138...` is absent from the local cache, so the diff is base `8a6966...` against merge commit `0dd5a4f...` whose parent is exactly base.
+- Title: the PR title, or a plain line about one `vcs` module that shows only the first VCS found.
+- Why: present, from issue #5932. A jj repo colocated with git shows both VCSes in the prompt when the user wants one. The PR body repeats this and adds that new VCSes tend to live beside git.
+- Size: medium. One new module with config, tests, docs, and a schema entry, plus a small helper change in four existing modules.
+- Parts: 0 or 1. One story.
+- Groups: 2 to 5. Three is the usual shape.
 
 ## Groups
 
-1. New vcs dispatcher plus config: `src/modules/vcs.rs`, `src/configs/vcs.rs`, and registration in `src/configs/mod.rs`, `src/module.rs`, `src/modules/mod.rs`. The core tries `order` in turn and renders the matched `<vcs>_modules` string for the first VCS found.
-2. Existing VCS modules on shared discovery: `src/modules/fossil_branch.rs`, `src/modules/fossil_metrics.rs`, `src/modules/hg_branch.rs`, `src/modules/pijul_channel.rs`. Each module now calls `discover_repo_root` instead of its own scan. Behavior is unchanged.
-3. Schema plus docs mirrors: `.github/config-schema.json`, `docs/config/README.md`. Generated schema and matching docs. Skim after group 1.
+1. Dispatcher and config: `src/modules/vcs.rs`, `src/configs/vcs.rs`, and the registration lines in `src/configs/mod.rs`, `src/module.rs`, and `src/modules/mod.rs`. `module` reads `VcsConfig`, picks the first `order` entry that `discover_repo_root` finds, and renders that VCS's `<vcs>_modules` string. The tests sit in `vcs.rs`.
+2. Existing modules on the shared helper: `src/modules/fossil_branch.rs`, `src/modules/fossil_metrics.rs`, `src/modules/hg_branch.rs`, `src/modules/pijul_channel.rs`. Each module now calls `vcs::discover_repo_root` instead of its own scan. This group may merge into group 1, and it may depend on group 1.
+3. Docs: `docs/config/README.md`. The new `VCS` section with the note on why `$vcs` is not in the default prompt. It may sit with group 1.
+4. Schema: `.github/config-schema.json`. It is meant to be generated from `VcsConfig`, but it does not match the code at head, so it needs its own read. It may sit with the docs or with the config, but not with the dispatcher as if it were skippable output.
 
-Config may stand as its own group, and docs and schema may split. The 5 group split is also good. The four migrated modules always stay together.
+## Must
 
-## Must state
+- The standalone VCS modules stay and `vcs` is not in `PROMPT_ORDER`, so the default `$all` prompt does not change and the change is not breaking, although issue #5932 proposed that the top level VCS modules disappear and the PR body and the docs note say they stay.
+- The `vcs` module renders the matched inner modules inline as its own segments, so a user cannot put some of them in `right_format` and keep the first-VCS choice, which is the trade-off davidkna raised and the docs note says may change for right aligned prompts.
+- `Vcs::try_from` accepts only `fossil`, `git`, `hg` or `mercurial`, and `pijul`, and `module` skips every other `order` entry with no warning, so the jj case that motivates issue #5932 gets no jj output until the follow-up work the author promises in the comments.
+- The `.github/config-schema.json` entry is not regenerated from head: it points to `#/definitions/VcsConfig` and `#/definitions/Vcs` while the file keeps its types under `$defs`, and it limits `order` to a `Vcs` enum without `mercurial`, while `VcsConfig.order` is a `Vec<&str>`.
+- `pijul_channel` changes behavior: it used to check only the current directory with `try_begin_scan`, and now `discover_repo_root` scans ancestor directories for `.pijul`, so the channel also shows in subdirectories of a Pijul repo.
 
-- At head the standalone VCS modules stay and `$vcs` is enabled but absent from the default prompt order, so the change is not breaking. The issue first proposed removing top level modules, and the PR body says they stay for the many VCS use case.
-- The issue motivates with jj colocated with git, but at head the dispatcher accepts only fossil, git, hg, and pijul. Unknown order entries are skipped, so `jj` in order gives no jj output until follow up work lands.
-- At head the module renders the matched inner modules inline, so segments cannot split across `format` and `right_format`. The docs note warns the format may change for right aligned prompts.
+## Good
 
-## Good to state
-
-- `mercurial` works as an alias for `hg` in order. A test covers it.
-- Fossil discovery keeps `_FOSSIL_` on Windows and `.fslckout` elsewhere. The helper now shares that logic.
-- Git discovery still uses `context.get_repo` while the other three use ancestor scans. Default order puts git first.
-- `$vcs` inside a `<vcs>_modules` string fails closed with a warning and renders nothing. A test covers it.
-- Empty order or an empty matched modules string disables the module. Tests cover both.
-- KingMob asked for git in the options and git first in order. At head the table has a `git_modules` row and order starts with git.
-- Joshka asked for docs links between the new section and the old modules. At head the section has no such links.
+- `fossil_branch`, `fossil_metrics`, and `hg_branch` keep the same ancestor scan as before (`_FOSSIL_` on Windows, `.fslckout` elsewhere, `.hg` folder), while Git discovery goes through `context.get_repo()`.
+- The inner modules keep their own `disabled` settings, and `hg_branch`, `hg_state`, `fossil_branch`, `fossil_metrics`, and `pijul_channel` default to `disabled = true`, so with the default config `$vcs` renders nothing in a Mercurial, Fossil, or Pijul repo.
+- `$all` expands to the `PROMPT_ORDER` modules that the root format does not name, and modules named only inside `git_modules` do not count, so a format with both `$vcs` and `$all` renders the Git modules twice in a Git repo.
+- `discover_repo_root` runs once in `vcs` and again inside each inner module, so the issue's goal of one shared lookup per VCS is not done, which the author defers to follow-up work.
+- joshka's open review comment asks for links between the new docs section and the existing VCS module sections, and the docs at head add no such links.
+- The tests cover an empty `order`, an empty `<vcs>_modules` string, `$vcs` inside `fossil_modules` (a warning and no output), the `mercurial` alias, and an unknown `order` name.
 
 ## Must not
 
-- Do not say top level modules were removed. They stay.
-- Do not say `$vcs` is in the default prompt. `PROMPT_ORDER` has no `vcs` entry at head.
-- Do not claim jj is supported. Unknown names are skipped.
-- Do not split the four migrated modules into one group per file. They share one concern.
-- Do not chain groups with `dependsOn` across parts. There is one story.
+- Do not say the top level VCS modules are removed or that `$vcs` is in the default prompt.
+- Do not say jj is supported or that an unknown `order` entry raises an error.
+- Do not call `.github/config-schema.json` a safe-to-skip regeneration that matches `VcsConfig`.
+- Do not say the four migrated modules keep exactly the same behavior, because `pijul_channel` now scans ancestor directories.
+- Do not split the four migrated modules into one group per file.
 
-## Baseline
+## Notes
 
-- First musecode run: 5 groups in the split shape, parts 0, size medium, claims 2 of 3. The run split config from the dispatcher and docs from the schema, which widened groups to 5 and dropped the module plus config together check.
-- Second musecode run: 4 groups, parts 0, size medium, claims 1 of 3. Passes the widened expects.
-- Third musecode run: 4 groups, parts 0, size medium, claims 0 of 3. The review omits two Must state points, so the misses are real.
-
-## case.json
-
-- `why` present, from issue #5932 and the PR body.
-- `parts` 0 to 1, `groups` 2 to 5, `size` medium or large. Slack around the merged 3 group estimate, with room for the observed 5 group split. 0 parts allows no named parts.
-- `together`: the four migrated modules as one set. `apart`: the new module and the generated schema. No `mechanicalPaths`: the docs are substantive prose, not mechanical output, so the check cannot tell a docs plus schema trailing group from two honest single file groups.
-- `sourceKinds`: ticket, pr, pr-comment. The issue, the PR body, and both comment threads shape the review.
-- Added three claims: standalone modules stay with `$vcs` out of the default prompt, jj names are skipped, and segments cannot split across `format` and `right_format`.
+- `$vcs` stays enabled by default (`disabled: false`), which is why the docs note says adding it to the default list would be breaking. Past runs often said only that `$vcs` is absent from the default format and left out that the change is therefore not breaking.
+- Past runs almost never stated the inline-rendering trade-off with `right_format`. It comes from davidkna's comment and the docs note, so it is `Must`.
+- The schema mismatch shows in the diff on its own: the new block uses `#/definitions/` next to `#/$defs/VcshConfig`, and the `Vcs` enum does not match `Vec<&'a str>`. The `Vcs` enum in `src/modules/vcs.rs` has no `JsonSchema` derive. The PR commit already had the stale block before the merge from master.
+- The `disabled = true` defaults, the `$all` expansion, and the double lookup need files outside the diff (`src/configs/*.rs`, `src/print.rs`), so they are `Good`.
+- The joshka comment is a docs request that the diff does not do. It is `Good` because the Must list already holds the claims that change how a reader judges the code.
+- `case.json`: `groups` 2 to 5 allows the merged shape (dispatcher plus migrated modules, docs plus schema) and the split shape (config, modules, docs, schema apart). `size` medium or large, because a reader can treat the `discover_repo_root` helper as a contract the four modules share. `parts` 0 to 1 for one story. No `mechanicalPaths`: the only generated file is the schema, and it needs a real read. `apart` keeps the schema away from the dispatcher.

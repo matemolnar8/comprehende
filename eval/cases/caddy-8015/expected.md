@@ -1,52 +1,48 @@
-# caddy-8015: New tls_automate_names global option
+# caddy-8015: httpcaddyfile: new `tls_automate_names` global option
 
-PR #8015 closes issue #7122. It adds one global option plus five adapt fixtures. Review comments shaped two of the fixtures. The PR body discloses AI assistance.
+PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt fixtures. One review comment and one conversation comment each asked for a change, and each added one fixture. The final name came from a naming thread in the conversation comments.
 
 ## Story
 
-- Title: the PR title.
-- Why: present, from #7122. The issue asks to manage a cert without serving the name. It names two uses: a wildcard with no site block, and certs where Caddy serves no HTTPS at all.
-- Size: small. The Go change is about 100 lines. The five fixtures are long JSON, but each pins one behavior, so the burden stays small.
-- Parts: 0 or 1. Groups: 1 or 2. The fixtures may sit with the implementation in one group or in a trailing group.
+- Title: the PR title, or a plain line about a global option that manages certificates for names without serving them.
+- Why: present, from issue #7122. The issue asks for a Caddyfile way to automate a certificate without an HTTPS site, for a wildcard with no site block and for names that only a layer 4 app serves.
+- Size: small. The Go change is about 100 lines in two files. The five fixtures are long JSON, but each pins one case.
+- Parts: 0 or 1. One story.
+- Groups: 1 or 2. The fixtures sit with the code, or in one trailing group.
 
 ## Groups
 
-1. Option and tls app: `caddyconfig/httpcaddyfile/options.go` and `caddyconfig/httpcaddyfile/tlsapp.go`. The parser fills the name list. The tls app writes the loader and the policy.
-2. Adapt fixtures: the five `.caddyfiletest` files in `caddytest/integration/caddyfile_adapt/`. These are generated outputs, checked by hand. The summary says the reader can skip the JSON. Each fixture pins one case: the issue scenario, no site blocks, internal names with a repeated option, the kept policy, and auto_https off.
+1. Option and tls app: `caddyconfig/httpcaddyfile/options.go` and `caddyconfig/httpcaddyfile/tlsapp.go`. `parseOptAutomateNames` fills the name list, and `buildTLSApp` reads it to write the `automate` loader and the automation policies.
+2. Adapt fixtures: the five `caddytest/integration/caddyfile_adapt/tls_automate_names*.caddyfiletest` files. They are generated adapt outputs that pin one case each: the issue scenario, no site blocks, internal names with a repeated option, a name with its own site policy, and `auto_https off`. They can also sit in group 1.
 
-## Must state
+## Must
 
-- all five adapt fixtures match the implementation, including the outputs with only the automate loader and no policy. The main fixture folds the wildcard into the same policy a site block would make.
-- tls_automate_names still manages a listed name when auto_https is off, as the auto_https off fixture pins. The block is not gated on the general switch, since a named subject is the stronger signal.
-- a listed name that already has a site block policy keeps that policy, and the existing policy fixture pins the boundary. A second policy naming the same subject would fail the adapt with an overlap error.
+- Each name in `tls_automate_names` goes into the tls app `automate` loader, so Caddy manages its certificate with no site block and no HTTP route for that name.
+- Public names that have no policy get a new automation policy only when a global automation or ACME option is set (`newBaseAutomationPolicy` with `hasGlobalACMEDefaults(options)`, which counts `email`), because the catch-all policy is dropped and without their own policy the names miss the global issuer.
+- A listed name that already is a subject of an automation policy keeps that policy and stays in the `automate` loader, because a second policy for the same subject fails the adapt with "hostname appears in more than one automation policy", as the review comment asked.
+- The `tls_automate_names` block is not gated on `auto_https off` or `disable_certs`, unlike the hostless-key block above it, so a listed name is still managed when `auto_https` is off.
 
-## Good to state
+## Good
 
-- Repeating the option appends to the list instead of replacing it. So a long list can split over lines.
-- Names that cannot get a public cert get the internal issuer, the same as a site block.
-- The helper is a pure move of the old inline check. It now serves both the fill in pass and the new policy choice.
+- All five fixtures match the code at head, and two of them (`tls_automate_names_without_site_block` and `tls_automate_names_auto_https_off`) hold only the `automate` loader and no automation policy, because they set no global option.
+- In `tls_automate_names.caddyfiletest`, the new policy for `*.example.com` gets the same issuers as the `foo.example.com` site policy, so `consolidateAutomationPolicies` folds both into one policy.
+- Repeating the option appends to the list, because `parseOptAutomateNames` appends to the `existing` value, and `tls_automate_names_internal.caddyfiletest` pins it with `second.example.com`.
+- Names that cannot get a public certificate, such as `localhost` and `192.168.1.5`, go into `internalAP` and get the internal issuer, the same as a site block gives them.
+- `hasGlobalACMEDefaults` is a pure extraction of the old inline check in `buildTLSApp`, and unlike the check inside `newBaseAutomationPolicy` it counts `email`.
+- The PR body lists three adapt tests, but head has five, because the `existing_policy` and `auto_https_off` fixtures came after review.
 
 ## Must not
 
-- Do not split options.go from tlsapp.go. The parser only fills the list. The tls app reads it.
-- Do not make one group per fixture. The five outputs sit in one trailing group.
-- Do not repeat the AI disclosure as a finding. The PR discloses it. The outputs match the code.
-- Do not ask for website docs in this diff. The docs live in website#570, outside this repo.
+- Do not put `options.go` and `tlsapp.go` in different groups, because the parser only fills the list that the tls app reads.
+- Do not make one group per fixture or spread the fixtures across groups.
+- Do not state that the PR adds three adapt tests, because head has five.
+- Do not ask for documentation in this diff, because the docs live in caddyserver/website#570, outside this repo.
+- Do not state that `auto_https off` stops Caddy from managing the listed names.
 
-## Baseline
+## Notes
 
-- First musecode run: 1 group holding everything, parts 0, size small, claims 2 of 3. The single group shape is allowed, so size widened to small.
-- Second musecode run: same shape, still 2 of 3 claims. The missed meta match claim stays.
-- Third musecode run: 2 groups in the estimated shape, parts 0, size small, claims 2 of 3.
+The fixture check is `Good`: it needs each JSON output traced against `buildTLSApp`, including the issuer fill-in and the consolidation further down the function. Past runs missed it in 22 of 23 runs. The `auto_https off` claim is `Must`: the fixture shows `"automatic_https": {"disable": true}` next to the `automate` loader, and the conversation comment says the override is deliberate. Past runs often left it out of `lookFor`.
 
-## case.json
+The PR body says a name with a site block "stays listed here". That is true at head: the name stays in the loader, and only the extra policy is skipped.
 
-- `why` present. Issue #7122 names the one story.
-- `parts` 0 to 2 around the one story estimate. 0 allows a review with no named parts.
-- `groups` 1 to 3 around the 2 group estimate. 1 allows the fixtures folded into the implementation.
-- `size` small to medium around the small estimate.
-- `sourceKinds` ticket, pr, and pr-comment. The issue, the PR body, and the review thread all shape the review.
-- `mechanicalPaths`: the five fixtures. One trailing group holds them all.
-- `together`: options.go with tlsapp.go. The parser fills the list the tls app reads.
-- `claims`: the three Must state sentences, word for word.
-- No `apart`. With one story, no pair of paths must stay apart.
+`parts` allows 0 or 1, since one story may or may not get a named part. `groups` allows 1 to 3 around the 2 group estimate. `size` allows small or medium, since the fixture JSON can read as more work than it is. `mechanicalPaths` holds the five fixtures, so one group holds all of them. `together` holds the two Go files. No `apart`: with one story, no pair of paths must stay apart.

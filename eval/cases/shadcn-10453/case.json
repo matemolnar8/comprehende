@@ -13,12 +13,6 @@
     "sourceKinds": ["pr", "pr-comment"],
     "together": [
       ["packages/shadcn/src/registry/proxy.ts", "packages/shadcn/src/registry/proxy.test.ts"]
-    ],
-    "apart": [["packages/shadcn/src/registry/proxy.ts", "pnpm-lock.yaml"]],
-    "claims": [
-      "ALL_PROXY triggers the SOCKS branch only for socks schemes and a non socks value falls through to HTTP_PROXY or HTTPS_PROXY",
-      "SOCKS wins when ALL_PROXY socks and HTTP proxy vars are both set",
-      "fetchWithProxy, fetchOnce and getFailureReason match main apart from the dispatcher swap and one comment, so the redirect hardening is untouched"
     ]
   }
 }

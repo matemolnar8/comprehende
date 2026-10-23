@@ -1,52 +1,46 @@
 # shadcn-10453: Add SOCKS proxy support
 
-PR #10453 adds SOCKS4 and SOCKS5 support through ALL_PROXY. There is no linked issue file. Sources are the PR body, 10 review comments and 11 issue comments. The body says earlier proxy work shipped in other PRs and PAC moved to a follow up.
+PR #10453. No linked ticket file; the body says the work is part of the gap tracked in #5952. Ten review comments and eleven issue comments. The PR was rescoped twice: the undici swap and HTTP proxy handling shipped in #10905, and PAC support was removed to a follow-up at the maintainer's request.
 
 ## Story
 
 - Title: the PR title.
-- Why: present, from the PR and its comments. Users need SOCKS proxy coverage in the CLI registry stack. The PR and supporting comments name this gap.
-- Size: small or medium. The diff adds 485 lines and removes 32 across 6 files. Most added lines are unit and integration tests, so the burden reads below the line count.
-- Parts: one story. Groups: 2.
+- Why: present, from the PR body. The registry HTTP stack has no SOCKS support, the most requested gap in proxy coverage.
+- Size: small or medium. The code change is one factory of about 80 lines in `proxy.ts`. The 380 added test lines include a hand-rolled SOCKS5 server, which reads slower than the code.
+- Parts: one story. Groups: 1 or 2.
 
 ## Groups
 
-1. SOCKS feature: `packages/shadcn/src/registry/proxy.ts`, `packages/shadcn/src/registry/proxy.test.ts`, `packages/shadcn/src/registry/proxy.integration.test.ts`, `.changeset/socks-proxy-support.md`, the `socks` line in `packages/shadcn/package.json`. The tests check the new factory, so they sit with the code.
-2. Lockfile (mechanical, last): `pnpm-lock.yaml`. It moves `socks` from 2.8.6 to 2.8.9 and updates `ip-address`. It drops two unused transitives. The reader can skip it.
+1. SOCKS dispatcher and its tests: `packages/shadcn/src/registry/proxy.ts`, `packages/shadcn/src/registry/proxy.test.ts`, `packages/shadcn/src/registry/proxy.integration.test.ts`, the `socks` line in `packages/shadcn/package.json`, and `.changeset/socks-proxy-support.md`. The unit tests call the factory directly and the integration tests route real requests through it. A review may hold the integration harness in a second group, since it adds local CONNECT and SOCKS5 servers that are a read of their own.
+2. `pnpm-lock.yaml` has no hunk refs and sits in no group. The CLI leaves lockfiles out of the draft.
 
-## Must state
+## Must
 
-- ALL_PROXY triggers the SOCKS branch only for socks schemes and a non socks value falls through to HTTP_PROXY or HTTPS_PROXY.
-- SOCKS wins when ALL_PROXY socks and HTTP proxy vars are both set.
-- fetchWithProxy, fetchOnce and getFailureReason match main apart from the dispatcher swap and one comment, so the redirect hardening is untouched.
+- `createProxyDispatcher` returns a SOCKS `Agent` only when `ALL_PROXY` or `all_proxy` holds a URL with scheme `socks`, `socks4`, `socks4a`, `socks5`, or `socks5h`. Any other `ALL_PROXY` value is ignored and the `HTTP_PROXY` and `HTTPS_PROXY` variables decide.
+- SOCKS wins when `ALL_PROXY` holds a socks URL and an HTTP proxy variable is also set, because the factory checks `ALL_PROXY` first.
+- `fetchWithProxy`, `fetchOnce`, and `getFailureReason` are the same as at base apart from the module-level dispatcher now coming from `createProxyDispatcher()` and one comment in `fetchOnce`, so the cross-origin redirect handling from #11196 is untouched.
+- The SOCKS branch has no `NO_PROXY` bypass. Only `EnvHttpProxyAgent` honors `no_proxy`, and the factory returns the SOCKS `Agent` before that branch, so every request goes through the SOCKS proxy when `ALL_PROXY` is a socks URL.
 
-## Good to state
+## Good
 
-- The parser accepts socks, socks4, socks4a, socks5 and socks5h. It defaults the port to 1080. It maps user info to SOCKS auth.
-- fetchOnce keeps the global fetch binding so MSW can patch it. A code comment says this.
-- The diff keeps the stated scope. It does not repeat the shipped HTTP handling or redirect work. It adds no PAC code.
-- The SOCKS branch has no NO_PROXY bypass. EnvHttpProxyAgent honors no_proxy, but the SOCKS return happens first. Verified at head.
-- The HTTP branch reads the injected env to decide, but constructs EnvHttpProxyAgent with no arguments. Routing follows process.env while unit tests assert only the agent class. Verified at head.
+- `parseSocksUrl` defaults the port to 1080 and maps URL user info to `userId` and `password` after `decodeURIComponent`.
+- The HTTP branch tests the injected `env` to decide, but constructs `EnvHttpProxyAgent` with no arguments, so the agent itself reads `process.env` at request time.
+- `proxyDispatcher` is still built once at module load, so `fetchWithProxy` does not see proxy variables set after the module is imported.
+- The lockfile diff is only the `socks` promotion: `socks` 2.8.6 to 2.8.9, `ip-address` 9.0.5 to 10.4.0, and the dropped `jsbn` and `sprintf-js` 1.1.3 transitives.
+- The integration test proxy answers non-CONNECT requests with 502 and a contract test pins that, which resolves pomeh's review comment about the unused `proxy-direct` body.
+- The `fetchOnce` comment says the global `fetch` binding must stay because MSW patches `globalThis.fetch`.
 
 ## Must not
 
-- Do not put either test file in its own group. Both test the one factory.
-- Do not link the lockfile group to the feature with dependsOn. It is generated output.
-- Do not describe PAC support as part of this change. PAC was removed to a follow up.
-- Do not say HTTP proxy handling changed. It still returns the same EnvHttpProxyAgent.
+- Say PAC support, `PAC_URL`, or `pac-resolver` is part of this change.
+- Say `ALL_PROXY=http://...` configures an HTTP proxy.
+- Say the HTTP proxy handling, the redirect logic, or `getFailureReason` changed.
+- Split `proxy.ts` from `proxy.test.ts`, or make one group per file.
+- Say `NO_PROXY` applies to the SOCKS path.
 
-## Baseline
+## Notes
 
-- First musecode run: 3 groups, parts 0, size medium, claims 1 of 3. No expects change.
-- Second musecode run: 2 groups, parts 0, size small, claims 1 of 3. Size widened to small. Large dropped with no run behind it.
-- Third musecode run: 2 groups, parts 0, size medium, claims 0 of 3.
-
-## case.json
-
-- `why` is present and `sourceKinds` lists pr and pr-comment. The PR names the SOCKS gap and reviewers discuss it.
-- `parts` 0 to 1. This is one story, so groups carry no part or one part.
-- `groups` 1 to 3. Two is best, with slack for a merged lockfile or split tests.
-- `size` is small or medium. Both runs landed inside, one each side.
-- `together` holds proxy.ts with proxy.test.ts. The unit test checks the factory directly.
-- `apart` holds proxy.ts with pnpm-lock.yaml. The lockfile is a trailing mechanical group.
-- Three claims cover SOCKS selection, priority and the untouched redirect path.
+- The `NO_PROXY` gap is `Must` because the diff shows the early return and the PR matrix lists `NO_PROXY` bypass as unchanged, which is true only for the HTTP branch.
+- The `EnvHttpProxyAgent` with no arguments and the module-load timing are `Good` because they need undici knowledge or the unchanged lines around the hunk.
+- `groups` 1 to 3: one group is best, two for a separate integration harness, three is slack. `parts` 0 to 1. `size` small or medium.
+- Past runs stated the three old claims in 1 of 3 runs or fewer. Graders flagged summaries that listed paths and a `lookFor` that restated the test plan.
