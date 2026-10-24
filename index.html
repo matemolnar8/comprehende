@@ -114,12 +114,11 @@
     border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 0.3em; background: var(--muted); color: var(--foreground); vertical-align: middle;
   }
 
-  .groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1em; margin-top: 1em; }
-  .group { border-left: 4px solid var(--strand-0); }
-  .group:nth-child(2) { border-left-color: var(--strand-1); }
-  .group:nth-child(3) { border-left-color: var(--strand-2); }
-  .group .meta { font-family: var(--font-mono); font-size: 0.65em; color: var(--muted-foreground); margin-bottom: 0.4em; }
-  .group p { font-size: 0.85em; margin: 0; }
+  .illus { width: 100%; max-height: 52vh; margin-top: 0.6em; overflow: visible; }
+  .illus .link { fill: none; stroke-width: 1.6; opacity: 0.55; stroke-dasharray: 600; stroke-dashoffset: 600; }
+  .slide.active .illus .link { animation: draw 900ms var(--motion-ease) forwards; animation-delay: calc(var(--k) * 40ms + 150ms); }
+  .illus .dep { fill: none; stroke-width: 2; stroke-dasharray: 4 4; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
 
   .arrow { display: flex; align-items: center; gap: 1.2em; font-family: var(--font-display); font-size: 1.6em; font-weight: 700; margin: 0.6em 0 1.2em; }
   .arrow .from { color: var(--del); text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--del) 60%, transparent); }
@@ -194,12 +193,8 @@
 
   <section class="slide">
     <h2>A review assistant for any git diff</h2>
-    <p class="lead">A skill and a small CLI. Your coding agent groups the diff by review concern and writes a why and a what for each group. A fixed local web UI shows the groups next to the real diff from git.</p>
-    <div class="groups">
-      <div class="card group"><div class="meta">group · 3 hunks</div><p><strong>Token refresh.</strong> Why: issue #42 asks for silent re-login. What: a new helper and two call sites.</p></div>
-      <div class="card group"><div class="meta">group · 1 hunk</div><p><strong>Retry on 401.</strong> Why: enables the group above. Look for: the retry has no cap.</p></div>
-      <div class="card group"><div class="meta">mechanical · 14 files</div><p><strong>Renamed test fixtures.</strong> Same change in every file. Safe to skim.</p></div>
-    </div>
+    <p class="lead">Your coding agent reads the diff and groups the hunks by review concern. Groups that belong to one story sit together. A fixed local web UI shows them next to the real diff from git.</p>
+    <svg class="illus" id="illus" viewBox="0 0 960 450" aria-label="Hunks from a diff, grouped into review concerns and stories"></svg>
   </section>
 
   <section class="slide">
@@ -300,6 +295,77 @@ npx skills add matemolnar8/comprehende
   addEventListener("hashchange", () => show((parseInt(location.hash.slice(1), 10) || 1) - 1));
   document.getElementById("theme").addEventListener("click", () => document.documentElement.classList.toggle("light"));
   show(i);
+
+  (() => {
+    const svg = document.getElementById("illus");
+    const ns = "http://www.w3.org/2000/svg";
+    const el = (tag, attrs, parent = svg) => {
+      const node = document.createElementNS(ns, tag);
+      for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
+      parent.appendChild(node);
+      return node;
+    };
+    const hunk = (x, y, stroke, parent) => {
+      el("rect", { x, y, width: 46, height: 16, rx: 3, fill: "var(--card)", stroke, "stroke-width": 1.5 }, parent);
+      el("line", { x1: x + 6, y1: y + 5, x2: x + 26, y2: y + 5, stroke: "var(--add)", "stroke-width": 2, "stroke-linecap": "round" }, parent);
+      el("line", { x1: x + 6, y1: y + 9, x2: x + 36, y2: y + 9, stroke: "var(--del)", "stroke-width": 2, "stroke-linecap": "round" }, parent);
+      el("line", { x1: x + 6, y1: y + 13, x2: x + 20, y2: y + 13, stroke: "var(--muted-foreground)", "stroke-width": 2, "stroke-linecap": "round" }, parent);
+    };
+    // The diff: files in storage order, each with its hunks.
+    const files = [
+      ["a", ["g0", "g1"]], ["b", ["g2"]], ["c", ["g0", "g2"]], ["d", ["g0"]],
+      ["e", ["g2"]], ["f", ["g1"]], ["g", ["m"]], ["h", ["m"]], ["i", ["m"]], ["j", ["m"]],
+    ];
+    const color = { g0: "var(--strand-0)", g1: "var(--strand-1)", g2: "var(--strand-2)", m: "var(--muted-foreground)" };
+    const left = el("g", {});
+    const src = {};
+    let y = 14;
+    for (const [name, hunks] of files) {
+      el("rect", { x: 24, y, width: 110, height: 7, rx: 2, fill: "var(--muted)" }, left);
+      y += 12;
+      for (const g of hunks) {
+        hunk(40, y, "var(--border)", left);
+        (src[g] ??= []).push([86, y + 8]);
+        y += 21;
+      }
+      y += 6;
+    }
+    // Groups, placed inside their stories.
+    const groups = [
+      { id: "g0", x: 470, y: 46, n: 3 },
+      { id: "g1", x: 470, y: 180, n: 2 },
+      { id: "g2", x: 740, y: 46, n: 3 },
+      { id: "m", x: 740, y: 250, n: 4, dashed: true },
+    ];
+    const stories = [
+      { x: 440, y: 20, w: 190, h: 262 },
+      { x: 710, y: 20, w: 190, h: 150 },
+    ];
+    for (const st of stories) {
+      el("rect", { x: st.x, y: st.y, width: st.w, height: st.h, rx: 10, fill: "none", stroke: "var(--border)", "stroke-width": 1.5 });
+    }
+    let k = 0;
+    for (const g of groups) {
+      const h = g.n * 21 + 14;
+      const card = el("g", {});
+      el("rect", { x: g.x, y: g.y, width: 130, height: h, rx: 7, fill: "var(--card)", stroke: g.dashed ? "var(--border)" : color[g.id], "stroke-width": 1.5, "stroke-dasharray": g.dashed ? "4 3" : "" }, card);
+      el("rect", { x: g.x, y: g.y + 6, width: 4, height: h - 12, rx: 2, fill: color[g.id] }, card);
+      const from = src[g.id];
+      for (let i = 0; i < g.n; i++) {
+        const hy = g.y + 7 + i * 21;
+        hunk(g.x + 42, hy, color[g.id], card);
+        const [sx, sy] = from[i];
+        const tx = g.x + 42;
+        const ty = hy + 8;
+        el("path", { class: "link", style: `--k:${k++}`, stroke: color[g.id], d: `M${sx} ${sy} C ${sx + 150} ${sy}, ${tx - 150} ${ty}, ${tx} ${ty}` });
+      }
+    }
+    // g1 depends on g0.
+    el("path", { class: "dep", stroke: "var(--strand-1)", d: "M535 123 L535 172", "marker-end": "url(#arrow)" });
+    const defs = el("defs", {});
+    const marker = el("marker", { id: "arrow", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+    el("path", { d: "M0 0 L10 5 L0 10 z", fill: "var(--strand-1)" }, marker);
+  })();
 </script>
 </body>
 </html>
