@@ -198,15 +198,12 @@
   </section>
 
   <section class="slide">
-    <h2>Install and use</h2>
-    <pre><span class="c"># once, in any repo</span>
-npx skills add matemolnar8/comprehende
-
-<span class="c"># in your coding agent, name what to review</span>
-<span class="p">/comprehende</span> PR 154
-<span class="p">/comprehende</span> the changes from the last turn
-<span class="p">/comprehende</span> feature/auth against main</pre>
-    <p class="muted">The agent writes <code>review.json</code> and prints a local URL. Needs Node.js 24+ and git. The diff never leaves your machine.</p>
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li><strong>The CLI indexes <code>base...head</code></strong> and writes a skeleton. One entry per changed file, hunk refs, stub prose.</li>
+      <li><strong>The agent fills the interpretation.</strong> Title, groups, why, what, look for, sources. It never invents a hunk ref.</li>
+      <li><strong>Validate, then serve or export.</strong> Every ref must resolve in live git. The UI reads the diff from git when you open it.</li>
+    </ol>
   </section>
 
   <section class="slide">
@@ -250,12 +247,15 @@ npx skills add matemolnar8/comprehende
   </section>
 
   <section class="slide">
-    <h2>How it works</h2>
-    <ol class="steps">
-      <li><strong>The CLI indexes <code>base...head</code></strong> and writes a skeleton. One entry per changed file, hunk refs, stub prose.</li>
-      <li><strong>The agent fills the interpretation.</strong> Title, groups, why, what, look for, sources. It never invents a hunk ref.</li>
-      <li><strong>Validate, then serve or export.</strong> Every ref must resolve in live git. The UI reads the diff from git when you open it.</li>
-    </ol>
+    <h2>Install and use</h2>
+    <pre><span class="c"># once, in any repo</span>
+npx skills add matemolnar8/comprehende
+
+<span class="c"># in your coding agent, name what to review</span>
+<span class="p">/comprehende</span> PR 154
+<span class="p">/comprehende</span> the changes from the last turn
+<span class="p">/comprehende</span> feature/auth against main</pre>
+    <p class="muted">The agent writes <code>review.json</code> and prints a local URL. Needs Node.js 24+ and git. The diff never leaves your machine.</p>
   </section>
 
   <section class="slide center">
