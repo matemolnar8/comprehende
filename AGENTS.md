@@ -40,6 +40,7 @@ The CLI indexes `base...head` and writes a covering skeleton `review.json`: one 
 ## Where code lives
 
 - `skills-next/comprehende/` - skill source. The only skill text you edit.
+- `.agents/skills/` - skills for agents that work in this repo. `.claude/skills` is a symlink to it, because Claude Code does not read `.agents/skills`.
 - `src/schema/` - review document schema. The source of truth. Parse at the boundary, infer inside.
 - `src/review/` - grouping logic: `review`, `pregroup`, `digest`, `show`.
 - `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export payloads, live git reads.
