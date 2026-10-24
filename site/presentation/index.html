@@ -115,7 +115,7 @@
   }
 
   .illus { width: 100%; max-height: 52vh; margin-top: 0.6em; overflow: visible; }
-  .illus .link { fill: none; stroke-width: 1.6; opacity: 0.55; stroke-dasharray: 600; stroke-dashoffset: 600; }
+  .illus .link { fill: none; stroke-width: 1.6; opacity: 0.55; stroke-dasharray: 1; stroke-dashoffset: 1; }
   .slide.active .illus .link { animation: draw 900ms var(--motion-ease) forwards; animation-delay: calc(var(--k) * 40ms + 150ms); }
   .illus .dep { fill: none; stroke-width: 2; stroke-dasharray: 4 4; }
   @keyframes draw { to { stroke-dashoffset: 0; } }
@@ -357,7 +357,7 @@ npx skills add matemolnar8/comprehende
         const [sx, sy] = from[i];
         const tx = g.x + 42;
         const ty = hy + 8;
-        el("path", { class: "link", style: `--k:${k++}`, stroke: color[g.id], d: `M${sx} ${sy} C ${sx + 150} ${sy}, ${tx - 150} ${ty}, ${tx} ${ty}` });
+        el("path", { class: "link", pathLength: 1, style: `--k:${k++}`, stroke: color[g.id], d: `M${sx} ${sy} C ${sx + 150} ${sy}, ${tx - 150} ${ty}, ${tx} ${ty}` });
       }
     }
     // g1 depends on g0.
