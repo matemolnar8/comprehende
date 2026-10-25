@@ -34,6 +34,7 @@ export type PrunePagesOpts = {
   pr?: number;
   name?: string;
   ttlDays?: number;
+  keep?: string[];
   remote?: string;
   branch?: string;
   now?: Date;
@@ -50,7 +51,8 @@ export const PAGES_USAGE = `Usage: pnpm exec tsx scripts/pages-review.ts <comman
 
 Commands:
   publish --dir <export> (--pr <n> | --name <slug>)   Copy a static site onto gh-pages
-  prune [--pr <n>] [--name <slug>] [--ttl-days <n>]   Remove a site and/or sites older than the TTL
+  prune [--pr <n>] [--name <slug>] [--ttl-days <n>] [--keep <slug>]...
+                                                      Remove a site and/or sites older than the TTL
   init                                                Create gh-pages with .nojekyll if it is missing
 
 Options:
@@ -61,6 +63,7 @@ Options:
   --pr <n>          Pull request number (dest pr/<n>/)
   --name <slug>     Named site (dest site/<slug>/)
   --ttl-days <n>    Age in days after which a site is removed (default: ${DEFAULT_TTL_DAYS})
+  --keep <slug>     Named site the TTL never removes (repeatable)
 `;
 
 export function parsePrNumber(raw: string): number {
@@ -320,6 +323,9 @@ function matchesPrune(site: PublishedMeta, opts: PrunePagesOpts, now: Date): boo
   if (opts.name !== undefined && site.kind === "name" && site.name === opts.name) {
     return true;
   }
+  if (site.kind === "name" && opts.keep?.includes(site.name)) {
+    return false;
+  }
   return opts.ttlDays !== undefined && ageDays(site.publishedAt, now) >= opts.ttlDays;
 }
 
@@ -510,6 +516,7 @@ export async function runPagesReview(argv: string[]): Promise<number> {
         pr: flags.pr === undefined ? undefined : parsePrNumber(flags.pr),
         name: flags.name === undefined ? undefined : parseSiteName(flags.name),
         ttlDays,
+        keep: flags.keep.map(parseSiteName),
         remote: flags.remote,
         branch: flags.branch,
       });
@@ -541,6 +548,7 @@ type Flags = {
   pr?: string;
   name?: string;
   ttlDays?: string;
+  keep: string[];
 };
 
 function publishDest(flags: Flags): PagesDest | undefined {
@@ -557,7 +565,7 @@ function publishDest(flags: Flags): PagesDest | undefined {
 }
 
 function parseFlags(args: string[]): Flags {
-  const flags: Flags = {};
+  const flags: Flags = { keep: [] };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const next = args[i + 1];
@@ -593,6 +601,11 @@ function parseFlags(args: string[]): Flags {
     }
     if (arg === "--ttl-days" && next !== undefined) {
       flags.ttlDays = next;
+      i++;
+      continue;
+    }
+    if (arg === "--keep" && next !== undefined) {
+      flags.keep.push(next);
       i++;
       continue;
     }

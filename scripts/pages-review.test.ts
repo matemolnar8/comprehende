@@ -186,6 +186,23 @@ describe("pages-review publish and prune", () => {
     assert.deepEqual(expired.removed, [named("stale")]);
   });
 
+  it("keeps named sites listed in keep on TTL", async () => {
+    const ctx = await setupRemoteRepo();
+    const old = new Date("2026-08-01T00:00:00.000Z");
+    const dir = await writeExport(ctx.root, "old", "old");
+    await publishPagesReview({ repo: ctx.repo, dir, dest: named("stale"), now: old });
+    await publishPagesReview({ repo: ctx.repo, dir, dest: named("pinned"), now: old });
+    const expired = await prunePagesReviews({
+      repo: ctx.repo,
+      ttlDays: 10,
+      keep: ["pinned"],
+      now: new Date("2026-09-20T00:00:00.000Z"),
+    });
+    assert.deepEqual(expired.removed, [named("stale")]);
+    const pages = await checkoutPages(ctx);
+    assert.equal(existsSync(join(pages, "site/pinned/index.html")), true);
+  });
+
   it("replaces an existing folder on republish", async () => {
     const ctx = await setupRemoteRepo();
     const first = await writeExport(ctx.root, "v1", "one");
