@@ -2,7 +2,7 @@
 name: comprehende
 description: Groups a git diff into review concerns and opens a local UI so humans can comprehend AI-generated code changes. Use when reviewing a PR, a branch diff, a turn diff, when a reviewed change has new commits, or when the user asks to run comprehende or to upload the report.
 license: MIT
-compatibility: Requires Node.js 24+, git, and a git work tree as the current working directory.
+compatibility: Requires Node.js 24+, git, a git work tree as the current working directory, and bash, zsh, or PowerShell.
 ---
 
 # Comprehende
@@ -14,6 +14,8 @@ Run every command inside the repository under review. Cwd is the repo. Use the p
 ```sh
 npx comprehende@0.11.0 <command>
 ```
+
+The shell blocks are POSIX sh, for bash and zsh. In PowerShell, read `references/powershell.md` before step 2: it replaces the blocks of Workflow steps 2 and 4 and of Refresh. Your harness names the shell. When it does not, run `$PSVersionTable`: it prints a table only in PowerShell.
 
 The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. `serve` reads the diff from git.
 
@@ -110,7 +112,7 @@ Carry an existing review over to new commits or a rebase. Prose for a hunk that 
 The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
 
 ```sh
-REVIEW_DIR=$(mktemp -d) && curl -fsSL "<site-url>/api/review.json" | jq .document > "$REVIEW_DIR/review.json"
+REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && curl -fsSL "<site-url>/api/review.json" | jq .document > "$REVIEW_DIR/review.json"
 ```
 
 1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another.

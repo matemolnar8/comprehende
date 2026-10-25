@@ -37,8 +37,7 @@ export async function resolveSource(
 }
 
 export async function readDiff(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
-  await resolveCommit(cwd, baseRef);
-  await resolveCommit(cwd, headRef);
+  await Promise.all([resolveCommit(cwd, baseRef), resolveCommit(cwd, headRef)]);
   return readDiffAt(cwd, baseRef, headRef);
 }
 

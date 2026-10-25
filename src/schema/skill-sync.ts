@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { cp, copyFile, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, posix, relative, sep } from "node:path";
 import { applyCliPin, cliPinErrors, listedCliPins } from "./cli-pin.ts";
 import { skillPaths } from "./skill-paths.ts";
 import {
@@ -132,7 +132,7 @@ async function readTree(dir: string): Promise<Map<string, string>> {
         await walk(full);
         continue;
       }
-      out.set(relative(dir, full), await readFile(full, "utf8"));
+      out.set(relative(dir, full).split(sep).join("/"), await readFile(full, "utf8"));
     }
   };
   await walk(dir);
@@ -147,7 +147,7 @@ function gitStagedTree(root: string, prefix: string): Map<string, string> {
   });
   const out = new Map<string, string>();
   for (const full of listing.split("\0").filter(Boolean)) {
-    out.set(relative(prefix, full), gitShowStaged(root, full));
+    out.set(posix.relative(prefix, full), gitShowStaged(root, full));
   }
   return out;
 }

@@ -29,7 +29,8 @@ export default defineConfig({
     dir: repoRoot,
     include: [`${repoRoot}src/**/*.test.ts`, `${repoRoot}scripts/**/*.test.ts`],
     // Fixture-heavy tests (example repos, static export) outlast the default 5s timeout.
-    testTimeout: 30000,
+    // Windows spawns each git process about 20 times slower, and these tests spawn hundreds.
+    testTimeout: process.platform === "win32" ? 180000 : 30000,
   },
   staged: {
     "*": "vp check --fix",

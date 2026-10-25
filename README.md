@@ -10,7 +10,7 @@ Comprehende groups a git diff by review concern and shows the groups in a local 
 npx skills add matemolnar8/comprehende
 ```
 
-Requires Node.js 24+ and git.
+Requires Node.js 24+ and git. Works on macOS, Linux, and Windows, with bash, zsh, or PowerShell.
 
 ## Use
 
