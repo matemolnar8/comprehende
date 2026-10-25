@@ -1,4 +1,4 @@
-import { basename as nodeBasename, dirname, isAbsolute, resolve } from "node:path";
+import { basename as nodeBasename, dirname, isAbsolute, resolve, sep } from "node:path";
 import { assertSafePath, isSafePath } from "../api/paths.ts";
 import { basename as posixBasename } from "../schema/types.ts";
 import { git, gitOk } from "./exec.ts";
@@ -135,7 +135,8 @@ export function resolveInsideRoot(root: string, relative: string): string {
   assertSafePath(relative);
   const rootAbs = resolve(root);
   const abs = resolve(root, relative);
-  if (abs !== rootAbs && !abs.startsWith(`${rootAbs}/`)) {
+  const prefix = rootAbs.endsWith(sep) ? rootAbs : `${rootAbs}${sep}`;
+  if (abs !== rootAbs && !abs.startsWith(prefix)) {
     throw new Error(`invalid path: ${relative}`);
   }
   return abs;

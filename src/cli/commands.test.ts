@@ -12,7 +12,8 @@ import { isLockfilePath } from "../schema/lockfile.ts";
 import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
 import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
-const REAL_GIT = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
+// The git log shim is a bash script on PATH. Windows spawns only git.exe, so those tests run on POSIX.
+const itWithGitLog = it.skipIf(process.platform === "win32");
 const roots: string[] = [];
 
 afterAll(() => {
@@ -22,7 +23,7 @@ afterAll(() => {
 });
 
 describe("cmdReview git work", { concurrent: false }, () => {
-  it("pins the range once and writes a skeleton validate accepts", async () => {
+  itWithGitLog("pins the range once and writes a skeleton validate accepts", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-git-"));
     roots.push(root);
     const repo = await createExampleRepo(join(root, "repo"));
@@ -72,7 +73,7 @@ describe("cmdReview git work", { concurrent: false }, () => {
     });
   });
 
-  it("stubs lockfiles from one covering diff", async () => {
+  itWithGitLog("stubs lockfiles from one covering diff", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-lock-"));
     roots.push(root);
     const repo = await createLockfileRepo(join(root, "repo"));
@@ -109,7 +110,7 @@ describe("cmdReview git work", { concurrent: false }, () => {
     });
   });
 
-  it("rejects an unsafe ref before git runs", async () => {
+  itWithGitLog("rejects an unsafe ref before git runs", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-review-unsafe-"));
     roots.push(root);
     const repo = await createExampleRepo(join(root, "repo"));
@@ -198,13 +199,14 @@ type GitLog = {
 };
 
 async function withGitLog(root: string, fn: (log: GitLog) => Promise<void>): Promise<void> {
+  const realGit = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
   const bin = join(root, "bin");
   const logPath = join(root, "git.log");
   await mkdir(bin, { recursive: true });
   await writeFile(logPath, "");
   await writeFile(
     join(bin, "git"),
-    `#!/bin/bash\nprintf '%s\\0' "$@" >> ${shellQuote(logPath)}\nprintf '\\n' >> ${shellQuote(logPath)}\nexec ${shellQuote(REAL_GIT)} "$@"\n`,
+    `#!/bin/bash\nprintf '%s\\0' "$@" >> ${shellQuote(logPath)}\nprintf '\\n' >> ${shellQuote(logPath)}\nexec ${shellQuote(realGit)} "$@"\n`,
   );
   await chmod(join(bin, "git"), 0o755);
   const previousPath = process.env.PATH;

@@ -80,14 +80,16 @@ export async function openReview(
 ): Promise<ReviewContext> {
   const document = typeof data === "string" ? await loadDocument(data) : data;
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
-  const { files, coverage } = await coverReview(cwd, document, range);
-  const pins = await staleCommentPins(cwd, document, range);
-  const commits = await listCommits(cwd, range.baseSha, range.headSha);
-  const repo = await readRepoIdentity(cwd);
-  const previous =
+  // Independent git reads run together: one git spawn costs about 100 ms on Windows.
+  const [{ files, coverage }, pins, commits, repo, previous] = await Promise.all([
+    coverReview(cwd, document, range),
+    staleCommentPins(cwd, document, range),
+    listCommits(cwd, range.baseSha, range.headSha),
+    readRepoIdentity(cwd),
     typeof data === "string" && document.previous !== undefined
-      ? await loadPrevious(join(dirname(data), document.previous))
-      : undefined;
+      ? loadPrevious(join(dirname(data), document.previous))
+      : undefined,
+  ]);
   return {
     cwd,
     document,

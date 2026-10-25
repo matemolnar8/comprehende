@@ -317,8 +317,11 @@ async function writeExport(root: string, name: string, body: string): Promise<st
 
 async function checkoutPages(ctx: RemoteRepo): Promise<string> {
   const dest = join(ctx.root, `pages-${crypto.randomUUID()}`);
+  // Read the published bytes, not the line endings a Windows git config checks out.
   await git(ctx.root, [
     "clone",
+    "--config",
+    "core.autocrlf=false",
     "--no-local",
     "--branch",
     "gh-pages",

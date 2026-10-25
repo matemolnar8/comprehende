@@ -1,0 +1,3 @@
+# LF on every OS. Git for Windows defaults to core.autocrlf=true, and the skill
+# sync and schema checks compare files byte for byte.
+* text=auto eol=lf

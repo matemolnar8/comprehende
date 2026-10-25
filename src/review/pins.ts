@@ -14,16 +14,11 @@ export async function staleCommentPins(
   document: ReviewDocument,
   range: { baseSha: string; headSha: string },
 ): Promise<StaleCommentPin[]> {
-  const stale: StaleCommentPin[] = [];
-  for (const source of document.sources ?? []) {
-    if (!isLinePinned(source)) {
-      continue;
-    }
-    if (!(await commentPinMatches(cwd, source, range))) {
-      stale.push({ id: source.id, path: source.path, side: source.side, line: source.line });
-    }
-  }
-  return stale;
+  const pinned = (document.sources ?? []).filter(isLinePinned);
+  const matches = await Promise.all(pinned.map((source) => commentPinMatches(cwd, source, range)));
+  return pinned
+    .filter((_, index) => !matches[index])
+    .map((source) => ({ id: source.id, path: source.path, side: source.side, line: source.line }));
 }
 
 export function commentPinErrors(pins: readonly StaleCommentPin[]): string[] {

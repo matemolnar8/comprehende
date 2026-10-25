@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { mkdir, rm } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DEFAULT_PORT } from "../src/cli/args.ts";
 import { cmdIndex } from "../src/cli/commands.ts";
@@ -19,9 +19,11 @@ export function fixtureCommands(opts: {
   dataPath: string;
   port?: number;
 }): { serve: string; export: string } {
-  const cli = relative(opts.cwd, join(opts.packageRoot, "dist/cli/main.js"));
-  const data = relative(opts.cwd, opts.dataPath);
-  const out = relative(opts.cwd, join(opts.packageRoot, "fixtures/site"));
+  // Forward slashes paste into bash, zsh, and PowerShell alike.
+  const rel = (to: string): string => relative(opts.cwd, to).split(sep).join("/");
+  const cli = rel(join(opts.packageRoot, "dist/cli/main.js"));
+  const data = rel(opts.dataPath);
+  const out = rel(join(opts.packageRoot, "fixtures/site"));
   const port = opts.port ?? DEFAULT_PORT;
   return {
     serve: `node ${cli} serve --data ${data} --port ${port}`,
