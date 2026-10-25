@@ -1,1 +1,0 @@
-{"path":".gitattributes","ref":"a476ce89308f686f4349f0c94cb750a094e8b51b","side":"new","content":"# LF on every OS. Git for Windows defaults to core.autocrlf=true, and the skill\n# sync and schema checks compare files byte for byte.\n* text=auto eol=lf\n","language":"plaintext"}
