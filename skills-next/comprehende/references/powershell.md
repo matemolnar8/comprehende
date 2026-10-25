@@ -22,10 +22,8 @@ if ($LASTEXITCODE -eq 0) {
   <cli> digest --base <base> --head <head>
   Get-Content -Raw -Encoding UTF8 "$REVIEW_DIR/review.json"
   git log --format=%s --end-of-options <base>..<head>
-  Get-ChildItem -File -LiteralPath "<sourcesDir>" | ForEach-Object {
-    "=== $($_.FullName)"
-    $text = Get-Content -Raw -Encoding UTF8 -LiteralPath $_.FullName
-    if ($text) { $text.Substring(0, [Math]::Min(10000, $text.Length)) }
+  foreach ($text in @((<fetch the request body> | Out-String), (<fetch the review comments> | Out-String))) {
+    $text.Substring(0, [Math]::Min(10000, $text.Length))
   }
 }
 ```
@@ -44,8 +42,6 @@ $document = @'
 ```
 
 ## Refresh: copy the previous document
-
-Node reads the hosted export, so the copy needs no `curl` or `jq`.
 
 ```powershell
 $REVIEW_DIR = Join-Path ([IO.Path]::GetTempPath()) "comprehende-$([guid]::NewGuid())"
