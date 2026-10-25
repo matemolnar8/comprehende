@@ -32,7 +32,7 @@ It builds, copies `skills-next/comprehende/` to `~/.agents/skills/comprehende/`,
 
 `serve` and `export` share one UI and one git payload. `serve` resolves the refs to commit SHAs at start, then builds the payloads from those objects on each request. `export` writes the same JSON and image bytes next to the UI.
 
-This repository publishes exports to GitHub Pages. A pull request review is at `https://matemolnar8.github.io/comprehende/pr/<number>/`, and a named site is at `https://matemolnar8.github.io/comprehende/site/<name>/`. To enable Pages, open the repo's Settings > Pages, choose Deploy from a branch, branch `gh-pages`, folder `/`. A workflow deletes a pull request's folder when the pull request closes, and deletes sites older than 30 days.
+This repository publishes exports to GitHub Pages. A pull request review is at `https://matemolnar8.github.io/comprehende/pr/<number>/`, and a named site is at `https://matemolnar8.github.io/comprehende/site/<name>/`. To enable Pages, open the repo's Settings > Pages, choose Deploy from a branch, branch `gh-pages`, folder `/`. A workflow deletes a pull request's folder when the pull request closes, and deletes sites older than 30 days, except `site/presentation/`.
 
 ## Refresh
 

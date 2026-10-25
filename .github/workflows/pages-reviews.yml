@@ -36,4 +36,4 @@ jobs:
         run: pnpm exec tsx scripts/pages-review.ts prune --pr ${{ github.event.pull_request.number }}
       - name: Drop reviews older than 30 days
         if: github.event_name != 'pull_request'
-        run: pnpm exec tsx scripts/pages-review.ts prune --ttl-days 30
+        run: pnpm exec tsx scripts/pages-review.ts prune --ttl-days 30 --keep presentation
