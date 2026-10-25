@@ -37,11 +37,12 @@ Each step is one tool call where the step says so. Batch the commands as written
      npx comprehende@0.11.0 digest --base <base> --head <head>
      cat "$REVIEW_DIR/review.json"
      git log --format='%s' --end-of-options <base>..<head>
-     for f in "<sourcesDir>"/*; do echo "=== $f"; head -c 10000 "$f"; done
+     <fetch the request body> | head -c 10000
+     <fetch the review comments> | head -c 10000
    }
    ```
 
-   Sources are the request or ticket body, each review comment with whether its thread is resolved, whether the comment is outdated, and its current line, and the commit subjects. Files on disk get the loop above; a host CLI fetch joins the call through the same `head -c 10000`. Sources only an MCP reaches go in one parallel block after this call, one fetch each. A ticket number in the request, the branch name, or a commit subject names a ticket to read here.
+   Sources are the request or ticket body, each review comment with whether its thread is resolved, whether the comment is outdated, and its current line, and the commit subjects. You fetch them; the user names only the change. The remote URL (`git remote get-url <remote>`) names the forge; its CLI fetches the request body and the review comments in this call, each through `head -c 10000`, and the two placeholder lines above are those fetches. When the harness reaches the forge only through an MCP, those fetches go in one parallel block after this call, one fetch each. A ticket number in the request, the branch name, or a commit subject names a ticket to read here the same way.
 
    When the user names a local executable, use that command as written in place of `npx comprehende@0.11.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version. If that version is newer than this pin (`npx comprehende@0.11.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
 
@@ -112,7 +113,7 @@ Carry an existing review over to new commits or a rebase. Prose for a hunk that 
 The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
 
 ```sh
-REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && curl -fsSL "<site-url>/api/review.json" | jq .document > "$REVIEW_DIR/review.json"
+REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1]).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((j) => require("fs").writeFileSync(process.argv[2], JSON.stringify(j.document, null, 2)))' "<site-url>/api/review.json" "$REVIEW_DIR/review.json"
 ```
 
 1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another.
@@ -152,7 +153,7 @@ Sources are read, never copied into the review document, except PR comments: cop
 
 - Tickets and issues. Emit a `sources` item: short `id` (`s1`), `kind` `ticket`, `label` (`#24`), plus `url`, `title`, `gist`, and `part` when you have them. `part` goes on a ticket when the groups of that story carry the same `part`.
 - Pull request. When the user named a pull request or merge request, emit `kind` `pr` with a label like `PR #32` and a gist from the description.
-- PR comments. Emit one `pr-comment` source for each comment the prose cites, and for each comment that gets a pin. Label like `alice on PR #32`. Copy `author` and `body`. Flatten threads: one source per comment. Pin a comment whose thread is open, whose forge reports a current line, and which is not outdated. A pin is `path`, `side`, and `line`. `side` is `old` for a line of the base file and `new` for a line of the head file. On GitHub, `LEFT` is `old`, `RIGHT` is `new`, the current line is `line` (`original_line` is the line on an older commit), an open thread has `isResolved` false, and an outdated comment has `isOutdated` true or a null current line. A conversation comment has no line, so no pin.
+- PR comments. Emit one `pr-comment` source for each comment the prose cites, and for each comment that gets a pin. Label like `alice on PR #32`. Copy `author` and `body`. Flatten threads: one source per comment. Pin a comment whose thread is open, whose forge reports a current line, and which is not outdated. A pin is `path`, `side`, and `line`. `side` is `old` for a line of the base file and `new` for a line of the head file. Each forge names these fields its own way; map them onto `side`, `line`, open, and outdated. On GitHub, `LEFT` is `old`, `RIGHT` is `new`, the current line is `line` (`original_line` is the line on an older commit), an open thread has `isResolved` false, and an outdated comment has `isOutdated` true or a null current line. A conversation comment has no line, so no pin.
 - Commit messages. `git log --format='%s' --end-of-options <base>..<head>`. Emit `kind` `commit` when a commit names the motive. `label` is that subject line, or a SHA from the same log. They can clarify group `why`; document `why` needs one of the stronger sources above.
 - Transcripts. A coding-agent transcript you already have (this session, or a historical one) supplies the human's stated reason. Emit `kind` `transcript`, a label like `Cursor session · Aug 12`, and a gist. Omit `url`.
 
