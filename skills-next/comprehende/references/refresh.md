@@ -2,7 +2,7 @@
 
 Carry an existing review over to new commits or a rebase. Prose for a hunk that did not change stays as it is; only the groups the report names get new words.
 
-`<cli>` is the CLI command SKILL.md uses.
+`<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named.
 
 The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
 
@@ -33,4 +33,4 @@ REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1])
 
    **4c. Update the document fields.** Retire a document `lookFor` bullet that a new commit resolves; a new comment asking for work the change does not do is a new bullet. `size` moves with the new burden; `title` and `why` change only when a source did. Done when every `lookFor` bullet is true at head.
 
-5. SKILL.md Workflow steps 5 and 6: validate, then serve. When the review was exported before, read `references/export.md` and export to the same place. Give the user the URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.
+5. Validate as in SKILL.md Workflow step 5. Then, when the review was exported before, read `references/export.md` and export to the same place; otherwise serve as in Workflow step 6. Give the user that URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.
