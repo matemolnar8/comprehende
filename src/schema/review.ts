@@ -232,9 +232,13 @@ const reviewDocumentObject = z
 // Older documents hold group findings in lookFor. Load them; validate asks for attention instead.
 const legacyGroupSchema = groupSchema.extend({ lookFor: stringList() });
 
-const reviewDocumentInput = reviewDocumentObject.extend({
-  tickets: z.array(legacyTicketSchema, { error: "must be an array" }).optional(),
+/** What a document may hold on disk and in api/review.json: legacy group lookFor round-trips. */
+const storedDocumentObject = reviewDocumentObject.extend({
   groups: z.array(legacyGroupSchema, { error: "must be an array" }),
+});
+
+const reviewDocumentInput = storedDocumentObject.extend({
+  tickets: z.array(legacyTicketSchema, { error: "must be an array" }).optional(),
 });
 
 export const reviewDocumentSchema = reviewDocumentInput
@@ -380,7 +384,7 @@ export type Source = z.infer<typeof sourceSchema>;
 export type ReviewPart = z.infer<typeof reviewPartSchema>;
 export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
 /** The on-disk form: hunk refs as strings. */
-export type StoredReviewDocument = z.infer<typeof reviewDocumentObject>;
+export type StoredReviewDocument = z.infer<typeof storedDocumentObject>;
 export type ReviewGroup = ReviewDocument["groups"][number];
 export type Attention = z.infer<typeof attentionSchema>;
 export type AttentionKind = Attention["kind"];

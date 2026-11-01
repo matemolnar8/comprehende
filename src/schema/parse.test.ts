@@ -164,7 +164,8 @@ describe("parseReviewDocument", () => {
       assert.deepEqual(legacyLookForErrors(result.document), [
         'groups id "g1" has lookFor; write its one judgment call as attention, or drop it',
       ]);
-      assert.equal("legacyLookFor" in (storedDocument(result.document).groups[0] ?? {}), false);
+      const stored = storedDocument(result.document).groups[0];
+      assert.equal(stored !== undefined && "legacyLookFor" in stored, false);
       const written = JSON.parse(reviewFileBody(result.document)) as {
         groups: { lookFor?: string[] }[];
       };
