@@ -167,7 +167,7 @@ export function refreshDocument(
   }
   const editedPaths = new Set(
     [
-      ...[...delta.changed, ...delta.reformat].flatMap((match) => [match.previous, match.next]),
+      ...[...delta.changed, ...delta.reformat].map((match) => match.next),
       ...delta.added,
       ...delta.removed,
     ].map((hunk) => hunk.path),
