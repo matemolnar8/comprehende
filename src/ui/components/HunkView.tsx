@@ -245,7 +245,7 @@ export function HunkView(props: {
           </div>
         </div>
         {relocationBadge !== null || fileNote !== undefined ? (
-          <div className={cn("mt-1 flex items-center gap-1.5", pure ? null : "pl-9")}>
+          <div className={cn("mt-1 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
             {relocationBadge}
             {fileNote !== undefined ? (
               <p className="min-w-0 text-xs leading-snug text-muted-foreground">
