@@ -16,7 +16,7 @@ PR #29308 in astral-sh/ruff, the top layer of a stack: `main` ← #29306 ← #29
 2. Server callers: `crates/ty_server/src/document/range.rs`, `crates/ty_server/src/document.rs`, `crates/ty_server/src/server/api/requests/folding_range.rs`, `crates/ty_server/src/server/api/requests/semantic_tokens.rs`. One shared `cell_range` helper replaces the same lookup in two request handlers.
 3. End-to-end test: `crates/ty_server/tests/e2e/notebook.rs` and its two snapshots. One test covers both groups above.
 
-One group for all eight files, or the e2e test inside group 1 or 2, is also good.
+One group for all eight files, the e2e test inside group 1 or 2, or the `range.rs` helper in group 1 with the code it wraps, is also good.
 
 ## Must
 
