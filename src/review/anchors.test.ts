@@ -7,7 +7,7 @@ import { cmdIndex, cmdValidate } from "../cli/commands.ts";
 import { mixedCoveringDocument, reviewFileBody } from "../test/covering-document.ts";
 import { createExampleRepo } from "../test/example-repo.ts";
 import type { DiffFile, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
-import { anchorErrors } from "./anchors.ts";
+import { anchorErrors, fileNoteErrors } from "./anchors.ts";
 import { joinCoverage } from "./coverage.ts";
 import { formatRefresh, refreshDocument } from "./refresh.ts";
 
@@ -117,6 +117,24 @@ describe("anchorErrors", () => {
   });
 });
 
+describe("fileNoteErrors", () => {
+  it("accepts a note on a file the group covers, and names one on a lockfile or another file", () => {
+    const doc = document([
+      group("login", "login.ts", {
+        hunkRefs: [{ path: "login.ts" }, { path: "pnpm-lock.yaml" }],
+        fileNotes: { "login.ts": "f", "pnpm-lock.yaml": "Lockfile for the new dependency." },
+      }),
+      group("api", "api.ts", { fileNotes: { "login.ts": "other group", "gone.ts": "no file" } }),
+    ]);
+    const [error, ...rest] = fileNoteErrors(joinCoverage(doc, [login, api]));
+    assert.deepEqual(rest, []);
+    assert.match(error ?? "", /^fileNotes: 3 note\(s\)/);
+    assert.match(error ?? "", /^ {2}login fileNotes "pnpm-lock\.yaml"$/m);
+    assert.match(error ?? "", /^ {2}api fileNotes "login\.ts"$/m);
+    assert.match(error ?? "", /^ {2}api fileNotes "gone\.ts"$/m);
+  });
+});
+
 describe("validate", () => {
   it("accepts the fixture's focus and notes, and fails loudly on a range past its hunk", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-anchors-"));
@@ -138,21 +156,36 @@ describe("validate", () => {
         () => cmdValidate(repo.root, dataPath),
         /anchor: 1 focus range\(s\) or note\(s\)[^]*app focus\[0\] src\/app\.ts new:1-12/,
       );
+
+      const stray = {
+        ...valid,
+        groups: [
+          { ...app, fileNotes: { "README.md": "Not this group's file." } },
+          ...valid.groups.slice(1),
+        ],
+      };
+      await writeFile(dataPath, reviewFileBody(stray));
+      await assert.rejects(
+        () => cmdValidate(repo.root, dataPath),
+        /fileNotes: 1 note\(s\)[^]*app fileNotes "README\.md"/,
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   });
 });
 
-describe("refresh carries focus ranges and notes", () => {
+describe("refresh carries focus ranges, notes, and file notes", () => {
   const before = document([
     group("login", "login.ts", {
       focus: [{ path: "login.ts", side: "new", start: 11, end: 13, caption: "c" }],
       notes: [{ path: "login.ts", side: "new", line: 12, body: "n" }],
+      fileNotes: { "login.ts": "f" },
     }),
     group("api", "api.ts", {
       focus: [{ path: "api.ts", side: "new", start: 1, end: 3, caption: "c" }],
       notes: [{ path: "api.ts", side: "old", line: 2, body: "n" }],
+      fileNotes: { "api.ts": "f" },
     }),
   ]);
   const previous = [diffFile("api.ts", [api]), diffFile("login.ts", [login])];
@@ -171,6 +204,7 @@ describe("refresh carries focus ranges and notes", () => {
       caption: "c",
     });
     assert.equal(login?.notes?.[0]?.line, 17);
+    assert.deepEqual(login?.fileNotes, { "login.ts": "f" });
     assert.deepEqual(result.unchanged, ["login", "api"], "a shift alone is not news");
   });
 
@@ -194,7 +228,7 @@ describe("refresh carries focus ranges and notes", () => {
       result.document.groups[0]?.notes?.map((note) => note.line),
       [17],
     );
-    assert.deepEqual(result.groups[0]?.droppedAnchors, { focus: 0, notes: 1 });
+    assert.deepEqual(result.groups[0]?.droppedAnchors, { focus: 0, notes: 1, fileNotes: 0 });
   });
 
   it("drops them with a changed hunk and names the group; drops them silently with a gone hunk", () => {
@@ -204,10 +238,25 @@ describe("refresh carries focus ranges and notes", () => {
     const [login, api] = result.document.groups;
     assert.equal(login?.focus, undefined);
     assert.equal(login?.notes, undefined);
+    assert.equal(login?.fileNotes, undefined);
     assert.equal(api?.focus, undefined);
     assert.equal(api?.notes, undefined);
+    assert.equal(api?.fileNotes, undefined);
     const text = formatRefresh(result, next, { commits: [], stalePins: [] });
-    assert.match(text, /^- login: 1 hunk changed · 1 focus range dropped · 1 note dropped$/m);
+    assert.match(
+      text,
+      /^- login: 1 hunk changed · 1 focus range dropped · 1 note dropped · 1 file note dropped$/m,
+    );
     assert.match(text, /^- api: 1 ref gone · now empty$/m);
+  });
+
+  it("drops and counts a file note when its file gains a hunk, and keeps ranges on the same hunk", () => {
+    const extra = liveHunk("login.ts", 40, 42, [" g", "+h", " i"]);
+    const next = [diffFile("api.ts", [api]), diffFile("login.ts", [login, extra])];
+    const result = refreshDocument(before, previous, next, before.source);
+    const login2 = result.document.groups.find((item) => item.id === "login");
+    assert.equal(login2?.fileNotes, undefined);
+    assert.equal(login2?.notes?.length, 1);
+    assert.deepEqual(result.groups[0]?.droppedAnchors, { focus: 0, notes: 0, fileNotes: 1 });
   });
 });

@@ -753,6 +753,19 @@ describe("parseReviewDocument", () => {
         match: /groups\[0\]\.why must be a non-empty string/,
       },
       {
+        name: "empty file note",
+        input: { ...docBase, groups: [{ ...groupBase, fileNotes: { "src/cli.ts": " " } }] },
+        match: /groups\[0\]\.fileNotes\.src\/cli\.ts must be a non-empty string/,
+      },
+      {
+        name: "file notes as a list",
+        input: {
+          ...docBase,
+          groups: [{ ...groupBase, fileNotes: [{ path: "src/cli.ts", note: "n" }] }],
+        },
+        match: /groups\[0\]\.fileNotes must be an object of strings/,
+      },
+      {
         name: "unknown walkthrough field",
         input: {
           ...docBase,

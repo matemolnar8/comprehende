@@ -77,6 +77,10 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     for (const file of payload.files) {
       parts.push(`#### ${fileHeading(file)}`);
       parts.push("");
+      const fileNote = group.fileNotes?.[file.path];
+      if (fileNote !== undefined) {
+        parts.push(`File note: ${fileNote}`, "");
+      }
       parts.push("```diff");
       parts.push(file.patch.trimEnd() === "" ? "(no patch text)" : file.patch.trimEnd());
       parts.push("```");
