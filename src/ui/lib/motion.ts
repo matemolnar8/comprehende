@@ -19,8 +19,19 @@ export function shouldViewTransition(options?: {
   return !reduced && typeof start === "function";
 }
 
-export function runViewTransition(update: () => void, kind: MotionKind): void {
-  if (!shouldViewTransition()) {
+/** Narrow screens skip the group motion: iOS Safari can leave the brief unpainted after it (WebKit bug 275698). */
+export function selectionMotion(view: {
+  inspectorOpen: boolean;
+  narrow: boolean;
+}): MotionKind | null {
+  if (view.inspectorOpen) {
+    return "scene";
+  }
+  return view.narrow ? null : "group";
+}
+
+export function runViewTransition(update: () => void, kind: MotionKind | null): void {
+  if (kind === null || !shouldViewTransition()) {
     update();
     return;
   }

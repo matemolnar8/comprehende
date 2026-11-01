@@ -12,7 +12,7 @@ import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
-import { runViewTransition } from "./lib/motion.ts";
+import { runViewTransition, selectionMotion } from "./lib/motion.ts";
 import {
   hashWriteMode,
   sameSelection,
@@ -146,13 +146,15 @@ export function App() {
       if (sameSelection(next, selection) && inspector === null) {
         return;
       }
-      const kind = inspector !== null ? "scene" : "group";
-      runViewTransition(() => {
-        setSelection(next);
-        setInspector(null);
-      }, kind);
+      runViewTransition(
+        () => {
+          setSelection(next);
+          setInspector(null);
+        },
+        selectionMotion({ inspectorOpen: inspector !== null, narrow }),
+      );
     },
-    [inspector, selection],
+    [inspector, narrow, selection],
   );
 
   const selectFromNav = useCallback(
