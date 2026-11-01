@@ -17,7 +17,7 @@ import type { Selection } from "../lib/selection.ts";
 import { shortSha } from "../api.ts";
 import { LookClosely } from "./Attention.tsx";
 import { Brief } from "./GroupBrief.tsx";
-import { CopyPrompt } from "./CopyPrompt.tsx";
+import { AskAgent } from "./AskAgent.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kbd } from "./Kbd.tsx";
@@ -86,7 +86,7 @@ export function Overview(props: {
           </>
         }
         title={meta.document.title}
-        kickerExtra={<CopyPrompt prompt={askAgentPrompt("overview")} scope="overview" />}
+        kickerExtra={<AskAgent prompt={askAgentPrompt("overview")} scope="overview" />}
       >
         {why !== undefined ? (
           <BriefField kicker="Why" kickerId="review-why">

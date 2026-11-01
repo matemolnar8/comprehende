@@ -12,7 +12,7 @@ import {
 } from "../git/diff.ts";
 import { GitError } from "../git/exec.ts";
 import { listCommits } from "../git/log.ts";
-import { pinRange, readRepoIdentity, type PinnedRange, type RepoIdentity } from "../git/repo.ts";
+import { pinRange, readRepoIdentity, type PinnedRange } from "../git/repo.ts";
 import { showFile } from "../git/show.ts";
 import { coverReview, coverageErrors, type ReviewCoverage } from "../review/coverage.ts";
 import { commentPinErrors, staleCommentPins, type StaleCommentPin } from "../review/pins.ts";
@@ -56,7 +56,7 @@ export type ReviewContext = {
   document: ReviewDocument;
   /** The review this one was refreshed from, when its file is still there. */
   previous?: ReviewDocument;
-  repo: RepoIdentity;
+  repo: ApiReview["repo"];
   resolved: ApiReview["resolved"];
   files: DiffFile[];
   coverage: ReviewCoverage;

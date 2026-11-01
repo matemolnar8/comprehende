@@ -5,7 +5,7 @@ import { groupSourceIds } from "../../schema/source.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
 import { groupOrderIndex, groupParts, isMixedReview, type Part } from "../lib/parts.ts";
 import { storyNav, type StoryHop } from "../lib/story-nav.ts";
-import { CopyPrompt } from "./CopyPrompt.tsx";
+import { AskAgent } from "./AskAgent.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse, Kicker } from "./Kicker.tsx";
@@ -59,7 +59,7 @@ export function GroupBrief(props: {
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
       title={group.title}
-      kickerExtra={<CopyPrompt prompt={askAgentPrompt({ group: group.id })} scope="group" />}
+      kickerExtra={<AskAgent prompt={askAgentPrompt({ group: group.id })} scope="group" />}
     >
       <div>
         <BriefField kicker="Why">

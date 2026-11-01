@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdtemp, mkdir, readdir, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
@@ -12,6 +12,7 @@ import { reviewFileBody, writeCoveringDocument } from "../test/covering-document
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import { listResources } from "./live.ts";
 import { apiHref } from "./paths.ts";
+import type { ApiReview } from "./types.ts";
 import { exportStaticSite } from "./snapshot.ts";
 
 const roots: string[] = [];
@@ -85,6 +86,14 @@ describe("export static site", () => {
       }
       if (resource.kind === "agent-md") {
         assert.equal(await frozenRes.text(), await liveRes.text(), apiHref(resource));
+        continue;
+      }
+      if (resource.kind === "review") {
+        const liveReview = (await liveRes.json()) as ApiReview;
+        const frozenReview = (await frozenRes.json()) as ApiReview;
+        assert.equal(realpathSync(liveReview.repo.root ?? ""), realpathSync(repo.root));
+        assert.equal(frozenReview.repo.root, null, "an export never names a local folder");
+        assert.deepEqual(frozenReview, { ...liveReview, repo: { ...liveReview.repo, root: null } });
         continue;
       }
       assert.deepEqual(await frozenRes.json(), await liveRes.json(), apiHref(resource));

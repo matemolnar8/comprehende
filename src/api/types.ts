@@ -72,6 +72,8 @@ export type ApiReview = {
   repo: {
     name: string;
     origin: string | null;
+    /** Local work tree path. Null in an export: it names a folder on the machine that wrote it. */
+    root: string | null;
   };
   resolved: {
     baseRef: string;

@@ -26,6 +26,7 @@ import {
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
 import { openTargetForSource, reviewClaims } from "./lib/claims.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
+import { AgentTargetProvider } from "./lib/AgentTargetProvider.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { resolveWrap, useNarrow } from "./lib/narrow.ts";
 import { linePinnedSources } from "../schema/source.ts";
@@ -448,82 +449,84 @@ export function App() {
   return (
     <TooltipProvider>
       <SourcesProvider value={sourcesHandle}>
-        <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
-          {narrow ? (
-            <MobileShell
-              meta={meta}
-              selection={selection}
-              parts={parts}
-              onSelect={selectFromNav}
-              viewedPaths={viewedPaths}
-              wrap={wrap}
-              onWrap={toggleWrap}
-              comments={showComments}
-              onComments={
-                pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
-              }
-            >
-              {stage}
-            </MobileShell>
-          ) : (
-            <>
-              <Header
+        <AgentTargetProvider repo={meta.repo}>
+          <div className="flex h-full min-h-0 flex-col" aria-busy={loading || hunksLoading}>
+            {narrow ? (
+              <MobileShell
                 meta={meta}
                 selection={selection}
+                parts={parts}
                 onSelect={selectFromNav}
-                wrap={wrap}
-                split={split}
-                onWrap={toggleWrap}
-                onUnified={() => setSplit(false)}
-                onSplit={() => {
-                  setSplit(true);
-                  if (!split) {
-                    setSplitRatio(0.5);
-                  }
-                }}
-                onRefresh={() => void load()}
                 viewedPaths={viewedPaths}
-                busy={loading}
+                wrap={wrap}
+                onWrap={toggleWrap}
                 comments={showComments}
                 onComments={
                   pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
                 }
-              />
-
-              <ResizablePanelGroup
-                className="min-h-0 flex-1"
-                defaultLayout={defaultLayout}
-                onLayoutChanged={onLayoutChanged}
               >
-                <ResizablePanel
-                  id="stack"
-                  defaultSize="20"
-                  minSize="14%"
-                  className="min-h-0 min-w-0"
+                {stage}
+              </MobileShell>
+            ) : (
+              <>
+                <Header
+                  meta={meta}
+                  selection={selection}
+                  onSelect={selectFromNav}
+                  wrap={wrap}
+                  split={split}
+                  onWrap={toggleWrap}
+                  onUnified={() => setSplit(false)}
+                  onSplit={() => {
+                    setSplit(true);
+                    if (!split) {
+                      setSplitRatio(0.5);
+                    }
+                  }}
+                  onRefresh={() => void load()}
+                  viewedPaths={viewedPaths}
+                  busy={loading}
+                  comments={showComments}
+                  onComments={
+                    pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
+                  }
+                />
+
+                <ResizablePanelGroup
+                  className="min-h-0 flex-1"
+                  defaultLayout={defaultLayout}
+                  onLayoutChanged={onLayoutChanged}
                 >
-                  <Sidebar
-                    meta={meta}
-                    selection={selection}
-                    parts={parts}
-                    viewedPaths={viewedPaths}
-                    onSelect={selectFromNav}
-                  />
-                </ResizablePanel>
-                <ResizableHandle withHandle />
-                <ResizablePanel
-                  id="main"
-                  defaultSize="80"
-                  minSize="40%"
-                  className="min-h-0 min-w-0"
-                >
-                  <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
-                    {stage}
-                  </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </>
-          )}
-        </div>
+                  <ResizablePanel
+                    id="stack"
+                    defaultSize="20"
+                    minSize="14%"
+                    className="min-h-0 min-w-0"
+                  >
+                    <Sidebar
+                      meta={meta}
+                      selection={selection}
+                      parts={parts}
+                      viewedPaths={viewedPaths}
+                      onSelect={selectFromNav}
+                    />
+                  </ResizablePanel>
+                  <ResizableHandle withHandle />
+                  <ResizablePanel
+                    id="main"
+                    defaultSize="80"
+                    minSize="40%"
+                    className="min-h-0 min-w-0"
+                  >
+                    <div className="h-full min-h-0 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
+                      {stage}
+                    </div>
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </>
+            )}
+          </div>
+        </AgentTargetProvider>
       </SourcesProvider>
     </TooltipProvider>
   );

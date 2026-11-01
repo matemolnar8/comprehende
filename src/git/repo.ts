@@ -36,6 +36,8 @@ export type PinnedRange = {
 export type RepoIdentity = {
   name: string;
   origin: string | null;
+  /** Absolute path of the work tree. */
+  root: string;
 };
 
 /** Last path segment of a git remote URL, without .git. */
@@ -60,15 +62,17 @@ export async function gitCommonDir(cwd: string): Promise<string> {
 }
 
 export async function readRepoIdentity(cwd: string): Promise<RepoIdentity> {
-  const originText = (
-    await git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true })
-  ).trim();
-  const origin = originText === "" ? null : stripRemoteCredentials(originText);
+  const [originText, rootText] = await Promise.all([
+    git(cwd, ["config", "--get", "remote.origin.url"], { allowFail: true }),
+    git(cwd, ["rev-parse", "--show-toplevel"]),
+  ]);
+  const origin = originText.trim() === "" ? null : stripRemoteCredentials(originText);
+  const root = rootText.trim();
   const fromOrigin = origin !== null ? nameFromRemoteUrl(origin) : null;
   if (fromOrigin !== null) {
-    return { name: fromOrigin, origin };
+    return { name: fromOrigin, origin, root };
   }
-  return { name: nodeBasename(dirname(await gitCommonDir(cwd))), origin };
+  return { name: nodeBasename(dirname(await gitCommonDir(cwd))), origin, root };
 }
 
 /** Drop userinfo from an http(s) remote so a copied prompt never carries a token. */

@@ -39,7 +39,8 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     throw new Error(`refusing to write export into a git repository: ${outDir}`);
   }
 
-  const ctx = await openReview(opts.cwd, opts.dataPath);
+  const opened = await openReview(opts.cwd, opts.dataPath);
+  const ctx = { ...opened, repo: { ...opened.repo, root: null } };
   await mkdir(outDir, { recursive: true });
   await rm(join(outDir, "assets"), { recursive: true, force: true });
   await rm(join(outDir, "api"), { recursive: true, force: true });
