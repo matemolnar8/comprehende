@@ -6,8 +6,7 @@ import {
   noteAnchor,
   type LineAnchor,
 } from "../schema/anchor.ts";
-import { hunkKey, isDirHunkRef } from "../schema/identity.ts";
-import { isLockfilePath } from "../schema/lockfile.ts";
+import { hunkKey } from "../schema/identity.ts";
 import type { FocusRange, LineNote, LiveHunk, ReviewGroup, SourceSide } from "../schema/types.ts";
 import type { ReviewCoverage } from "./coverage.ts";
 
@@ -36,11 +35,6 @@ export function fileNoteErrors(coverage: ReviewCoverage): string[] {
   const lines: string[] = [];
   for (const { group, hunks } of coverage.groups) {
     const paths = new Set(hunks.map((hunk) => hunk.path));
-    for (const ref of group.hunkRefs) {
-      if (!isDirHunkRef(ref) && isLockfilePath(ref.path)) {
-        paths.add(ref.path);
-      }
-    }
     for (const path of Object.keys(group.fileNotes ?? {})) {
       if (!paths.has(path)) {
         lines.push(`  ${group.id} fileNotes "${path}"`);

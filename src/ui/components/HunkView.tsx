@@ -146,7 +146,7 @@ export function HunkView(props: {
 
   const relocationBadge =
     word !== undefined ? (
-      <Badge variant="outline" className="font-normal">
+      <Badge variant="outline" className="shrink-0 font-normal">
         {word}
         {file.relocation?.similarity !== undefined ? (
           <span className="font-mono font-normal tabular-nums text-muted-foreground">

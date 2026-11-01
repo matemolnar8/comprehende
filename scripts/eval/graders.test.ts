@@ -101,6 +101,7 @@ describe("rubric grader", () => {
             { path: "a.ts", side: "new", line: 4, body: "first" },
             { path: "a.ts", side: "old", line: 2, body: "second" },
           ],
+          fileNotes: { "a.ts": "file" },
         },
         {
           id: "g2",
@@ -118,6 +119,7 @@ describe("rubric grader", () => {
       { where: "group g1 focus a.ts new:3-9", bullet: "range" },
       { where: "group g1 note A a.ts new:4", bullet: "first" },
       { where: "group g1 note B a.ts old:2", bullet: "second" },
+      { where: "group g1 file note a.ts", bullet: "file" },
     ]);
   });
 
