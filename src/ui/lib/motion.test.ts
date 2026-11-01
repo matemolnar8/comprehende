@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { shouldViewTransition } from "./motion.ts";
+import { selectionMotion, shouldViewTransition } from "./motion.ts";
 import { selectionStack } from "./selection.ts";
 
 describe("shouldViewTransition", () => {
@@ -15,6 +15,15 @@ describe("shouldViewTransition", () => {
     for (const [options, expected] of cases) {
       assert.equal(shouldViewTransition(options), expected);
     }
+  });
+});
+
+describe("selectionMotion", () => {
+  it("skips the group motion on narrow screens and keeps the scene motion", () => {
+    assert.equal(selectionMotion({ inspectorOpen: false, narrow: false }), "group");
+    assert.equal(selectionMotion({ inspectorOpen: false, narrow: true }), null);
+    assert.equal(selectionMotion({ inspectorOpen: true, narrow: true }), "scene");
+    assert.equal(selectionMotion({ inspectorOpen: true, narrow: false }), "scene");
   });
 });
 
