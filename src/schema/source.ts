@@ -115,7 +115,12 @@ export function groupIdForPinnedSource(
 
 export function groupSourceIds(group: ReviewDocument["groups"][number]): string[] {
   const named = group.sources ?? [];
-  const cited = [group.why, group.summary, group.attention?.note ?? ""].flatMap(citationIds);
+  const cited = [
+    group.why,
+    group.summary,
+    group.attention?.note ?? "",
+    ...(group.questions ?? []),
+  ].flatMap(citationIds);
   return [...new Set([...named, ...cited])];
 }
 

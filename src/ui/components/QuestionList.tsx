@@ -12,9 +12,9 @@ export function QuestionList(props: { groupId: string; questions: Questions }) {
   return (
     <BriefField kicker="Questions">
       <ul className={briefRows}>
-        {questions.map((question) => (
+        {questions.map((question, i) => (
           <li
-            key={question}
+            key={i}
             className="flex max-w-[calc(68ch+1.5rem)] items-start justify-between gap-3 py-1.5 first:pt-0 last:pb-0"
           >
             <p className={briefProse}>
