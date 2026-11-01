@@ -3,6 +3,8 @@ import type { HunkRef, ReviewSource, Source } from "./review.ts";
 export type {
   Attention,
   AttentionKind,
+  FocusRange,
+  LineNote,
   HunkRef,
   Questions,
   ReviewDocument,
@@ -41,6 +43,9 @@ export function basename(path: string): string {
 }
 
 export const ATTENTION_KINDS = ["contract", "tradeoff", "product", "risk"] as const;
+
+export const FOCUS_MAX_LINES = 25;
+export const NOTES_MAX = 3;
 
 export const SOURCE_KINDS = ["ticket", "pr", "pr-comment", "commit", "transcript"] as const;
 

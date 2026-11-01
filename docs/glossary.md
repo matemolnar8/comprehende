@@ -20,15 +20,19 @@
 
 **Questions.** At most 2 per group. Each asks why the change is this way, where the code and the sources leave the reason open. When a source answers it, the answer goes in the why. The UI copies each question into a prompt for the agent that wrote the change.
 
+**Focus range.** Lines of one hunk the UI opens first, labeled Agent focus, with a caption that says why to read them: on one side, inside one live hunk of the group, at most 25 lines. An added file gets none. A row at each cut edge counts the lines not shown, and one click shows the whole hunk. `validate` fails a range that leaves its hunk.
+
+**Note.** One or two sentences pinned to one line of a hunk the group covers. It says what the code alone does not say. At most three per group, lettered A, B, C in the UI. A judgment call is an attention, not a note.
+
 **Look for.** Document-level source verdicts: each source item done differently, not done, or not true at head, each manual step a source says the change needs, and each instruction a source gives a reviewer. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
 
 **Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. The pin is the line that comment still sits on at head, on an open thread. A resolved thread and an outdated comment keep the source and omit the pin. Transcripts have no URL.
 
-**Citation.** A markdown link `[text](source:id)` in the why, the what, an attention, or lookFor. The UI turns it into a mark. `validate` fails on an unknown id.
+**Citation.** A markdown link `[text](source:id)` in the why, the what, an attention, a question, a focus caption, a note, or lookFor. The UI turns it into a mark. `validate` fails on an unknown id.
 
 ## Code
 
-**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional attentions, optional questions, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
+**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional attentions, questions, focus ranges, and notes, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
 **Group.** Schema `groups` item. The UI uses the same word.
 
@@ -50,7 +54,7 @@
 
 **Stale ref.** Pointer that does not match live git. Serve still starts. Do not invent a replacement.
 
-**Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood. The last review stays beside the new one, named in `previous`; the UI's What changed page compares the two.
+**Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. Focus ranges and notes follow a same hunk and drop with a changed or gone one. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood. The last review stays beside the new one, named in `previous`; the UI's What changed page compares the two.
 
 **Skill.** Grouping instructions. Does not talk to git.
 

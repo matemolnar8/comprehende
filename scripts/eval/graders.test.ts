@@ -79,7 +79,7 @@ describe("rubric grader", () => {
     );
   });
 
-  it("lists document lookFor before group attention notes", () => {
+  it("lists document lookFor, then each group's attention, focus captions, and notes", () => {
     const document: ReviewDocument = {
       version: 1,
       source: { baseRef: "a", headRef: "b" },
@@ -96,6 +96,11 @@ describe("rubric grader", () => {
           suggestedOrder: 1,
           hunkRefs: [{ path: "a.ts" }],
           attention: { kind: "contract", note: "in g1" },
+          focus: [{ path: "a.ts", side: "new", start: 3, end: 9, caption: "range" }],
+          notes: [
+            { path: "a.ts", side: "new", line: 4, body: "first" },
+            { path: "a.ts", side: "old", line: 2, body: "second" },
+          ],
         },
         {
           id: "g2",
@@ -110,6 +115,9 @@ describe("rubric grader", () => {
     assert.deepEqual(claimBullets(document), [
       { where: "document lookFor", bullet: "doc one" },
       { where: "group g1 attention contract", bullet: "in g1" },
+      { where: "group g1 focus a.ts new:3-9", bullet: "range" },
+      { where: "group g1 note A a.ts new:4", bullet: "first" },
+      { where: "group g1 note B a.ts old:2", bullet: "second" },
     ]);
   });
 

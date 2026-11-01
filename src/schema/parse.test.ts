@@ -173,6 +173,43 @@ describe("parseReviewDocument", () => {
     assert.equal(blank.ok, false);
   });
 
+  it("rejects a backwards or long focus range and a fourth note", () => {
+    const note = { path: "a.ts", side: "new", line: 3, body: "n" };
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "t",
+      summary: "s",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "w",
+          summary: "s",
+          focus: [
+            { path: "a.ts", side: "new", start: 9, end: 8, caption: "c" },
+            { path: "a.ts", side: "new", start: 1, end: 26, caption: "c" },
+            { path: "a.ts", side: "new", start: 1, end: 25, caption: "c" },
+            { path: "a.ts", side: "left", start: 1, end: 2, caption: "c" },
+          ],
+          notes: [note, note, note, note],
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      const text = result.errors.join("\n");
+      assert.match(text, /focus\[0\]\.end.*must not be before start/);
+      assert.match(text, /focus\[1\]\.end.*range spans 26 lines; at most 25/);
+      assert.doesNotMatch(text, /focus\[2\]/);
+      assert.match(text, /focus\[3\]\.side.*must be old or new/);
+      assert.match(text, /notes.*must hold at most 3 notes/);
+    }
+  });
+
   it("loads legacy group lookFor, flags it, and writes it back", () => {
     const result = parseReviewDocument({
       version: 1,

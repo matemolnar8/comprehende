@@ -17,6 +17,7 @@ import type {
   ReviewHunkRef,
   ReviewSource,
 } from "../schema/types.ts";
+import { carryAnchors, type CarriedHunk } from "./anchors.ts";
 import { joinCoverage } from "./coverage.ts";
 import { buildDigest, type DigestFile } from "./digest.ts";
 
@@ -45,6 +46,8 @@ export type GroupRefresh = {
   reformatted: LiveHunk[];
   /** Added hunks a path ref of this group now covers. */
   newHunks: LiveHunk[];
+  /** Focus ranges and notes dropped because their hunk was edited. */
+  droppedAnchors: { focus: number; notes: number };
   empty: boolean;
 };
 
@@ -148,8 +151,8 @@ export function refreshDocument(
   const addedByPath = groupByPath(delta.added);
   const changedByPath = groupByPath(delta.changed.map((match) => match.next));
   const reformatByPath = groupByPath(delta.reformat.map((match) => match.next));
-  type Carried = { next: LiveHunk; kind: "same" | "changed" | "reformat" };
-  const carried = new Map<string, Carried | undefined>();
+  const previousLive = flattenHunks(previous);
+  const carried = new Map<string, CarriedHunk>();
   for (const match of delta.same) {
     carried.set(hunkKey(match.previous), { next: match.next, kind: "same" });
   }
@@ -173,6 +176,7 @@ export function refreshDocument(
       changed: [],
       reformatted: [],
       newHunks: [],
+      droppedAnchors: { focus: 0, notes: 0 },
       empty: false,
     };
     const refs: ReviewHunkRef[] = [];
@@ -231,18 +235,27 @@ export function refreshDocument(
       }
     }
     change.empty = refs.length === 0;
+    const { focus: _focus, notes: _notes, ...rest } = group;
+    const anchors = carryAnchors(group, previousLive, carried);
+    change.droppedAnchors = anchors.changed;
     if (
       change.dropped.length > 0 ||
       change.moved > 0 ||
       change.changed.length > 0 ||
       change.reformatted.length > 0 ||
-      change.newHunks.length > 0
+      change.newHunks.length > 0 ||
+      anchors.changed.focus + anchors.changed.notes > 0
     ) {
       groups.push(change);
     } else {
       unchanged.push(group.id);
     }
-    return { ...group, hunkRefs: refs };
+    return {
+      ...rest,
+      ...(anchors.focus.length > 0 ? { focus: anchors.focus } : {}),
+      ...(anchors.notes.length > 0 ? { notes: anchors.notes } : {}),
+      hunkRefs: refs,
+    };
   });
 
   const refreshed: ReviewDocument = { ...document, source, groups: nextGroups };
@@ -468,6 +481,12 @@ export function formatRefresh(
     }
     if (group.newHunks.length > 0) {
       bits.push(count(group.newHunks.length, "new hunk"));
+    }
+    if (group.droppedAnchors.focus > 0) {
+      bits.push(`${count(group.droppedAnchors.focus, "focus range")} dropped`);
+    }
+    if (group.droppedAnchors.notes > 0) {
+      bits.push(`${count(group.droppedAnchors.notes, "note")} dropped`);
     }
     if (group.dropped.length > 0) {
       bits.push(`${count(group.dropped.length, "ref")} gone`);

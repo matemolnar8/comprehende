@@ -1,7 +1,13 @@
 import * as z from "zod";
 import { parseHunkRefString, parseStoredHunkRef } from "./identity.ts";
 import { sourceCitationErrors } from "./source.ts";
-import { ATTENTION_KINDS, REVIEW_SIZES, SOURCE_KINDS } from "./types.ts";
+import {
+  ATTENTION_KINDS,
+  FOCUS_MAX_LINES,
+  NOTES_MAX,
+  REVIEW_SIZES,
+  SOURCE_KINDS,
+} from "./types.ts";
 
 const SCHEMA_ID = "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json";
 const COMMENT_ONLY_KEYS = ["author", "body", "path", "side", "line"] as const;
@@ -152,6 +158,47 @@ const questionsSchema = z
       "At most 2 questions that ask why the change is this way, where the code and the sources leave the reason open. When a source answers one, the answer goes in why.",
   });
 
+function lineNumber(description: string) {
+  return z
+    .int({ error: "must be a positive integer" })
+    .min(1, { error: "must be a positive integer" })
+    .meta({ description });
+}
+
+const lineSideSchema = z
+  .enum(["old", "new"], { error: "must be old or new" })
+  .meta({ description: "old: a line of the base file. new: a line of the head file." });
+
+const focusShape = z.strictObject(
+  {
+    path: nonemptyString("Git path of a file this group covers."),
+    side: lineSideSchema,
+    start: lineNumber("First line, 1-based, on that side."),
+    end: lineNumber(`Last line, inclusive. At most ${FOCUS_MAX_LINES} lines from start.`),
+    caption: nonemptyString("One sentence: what these lines show."),
+  },
+  { error: objectError },
+);
+
+const focusSchema = focusShape.check((ctx) => {
+  const { start, end } = ctx.value;
+  if (end < start) {
+    addIssue(ctx, "must not be before start", ["end"]);
+  } else if (end - start + 1 > FOCUS_MAX_LINES) {
+    addIssue(ctx, `range spans ${end - start + 1} lines; at most ${FOCUS_MAX_LINES}`, ["end"]);
+  }
+});
+
+const noteSchema = z.strictObject(
+  {
+    path: nonemptyString("Git path of a file this group covers."),
+    side: lineSideSchema,
+    line: lineNumber("1-based line on that side, inside a hunk this group covers."),
+    body: nonemptyString("What the code alone does not say about this line."),
+  },
+  { error: objectError },
+);
+
 const groupSchema = z.strictObject(
   {
     id: nonemptyString(),
@@ -164,6 +211,17 @@ const groupSchema = z.strictObject(
       description: "The one judgment call a reviewer makes in this group. Most groups have none.",
     }),
     questions: questionsSchema,
+    focus: z
+      .array(focusSchema, { error: "must be an array" })
+      .optional()
+      .meta({
+        description: `Ranges the UI opens a hunk to. Each sits inside one live hunk of this group and spans at most ${FOCUS_MAX_LINES} lines. The whole hunk is one click away.`,
+      }),
+    notes: z
+      .array(noteSchema, { error: "must be an array" })
+      .max(NOTES_MAX, { error: `must hold at most ${NOTES_MAX} notes` })
+      .optional()
+      .meta({ description: "Line-anchored notes the UI letters A, B, C." }),
     dependsOn: stringList("Ids of earlier groups this one depends on. Same story only."),
     part: nonemptyString(
       "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs.",
@@ -399,6 +457,8 @@ export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
 export type StoredReviewDocument = z.infer<typeof storedDocumentObject>;
 export type ReviewGroup = ReviewDocument["groups"][number];
 export type Attention = z.infer<typeof attentionSchema>;
+export type FocusRange = z.infer<typeof focusSchema>;
+export type LineNote = z.infer<typeof noteSchema>;
 export type AttentionKind = Attention["kind"];
 export type Questions = NonNullable<ReviewGroup["questions"]>;
 

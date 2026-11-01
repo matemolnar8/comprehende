@@ -7,9 +7,10 @@ import { waitCopy } from "../lib/wait.ts";
 import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { FileRail, FileStrip } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
+import { letterNotes } from "../lib/focus.ts";
 import { ReadingMark } from "./ReadingMark.tsx";
 import { WaitMark } from "./WaitMark.tsx";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export function Group(props: {
   group: ReviewMeta["groups"][number] | null;
@@ -58,6 +59,8 @@ export function Group(props: {
         : "var(--primary)");
 
   const filePaths = files.map((file) => file.path);
+  const listed = props.document.groups.find((item) => item.id === group?.id);
+  const notes = useMemo(() => letterNotes(listed?.notes ?? []), [listed]);
   const narrow = useNarrow();
 
   useEffect(() => {
@@ -98,6 +101,8 @@ export function Group(props: {
       onViewed={props.onViewed}
       comments={props.comments}
       focusCommentId={props.focusCommentId}
+      focus={listed?.focus}
+      notes={notes}
     />
   ));
 

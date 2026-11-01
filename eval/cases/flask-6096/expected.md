@@ -38,6 +38,7 @@ One group that holds all four files is equally good, because both hunks fix the 
 - Do not put a test in a different group from the code it checks, or make one group per file.
 - Do not split the change into two parts; one issue names both fixes as one story.
 - Do not present the "Development Versions" CI failure as a defect of this change.
+- Do not write a focus range; every hunk in this change is 20 lines or fewer, so each reads whole.
 - Do not write a group attention that asks for more IPv6 tests, a note on the removed `t.cast`, or a refactor that shares one host parser between `app.py` and `testing.py`; a missing test, a nit, and a refactor idea are not attentions.
 - Do not write a group question that asks why the fix uses `urlsplit` instead of `partition`, or where the `or "localhost"` fallback comes from; issue #6093 and the PR comments give those reasons.
 
