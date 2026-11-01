@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify 831ca5da9276ead82ada198ba2b928e62c3710f2` in this repository.
+   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify 40fb350b116d4142086135bae7691f55d33ea6b1` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 831ca5da9276ead82ada198ba2b928e62c3710f2 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 40fb350b116d4142086135bae7691f55d33ea6b1 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  3d282dc3d8e5a36190f501ab5d73fa0b9f138cae
 
-head               831ca5da9276ead82ada198ba2b928e62c3710f2
+head               40fb350b116d4142086135bae7691f55d33ea6b1
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 831ca5da9276ead82ada198ba2b928e62c3710f2
+git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 40fb350b116d4142086135bae7691f55d33ea6b1
 
 Review concern 04 of 07: Collapsed hunk and note pins (`ui`)
 
@@ -41,13 +41,13 @@ The why:
 
 The what:
 
-`focusPatch` in `focus.ts` cuts the file patch to the focused lines, `HunkView` renders it under a `FocusBar`, and `PierreDiff` adds `NotePin` rows as line annotations.
+`focusBlocks` in `focus.ts` turns a focused file into bars, diffs, and hidden-lines rows, which `HunkView` renders with `FocusBar`, `HiddenLines`, and one `PierreFileDiff` per diff; `NotePin` adds the lettered note rows.
 
 Attention (tradeoff):
-While any hunk of a file is cut, `HunkView` turns hydration off and `PierreDiff` shows `@@` headers between hunks instead of expandable gaps. A gap count would call the hidden changed lines unmodified. Decide whether losing gap expansion until "Show whole hunk" is the right cost.
+A file with a focus range renders one diff per block, with `hydrate` off and plain separator bars. Its gaps between hunks no longer expand, even after "Show whole hunk". Decide whether that cost is right for focused files.
 
 Questions:
-- Why does `focusPatch` fall back to the whole patch when its `@@` lines do not match the file's hunks, instead of failing?
+- Why does `focusBlocks` render the file whole, with no mark, when the patch's `@@` lines do not line up with its hunks?
 
 Depends on:
 - 01 Focus and note fields (`schema`)

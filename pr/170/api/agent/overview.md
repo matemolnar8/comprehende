@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify 831ca5da9276ead82ada198ba2b928e62c3710f2` in this repository.
+   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify 40fb350b116d4142086135bae7691f55d33ea6b1` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  3d282dc3d8e5a36190f501ab5d73fa0b9f138cae
 
-head               831ca5da9276ead82ada198ba2b928e62c3710f2
+head               40fb350b116d4142086135bae7691f55d33ea6b1
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 831ca5da9276ead82ada198ba2b928e62c3710f2
+git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 40fb350b116d4142086135bae7691f55d33ea6b1
 
 Commits:
+- 40fb350 Show the cut in the diff and the focus reason as a reason
 - 831ca5d cobra-2356: a note that repeats the code comment is a Must not
 - bae4cb6 Size show's number column from the last line, not one past it
 - c82b14b Fix excerpt headers on an empty side, widen mid-block ranges, keep no-newline marks in show
@@ -58,6 +59,7 @@ Groups gain `focus` ranges and up to three line `notes`. `validate` checks them 
 
 Look for:
 - [#163](source:s1) gives refresh rules for `same`, `changed`, and `gone` hunks. At head, `carryAnchors` also drops a range or note on a `reformat` hunk and counts it with the `changed` ones in the report. [PR #170](source:s2) gives the reason: whitespace edits can move lines inside the hunk.
+- [#163](source:s1) puts the caption and `Showing 12 of 48 lines · Show whole hunk` above a focused hunk. At head, the bar above the hunk holds the caption and the toggle, and the line counts move into rows at each cut edge inside the diff (`⋯ N lines above not shown`). No source gives the reason for the move.
 
 ## Review concerns
 
@@ -72,7 +74,7 @@ The 25-line cap, `end >= start`, and the three-note cap are zod checks in `revie
 
 ### 02 validate and refresh (`anchors`)
 
-`cmdValidate` adds `anchorErrors` from `anchors.ts`, and `refreshDocument` calls `carryAnchors` to shift or drop each anchor and count the drops for the report.
+`cmdValidate` adds `anchorErrors` from `anchors.ts`, and `refreshDocument` calls `carryAnchors` to shift or drop each anchor.
 
 Attention (tradeoff):
 `carryAnchors` keeps an anchor only on a `same` hunk. A whitespace-only push makes the hunk `reformat`, so its ranges and notes drop, and the agent writes them again. Decide whether that loss is worth the safety.
@@ -90,13 +92,13 @@ Depends on:
 
 ### 04 Collapsed hunk and note pins (`ui`)
 
-`focusPatch` in `focus.ts` cuts the file patch to the focused lines, `HunkView` renders it under a `FocusBar`, and `PierreDiff` adds `NotePin` rows as line annotations.
+`focusBlocks` in `focus.ts` turns a focused file into bars, diffs, and hidden-lines rows, which `HunkView` renders with `FocusBar`, `HiddenLines`, and one `PierreFileDiff` per diff; `NotePin` adds the lettered note rows.
 
 Attention (tradeoff):
-While any hunk of a file is cut, `HunkView` turns hydration off and `PierreDiff` shows `@@` headers between hunks instead of expandable gaps. A gap count would call the hidden changed lines unmodified. Decide whether losing gap expansion until "Show whole hunk" is the right cost.
+A file with a focus range renders one diff per block, with `hydrate` off and plain separator bars. Its gaps between hunks no longer expand, even after "Show whole hunk". Decide whether that cost is right for focused files.
 
 Questions:
-- Why does `focusPatch` fall back to the whole patch when its `@@` lines do not match the file's hunks, instead of failing?
+- Why does `focusBlocks` render the file whole, with no mark, when the patch's `@@` lines do not line up with its hunks?
 
 Depends on:
 - 01 Focus and note fields (`schema`)
