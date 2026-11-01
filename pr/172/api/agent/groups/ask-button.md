@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify de6c86b23284d2dc40e2633828c3854e1e8e6b1a` and `git rev-parse --verify 02739aebc0a4f3928a5867376d0363b45591795d` in this repository.
+   Run `git rev-parse --verify f9d12b75708f86c165bb8249aa024f7914a785ef` and `git rev-parse --verify 5d59f087125233c028b0b844984838da3e3df2bf` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames de6c86b23284d2dc40e2633828c3854e1e8e6b1a 02739aebc0a4f3928a5867376d0363b45591795d -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames f9d12b75708f86c165bb8249aa024f7914a785ef 5d59f087125233c028b0b844984838da3e3df2bf -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -23,15 +23,15 @@ When no question follows this paste, explain this review concern.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  de6c86b23284d2dc40e2633828c3854e1e8e6b1a
+base (merge-base)  f9d12b75708f86c165bb8249aa024f7914a785ef
 
-head               02739aebc0a4f3928a5867376d0363b45591795d
+head               5d59f087125233c028b0b844984838da3e3df2bf
 
 Named refs at pin: origin/main ... t3/agent-deep-links
 
 Read the diff:
 
-git diff --find-renames de6c86b23284d2dc40e2633828c3854e1e8e6b1a 02739aebc0a4f3928a5867376d0363b45591795d
+git diff --find-renames f9d12b75708f86c165bb8249aa024f7914a785ef 5d59f087125233c028b0b844984838da3e3df2bf
 
 Review concern 03 of 03: Split Ask button with the picker (`ask-button`)
 
