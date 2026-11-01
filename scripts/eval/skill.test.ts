@@ -51,7 +51,11 @@ describe("next skill workflow", () => {
     assert.match(batch, /digest --base <base> --head <head>/);
     assert.match(batch, /git log --format=/);
     assert.doesNotMatch(batch, /git diff --stat/);
-    assert.match(md, /<executable> --version` in this same shell call/);
+    const localCli = await readFile(
+      join(findPackageRoot(), "skills-next/comprehende/references/local-cli.md"),
+      "utf8",
+    );
+    assert.match(localCli, /`<executable> --version` in place of `npm view comprehende version`/);
     assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);
     assert.doesNotMatch(md, /package-lock\.json/);

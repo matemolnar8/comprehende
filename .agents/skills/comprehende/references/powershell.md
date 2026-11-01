@@ -1,6 +1,6 @@
 # PowerShell
 
-These blocks replace the POSIX blocks of Workflow steps 2 and 4 and of Refresh. Every other block in SKILL.md runs in PowerShell as written: `"$REVIEW_DIR/review.json"` expands the same way in both shells. `<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named. The blocks run in Windows PowerShell 5.1 and in PowerShell 7.
+These blocks replace the POSIX blocks of SKILL.md Workflow steps 2 and 4 and of `references/refresh.md`. Every other block in SKILL.md and its references runs in PowerShell as written: `"$REVIEW_DIR/review.json"` expands the same way in both shells. `<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named. The blocks run in Windows PowerShell 5.1 and in PowerShell 7.
 
 - Each block starts with `[Console]::OutputEncoding = [Text.Encoding]::UTF8`, so paths and commit subjects print as git wrote them.
 - Read files with `Get-Content -Raw -Encoding UTF8`. Write files with `[IO.File]::WriteAllText`; it writes UTF-8 with no BOM.

@@ -15,7 +15,7 @@ Run every command inside the repository under review. Cwd is the repo. Use the p
 npx comprehende@0.12.0 <command>
 ```
 
-The shell blocks are POSIX sh, for bash and zsh. In PowerShell, read `references/powershell.md` before step 2: it replaces the blocks of Workflow steps 2 and 4 and of Refresh. Your harness names the shell. When it does not, run `$PSVersionTable`: it prints a table only in PowerShell.
+The shell blocks are POSIX sh, for bash and zsh. In PowerShell, read `references/powershell.md` before step 2: it replaces the blocks of Workflow steps 2 and 4 and of `references/refresh.md`. Your harness names the shell. When it does not, run `$PSVersionTable`: it prints a table only in PowerShell.
 
 The review document is interpretation only. It holds a title, groups, summaries, and hunk pointers. `serve` reads the diff from git.
 
@@ -23,12 +23,17 @@ Work from the digest, not the diff. The digest is one line per file: kind, hunks
 
 ## Workflow
 
-When a review document for this change already exists, follow Refresh instead.
+When a review document for this change already exists, as a `review.json` or a hosted export, read `references/refresh.md` and follow it instead of this Workflow.
 
-Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch with its sources, one show batch, one write that ends in validate. Further calls only fix what validate names.
+Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch with its sources, one show batch, one write that ends in validate. Further calls only fix what validate names. Lettered substeps (2a, 2b) split the work of one step and share its one call.
 
-1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. When the user names a ref that is not in the clone, `git fetch <remote> <ref>` goes first in the step-2 call. When the base branch the forge reports for a request is the head branch of another request, the request is in a stack, and that other request is the lower layer. That branch is the base, or the recorded base SHA when the change is already on the default branch, so the review covers this layer only. The lower layer is a `pr` source; cite it where a group uses its code. Done when both ref names are chosen.
-2. One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources. `$REVIEW_DIR` comes from `mktemp -d` in that call, outside the repository. `&&` stops the shell before `pregroup` when a ref does not resolve; tell the user which ref failed.
+1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. When the user names a ref that is not in the clone, `git fetch <remote> <ref>` goes first in the step-2 call. When the base branch the forge reports for the request is the head branch of another request, the request is in a stack: read `references/stacks.md` before you choose the base. Done when both ref names are chosen.
+
+2. One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources. When the user names a local executable for the CLI, read `references/local-cli.md` before this call.
+
+   **2a. Pick the sources.** Sources are the request or ticket body, each review comment with whether its thread is resolved, whether the comment is outdated, and its current line, and the commit subjects. You fetch them; the user names only the change. The remote URL (`git remote get-url <remote>`) names the forge; its CLI fetches the request body and the review comments in this call, each through `head -c 10000`, and the two placeholder lines in 2b are those fetches. When the harness reaches the forge only through an MCP, those fetches go in one parallel block after this call, one fetch each. A ticket number in the request, the branch name, or a commit subject names a ticket to read here the same way. The why says how each source becomes a `sources` item. Done when each source has a fetch in the call or in the parallel block.
+
+   **2b. Run the call.** `$REVIEW_DIR` comes from `mktemp -d` in that call, outside the repository. `&&` stops the shell before `pregroup` when a ref does not resolve; tell the user which ref failed.
 
    ```sh
    REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
@@ -42,21 +47,48 @@ Each step is one tool call where the step says so. Batch the commands as written
    }
    ```
 
-   Sources are the request or ticket body, each review comment with whether its thread is resolved, whether the comment is outdated, and its current line, and the commit subjects. You fetch them; the user names only the change. The remote URL (`git remote get-url <remote>`) names the forge; its CLI fetches the request body and the review comments in this call, each through `head -c 10000`, and the two placeholder lines above are those fetches. When the harness reaches the forge only through an MCP, those fetches go in one parallel block after this call, one fetch each. On a stack, fetch the lower layer's body the same way: one more fetch in this call, or one more in that parallel block. A ticket number in the request, the branch name, or a commit subject names a ticket to read here the same way.
+   Done when the call printed, or the user knows which ref failed.
 
-   When the user names a local executable, use that command as written in place of `npx comprehende@0.12.0`, and run `<executable> --version` in this same shell call in place of `npm view`. That printed line is the CLI version. If that version is newer than this pin (`npx comprehende@0.12.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
+   **2c. Check the version.** `npm view` prints the newest published CLI version. If that version is newer than this pin (`npx comprehende@0.12.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue. Done when you continue or the user has the choice.
 
-   `pregroup` writes a draft: `mirrors-<n>` groups of files that received the same change, one `mechanical` group (renames, copies, moves, generated output), and one `change` group for the rest, with stub prose. The `cat` prints the draft. Trust the `same change as`, `pairs with`, and `replaces` hints; a file that `replaces` a deleted one, and the file it `replaced`, are a new version, not a move, and read with their story. Done when the digest, the draft, the log, and the sources are in context.
+   **2d. Read the draft.** `pregroup` writes a draft: `mirrors-<n>` groups of files that received the same change, one `mechanical` group (renames, copies, moves, generated output), and one `change` group for the rest, with stub prose. The `cat` prints the draft. Trust the `same change as`, `pairs with`, and `replaces` hints; a file that `replaces` a deleted one, and the file it `replaced`, are a new version, not a move, and read with their story. Done when the digest, the draft, the log, and the sources are in context.
 
-3. Group the hunks by review concern, starting from the draft, and fetch the patch the decision needs. Accept a draft group that already holds one concern. Split the `change` group where a reader would stop and review the first piece alone. Merge draft groups that serve one concern. Name each story that could have been its own PR: the asked story, and each dependency policy change (exact versions loosened to ranges, or the reverse), standalone document, refactor of files the asked story does not need, or production code in a PR about tests. Each story is a `part` on its groups; one story means no `part`. Up to six files in the digest: fetch every file that is not mechanical or a copy. Past six: fetch only the hunks that decide a split, a source verdict, or an `attention`, eight fetches at most, and state each reason first ("`login.ts` hunks may belong apart"). Draft `mirrors-<n>` and `mechanical` groups need no fetch. One show call:
+3. Group the hunks by review concern, starting from the draft, and fetch the patch the decision needs. One show call. Grouping rules hold the rules this step applies.
+
+   **3a. Fetch.** Up to six files in the digest: fetch every file that is not mechanical or a copy. Past six: fetch only the hunks that decide a split, a source verdict, or an `attention`, eight fetches at most, and state each reason first ("`login.ts` hunks may belong apart"). Draft `mirrors-<n>` and `mechanical` groups need no fetch.
 
    ```sh
    npx comprehende@0.12.0 show --base <base> --head <head> --hunk "<ref>"; npx comprehende@0.12.0 show --base <base> --head <head> --file "<path>"
    ```
 
-   `show` prints the old and the new line number before each line. Done when every story has a `part` name or there is one story, and the show output is in context or nothing needs a fetch.
+   `show` prints the old and the new line number before each line. Done when the show output is in context or nothing needs a fetch.
 
-4. Write the document. Document `title` (always), document `summary` (always), and document `why` (only when a source names the motive). Check each source item against the digest and the fetched hunks; each divergence is a document `lookFor` bullet (see lookFor). Summaries come from the digest symbols and kinds, plus fetched hunks. Every group has `why` and `summary`. A group `summary` is one sentence that names one relation among its hunks, not a list of its files. Before each citation, find the sentence in that source that says the claim, and cite that source for that sentence only (see The what and The why). A group whose fetched hunks hold a judgment call has one `attention` (see Attention). A group whose code and sources leave the reason for a choice open asks why in `questions` (see Questions). A long fetched hunk gets a `focus` range, and a fetched line the code alone does not explain gets a note (see Focus and notes). Each file of a group with two or more files gets a file note (see File notes). Copy each ref from the draft into the group that holds it, verbatim; the draft refs already match live git. A path covers every hunk of its file; write hunk refs (`path@oldStart+newStart`, see Grouping rules) only for a file split across groups. Keep `version` and `source` from the draft. Write the whole `review.json` in one shell call from the field shape below: a quoted heredoc, then `validate`.
+   **3b. Group.** Accept a draft group that already holds one concern. Split the `change` group where a reader would stop and review the first piece alone. Merge draft groups that serve one concern. Name each story that could have been its own PR: the asked story, and each dependency policy change (exact versions loosened to ranges, or the reverse), standalone document, refactor of files the asked story does not need, or production code in a PR about tests. Each story is a `part` on its groups; one story means no `part`. When a story builds on another part, `suggestedOrder` puts that part first. Done when:
+
+   - every story has a `part` name, or there is one story;
+   - unasked work that could have been its own PR has its own `part`, and related enabling work stays one part;
+   - each unit test sits in the group of the code it checks;
+   - each helper several groups call sits in the foundation group they share;
+   - each new harness sits with the build or CI that runs it;
+   - each feature spec sits with its seed and helpers;
+   - each one-line call site or declaration sits with the code it serves;
+   - each `dependsOn` id names a group in the same `part`.
+
+4. Write the whole `review.json` in one shell call: a quoted heredoc, then `validate`. 4a to 4f decide the content; 4g writes it.
+
+   **4a. Title, why, and what.** Document `title` (always, see The title), document `summary` (always, see The what), and document `why` (only when a source names the motive, see The why). Every group has `why` and `summary`. Summaries come from the digest symbols and kinds, plus fetched hunks. A group `summary` is one sentence that names one relation among its hunks, not a list of its files. Before each citation, find the sentence in that source that says the claim, and cite that source for that sentence only (see The what and The why). Done when stub prose is gone, each mechanical summary says what the reader can skip, every named `part` has a document `parts[]` entry, and every citation rests on a sentence its source says.
+
+   **4b. Source verdicts.** Check each source item against the digest and the fetched hunks; each divergence is a document `lookFor` bullet (see lookFor). Done when every source item has a verdict and every divergence is a document `lookFor` bullet.
+
+   **4c. Attention.** A group whose fetched hunks hold a judgment call has one `attention` (see Attention). Done when every judgment call a fetched hunk shows is the `attention` of its group, and every other group has none.
+
+   **4d. Questions.** A group whose code and sources leave the reason for a choice open asks why in `questions` (see Questions). Done when every question asks a reason no source gives.
+
+   **4e. Focus and notes.** A long fetched hunk gets a `focus` range, and a fetched line the code alone does not explain gets a note (see Focus and notes). Done when every focus range and note uses line numbers `show` printed.
+
+   **4f. File notes.** Each file of a group with two or more files gets a file note (see File notes). Done when every file note says what changed in its file.
+
+   **4g. Write and validate.** Copy each ref from the draft into the group that holds it, verbatim; the draft refs already match live git. A path covers every hunk of its file; write hunk refs (`path@oldStart+newStart`, see Grouping rules) only for a file split across groups. Keep `version` and `source` from the draft. Write the document from the field shape below.
 
    ```sh
    cat > "$REVIEW_DIR/review.json" <<'EOF'
@@ -64,8 +96,6 @@ Each step is one tool call where the step says so. Batch the commands as written
    EOF
    npx comprehende@0.12.0 validate --data "$REVIEW_DIR/review.json"
    ```
-
-   Done when every source item has a verdict and every divergence is a document `lookFor` bullet; every judgment call a fetched hunk shows is the `attention` of its group, and every other group has none; every question asks a reason no source gives; every ref from the draft is in at least one group; every live hunk of a split file is named; stub prose is gone; every named `part` has a document `parts[]` entry; each `dependsOn` id names a group in the same `part`; every citation rests on a sentence its source says; every focus range and note uses line numbers `show` printed; every file note says what changed in its file. Also done when each unit test sits in the group of the code it checks, each helper several groups call sits in the foundation group they share, each new harness sits with the build or CI that runs it, each feature spec sits with its seed and helpers, each one-line call site or declaration sits with the code it serves, unasked work that could have been its own PR has its own `part`, related enabling work stays one part, and each mechanical summary says what the reader can skip. When a story builds on another part, `suggestedOrder` puts that part first.
 
    Field shape. The words are placeholders. This shape is enough to write a valid document.
 
@@ -91,49 +121,12 @@ Each step is one tool call where the step says so. Batch the commands as written
 
    Add a field when the section that defines it says to write it: document `why`, `lookFor`, and `parts` (`name`, `summary`); `sources` (`id`, `kind` of `ticket`, `pr`, `pr-comment`, `commit`, or `transcript`, `label`, plus `url`, `title`, `gist`, and `part` when you have them). On a group: `part`, `sources` (those ids), `attention` (`kind`, `note`), `questions` (at most 2 strings), `focus` (`path`, `side`, `start`, `end`, `caption`), `notes` (`path`, `side`, `line`, `body`), `fileNotes` (file path to one line), `dependsOn` (group ids). A `pr-comment` source also has `author` and `body`, and a pin (`path`, `side`, `line`) when PR comments under The why say so. `size` is `trivial`, `small`, `medium`, `large`, or `very-large`.
 
-5. `validate` ends the step-4 call; after a fix or a Refresh edit, run `npx comprehende@0.12.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every directory ref holds only mechanical files, every group `part` has a `parts[]` entry, every `dependsOn` names a group in the same `part`, every PR comment pin (`path`, `side`, `line`) matches a live line, every focus range sits inside one live hunk of its group and spans at most 25 lines, every note sits inside a hunk of its group, a group holds at most three notes, every `fileNotes` path is a file of its group, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
-6. When the user asks to upload the report, follow Export. Otherwise run `npx comprehende@0.12.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
+   Done when every ref from the draft is in at least one group and every live hunk of a split file is named.
+
+5. `validate` ends the step-4 call; after a fix or a refresh edit, run `npx comprehende@0.12.0 validate --data "$REVIEW_DIR/review.json"` with the absolute path. It checks: every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`, every directory ref holds only mechanical files, every group `part` has a `parts[]` entry, every `dependsOn` names a group in the same `part`, every PR comment pin (`path`, `side`, `line`) matches a live line, every focus range sits inside one live hunk of its group and spans at most 25 lines, every note sits inside a hunk of its group, a group holds at most three notes, every `fileNotes` path is a file of its group, and the document has no unknown fields. On failure, fix what the message names; the diff is git's, leave it alone. Done when validate exits 0.
+6. When the user asks to upload the report, read `references/export.md` and follow it. Otherwise run `npx comprehende@0.12.0 serve --data "$REVIEW_DIR/review.json" --open` and give the user the localhost URL (`127.0.0.1` only).
 
 `references/example.md` is an optional filled sample of the field shape.
-
-## Export
-
-Write a static site and put that folder where the user asked.
-
-```sh
-npx comprehende@0.12.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
-```
-
-`$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads. There is no git in it. Done when the user has the URL or path they named. If `review.json` is still a draft, finish the Workflow through validate, then export.
-
-## Refresh
-
-Carry an existing review over to new commits or a rebase. Prose for a hunk that did not change stays as it is; only the groups the report names get new words.
-
-The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
-
-```sh
-REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1]).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((j) => require("fs").writeFileSync(process.argv[2], JSON.stringify(j.document, null, 2)))' "<site-url>/api/review.json" "$REVIEW_DIR/review.json"
-```
-
-1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another. When the lower layer of a stack has merged and this request is still open, pass `--base` with the base branch the forge now reports.
-
-   ```sh
-   git fetch --quiet <remote> && {
-     npx comprehende@0.12.0 refresh --data "$REVIEW_DIR/review.json"
-     cat "$REVIEW_DIR/review.json"
-   }
-   ```
-
-   `refresh` keeps a hunk whose path and changed lines are the same, wherever it now starts, and re-points its ref. A hunk edited in place (same file, same region, other lines) is `changed` and keeps its group; when only whitespace moved it is `reformat`. A ref whose hunk left the diff is dropped. Every hunk no group covers lands in a draft `update` group with stub prose, and so does every new hunk under a directory ref. A focus range or note follows a `same` hunk to its new lines. One on a `changed` or `reformat` hunk is dropped, and the report names its group; one on a `gone` hunk is dropped. A file note stays while every hunk of its file is `same`. When its file gains, edits, or loses a hunk, the note is dropped and the report counts it; one on a file that left the diff is dropped. The report prints the new commit subjects, one line per file whose hunks changed (`new`, `changed`, `reformat`, `same`, `gone`, and the groups it sits in), and per group what moved. "nothing to refresh" means the refs still resolve to the commits the document names: fetch the right remote or name the head, then run it again. Done when the report and the document are in context.
-
-2. Sources as in step 2 of the Workflow, appended to the step-1 shell call. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read each new comment whole. Commit subjects are in the report. Done when every new comment and subject is in context.
-
-3. One `show` batch, with `--base` and `--head` set to the new range, for the hunks the report marks `new` or `changed`. Up to six listed files: fetch every `new` or `changed` hunk. Past six, the step-3 budget applies to the files the report lists. A `same` or `reformat` hunk is fetched only when a kept `attention` rests on it.
-
-4. Edit `review.json` in place with your edit tool; untouched groups stay verbatim. Move each `update` ref into the group that holds its concern, or into a new group, then delete `update`. In a group the report names: rewrite `summary` when the new or changed hunks change what the group is; drop an `attention` whose hunks are `gone`; re-check an `attention` on a `changed` hunk against the fetched hunk; re-check each question the report counts, and when a new source answers it, put the answer in `why` and drop the question; write a dropped focus range, note, or file note again from the fetched hunk when that hunk still needs it. A group the report lists under `lookFor to convert to attention` gets its one judgment call as `attention`, and its `lookFor` field goes. A named group whose hunks keep their meaning, such as one with only `reformat` hunks, keeps its prose as it is. Delete a group that is `now empty`, and every `dependsOn` that names it. Retire a document `lookFor` bullet that a new commit resolves; a new comment asking for work the change does not do is a new bullet. `size` moves with the new burden; `title` and `why` change only when a source did. Done when `update` is gone, no group is empty, no stub prose remains, and every named group's prose matches the code at head.
-
-5. Steps 5 and 6 of the Workflow: validate, then serve or export to the same place as before. Give the user the URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.
 
 ## The title
 
@@ -181,7 +174,7 @@ Group `summary` is one sentence saying what the group is, describing how its hun
 - Document `size` is human review burden: `trivial`, `small`, `medium`, `large`, `very-large`. Forty files changing one import in one group are `small`. A new component plus follow-up changes across existing screens is `medium`. A new contract that later groups depend on is `large`. That `size` stays when those groups merge.
 - Coverage: every live hunk sits in at least one group. A path covers every live hunk of that file. Duplicate refs across groups are allowed. Unreferenced hunks fail `validate` and show as Unassigned in the UI. Every ref in the draft already covers its hunks; splitting a file across groups needs hunk refs, everything else keeps the draft's paths.
 - Lockfiles have no hunk refs; the CLI leaves them out of the draft and the UI gives them their own closed bucket. Hunk refs exist only for hunks the draft lists.
-- A path stays valid when a rebase only shifts line numbers. `path@oldStart+newStart` goes stale when those starts move, and that fails `validate`; `refresh` re-points it (see Refresh).
+- A path stays valid when a rebase only shifts line numbers. `path@oldStart+newStart` goes stale when those starts move, and that fails `validate`; `refresh` re-points it (see `references/refresh.md`).
 
 A `hunkRefs` entry is a path string when the group holds every live hunk of that file. Copy the path from the draft. A path ending in `/` holds every live hunk under that directory that no other ref names: the most specific ref wins. The digest prints one line for a directory of mechanical files, at least half of them pure renames; the draft holds it as that one ref, and the files listed below that line are already inside it. To move one of those files to its story, put its path in that story's group; the directory ref lets it go. `validate` fails a directory ref that still holds a file that is not mechanical. When a file is split across groups, name each hunk as `path@oldStart+newStart`, or `old/path -> new/path@oldStart+newStart` when that hunk is a rename. Copy `oldStart` and `newStart` from the digest line (`hunks: path@oldStart+newStart`) or from the `@@ -oldStart,oldLines +newStart,newLines @@` header `show` prints. Identity is `(path, oldStart, newStart)` plus `oldPath` when renamed. Image files are paths.
 
