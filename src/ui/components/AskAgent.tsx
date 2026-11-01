@@ -96,7 +96,10 @@ export function AskAgent(props: { prompt: string; scope: keyof typeof ASK_CTA })
             type="button"
             size="sm"
             variant={variant}
-            className={cn("rounded-l-none border-l-0 px-1.5 has-[>svg]:px-1.5", tone)}
+            className={cn(
+              "rounded-l-none border-l-0 px-1.5 has-[>svg]:px-1.5 max-[799px]:px-2.5",
+              tone,
+            )}
             aria-label="Choose where to ask"
           >
             <ChevronDownIcon aria-hidden className="size-3.5" />

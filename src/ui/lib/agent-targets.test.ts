@@ -28,18 +28,9 @@ describe("agentLink", () => {
     }
   });
 
-  it("opens Claude Code in the local work tree, else in the clone of the origin", () => {
-    assert.deepEqual(params(agentLink("claude", prompt, local)), {
-      q: prompt,
-      cwd: "/home/me/widgets wt",
-    });
-    assert.deepEqual(params(agentLink("claude", prompt, hosted)), {
-      q: prompt,
-      repo: "acme/widgets",
-    });
-    assert.deepEqual(params(agentLink("claude", prompt, { origin: null, root: null })), {
-      q: prompt,
-    });
+  it("opens Claude Code desktop with the prompt only, local or hosted", () => {
+    assert.equal(agentLink("claude", prompt, local), agentLink("claude", prompt, hosted));
+    assert.deepEqual(params(agentLink("claude", prompt, local)), { q: prompt });
   });
 
   it("gives Codex the path only when there is one", () => {
@@ -53,6 +44,7 @@ describe("repoSlug", () => {
     assert.equal(repoSlug("git@github.com:acme/widgets.git"), "acme/widgets");
     assert.equal(repoSlug("https://github.com/acme/widgets/"), "acme/widgets");
     assert.equal(repoSlug("ssh://git@host:2222/acme/widgets.git"), "acme/widgets");
+    assert.equal(repoSlug("git@host:acme/widgets.GIT"), "acme/widgets");
     assert.equal(repoSlug(null), null);
   });
 });

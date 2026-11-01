@@ -13,19 +13,7 @@ export const AGENT_TARGETS = {
   copy: { label: "Copy prompt", link: null },
   claude: {
     label: "Claude Code",
-    link: (prompt, repo) =>
-      deepLink("claude-cli://open", {
-        q: prompt,
-        ...(repo.root !== null ? { cwd: repo.root } : { repo: repoSlug(repo.origin) }),
-      }),
-  },
-  "claude-vscode": {
-    label: "Claude Code in VS Code",
-    link: (prompt) => deepLink("vscode://anthropic.claude-code/open", { prompt }),
-  },
-  "claude-cursor": {
-    label: "Claude Code in Cursor",
-    link: (prompt) => deepLink("cursor://anthropic.claude-code/open", { prompt }),
+    link: (prompt) => deepLink("claude://code/new", { q: prompt }),
   },
   codex: {
     label: "Codex",
@@ -67,7 +55,8 @@ export function agentLink(target: AgentTargetId, prompt: string, repo: Repo): st
 
 /** `owner/name` from the last two path segments of a remote URL. Apps match it to a local clone. */
 export function repoSlug(origin: string | null): string | null {
-  const match = origin === null ? null : /[/:]([^/:]+)\/([^/]+?)(?:\.git)?\/?$/.exec(origin.trim());
+  const match =
+    origin === null ? null : /[/:]([^/:]+)\/([^/]+?)(?:\.git)?\/?$/i.exec(origin.trim());
   return match === null ? null : `${match[1]}/${match[2]}`;
 }
 
