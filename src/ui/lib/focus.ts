@@ -50,8 +50,9 @@ export function fileFocus(hunks: readonly LiveHunk[], focus: readonly FocusRange
 }
 
 /**
- * The lines a range names on its side, plus the other side of a change on the range's edge:
- * a range that starts on an added line also shows the deletions that line replaces.
+ * The lines a range names on its side. A change block cut at the range's edge widens to the whole
+ * block when the cut-off part holds the other side: a range that starts on an added line also
+ * shows the deletions that block replaces. A block of only additions stays cut.
  */
 export function rangeLines(lines: readonly DiffLine[], range: FocusRange): number[] {
   const number = (line: DiffLine) => (range.side === "old" ? line.oldNumber : line.newNumber);
@@ -64,12 +65,22 @@ export function rangeLines(lines: readonly DiffLine[], range: FocusRange): numbe
   if (first === -1) {
     return [];
   }
+  const changed = (index: number) => {
+    const kind = lines[index]?.kind;
+    return kind !== undefined && kind !== "ctx";
+  };
   const other = range.side === "old" ? "add" : "del";
-  if (lines[first]?.kind !== "ctx") {
-    while (lines[first - 1]?.kind === other) first -= 1;
+  const pairs = (from: number, to: number) =>
+    lines.slice(from, to + 1).some((line) => line.kind === other);
+  let blockStart = first;
+  while (changed(first) && changed(blockStart - 1)) blockStart -= 1;
+  if (pairs(blockStart, first - 1)) {
+    first = blockStart;
   }
-  if (lines[last]?.kind !== "ctx") {
-    while (lines[last + 1]?.kind === other) last += 1;
+  let blockEnd = last;
+  while (changed(last) && changed(blockEnd + 1)) blockEnd += 1;
+  if (pairs(last + 1, blockEnd)) {
+    last = blockEnd;
   }
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
@@ -145,10 +156,12 @@ function subHunk(hunk: LiveHunk, run: readonly number[]): string[] {
   const picked = run.flatMap((i) => hunk.lines[i] ?? []);
   const count = (list: readonly DiffLine[], side: "oldNumber" | "newNumber") =>
     list.filter((line) => line[side] !== null).length;
-  const start = (hunkStart: number, side: "oldNumber" | "newNumber") => {
+  // An empty side starts on the line before the excerpt, as git writes it. A hunk that is empty on
+  // that side already names that line.
+  const start = (hunkStart: number, hunkLines: number, side: "oldNumber" | "newNumber") => {
     const at = hunkStart + count(before, side);
-    return count(picked, side) === 0 ? at - 1 : at;
+    return count(picked, side) === 0 && hunkLines > 0 ? at - 1 : at;
   };
-  const header = `@@ -${start(hunk.oldStart, "oldNumber")},${count(picked, "oldNumber")} +${start(hunk.newStart, "newNumber")},${count(picked, "newNumber")} @@`;
+  const header = `@@ -${start(hunk.oldStart, hunk.oldLines, "oldNumber")},${count(picked, "oldNumber")} +${start(hunk.newStart, hunk.newLines, "newNumber")},${count(picked, "newNumber")} @@`;
   return [header, ...picked.map((line) => `${MARK[line.kind]}${line.text}`)];
 }

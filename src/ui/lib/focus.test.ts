@@ -81,6 +81,28 @@ describe("focus", () => {
     assert.deepEqual(focus[0]?.shown, [2, 3, 4]);
   });
 
+  it("shows the whole change block when a range starts inside it", () => {
+    const block = hunk(5, 5, [" a", "-x", "-y", "+X", "+Y", "+Z", " b"]);
+    assert.deepEqual(fileFocus([block], [range(7, 8)])[0]?.shown, [1, 2, 3, 4, 5]);
+    assert.deepEqual(fileFocus([block], [range(7, 7, "old")])[0]?.shown, [2, 3, 4, 5]);
+  });
+
+  it("writes git's start line on an empty side, for a new file and for an insertion", () => {
+    const added = hunk(0, 1, ["+one", "+two", "+three", "+four"]);
+    const addedBody = ["+one", "+two", "+three", "+four"];
+    const newFile = patchOf([{ header: added.header, body: addedBody }]);
+    assert.equal(
+      focusPatch(newFile, [added], fileFocus([added], [range(3, 4)])),
+      patchOf([{ header: "@@ -0,0 +3,2 @@", body: ["+three", "+four"] }]),
+    );
+    const inserted = hunk(7, 7, [" a", "+b", "+c"]);
+    const insertedPatch = patchOf([{ header: inserted.header, body: [" a", "+b", "+c"] }]);
+    assert.equal(
+      focusPatch(insertedPatch, [inserted], fileFocus([inserted], [range(9, 9)])),
+      patchOf([{ header: "@@ -7,0 +9,1 @@", body: ["+c"] }]),
+    );
+  });
+
   it("names the notes a collapsed hunk leaves out", () => {
     const focus = fileFocus([first], [range(12, 13)]);
     const notes = letterNotes([

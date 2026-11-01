@@ -53,7 +53,8 @@ export type CarriedAnchors = {
 
 /**
  * Ranges and notes follow their hunk: a `same` hunk shifts them, an edited one drops them, and
- * so does a hunk that left the diff.
+ * so does a hunk that left the diff. A shift onto context the `same` hunk no longer shows drops
+ * the anchor too, and counts it with the edited ones.
  */
 export function carryAnchors(
   group: Pick<ReviewGroup, "focus" | "notes">,
@@ -67,11 +68,13 @@ export function carryAnchors(
     if (from === undefined || to === undefined) {
       return undefined;
     }
-    if (to.kind !== "same") {
+    const by = changeStart(to.next, anchor.side) - changeStart(from, anchor.side);
+    const moved = { ...anchor, start: anchor.start + by, end: anchor.end + by };
+    if (to.kind !== "same" || holdingHunk([to.next], moved) === undefined) {
       changed[kind] += 1;
       return undefined;
     }
-    return changeStart(to.next, anchor.side) - changeStart(from, anchor.side);
+    return by;
   };
   const focus = (group.focus ?? []).flatMap((range) => {
     const by = shiftOf(focusAnchor(range), "focus");

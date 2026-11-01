@@ -174,6 +174,29 @@ describe("refresh carries focus ranges and notes", () => {
     assert.deepEqual(result.unchanged, ["login", "api"], "a shift alone is not news");
   });
 
+  it("drops and counts one that sat on context the same hunk no longer shows", () => {
+    const doc = document([
+      group("login", "login.ts", {
+        notes: [
+          { path: "login.ts", side: "new", line: 10, body: "on leading context" },
+          { path: "login.ts", side: "new", line: 12, body: "on a changed line" },
+        ],
+      }),
+    ]);
+    const trimmed = liveHunk("login.ts", 11, 16, ["-b", "+B", "+C", "+D", " e", " f"]);
+    const result = refreshDocument(
+      doc,
+      [diffFile("login.ts", [login])],
+      [diffFile("login.ts", [trimmed])],
+      doc.source,
+    );
+    assert.deepEqual(
+      result.document.groups[0]?.notes?.map((note) => note.line),
+      [17],
+    );
+    assert.deepEqual(result.groups[0]?.droppedAnchors, { focus: 0, notes: 1 });
+  });
+
   it("drops them with a changed hunk and names the group; drops them silently with a gone hunk", () => {
     const edited = liveHunk("login.ts", 10, 10, [" a", "-b", "+Q", " e", " f"]);
     const next = [diffFile("login.ts", [edited])];
