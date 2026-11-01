@@ -249,7 +249,7 @@ export const reviewDocumentSchema = reviewDocumentInput
       ...next,
       groups: next.groups.map(({ lookFor, ...group }) => ({
         ...group,
-        ...(lookFor === undefined ? {} : { legacyLookFor: lookFor }),
+        ...(lookFor === undefined || lookFor.length === 0 ? {} : { legacyLookFor: lookFor }),
         hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
       })),
     };

@@ -51,7 +51,7 @@ export async function run(argv: string[]): Promise<number> {
           console.error(`skipped ${index.skipped.length}`);
         }
         console.error(
-          `Fill title, summary, groups, and lookFor. Then:\n  comprehende validate --data ${dataPath}\n  comprehende serve --data ${dataPath}\n  comprehende export --data ${dataPath} --out <dir>`,
+          `Fill title, summary, groups, attention, and lookFor. Then:\n  comprehende validate --data ${dataPath}\n  comprehende serve --data ${dataPath}\n  comprehende export --data ${dataPath} --out <dir>`,
         );
         return 0;
       }
