@@ -28,9 +28,12 @@ describe("agentLink", () => {
     }
   });
 
-  it("opens Claude Code desktop with the prompt only, local or hosted", () => {
-    assert.equal(agentLink("claude", prompt, local), agentLink("claude", prompt, hosted));
-    assert.deepEqual(params(agentLink("claude", prompt, local)), { q: prompt });
+  it("opens Claude Code and Codex in the work tree only when there is one", () => {
+    assert.deepEqual(params(agentLink("claude", prompt, local)), {
+      q: prompt,
+      folder: "/home/me/widgets wt",
+    });
+    assert.deepEqual(params(agentLink("claude", prompt, hosted)), { q: prompt });
   });
 
   it("gives Codex the path only when there is one", () => {

@@ -13,7 +13,7 @@ export const AGENT_TARGETS = {
   copy: { label: "Copy prompt", link: null },
   claude: {
     label: "Claude Code",
-    link: (prompt) => deepLink("claude://code/new", { q: prompt }),
+    link: (prompt, repo) => deepLink("claude://code/new", { q: prompt, folder: repo.root }),
   },
   codex: {
     label: "Codex",
