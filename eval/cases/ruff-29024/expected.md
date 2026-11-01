@@ -36,9 +36,12 @@ PR #29024 in astral-sh/ruff. One small type-checker fix in Rust plus two corpus 
 - Do not describe the reindented `let parameters` block as new logic or as a change to the `Todo`, `Any`, or `Unknown` handling.
 - Do not claim the corpus files check the inferred type or that the PR adds an mdtest; they only guard against a panic.
 - Do not claim the PR fixes every reproducer in ty issue 4615.
+- Do not write a group attention that asks for an mdtest that checks the inferred type, or a new name for `is_non_divergent_dynamic`; a missing test and a nit are not attentions.
 
 ## Notes
 
 The `materialization` detail and the no-panic-only corpus harness are `Good` because they need `types.rs` and `tests/corpus.rs`, which the diff does not touch. The reindent claim is `Must` because rustfmt rewrote the whole block, and a reader who misses the one changed condition misjudges the size of the fix. Past runs often missed the `Divergent` versus `Unknown` split and the legacy and PEP 695 pairing of the corpus files.
 
 `size` allows `trivial` because the code change is one condition. `groups` allows 2 for a review that adds a duplicate or context group, but `together` keeps all three files in one group. No `apart` pairs: the diff has only these three files and they form one concern.
+
+Homes: the four Must claims live in the group summary or why. The group needs no attention: the fix is one condition, and the reindent is a fact for the summary.

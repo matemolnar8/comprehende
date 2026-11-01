@@ -51,6 +51,7 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 - Do not put the page objects in a different part from the living-room spec that imports `HostPage`, `TvPage`, `RemotePage`, and `PlayerPage`, and do not chain groups across parts with `dependsOn`.
 - Do not fold the dependency refresh into a group titled as the rename without naming it.
 - Do not describe the `pause` playback command as a fix for the app; it only forces a write so the stale host query runs again.
+- Do not write a group attention that asks for a unit test of `useQRCodeSVG`, a rename of the page objects, or a shorter wait than 12.5 seconds; a missing test, a nit, and a fix idea are not attentions.
 
 ## Notes
 
@@ -61,3 +62,4 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 - Past runs often put the page objects in their own part while the living-room factory imports them, and often called the three changed goldens pure moves.
 - `parts` 3 to 8 has slack: the harness can fold into the story part, and the snapshot folders, the QR fix, or the visual-spec migration can stand alone. `groups` 6 to 11 has the same slack: groups 4 and 5 can merge, and groups 1 and 3 can merge.
 - `together` holds the living-room spec with its seed and factory. `apart` keeps the living-room spec away from the snapshot moves, the audit, and the migrated `admin.spec.ts`, the QR hook away from the snapshot moves, and the audit away from the page objects.
+- Homes: the `.env.local` deletion fits a `risk` attention on the startup group, the 12.5 second wait and the forced `pause` write a `tradeoff` attention on the living-room group, and `useQRCodeSVG` and the dependency refresh a `product` attention on their own parts, or each group summary. The `E2E_UI` claim is a document `lookFor` bullet, because it compares the PR body with head.

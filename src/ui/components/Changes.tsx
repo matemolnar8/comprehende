@@ -160,7 +160,7 @@ function AttentionText(props: { attention: Attention; removed?: boolean; classNa
     >
       <span className={cn("mr-2 font-mono text-[11px]", !removed && "text-warn")}>
         {ATTENTION_TITLES[attention.kind]}
-      </span>
+      </span>{" "}
       <InlineMd text={attention.note} />
     </p>
   );

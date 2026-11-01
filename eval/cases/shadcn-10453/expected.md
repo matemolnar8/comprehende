@@ -38,10 +38,12 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 - Say the HTTP proxy handling, the redirect logic, or `getFailureReason` changed.
 - Split `proxy.ts` from `proxy.test.ts`, or make one group per file.
 - Say `NO_PROXY` applies to the SOCKS path.
+- Write a group attention that asks for a test of `parseSocksUrl`, a lazy dispatcher, or a rename of `createProxyDispatcher`; a missing test, a refactor idea, and a nit are not attentions.
 
 ## Notes
 
 - The `NO_PROXY` gap is `Must` because the diff shows the early return and the PR matrix lists `NO_PROXY` bypass as unchanged, which is true only for the HTTP branch.
 - The `EnvHttpProxyAgent` with no arguments and the module-load timing are `Good` because they need undici knowledge or the unchanged lines around the hunk.
 - `groups` 1 to 3: one group is best, two for a separate integration harness, three is slack. `parts` 0 to 1. `size` small or medium.
-- Past runs stated the three old claims in 1 of 3 runs or fewer. Graders flagged summaries that listed paths and a `lookFor` that restated the test plan.
+- Past runs stated the three old claims in 1 of 3 runs or fewer. Graders flagged summaries that listed paths and a group `lookFor` bullet that restated the test plan.
+- Homes: the missing `NO_PROXY` bypass on the SOCKS path fits a `contract` or `risk` attention, and SOCKS winning over the HTTP variables fits a `contract` attention. Only one goes on the group; the other lives in the summary. The untouched redirect handling lives in the summary.

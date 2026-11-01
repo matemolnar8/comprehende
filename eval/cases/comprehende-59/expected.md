@@ -38,6 +38,7 @@ PR #59. No linked ticket. One Bugbot review comment, not addressed at head. A UI
 - Do not say a `?design=` switch or the stack and dock layouts exist at head.
 - Do not say the Bugbot tap target issue is fixed at head.
 - Do not put the compact type and spacing changes, such as the body rule in `styles.css` or the `GroupBrief.tsx` sizes, in the `MobileShell` group, and do not make one group each for the hook, the caption, the stage, and the shell.
+- Do not write a group attention that asks to remove the unused `className` prop on `ReviewStage`, to add a test for `useNarrow`, or to rename `MobileShell`; a cleanup idea, a missing test, and a nit are not attentions.
 
 ## Notes
 
@@ -46,3 +47,5 @@ The Bugbot claim is `Must` because the comment and the `HunkView.tsx` hunk show 
 The viewed-control and split claims are `Good` because they need `Group.tsx`, `FileNav.tsx`, `HunkView.tsx`, and `App.tsx` read side by side. The desktop claim is `Good` because it confirms a PR claim that is true, and it needs every class change checked.
 
 Past runs over-split (6 to 9 groups) and often put the `styles.css` body rule in the shell group. `groups` allows 2 because the shell, the stage, and the sheet can merge into one group beside the compact styles. `groups` allows 5 for a foundation group, the shell, the stage, the compact styles, and the sheet. `size` allows `large` because the stage and the shell are a new layout that later class changes lean on.
+
+Homes: the dropped header items fit a `product` attention on the shell group, or its summary. The Bugbot tap target is a document `lookFor` bullet, because an open review comment asks for work head does not do. The `ReviewStage` move lives in its group summary.

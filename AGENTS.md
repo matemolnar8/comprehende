@@ -35,7 +35,7 @@ The rest of this file gives good defaults, not hard rules. The developer's choic
 
 ## How it works
 
-The CLI indexes `base...head` and writes a covering skeleton `review.json`: one path per changed file, stub prose, hunk refs. The skill fills interpretation only: title, groups, summaries, lookFor, sources. `validate` checks refs and coverage. `serve` and `export` share one UI and one git payload. Live git wins.
+The CLI indexes `base...head` and writes a covering skeleton `review.json`: one path per changed file, stub prose, hunk refs. The skill fills interpretation only: title, groups, summaries, attention, lookFor, sources. `validate` checks refs and coverage. `serve` and `export` share one UI and one git payload. Live git wins.
 
 ## Where code lives
 
@@ -123,6 +123,6 @@ Watch out for small, quick neat wins and the attention to detail that makes peop
 
 ## Cursor Cloud specific instructions
 
-To open the mixed fixture UI (colored Overview stories and lookFor) without writing `review.json`: run `pnpm fixture`, then the printed serve command from that cwd. The process prints the URL (`http://127.0.0.1:<port>`).
+To open the mixed fixture UI (colored Overview stories, attention, and lookFor) without writing `review.json`: run `pnpm fixture`, then the printed serve command from that cwd. The process prints the URL (`http://127.0.0.1:<port>`).
 
 UI smoke for that fixture (`#overview` and one `#group/...`, then exit): `pnpm fixture:smoke`.

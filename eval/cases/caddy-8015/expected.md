@@ -38,11 +38,14 @@ PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt 
 - Do not state that the PR adds three adapt tests, because head has five.
 - Do not ask for documentation in this diff, because the docs live in caddyserver/website#570, outside this repo.
 - Do not state that `auto_https off` stops Caddy from managing the listed names.
+- Do not write a group attention that asks for more adapt fixtures, a docs page, or a merge of `hasGlobalACMEDefaults` with the check in `newBaseAutomationPolicy`; a missing test, a docs request, and a refactor idea are not attentions.
 
 ## Notes
 
-The fixture check is `Good`: it needs each JSON output traced against `buildTLSApp`, including the issuer fill-in and the consolidation further down the function. Past runs missed it in 22 of 23 runs. The `auto_https off` claim is `Must`: the fixture shows `"automatic_https": {"disable": true}` next to the `automate` loader, and the conversation comment says the override is deliberate. Past runs often left it out of `lookFor`.
+The fixture check is `Good`: it needs each JSON output traced against `buildTLSApp`, including the issuer fill-in and the consolidation further down the function. Past runs missed it in 22 of 23 runs. The `auto_https off` claim is `Must`: the fixture shows `"automatic_https": {"disable": true}` next to the `automate` loader, and the conversation comment says the override is deliberate. Past runs often left it out of group `lookFor`, the field that attention replaced.
 
 The PR body says a name with a site block "stays listed here". That is true at head: the name stays in the loader, and only the extra policy is skipped.
 
 `parts` allows 0 or 1, since one story may or may not get a named part. `groups` allows 1 to 3 around the 2 group estimate. `size` allows small or medium, since the fixture JSON can read as more work than it is. `mechanicalPaths` holds the five fixtures, so one group holds all of them. `together` holds the two Go files. No `apart`: with one story, no pair of paths must stay apart.
+
+Homes: the four Must claims live in the group 1 summary or why, or in an attention. The `auto_https off` override can be a `product` attention, but the conversation comment already settles it, so a summary fact is enough. No case item asks for an attention.

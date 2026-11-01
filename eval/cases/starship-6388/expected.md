@@ -41,6 +41,7 @@ PR #6388 closes issue #5932. It adds a `vcs` module that tries the VCSes in `ord
 - Do not call `.github/config-schema.json` a safe-to-skip regeneration that matches `VcsConfig`.
 - Do not say the four migrated modules keep exactly the same behavior, because `pijul_channel` now scans ancestor directories.
 - Do not split the four migrated modules into one group per file.
+- Do not write a group attention that asks to regenerate `.github/config-schema.json`, to add jj support, or to add more tests; a fix request, a feature request, and a missing test are not attentions. The schema mismatch is a fact for the schema group summary.
 
 ## Notes
 
@@ -50,3 +51,4 @@ PR #6388 closes issue #5932. It adds a `vcs` module that tries the VCSes in `ord
 - The `disabled = true` defaults, the `$all` expansion, and the double lookup need files outside the diff (`src/configs/*.rs`, `src/print.rs`), so they are `Good`.
 - The joshka comment is a docs request that the diff does not do. It is `Good` because the Must list already holds the claims that change how a reader judges the code.
 - `case.json`: `groups` 2 to 5 allows the merged shape (dispatcher plus migrated modules, docs plus schema) and the split shape (config, modules, docs, schema apart). `size` medium or large, because a reader can treat the `discover_repo_root` helper as a contract the four modules share. `parts` 0 to 1 for one story. No `mechanicalPaths`: the only generated file is the schema, and it needs a real read. `apart` keeps the schema away from the dispatcher.
+- Homes: the inline rendering with `right_format` fits a `tradeoff` attention on the dispatcher group, and the `pijul_channel` ancestor scan a `contract` attention on the migrated modules. The unsupported jj case fits a `product` attention or the dispatcher summary. The schema mismatch lives in the schema group summary.
