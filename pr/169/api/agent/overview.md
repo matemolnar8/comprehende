@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 5f50618caf4f4029e5dbba2aa5e83419842b8460` and `git rev-parse --verify 213dd6b92c2db8437786bfa0b20327632ea942bd` in this repository.
+   Run `git rev-parse --verify edf8493d0359215e44fbe8b801c108ca61c609a2` and `git rev-parse --verify 7916fd39239ca52f88e28f63adb77d7f4901a955` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,26 +22,26 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  5f50618caf4f4029e5dbba2aa5e83419842b8460
+base (merge-base)  edf8493d0359215e44fbe8b801c108ca61c609a2
 
-head               213dd6b92c2db8437786bfa0b20327632ea942bd
+head               7916fd39239ca52f88e28f63adb77d7f4901a955
 
-Named refs at pin: origin/t3/group-attention-164 ... HEAD
+Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 5f50618caf4f4029e5dbba2aa5e83419842b8460 213dd6b92c2db8437786bfa0b20327632ea942bd
+git diff --find-renames edf8493d0359215e44fbe8b801c108ca61c609a2 7916fd39239ca52f88e28f63adb77d7f4901a955
 
 Commits:
-- 213dd6b Questions: cite sources in the group list, index keys, planted Must not, Refresh wording
-- 2e72adb Add group intent questions with an Ask agent button
+- 7916fd3 Questions: cite sources in the group list, index keys, planted Must not, Refresh wording
+- ca0b489 Add group intent questions with an Ask agent button
 
 Sources:
 - ticket #162 Group questions (at most 2) about intent, with an Ask agent button, across every layer.
   https://github.com/matemolnar8/comprehende/issues/162
 - pr PR #169 This change.
   https://github.com/matemolnar8/comprehende/pull/169
-- pr PR #168 Lower layer of the stack: group attention, which questions sit under.
+- pr PR #168 Merged into main: group attention, which questions sit under.
   https://github.com/matemolnar8/comprehende/pull/168
 
 The title:
