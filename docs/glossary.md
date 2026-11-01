@@ -20,7 +20,7 @@
 
 **Questions.** At most 2 per group. Each asks why the change is this way, where the code and the sources leave the reason open. When a source answers it, the answer goes in the why. The UI copies each question into a prompt for the agent that wrote the change.
 
-**Focus range.** Lines of one hunk the UI opens first, with a caption: on one side, inside one live hunk of the group, at most 25 lines. The whole hunk is one click away. `validate` fails a range that leaves its hunk.
+**Focus range.** Lines of one hunk the UI opens first, labeled Agent focus, with a caption that says why to read them: on one side, inside one live hunk of the group, at most 25 lines. An added file gets none. A row at each cut edge counts the lines not shown, and one click shows the whole hunk. `validate` fails a range that leaves its hunk.
 
 **Note.** One or two sentences pinned to one line of a hunk the group covers. It says what the code alone does not say. At most three per group, lettered A, B, C in the UI. A judgment call is an attention, not a note.
 

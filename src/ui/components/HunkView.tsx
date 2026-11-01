@@ -2,14 +2,14 @@ import { hunkRangeLabel } from "../../schema/hunk-meta.ts";
 import { PierreFileDiff } from "../PierreDiff.tsx";
 import { fetchPatch } from "../api.ts";
 import type { FocusRange } from "../../schema/types.ts";
-import { FocusBar } from "./FocusBar.tsx";
+import { FocusBar, HiddenLines } from "./FocusBar.tsx";
 import { ImageDiff } from "./ImageDiff.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
-import { fileFocus, focusPatch, hiddenNotes, onFile, type LetteredNote } from "../lib/focus.ts";
+import { fileFocus, focusBlocks, onFile, type LetteredNote } from "../lib/focus.ts";
 import type { GroupFile } from "../lib/group-files.ts";
 import { isPureRelocation, movedMarks, relocationWord } from "../lib/relocation.ts";
 import type { FileComment } from "../lib/source-display.ts";
@@ -87,13 +87,9 @@ export function HunkView(props: {
     [file, focus],
   );
   const [wholeHunks, setWholeHunks] = useState<ReadonlySet<number>>(() => new Set());
-  const collapsedFocus = useMemo(
-    () => hunkFocus.filter((item) => !wholeHunks.has(item.hunk)),
-    [hunkFocus, wholeHunks],
-  );
-  const shownPatch = useMemo(
-    () => focusPatch(patch, file.hunks, collapsedFocus),
-    [collapsedFocus, file.hunks, patch],
+  const blocks = useMemo(
+    () => focusBlocks(patch, file.hunks, hunkFocus, wholeHunks, fileNotes),
+    [file.hunks, fileNotes, hunkFocus, patch, wholeHunks],
   );
   const toggleWhole = (hunk: number) =>
     setWholeHunks((current) => {
@@ -260,35 +256,40 @@ export function HunkView(props: {
           ) : deferred && patch === "" ? (
             <WaitMark label={waitCopy.lockfile} />
           ) : (
-            <>
-              {hunkFocus.map((item) => {
-                const hunk = file.hunks[item.hunk];
-                const whole = wholeHunks.has(item.hunk);
-                return hunk === undefined ? null : (
-                  <FocusBar
-                    key={item.hunk}
-                    focus={item}
-                    whole={whole}
-                    hidden={whole ? [] : hiddenNotes(hunk, item, fileNotes)}
-                    onToggle={() => toggleWhole(item.hunk)}
-                  />
-                );
-              })}
-              <PierreFileDiff
-                path={file.path}
-                patch={shownPatch}
-                split={split}
-                wrap={wrap}
-                splitRatio={splitRatio}
-                onSplitRatio={onSplitRatio}
-                hydrate={file.complete && collapsedFocus.length === 0}
-                excerpt={collapsedFocus.length > 0}
-                comments={fileComments}
-                moves={moves}
-                notes={fileNotes}
-                focusCommentId={focusCommentId}
-              />
-            </>
+            (blocks ?? [{ kind: "diff", key: "file", patch } as const]).map((block) =>
+              block.kind === "bar" ? (
+                <FocusBar
+                  key={block.key}
+                  focus={block.focus}
+                  whole={block.whole}
+                  onToggle={() => toggleWhole(block.hunk)}
+                />
+              ) : block.kind === "hidden" ? (
+                <HiddenLines
+                  key={block.key}
+                  count={block.count}
+                  where={block.where}
+                  notes={block.notes}
+                  onShow={() => toggleWhole(block.hunk)}
+                />
+              ) : (
+                <PierreFileDiff
+                  key={block.key}
+                  path={file.path}
+                  patch={block.patch}
+                  split={split}
+                  wrap={wrap}
+                  splitRatio={splitRatio}
+                  onSplitRatio={onSplitRatio}
+                  hydrate={blocks === undefined && file.complete}
+                  excerpt={blocks !== undefined}
+                  comments={fileComments}
+                  moves={moves}
+                  notes={fileNotes}
+                  focusCommentId={focusCommentId}
+                />
+              ),
+            )
           )}
         </div>
       )}

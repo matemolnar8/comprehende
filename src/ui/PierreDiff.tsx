@@ -195,8 +195,9 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       lineDiffType: "none" as const,
       // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
-      // An excerpt hides changed lines too, so a gap's line count would read as unmodified code.
-      hunkSeparators: props.excerpt ? ("metadata" as const) : GAP_SEPARATOR,
+      // A focused file renders hunk by hunk with its own hidden-lines rows. Pierre's gap count
+      // there would include changed lines the cut hides, so a plain bar marks real gaps.
+      hunkSeparators: props.excerpt ? ("simple" as const) : GAP_SEPARATOR,
       ...(props.loadFiles ? { loadDiffFiles } : {}),
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
       onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
@@ -387,7 +388,7 @@ export function PierreFileDiff(props: {
   onSplitRatio: (ratio: number) => void;
   /** False for grouped subset patches. Full-file blobs do not match those patches. */
   hydrate?: boolean;
-  /** Some hunks are cut down to their focus ranges. */
+  /** One block of a focused file. Separators show no line counts. */
   excerpt?: boolean;
   comments?: FileComment[];
   moves?: readonly MovedMark[];

@@ -7,7 +7,7 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `cookie` has a `contract` attention with its predicted trace, and `login` a `product` call. `docs` has no attention.
 - `cookie` and `login` each ask one question about a choice that no source explains. Ticket #12 already says why cookies are HttpOnly, so no question asks that; the answer is in `why`.
-- `cookie` opens the long `session.ts` hunk on the lines that set the options, with a `focus` range. `login` pins one note to the line where `rememberMe` reaches the helper, because the code there does not say what the helper does with it. Both copy line numbers from `show`.
+- `session.ts` is an added file, so `cookie` has no `focus` range. `login` opens the long `login.ts` hunk on the lines where `rememberMe` reaches the helper; the caption says what to check there. Its note sits inside that range, on the line the code alone does not explain. Both copy line numbers from `show`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and an item done differently. Both cite `[#12](source:s1)`.
 - A refactor idea (`parseCookie` could reuse `splitHeader`), a nit (`opts` is a vague name), and a missing test (expired cookies) are not in the document.
 - Each group holds every hunk of its files, so each `hunkRefs` entry is a path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed). A directory of mechanical files the draft collapsed stays one `dir/` ref.
@@ -62,15 +62,6 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
         "note": "`setSessionCookie` throws when a caller passes `httpOnly: false`. A caller that needs a cookie scripts can read now fails at runtime."
       },
       "questions": ["Why does the helper set `SameSite=Lax` and not `Strict`?"],
-      "focus": [
-        {
-          "path": "src/auth/session.ts",
-          "side": "new",
-          "start": 18,
-          "end": 31,
-          "caption": "`setSessionCookie` sets `HttpOnly`, `Secure`, and `SameSite`, and throws on `httpOnly: false`."
-        }
-      ],
       "suggestedOrder": 0,
       "hunkRefs": ["src/auth/session.ts", "src/auth/session.test.ts"]
     },
@@ -87,6 +78,15 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
       },
       "questions": [
         "Why does `rememberMe = false` drop `Max-Age` instead of setting a short expiry?"
+      ],
+      "focus": [
+        {
+          "path": "src/api/login.ts",
+          "side": "new",
+          "start": 40,
+          "end": 52,
+          "caption": "Check which `rememberMe` value reaches `setSessionCookie`; the rest of the hunk moves request parsing."
+        }
       ],
       "notes": [
         {

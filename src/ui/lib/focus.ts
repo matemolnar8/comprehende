@@ -9,7 +9,6 @@ export type HunkFocus = {
   ranges: FocusRange[];
   /** Indexes into the hunk's lines that the ranges show, ascending. */
   shown: number[];
-  total: number;
 };
 
 export type LetteredNote = LineNote & { letter: string };
@@ -34,12 +33,7 @@ export function fileFocus(hunks: readonly LiveHunk[], focus: readonly FocusRange
       continue;
     }
     const index = hunks.indexOf(holder);
-    const entry = byHunk.get(index) ?? {
-      hunk: index,
-      ranges: [],
-      shown: [],
-      total: holder.lines.length,
-    };
+    const entry = byHunk.get(index) ?? { hunk: index, ranges: [], shown: [] };
     entry.ranges.push(range);
     entry.shown = [...new Set([...entry.shown, ...rangeLines(holder.lines, range)])].sort(
       (a, b) => a - b,
@@ -85,54 +79,100 @@ export function rangeLines(lines: readonly DiffLine[], range: FocusRange): numbe
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
 
-/** Notes in a focused hunk that its shown lines leave out. */
-export function hiddenNotes(
-  hunk: LiveHunk,
-  focus: HunkFocus,
-  notes: readonly LetteredNote[],
-): LetteredNote[] {
-  const shown = focus.shown.map((i) => hunk.lines[i]);
-  return notes.filter(
-    (note) =>
-      holdingHunk([hunk], noteAnchor(note)) !== undefined &&
-      !shown.some(
-        (line) => (note.side === "old" ? line?.oldNumber : line?.newNumber) === note.line,
-      ),
-  );
-}
+/** What a file with focus ranges renders, top to bottom. */
+export type FocusBlock =
+  | { kind: "bar"; key: string; hunk: number; focus: HunkFocus; whole: boolean }
+  | { kind: "diff"; key: string; patch: string }
+  | {
+      kind: "hidden";
+      key: string;
+      hunk: number;
+      count: number;
+      where: "above" | "between" | "below";
+      notes: LetteredNote[];
+    };
 
 /**
- * The file patch with each collapsed hunk cut down to its shown lines. Lines that stay hidden
- * between two ranges split the hunk in two. Returns the patch as is when its hunks do not line up
- * with `hunks`.
+ * One diff per focused hunk, so each focus bar sits on its hunk. A cut hunk shows its ranges, with
+ * a hidden-lines row at each cut edge that names the notes it hides. Undefined when no hunk has a
+ * range, or when the patch's `@@` lines do not line up with `hunks`: the file then renders whole.
  */
-export function focusPatch(
+export function focusBlocks(
   patch: string,
   hunks: readonly LiveHunk[],
-  collapsed: readonly HunkFocus[],
-): string {
-  if (collapsed.length === 0) {
-    return patch;
-  }
-  const lines = patch.split("\n");
+  focus: readonly HunkFocus[],
+  whole: ReadonlySet<number>,
+  notes: readonly LetteredNote[],
+): FocusBlock[] | undefined {
+  const lines = patch.replace(/\n$/, "").split("\n");
   const starts = lines.flatMap((line, i) => (line.startsWith("@@ ") ? [i] : []));
-  if (starts.length !== hunks.length || starts[0] === undefined) {
-    return patch;
+  if (focus.length === 0 || starts.length !== hunks.length || starts[0] === undefined) {
+    return undefined;
   }
-  const out = lines.slice(0, starts[0]);
-  starts.forEach((start, i) => {
-    const hunk = hunks[i];
-    const focus = collapsed.find((item) => item.hunk === i);
-    if (hunk === undefined || focus === undefined) {
-      out.push(...lines.slice(start, starts[i + 1] ?? lines.length));
+  const header = lines.slice(0, starts[0]);
+  const diff = (key: string, body: readonly string[]): FocusBlock => ({
+    kind: "diff",
+    key,
+    patch: `${[...header, ...body].join("\n")}\n`,
+  });
+  const blocks: FocusBlock[] = [];
+  // Hunks with no range read together as one diff, as they do in a file with no focus.
+  let plain: string[] = [];
+  const flush = (i: number) => {
+    if (plain.length > 0) {
+      blocks.push(diff(`plain-${i}`, plain));
+      plain = [];
+    }
+  };
+  hunks.forEach((hunk, i) => {
+    const chunk = lines.slice(starts[i], starts[i + 1] ?? lines.length);
+    const entry = focus.find((item) => item.hunk === i);
+    if (entry === undefined) {
+      plain.push(...chunk);
       return;
     }
-    for (const run of runs(focus.shown)) {
-      out.push(...subHunk(hunk, run));
+    flush(i);
+    const isWhole = whole.has(i);
+    blocks.push({ kind: "bar", key: `bar-${i}`, hunk: i, focus: entry, whole: isWhole });
+    if (isWhole) {
+      blocks.push(diff(`hunk-${i}`, chunk));
+      return;
     }
+    const hidden = (where: "above" | "between" | "below", from: number, to: number) => {
+      if (to < from) {
+        return;
+      }
+      const cutLines = hunk.lines.slice(from, to + 1);
+      blocks.push({
+        kind: "hidden",
+        key: `hidden-${i}-${from}`,
+        hunk: i,
+        count: cutLines.length,
+        where,
+        notes: notes.filter(
+          (note) =>
+            onHunk(note, hunk) &&
+            cutLines.some(
+              (line) => (note.side === "old" ? line.oldNumber : line.newNumber) === note.line,
+            ),
+        ),
+      });
+    };
+    const cut = runs(entry.shown);
+    cut.forEach((run, j) => {
+      const first = run[0] ?? 0;
+      const previous = cut[j - 1]?.at(-1);
+      hidden(j === 0 ? "above" : "between", previous === undefined ? 0 : previous + 1, first - 1);
+      blocks.push(diff(`cut-${i}-${first}`, subHunk(hunk, run)));
+    });
+    hidden("below", (cut.at(-1)?.at(-1) ?? -1) + 1, hunk.lines.length - 1);
   });
-  const text = out.join("\n");
-  return patch.endsWith("\n") && !text.endsWith("\n") ? `${text}\n` : text;
+  flush(hunks.length);
+  return blocks;
+}
+
+function onHunk(note: LineNote, hunk: LiveHunk): boolean {
+  return holdingHunk([hunk], noteAnchor(note)) !== undefined;
 }
 
 function runs(indexes: readonly number[]): number[][] {
