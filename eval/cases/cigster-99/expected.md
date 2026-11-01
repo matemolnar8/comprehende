@@ -52,6 +52,7 @@ PR #99 implements ticket #98. One bot comment (Netlify deploy preview), no revie
 - Do not fold the dependency refresh into a group titled as the rename without naming it.
 - Do not describe the `pause` playback command as a fix for the app; it only forces a write so the stale host query runs again.
 - Do not write a group attention that asks for a unit test of `useQRCodeSVG`, a rename of the page objects, or a shorter wait than 12.5 seconds; a missing test, a nit, and a fix idea are not attentions.
+- Do not write a group question that asks why the living-room spec waits 12.5 seconds and sends `pause`; the spec comment and commit `5a0cd31` give the reason.
 
 ## Notes
 

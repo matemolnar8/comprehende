@@ -349,6 +349,9 @@ function documentFields(document: ReviewDocument): { where: string; text: string
     if (group.attention !== undefined) {
       fields.push({ where: `group ${group.id} attention`, text: group.attention.note });
     }
+    for (const question of group.questions ?? []) {
+      fields.push({ where: `group ${group.id} question`, text: question });
+    }
   }
   return fields;
 }

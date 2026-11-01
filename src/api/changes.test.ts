@@ -170,4 +170,30 @@ describe("changesPayload", () => {
     );
     assert.deepEqual(same.groups, []);
   });
+
+  it("lists questions that were added or removed, and none for a reordered pair", () => {
+    const kept = "Why `SameSite=Lax` and not `Strict`?";
+    const dropped = "Why no `Max-Age`?";
+    const asked = "Why retry three times?";
+    const payload = changesPayload(
+      document({ groups: [group("cookie", { questions: [kept, dropped] }), group("calm")] }),
+      document({
+        groups: [
+          group("cookie", { questions: [kept, asked] }),
+          group("calm"),
+          group("retry", { questions: [asked] }),
+        ],
+      }),
+      undefined,
+    );
+    const [cookie, retry] = payload.groups;
+    assert.deepEqual(cookie?.questions, { added: [asked], removed: [dropped] });
+    assert.deepEqual(retry?.questions, { added: [asked], removed: [] });
+    const reordered = changesPayload(
+      document({ groups: [group("cookie", { questions: [kept, dropped] })] }),
+      document({ groups: [group("cookie", { questions: [dropped, kept] })] }),
+      undefined,
+    );
+    assert.deepEqual(reordered.groups, []);
+  });
 });

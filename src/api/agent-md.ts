@@ -15,8 +15,9 @@ export function isImageSlot(ref: HunkRef): boolean {
   return ref.oldStart === 0 && ref.oldLines === 0 && ref.newStart === 0 && ref.newLines === 0;
 }
 
-export function agentClipboardPrompt(url: string): string {
-  return `Answer the following questions by using ${url}`;
+export function agentClipboardPrompt(url: string, question?: string): string {
+  const prompt = `Answer the following questions by using ${url}`;
+  return question === undefined ? prompt : `${prompt}: ${question}`;
 }
 
 export function agentMd(review: ApiReview, resource: AgentMdResource): string | null {
@@ -62,6 +63,7 @@ function groupAgentMd(review: ApiReview, id: string): string | null {
     "The what:",
     listed.summary,
     attentionBlock(listed.attention),
+    questionsBlock(listed.questions),
     dependsOnBlock(review, listed.dependsOn),
     hunkList("Hunk refs for this concern:", hunks),
     listed.staleCount > 0
@@ -130,6 +132,7 @@ function reviewConcernsBlock(review: ApiReview): string {
       `### ${padIndex(i + 1)} ${group.title} (\`${group.id}\`)`,
       group.summary,
       attentionBlock(group.attention),
+      questionsBlock(group.questions),
       dependsOnBlock(review, group.dependsOn),
       `[${href}](${href})`,
     ]);
@@ -146,6 +149,12 @@ function lookForBlock(lookFor: string[]): string | null {
 
 function attentionBlock(attention: Attention | undefined): string | null {
   return attention === undefined ? null : `Attention (${attention.kind}):\n${attention.note}`;
+}
+
+function questionsBlock(questions: readonly string[]): string | null {
+  return questions.length === 0
+    ? null
+    : ["Questions:", ...questions.map((question) => `- ${question}`)].join("\n");
 }
 
 function dependsOnBlock(review: ApiReview, dependsOn: string[]): string | null {

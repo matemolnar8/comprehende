@@ -12,7 +12,7 @@ Each case has an `expected.md` next to its `case.json`. It says what a good revi
 6. Compare every source item with the diff. Flag each place where the diff does something other than what the ticket, PR, or review comment asks. Say what the source asks, what the diff does, and the reason when a source or the code gives one. Do not list items the diff simply does.
 7. Check the PR description against the code. A claim in the PR that is not true at head is a finding, not a fact to repeat.
 8. Name scope the sources do not ask for, such as extra events, dependency bumps, or production code in a test PR.
-9. A group `attention` is only for the one judgment call a maintainer makes in that group: a contract, a tradeoff, a product call, or a risk. A bug, a missing test, a nit, a refactor idea, or a call settled in review is not an attention. Document `lookFor` holds source verdicts only. A bullet that says "confirm X" or restates the test plan is padding.
+9. A group `attention` is only for the one judgment call a maintainer makes in that group: a contract, a tradeoff, a product call, or a risk. A bug, a missing test, a nit, a refactor idea, or a call settled in review is not an attention. A group question asks the author's reason for a choice that the code and the sources leave open; when a source gives the reason, it goes in the why. Document `lookFor` holds source verdicts only. A bullet that says "confirm X" or restates the test plan is padding.
 10. Every claim is true at head. A wrong claim is worse than a missing one.
 11. Short, plain sentences in Simplified Technical English. Detail belongs in "Ask an AI about this", not in the review.
 

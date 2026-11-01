@@ -10,6 +10,7 @@ import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse, Kicker } from "./Kicker.tsx";
 import { AttentionAlert } from "./Attention.tsx";
+import { QuestionList } from "./QuestionList.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Brief(props: {
@@ -74,6 +75,7 @@ export function GroupBrief(props: {
         {group.attention !== undefined ? (
           <AttentionAlert groupId={group.id} attention={group.attention} focusKey={focusClaimKey} />
         ) : null}
+        <QuestionList groupId={group.id} questions={group.questions} />
         <SourceList ids={sourceIds} sources={document.sources ?? []} />
         <HopList label="Depends on" hops={nav.dependsOn} parts={parts} onOpenGroup={onOpenGroup} />
         <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />

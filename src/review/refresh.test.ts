@@ -197,6 +197,7 @@ describe("refreshDocument", () => {
         why: "w",
         summary: "s",
         legacyLookFor: ["Breaking. b throws."],
+        questions: ["Why does b throw?"],
         suggestedOrder: 1,
         hunkRefs: [{ path: "b.ts" }],
       },
@@ -205,6 +206,7 @@ describe("refreshDocument", () => {
         title: "G",
         why: "w",
         summary: "s",
+        questions: ["Why is g gone?", "Why now?"],
         suggestedOrder: 2,
         hunkRefs: [{ path: "gone.ts" }],
       },
@@ -260,7 +262,7 @@ describe("refreshDocument", () => {
     assert.match(text, /^- fresh\.ts · added \+1\/-0 · logic · new · in update-2$/m);
     assert.match(text, /^- gone\.ts · gone · was in g$/m);
     assert.match(text, /^- update: 1 ref gone · 1 ref re-pointed$/m);
-    assert.match(text, /^- b: 1 hunk changed · 1 new hunk$/m);
+    assert.match(text, /^- b: 1 hunk changed · 1 new hunk · 1 question to re-check$/m);
     assert.match(text, /^- g: 1 ref gone · now empty$/m);
     assert.match(text, /^- update-2: draft · 2 uncovered hunks$/m);
     assert.match(text, /^Pins off a live line: s9$/m);
@@ -316,6 +318,7 @@ describe("cmdRefresh", () => {
     assert.equal(update?.id, "update");
     assert.deepEqual(update?.hunkRefs, [{ path: "src/extra.ts" }]);
     assert.equal(appGroup?.attention?.kind, "contract", "prose is untouched");
+    assert.equal(appGroup?.questions?.length, 2, "questions are untouched");
 
     assert.match(report, /^Commits since [0-9a-f]{7}:\n- Add version, extra, revert README$/m);
     assert.match(
@@ -324,7 +327,7 @@ describe("cmdRefresh", () => {
     );
     assert.match(report, /^- src\/extra\.ts · added \+1\/-0 · logic · new · in update$/m);
     assert.match(report, /^- README\.md · gone · was in docs$/m);
-    assert.match(report, /^- app: 1 hunk changed · 1 ref re-pointed$/m);
+    assert.match(report, /^- app: 1 hunk changed · 1 ref re-pointed · 2 questions to re-check$/m);
     assert.match(report, /^- docs: 1 ref gone · now empty$/m);
     assert.match(report, /^- update: draft · 1 uncovered hunk$/m);
     assert.match(report, /^- same: app-test, helpers, types, relocations, move-block$/m);

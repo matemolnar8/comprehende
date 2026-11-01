@@ -39,6 +39,7 @@ PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt 
 - Do not ask for documentation in this diff, because the docs live in caddyserver/website#570, outside this repo.
 - Do not state that `auto_https off` stops Caddy from managing the listed names.
 - Do not write a group attention that asks for more adapt fixtures, a docs page, or a merge of `hasGlobalACMEDefaults` with the check in `newBaseAutomationPolicy`; a missing test, a docs request, and a refactor idea are not attentions.
+- Do not write a group question that asks why the listed names stay managed under `auto_https off`, or why a name with its own site policy gets no second policy; the conversation comment and the review comment give those reasons.
 
 ## Notes
 

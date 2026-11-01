@@ -136,6 +136,43 @@ describe("parseReviewDocument", () => {
     }
   });
 
+  it("accepts up to 2 questions and rejects a third", () => {
+    const withQuestions = (questions: unknown) =>
+      parseReviewDocument({
+        version: 1,
+        source: { baseRef: "main", headRef: "HEAD" },
+        size: "small",
+        title: "t",
+        summary: "s",
+        groups: [
+          {
+            id: "g1",
+            title: "CLI",
+            why: "w",
+            summary: "s",
+            questions,
+            suggestedOrder: 0,
+            hunkRefs: [],
+          },
+        ],
+      });
+    const two = withQuestions(["Why `Lax`?", "Why no `Max-Age`?"]);
+    assert.equal(two.ok, true);
+    if (two.ok) {
+      assert.deepEqual(two.document.groups[0]?.questions, ["Why `Lax`?", "Why no `Max-Age`?"]);
+    }
+    const three = withQuestions(["a?", "b?", "c?"]);
+    assert.equal(three.ok, false);
+    if (!three.ok) {
+      assert.match(
+        three.errors.join("\n"),
+        /questions must be an array of at most 2 non-empty strings/,
+      );
+    }
+    const blank = withQuestions(["a?", " "]);
+    assert.equal(blank.ok, false);
+  });
+
   it("loads legacy group lookFor, flags it, and writes it back", () => {
     const result = parseReviewDocument({
       version: 1,

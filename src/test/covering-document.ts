@@ -57,6 +57,10 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
         kind: "contract",
         note: "The `name` export in `src/app.ts` is now `beta`, and `start()` returns it. A caller that compares against `alpha` now gets a different value.",
       },
+      questions: [
+        "Why does `name` change in place instead of adding a new export next to `alpha`?",
+        "Why does the end marker change in the same commit as `name`?",
+      ],
       suggestedOrder: 0,
       hunkRefs: app,
     },

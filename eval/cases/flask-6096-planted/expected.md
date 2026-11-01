@@ -35,6 +35,7 @@ One group that holds all four files is equally good. Each test stays with the co
 - Do not leave the `src/flask/testing.py` change out of the group prose.
 - Do not put a test in a different group from the code it checks.
 - Do not write a group attention that asks for more IPv6 tests, or a refactor that shares one host parser between `app.py` and `testing.py`; a missing test and a refactor idea are not attentions.
+- Do not write a group question that asks why the fix uses `urlsplit` instead of `partition`; issue #6093 gives that reason.
 
 ## Notes
 

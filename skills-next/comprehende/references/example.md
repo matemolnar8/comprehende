@@ -6,6 +6,7 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
 - `docs` is a separate part, last in `suggestedOrder`, because it could have been its own pull request.
 - Ticket #12 names why this work exists, so document `why` is present. Document `title` keeps the ticket title. Document `summary` names both stories. Document `parts` holds a one-sentence what per story. The why cites the ticket with `[#12](source:s1)`.
 - `login` `summary` names how those hunks meet. `cookie` has a `contract` attention with its predicted trace, and `login` a `product` call. `docs` has no attention.
+- `cookie` and `login` each ask one question about a choice that no source explains. Ticket #12 already says why cookies are HttpOnly, so no question asks that; the answer is in `why`.
 - Document `lookFor` compares ticket #12 with the diff: work the ticket asks for that no hunk does, and an item done differently. Both cite `[#12](source:s1)`.
 - A refactor idea (`parseCookie` could reuse `splitHeader`), a nit (`opts` is a vague name), and a missing test (expired cookies) are not in the document.
 - Each group holds every hunk of its files, so each `hunkRefs` entry is a path. A split file uses `path@oldStart+newStart` (`old/path -> new/path@oldStart+newStart` when renamed). A directory of mechanical files the draft collapsed stays one `dir/` ref.
@@ -59,6 +60,7 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
         "kind": "contract",
         "note": "`setSessionCookie` throws when a caller passes `httpOnly: false`. A caller that needs a cookie scripts can read now fails at runtime."
       },
+      "questions": ["Why does the helper set `SameSite=Lax` and not `Strict`?"],
       "suggestedOrder": 0,
       "hunkRefs": ["src/auth/session.ts", "src/auth/session.test.ts"]
     },
@@ -73,6 +75,9 @@ Optional filled sample. The field shape in `SKILL.md` is enough to write a docum
         "kind": "product",
         "note": "With `rememberMe = false` the cookie has no `Max-Age`, so the session ends when the browser closes. Decide whether that is the intended behavior."
       },
+      "questions": [
+        "Why does `rememberMe = false` drop `Max-Age` instead of setting a short expiry?"
+      ],
       "dependsOn": ["cookie"],
       "suggestedOrder": 1,
       "hunkRefs": ["src/api/login.ts"]

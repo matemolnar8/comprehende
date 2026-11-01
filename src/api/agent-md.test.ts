@@ -52,6 +52,14 @@ describe("agentClipboardPrompt", () => {
     assert.ok(prompt.includes(url));
     assert.equal(prompt.includes("git diff"), false);
   });
+
+  it("appends one question after the URL", () => {
+    const url = "http://127.0.0.1:4567/api/agent/groups/cookie.md";
+    assert.equal(
+      agentClipboardPrompt(url, "Why `Lax` and not `Strict`?"),
+      `Answer the following questions by using ${url}: Why \`Lax\` and not \`Strict\`?`,
+    );
+  });
 });
 
 describe("agentMd", () => {
@@ -69,6 +77,8 @@ describe("agentMd", () => {
     assert.ok(prompt.includes("groups/cookie.md"));
     assert.ok(prompt.includes("groups/login.md"));
     assert.ok(prompt.includes("Look for:"));
+    assert.ok(prompt.includes("Questions:\n- Why does the helper throw"));
+    assert.equal(prompt.match(/Questions:/g)?.length, 1);
     assert.ok(prompt.includes("Overview and group both have CopyPrompt."));
     assert.equal(prompt.includes("+++"), false);
     assert.equal(prompt.includes("Hunk refs:"), false);
@@ -87,6 +97,9 @@ describe("agentMd", () => {
     assert.ok(prompt.includes("src/util.ts -> src/helpers.ts@4+4"));
     assert.ok(prompt.includes("assets/dot.png"));
     assert.ok(prompt.includes("Attention (contract):\nThrows when httpOnly is false."));
+    assert.ok(
+      prompt.includes("Questions:\n- Why does the helper throw instead of forcing `httpOnly`?"),
+    );
     assert.equal(prompt.includes("src/api/login.ts"), false);
     assert.equal(prompt.includes("groups/login.md"), false);
     assert.equal(prompt.includes("+++"), false);
@@ -198,6 +211,7 @@ function sampleReview(): ApiReview {
         why: "The login route needs one helper.",
         summary: "setSessionCookie applies the required options.",
         attention: { kind: "contract", note: "Throws when httpOnly is false." },
+        questions: ["Why does the helper throw instead of forcing `httpOnly`?"],
         dependsOn: [],
         part: "Session cookie",
         sources: [],
@@ -211,6 +225,7 @@ function sampleReview(): ApiReview {
         title: "Login route",
         why: "The route must set cookies through the helper.",
         summary: "The login route uses setSessionCookie.",
+        questions: [],
         dependsOn: ["cookie"],
         suggestedOrder: 1,
         sources: [],

@@ -42,6 +42,7 @@ PR #6388 closes issue #5932. It adds a `vcs` module that tries the VCSes in `ord
 - Do not say the four migrated modules keep exactly the same behavior, because `pijul_channel` now scans ancestor directories.
 - Do not split the four migrated modules into one group per file.
 - Do not write a group attention that asks to regenerate `.github/config-schema.json`, to add jj support, or to add more tests; a fix request, a feature request, and a missing test are not attentions. The schema mismatch is a fact for the schema group summary.
+- Do not write a group question that asks why jj gets no output or why `$vcs` is not in the default prompt; the conversation comments drop jj, and the docs note says adding `$vcs` would be breaking.
 
 ## Notes
 
