@@ -12,7 +12,7 @@ export function numberedPatch(file: DiffFile, hunks: readonly LiveHunk[]): strin
   const width = String(
     Math.max(
       ...hunks.map((hunk) =>
-        Math.max(hunk.oldStart + hunk.oldLines, hunk.newStart + hunk.newLines),
+        Math.max(hunk.oldStart + hunk.oldLines - 1, hunk.newStart + hunk.newLines - 1),
       ),
     ),
   ).length;
