@@ -23,7 +23,7 @@ One group for all eight files, or the e2e test inside group 1 or 2, is also good
 - `Notebook::cell_range` now converts the cell's index among all notebook cells to its index among valid Python code cells with a binary search on `valid_code_cells`, so a cell after a `%%bash` cell gets its own offsets.
 - `cell_range` and `cell_content_range` now return `None` for a cell that is not in the Python source, such as a Markdown cell or a cell-magic cell.
 - A new `cell_range` helper in `crates/ty_server/src/document/range.rs` replaces the duplicated notebook lookup in `folding_range.rs` and `semantic_tokens.rs`.
-- Folding range and semantic token requests for a cell with no range now return no result, where before they fell back to the whole notebook.
+- Folding range and semantic token requests now return no result when `cell_range` is `None`; at base a `None` range gave results for the whole notebook.
 - The review names PR #29307, the lower layer of the stack whose head branch is this request's base, as a `pr` source.
 - The new e2e test `cells_after_cell_magic` checks hover and semantic tokens on the `x = 1` cell after a `%%bash` cell, and empty tokens for the magic cell.
 
@@ -37,6 +37,7 @@ One group for all eight files, or the e2e test inside group 1 or 2, is also good
 
 - Do not describe the clamp of a position to the end of its cell (`offset.min(cell_range.end())`) as a change of this request; PR #29307 adds it and it is not in this diff.
 - Do not describe the notebook module range fix from PR #29306 as part of this request.
+- Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with `03ea17f`, not with this request's base.
 - Do not put a snapshot in a different group from the `cells_after_cell_magic` test that writes it.
 
 ## Notes
