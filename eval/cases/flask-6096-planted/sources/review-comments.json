@@ -1,0 +1,54 @@
+[
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#discussion_r3580384102",
+    "user": {
+      "login": "lkk7"
+    },
+    "body": "`sn_port` changed to int/none, that's the reason for this change",
+    "path": "src/flask/app.py",
+    "side": "RIGHT",
+    "line": 737,
+    "original_line": 651,
+    "original_commit_id": "67d2e8f7e018dc7c64f6fccc1fb420b7f7dd0164",
+    "commit_id": "7203feabf723edae0286ae5dc64fec8ac4c91735"
+  },
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#discussion_r3580389718",
+    "user": {
+      "login": "lkk7"
+    },
+    "body": "Mypy: Redundant cast to \"str\"",
+    "path": "src/flask/app.py",
+    "side": "RIGHT",
+    "line": 751,
+    "original_line": 665,
+    "original_commit_id": "67d2e8f7e018dc7c64f6fccc1fb420b7f7dd0164",
+    "commit_id": "7203feabf723edae0286ae5dc64fec8ac4c91735"
+  },
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#discussion_r3580425176",
+    "user": {
+      "login": "lkk7"
+    },
+    "body": "That's the part I was unsure about. \r\nHostname can be `None`, so I used the behavior from the werkzeug change you mentioned:\r\n\r\n`hostname = url.hostname or \"localhost\"`",
+    "path": "src/flask/testing.py",
+    "side": "RIGHT",
+    "line": 180,
+    "original_line": 180,
+    "original_commit_id": "67d2e8f7e018dc7c64f6fccc1fb420b7f7dd0164",
+    "commit_id": "7203feabf723edae0286ae5dc64fec8ac4c91735"
+  },
+  {
+    "html_url": "https://github.com/pallets/flask/pull/6096#discussion_r3580431545",
+    "user": {
+      "login": "lkk7"
+    },
+    "body": "I added \"//\" to make urlsplit work in this instance. I assume that this won't break anything, but you definitely know more about that.",
+    "path": "src/flask/app.py",
+    "side": "RIGHT",
+    "line": 725,
+    "original_line": 639,
+    "original_commit_id": "67d2e8f7e018dc7c64f6fccc1fb420b7f7dd0164",
+    "commit_id": "7203feabf723edae0286ae5dc64fec8ac4c91735"
+  }
+]
