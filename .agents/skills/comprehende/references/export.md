@@ -1,6 +1,6 @@
 # Export
 
-Write a static site and put that folder where the user asked. `<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named.
+Write a static site and put that folder where the user asked. `<cli>` is the CLI command SKILL.md uses.
 
 ```sh
 <cli> export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"

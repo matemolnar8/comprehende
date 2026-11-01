@@ -2,7 +2,7 @@
 
 Carry an existing review over to new commits or a rebase. Prose for a hunk that did not change stays as it is; only the groups the report names get new words.
 
-`<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named.
+`<cli>` is the CLI command SKILL.md uses.
 
 The previous document is the `review.json` the user names, or the `document` field of a hosted export's `api/review.json`. Copy it into a fresh directory first:
 
@@ -21,7 +21,7 @@ REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1])
 
    `refresh` keeps a hunk whose path and changed lines are the same, wherever it now starts, and re-points its ref. A hunk edited in place (same file, same region, other lines) is `changed` and keeps its group; when only whitespace moved it is `reformat`. A ref whose hunk left the diff is dropped. Every hunk no group covers lands in a draft `update` group with stub prose, and so does every new hunk under a directory ref. A focus range or note follows a `same` hunk to its new lines. One on a `changed` or `reformat` hunk is dropped, and the report names its group; one on a `gone` hunk is dropped. A file note stays while every hunk of its file is `same`. When its file gains, edits, or loses a hunk, the note is dropped and the report counts it; one on a file that left the diff is dropped. The report prints the new commit subjects, one line per file whose hunks changed (`new`, `changed`, `reformat`, `same`, `gone`, and the groups it sits in), and per group what moved. "nothing to refresh" means the refs still resolve to the commits the document names: fetch the right remote or name the head, then run it again. Done when the report and the document are in context.
 
-2. Sources as in SKILL.md Workflow step 2a, appended to the step-1 shell call. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read each new comment whole. Commit subjects are in the report. Done when every new comment and subject is in context.
+2. Sources as in SKILL.md Workflow step 2a, appended to the step-1 shell call. The request body is read again, because document `lookFor` bullets cite it. A comment whose `url` is already in `sources` keeps its entry; copy only its current line and resolved state onto the pin. Read each new comment whole. Commit subjects are in the report. When the base branch the forge reports for the request is the head branch of another request, read `references/stacks.md` and fetch the lower layer's body as it says, in this call. Done when every new comment and subject is in context.
 
 3. One `show` batch, with `--base` and `--head` set to the new range, for the hunks the report marks `new` or `changed`. Up to six listed files: fetch every `new` or `changed` hunk. Past six, the SKILL.md step-3a budget applies to the files the report lists. A `same` or `reformat` hunk is fetched only when a kept `attention` rests on it.
 
@@ -33,4 +33,4 @@ REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1])
 
    **4c. Update the document fields.** Retire a document `lookFor` bullet that a new commit resolves; a new comment asking for work the change does not do is a new bullet. `size` moves with the new burden; `title` and `why` change only when a source did. Done when every `lookFor` bullet is true at head.
 
-5. SKILL.md Workflow steps 5 and 6: validate, then serve or export to the same place as before. Give the user the URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.
+5. SKILL.md Workflow steps 5 and 6: validate, then serve. When the review was exported before, read `references/export.md` and export to the same place. Give the user the URL with `#changes` at the end: that page compares this review with the one `refresh` kept beside it.

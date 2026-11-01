@@ -55,7 +55,14 @@ describe("next skill workflow", () => {
       join(findPackageRoot(), "skills-next/comprehende/references/local-cli.md"),
       "utf8",
     );
-    assert.match(localCli, /`<executable> --version` in place of `npm view comprehende version`/);
+    assert.match(
+      md,
+      /When the user names a local executable for the CLI, read `references\/local-cli\.md` before this call/,
+    );
+    assert.match(
+      localCli,
+      /In the step-2 shell call, run `<executable> --version` in place of `npm view comprehende version`/,
+    );
     assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);
     assert.doesNotMatch(md, /package-lock\.json/);
