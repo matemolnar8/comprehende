@@ -1,6 +1,6 @@
 import type { Questions } from "../../schema/types.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
-import { CopyPrompt } from "./CopyPrompt.tsx";
+import { AskAgent } from "./AskAgent.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse, briefRows } from "./Kicker.tsx";
 
@@ -20,7 +20,7 @@ export function QuestionList(props: { groupId: string; questions: Questions }) {
             <p className={briefProse}>
               <InlineMd text={question} />
             </p>
-            <CopyPrompt prompt={askAgentPrompt({ group: groupId }, question)} scope="question" />
+            <AskAgent prompt={askAgentPrompt({ group: groupId }, question)} scope="question" />
           </li>
         ))}
       </ul>

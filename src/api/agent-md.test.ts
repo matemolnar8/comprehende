@@ -133,7 +133,7 @@ describe("agentMd", () => {
 
   it("omits origin when the repo has no remote", () => {
     const review = sampleReview();
-    review.repo = { name: "example", origin: null };
+    review.repo = { name: "example", origin: null, root: null };
     const prompt = agentMd(review, { kind: "agent-md", target: "overview" });
     assert.ok(prompt !== null);
     assert.match(prompt, /Repository: example/);
@@ -262,6 +262,7 @@ function sampleReview(): ApiReview {
     repo: {
       name: "comprehende",
       origin: "git@github.com:matemolnar8/comprehende.git",
+      root: null,
     },
   };
 }
