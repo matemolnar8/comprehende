@@ -214,7 +214,7 @@ const reviewDocumentObject = z
           "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
       }),
       lookFor: stringList(
-        "Source verdicts: a source item done differently, not done, or not true at head, and manual steps a source says the change needs. Cite the source.",
+        "Source verdicts: a source item done differently, not done, or not true at head, manual steps a source says the change needs, and instructions a source gives a reviewer. Cite the source.",
       ),
       parts: z.array(reviewPartSchema, { error: "must be an array" }).optional().meta({
         description:

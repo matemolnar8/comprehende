@@ -78,7 +78,7 @@
       }
     },
     "lookFor": {
-      "description": "Source verdicts: a source item done differently, not done, or not true at head, and manual steps a source says the change needs. Cite the source.",
+      "description": "Source verdicts: a source item done differently, not done, or not true at head, manual steps a source says the change needs, and instructions a source gives a reviewer. Cite the source.",
       "type": "array",
       "items": {
         "type": "string",
