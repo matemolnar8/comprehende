@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/astral-sh/ruff/pull/29307",
+  "number": 29307,
+  "title": "[ty] Clamp notebook cell positions to the end of the cell",
+  "body": "## Summary\n\nWe now clamp notebook request positions to the end of the requested cell's content. For example, `(0, 1)` in an empty cell resolves to `(0, 0)`, consistent with the [LSP rule for character offsets beyond the end of a line](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/lsp/3.17/types/position.md).\n\nPreviously, we converted positions against the concatenated notebook source, allowing a position past the end of a cell to resolve into a later cell. Hovering just past an empty cell could show the type of `x` from a following `x = 1` cell, and an inlay hint request could return hints from the next cell.\n\nWe now bound position conversion by the cell's content range, excluding its synthetic separator newline. If the cell has no source range, we return `None` instead of falling back to the start of the notebook.\n",
+  "user": {
+    "login": "charliermarsh"
+  },
+  "merged_at": "2026-10-13T13:15:16Z",
+  "merge_commit_sha": "eb9e9bdcf988fffcd619dcf5d2a2bd74d75be1c6",
+  "base": {
+    "ref": "charlie/notebook-module-range",
+    "sha": "d88a88b4ff25a276247675e6706476e6367d7407"
+  },
+  "head": {
+    "ref": "charlie/notebook-position-clamp",
+    "sha": "867edce05c7e0b9136457ba5662f44327c734f46"
+  }
+}

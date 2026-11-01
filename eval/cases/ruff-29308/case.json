@@ -1,0 +1,27 @@
+{
+  "id": "ruff-29308",
+  "repo": "https://github.com/astral-sh/ruff.git",
+  "pr": 29308,
+  "base": "867edce05c7e0b9136457ba5662f44327c734f46",
+  "head": "fc8c4fbd769794f4cd7310dc9e03113cb7f47bbf",
+  "tags": ["foreign", "lang-rust", "type-service", "shape-stacked"],
+  "expect": {
+    "why": "present",
+    "parts": { "min": 0, "max": 1 },
+    "groups": { "min": 1, "max": 3 },
+    "size": ["small", "medium"],
+    "sourceKinds": ["pr"],
+    "together": [
+      [
+        "crates/ty_server/src/document/range.rs",
+        "crates/ty_server/src/server/api/requests/folding_range.rs",
+        "crates/ty_server/src/server/api/requests/semantic_tokens.rs"
+      ],
+      [
+        "crates/ty_server/tests/e2e/notebook.rs",
+        "crates/ty_server/tests/e2e/snapshots/e2e__notebook__cells_after_cell_magic_hover.snap",
+        "crates/ty_server/tests/e2e/snapshots/e2e__notebook__cells_after_cell_magic_tokens.snap"
+      ]
+    ]
+  }
+}
