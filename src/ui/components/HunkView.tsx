@@ -4,6 +4,7 @@ import { fetchPatch } from "../api.ts";
 import type { FocusRange } from "../../schema/types.ts";
 import { FocusBar, HiddenLines } from "./FocusBar.tsx";
 import { ImageDiff } from "./ImageDiff.tsx";
+import { InlineMd } from "./InlineMd.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -34,6 +35,7 @@ export function HunkView(props: {
   focusCommentId?: string;
   focus?: readonly FocusRange[];
   notes?: readonly LetteredNote[];
+  fileNote?: string;
 }) {
   const {
     file,
@@ -50,6 +52,7 @@ export function HunkView(props: {
     focusCommentId,
     focus,
     notes,
+    fileNote,
   } = props;
   const deferred = file.kind === "lockfile";
   const [collapsed, setCollapsed] = useState(viewed || deferred);
@@ -72,7 +75,7 @@ export function HunkView(props: {
   const focused =
     focusCommentId !== undefined && fileComments.some((comment) => comment.id === focusCommentId);
 
-  const fileNotes = useMemo(
+  const lineNotes = useMemo(
     () => (notes ?? []).filter((note) => onFile(note, file)),
     [file, notes],
   );
@@ -88,8 +91,8 @@ export function HunkView(props: {
   );
   const [wholeHunks, setWholeHunks] = useState<ReadonlySet<number>>(() => new Set());
   const blocks = useMemo(
-    () => focusBlocks(patch, file.hunks, hunkFocus, wholeHunks, fileNotes),
-    [file.hunks, fileNotes, hunkFocus, patch, wholeHunks],
+    () => focusBlocks(patch, file.hunks, hunkFocus, wholeHunks, lineNotes),
+    [file.hunks, hunkFocus, lineNotes, patch, wholeHunks],
   );
   const toggleWhole = (hunk: number) =>
     setWholeHunks((current) => {
@@ -143,7 +146,7 @@ export function HunkView(props: {
 
   const relocationBadge =
     word !== undefined ? (
-      <Badge variant="outline" className="font-normal">
+      <Badge variant="outline" className="shrink-0 font-normal">
         {word}
         {file.relocation?.similarity !== undefined ? (
           <span className="font-mono font-normal tabular-nums text-muted-foreground">
@@ -241,9 +244,14 @@ export function HunkView(props: {
             </Tooltip>
           </div>
         </div>
-        {relocationBadge !== null ? (
-          <div className={cn("mt-1.5 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
+        {relocationBadge !== null || fileNote !== undefined ? (
+          <div className={cn("mt-1 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
             {relocationBadge}
+            {fileNote !== undefined ? (
+              <p className="min-w-0 text-xs leading-snug text-muted-foreground">
+                <InlineMd text={fileNote} />
+              </p>
+            ) : null}
           </div>
         ) : null}
       </header>
@@ -285,7 +293,7 @@ export function HunkView(props: {
                   excerpt={blocks !== undefined}
                   comments={fileComments}
                   moves={moves}
-                  notes={fileNotes}
+                  notes={lineNotes}
                   focusCommentId={focusCommentId}
                 />
               ),

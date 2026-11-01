@@ -103,6 +103,7 @@ export function Group(props: {
       focusCommentId={props.focusCommentId}
       focus={listed?.focus}
       notes={notes}
+      fileNote={listed?.fileNotes?.[file.path]}
     />
   ));
 

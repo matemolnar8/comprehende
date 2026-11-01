@@ -358,6 +358,9 @@ function documentFields(document: ReviewDocument): { where: string; text: string
     for (const note of group.notes ?? []) {
       fields.push({ where: `group ${group.id} note`, text: note.body });
     }
+    for (const [path, note] of Object.entries(group.fileNotes ?? {})) {
+      fields.push({ where: `group ${group.id} file note ${path}`, text: note });
+    }
   }
   return fields;
 }

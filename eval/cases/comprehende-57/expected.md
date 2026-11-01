@@ -31,6 +31,8 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - `isReviewSize` and `isSourceKind` in `types.ts` lose their last callers with the old parser and stay as unused exports.
 - The `parseHunkRef` export goes away with the old parser, and no other module imported it.
 - A note on line 251 of the new `src/schema/review.ts` points at the `sourceCitationErrors` call in `documentRules`.
+- Each `review.schema.json` copy has a short file note that says it is a generated copy of `src/schema/review.schema.json`.
+- In a group with two or more files, each file note says what changed in that file, such as `types.ts` re-exporting the inferred types or `pack-smoke.ts` asserting the `zod` dependency.
 
 ## Must not
 
@@ -41,6 +43,7 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - Do not give the `types.ts` re-exports or `parse.test.ts` their own group, and do not put the Zod dependency in its own part.
 - Do not write a focus range on the new `src/schema/review.ts`; an added file is read whole.
 - Do not put a focus range or a note on a `review.schema.json` file; the three files are generated, and the reader skips them.
+- Do not write a file note that repeats its group summary, or a file note in a group that holds only one file.
 - Do not write a group attention that asks to delete the unused `isReviewSize` and `isSourceKind` exports, to drop the `tickets` TODO, or to add more schema tests; a cleanup idea and a missing test are not attentions.
 - Do not write a group question that asks why the parser moves to Zod; the PR names the three copies of the document shape as the reason.
 
