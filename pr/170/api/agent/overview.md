@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify 40fb350b116d4142086135bae7691f55d33ea6b1` in this repository.
+   Run `git rev-parse --verify 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae` and `git rev-parse --verify b4365a5a3581593baf3069bc034b5e63104038fb` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  3d282dc3d8e5a36190f501ab5d73fa0b9f138cae
 
-head               40fb350b116d4142086135bae7691f55d33ea6b1
+head               b4365a5a3581593baf3069bc034b5e63104038fb
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae 40fb350b116d4142086135bae7691f55d33ea6b1
+git diff --find-renames 3d282dc3d8e5a36190f501ab5d73fa0b9f138cae b4365a5a3581593baf3069bc034b5e63104038fb
 
 Commits:
+- b4365a5 Skill: a test's focus range is the call and its assertions, not setup
 - 40fb350 Show the cut in the diff and the focus reason as a reason
 - 831ca5d cobra-2356: a note that repeats the code comment is a Must not
 - bae4cb6 Size show's number column from the last line, not one past it
@@ -107,7 +108,7 @@ Depends on:
 
 ### 05 Eval grading (`eval`)
 
-`packet.ts` lists each group's ranges and notes for the grader, `graders.ts` checks each caption and note at head, and three `expected.md` files gain rubric lines.
+`packet.ts` lists each group's ranges and notes for the grader, `graders.ts` checks each caption and note at head, and three `expected.md` files gain focus and note rubric lines.
 
 Depends on:
 - 01 Focus and note fields (`schema`)
@@ -116,7 +117,7 @@ Depends on:
 
 ### 06 Skill and glossary (`skill`)
 
-A Focus and notes section in `SKILL.md` names when to write each one, and `example.md` and the glossary show both beside attention and questions.
+A Focus and notes section in `SKILL.md` says when to write each one: a range covers the lines that carry the concern, in a test the call and its assertions. `example.md` and the glossary show both beside attention and questions.
 
 Depends on:
 - 01 Focus and note fields (`schema`)
