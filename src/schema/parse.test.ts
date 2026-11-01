@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, it } from "vite-plus/test";
 import { parseReviewDocument, parseReviewJson } from "./parse.ts";
+import { legacyLookForErrors } from "./review.ts";
+import { reviewFileBody, storedDocument } from "../review/write.ts";
 import { skillPaths } from "./skill-paths.ts";
 import { findPackageRoot } from "../package-root.ts";
 import { addedSymbols, hunkRangeLabel } from "./hunk-meta.ts";
@@ -93,7 +95,7 @@ describe("parseReviewDocument", () => {
           title: "CLI",
           why: "The command is how an agent starts a review.",
           summary: "Adds a command.",
-          lookFor: ["Check the flag parsing."],
+          attention: { kind: "contract", note: "`--data` is now required." },
           suggestedOrder: 0,
           hunkRefs: ["src/cli/main.ts@1+8"],
         },
@@ -106,6 +108,68 @@ describe("parseReviewDocument", () => {
       assert.equal(result.document.summary, "Adds a review command.");
       assert.equal(result.document.groups[0]?.why, "The command is how an agent starts a review.");
       assert.deepEqual(result.document.lookFor, undefined);
+    }
+  });
+
+  it("rejects an attention kind outside the four", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "t",
+      summary: "s",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "w",
+          summary: "s",
+          attention: { kind: "nit", note: "opts is a vague name." },
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+      ],
+    });
+    assert.equal(result.ok, false);
+    if (!result.ok) {
+      assert.match(result.errors.join("\n"), /attention\.kind must be one of contract, tradeoff/);
+    }
+  });
+
+  it("loads legacy group lookFor, flags it, and writes it back", () => {
+    const result = parseReviewDocument({
+      version: 1,
+      source: { baseRef: "main", headRef: "HEAD" },
+      size: "small",
+      title: "t",
+      summary: "s",
+      groups: [
+        {
+          id: "g1",
+          title: "CLI",
+          why: "w",
+          summary: "s",
+          lookFor: ["Breaking. `--data` is now required."],
+          suggestedOrder: 0,
+          hunkRefs: [],
+        },
+        { id: "g2", title: "Docs", why: "w", summary: "s", suggestedOrder: 1, hunkRefs: [] },
+      ],
+    });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.deepEqual(result.document.groups[0]?.legacyLookFor, [
+        "Breaking. `--data` is now required.",
+      ]);
+      assert.deepEqual(legacyLookForErrors(result.document), [
+        'groups id "g1" has lookFor; write its one judgment call as attention, or drop it',
+      ]);
+      assert.equal("legacyLookFor" in (storedDocument(result.document).groups[0] ?? {}), false);
+      const written = JSON.parse(reviewFileBody(result.document)) as {
+        groups: { lookFor?: string[] }[];
+      };
+      assert.deepEqual(written.groups[0]?.lookFor, ["Breaking. `--data` is now required."]);
+      assert.equal(written.groups[1]?.lookFor, undefined);
     }
   });
 

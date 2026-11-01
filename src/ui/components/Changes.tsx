@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type {
+  ApiAttentionChange,
   ApiChanges,
   ApiGroupChange,
   ApiHunkCounts,
@@ -9,7 +10,9 @@ import type {
 } from "../../api/types.ts";
 import { shortSha, type ReviewMeta } from "../api.ts";
 import type { Selection } from "../lib/selection.ts";
+import type { Attention } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
+import { ATTENTION_TITLES } from "./Attention.tsx";
 import { Brief } from "./GroupBrief.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
@@ -96,7 +99,7 @@ function GroupChange(props: {
       {group.state === "kept" ? (
         <div className="mt-2 empty:hidden">
           <TextFields text={group.text} />
-          <ListField label="Look for" change={group.lookFor} />
+          {group.attention !== undefined ? <AttentionField change={group.attention} /> : null}
           <ListField label="Files" change={group.files} mono />
         </div>
       ) : null}
@@ -130,6 +133,36 @@ function TextChange(props: { change: ApiTextChange }) {
         </p>
       ) : null}
     </>
+  );
+}
+
+function AttentionField(props: { change: ApiAttentionChange }) {
+  const { before, after } = props.change;
+  return (
+    <BriefField kicker="Attention">
+      {before !== null ? <AttentionText attention={before} removed /> : null}
+      {after !== null ? (
+        <AttentionText attention={after} className={cn(before !== null && "mt-1")} />
+      ) : null}
+    </BriefField>
+  );
+}
+
+function AttentionText(props: { attention: Attention; removed?: boolean; className?: string }) {
+  const { attention, removed = false } = props;
+  return (
+    <p
+      className={cn(
+        briefProse,
+        removed && "text-muted-foreground line-through decoration-del/60",
+        props.className,
+      )}
+    >
+      <span className={cn("mr-2 font-mono text-[11px]", !removed && "text-warn")}>
+        {ATTENTION_TITLES[attention.kind]}
+      </span>
+      <InlineMd text={attention.note} />
+    </p>
   );
 }
 

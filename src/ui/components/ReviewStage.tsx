@@ -39,7 +39,7 @@ export function ReviewStage(props: {
   onViewed: (path: string, viewed: boolean) => void;
   comments: FileComment[];
   focusCommentId?: string;
-  focusLookForKey?: string;
+  focusClaimKey?: string;
 }) {
   const pad = props.compact === true ? "px-4 py-4" : "px-10 py-8";
   if (props.inspector !== null) {
@@ -64,7 +64,7 @@ export function ReviewStage(props: {
           parts={props.parts}
           viewedPaths={props.viewedPaths}
           onSelect={props.onSelect}
-          focusLookForKey={props.focusLookForKey}
+          focusClaimKey={props.focusClaimKey}
         />
       ) : props.selection?.kind === "changes" && props.meta.changes !== undefined ? (
         <Changes
@@ -100,7 +100,7 @@ export function ReviewStage(props: {
           document={props.meta.document}
           comments={props.comments}
           focusCommentId={props.focusCommentId}
-          focusLookForKey={props.focusLookForKey}
+          focusClaimKey={props.focusClaimKey}
         />
       )}
     </main>

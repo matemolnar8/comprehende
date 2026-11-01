@@ -24,7 +24,7 @@ import {
   type Selection,
 } from "./lib/selection.ts";
 import { colorIndexByGroupId, groupParts, isMixedReview, partColor } from "./lib/parts.ts";
-import { lookForClaims, openTargetForSource } from "./lib/look-for.ts";
+import { openTargetForSource, reviewClaims } from "./lib/claims.ts";
 import { SourcesProvider } from "./lib/sources-context.tsx";
 import { useViewedFiles } from "./lib/use-viewed-files.ts";
 import { resolveWrap, useNarrow } from "./lib/narrow.ts";
@@ -50,7 +50,7 @@ export function App() {
   const [splitRatio, setSplitRatio] = useState(0.5);
   const [showComments, setShowComments] = useState(true);
   const [focusCommentId, setFocusCommentId] = useState<string | null>(null);
-  const [focusLookForKey, setFocusLookForKey] = useState<string | null>(null);
+  const [focusClaimKey, setFocusClaimKey] = useState<string | null>(null);
   const [activeHunk, setActiveHunk] = useState(0);
   const [inspector, setInspector] = useState<InspectorState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -157,7 +157,7 @@ export function App() {
 
   const selectFromNav = useCallback(
     (next: Selection) => {
-      setFocusLookForKey(null);
+      setFocusClaimKey(null);
       selectWithMotion(next);
     },
     [selectWithMotion],
@@ -313,11 +313,11 @@ export function App() {
   ]);
 
   useEffect(() => {
-    if (focusLookForKey !== null) {
+    if (focusClaimKey !== null) {
       return;
     }
     mainRef.current?.scrollTo({ top: 0 });
-  }, [focusLookForKey, selection]);
+  }, [focusClaimKey, selection]);
 
   const selectedGroup = useMemo(() => {
     if (meta === null || selection?.kind !== "group") {
@@ -341,7 +341,7 @@ export function App() {
     [pinnedComments, showComments, staleSourceIds],
   );
   const claims = useMemo(
-    () => (meta === null ? [] : lookForClaims(meta.document, meta.groups)),
+    () => (meta === null ? [] : reviewClaims(meta.document, meta.groups)),
     [meta],
   );
   const renames = useMemo(
@@ -371,7 +371,7 @@ export function App() {
       if (target === undefined) {
         return;
       }
-      setFocusLookForKey(target.lookForKey ?? null);
+      setFocusClaimKey(target.claimKey ?? null);
       if (target.commentId !== undefined) {
         setShowComments(true);
         setFocusCommentId(target.commentId);
@@ -439,7 +439,7 @@ export function App() {
       onViewed={setFileViewed}
       comments={visibleComments}
       focusCommentId={focusCommentId ?? undefined}
-      focusLookForKey={focusLookForKey ?? undefined}
+      focusClaimKey={focusClaimKey ?? undefined}
     />
   );
 

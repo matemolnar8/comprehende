@@ -18,6 +18,7 @@ import { writeDocument } from "../review/write.ts";
 import { listNewSubjects } from "../git/log.ts";
 import { parseHunkRefString } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
+import { legacyLookForErrors } from "../schema/review.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import {
   shortSha,
@@ -67,6 +68,7 @@ export async function cmdValidate(
     ...dirRefErrors(coverage, files),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
+    ...legacyLookForErrors(document),
   ];
   if (errors.length > 0) {
     throw new Error(errors.join("\n\n"));

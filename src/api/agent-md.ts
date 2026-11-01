@@ -1,6 +1,6 @@
 import { formatHunkRef } from "../schema/identity.ts";
 import { padIndex, sizeLabel } from "../schema/types.ts";
-import type { HunkRef } from "../schema/types.ts";
+import type { Attention, HunkRef } from "../schema/types.ts";
 import { agentMdGroupHref } from "./paths.ts";
 import type { ApiResource } from "./paths.ts";
 import type { ApiReview } from "./types.ts";
@@ -61,7 +61,7 @@ function groupAgentMd(review: ApiReview, id: string): string | null {
     listed.why,
     "The what:",
     listed.summary,
-    lookForBlock(listed.lookFor),
+    attentionBlock(listed.attention),
     dependsOnBlock(review, listed.dependsOn),
     hunkList("Hunk refs for this concern:", hunks),
     listed.staleCount > 0
@@ -129,6 +129,7 @@ function reviewConcernsBlock(review: ApiReview): string {
     return joinBlocks([
       `### ${padIndex(i + 1)} ${group.title} (\`${group.id}\`)`,
       group.summary,
+      attentionBlock(group.attention),
       dependsOnBlock(review, group.dependsOn),
       `[${href}](${href})`,
     ]);
@@ -141,6 +142,10 @@ function lookForBlock(lookFor: string[]): string | null {
     return null;
   }
   return ["Look for:", ...lookFor.map((item) => `- ${item}`)].join("\n");
+}
+
+function attentionBlock(attention: Attention | undefined): string | null {
+  return attention === undefined ? null : `Attention (${attention.kind}):\n${attention.note}`;
 }
 
 function dependsOnBlock(review: ApiReview, dependsOn: string[]): string | null {

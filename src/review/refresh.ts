@@ -491,6 +491,10 @@ export function formatRefresh(
   if (context.stalePins.length > 0) {
     lines.push(`Pins off a live line: ${context.stalePins.join(", ")}`);
   }
+  const legacy = document.groups.filter((group) => group.legacyLookFor !== undefined);
+  if (legacy.length > 0) {
+    lines.push(`lookFor to convert to attention: ${legacy.map((group) => group.id).join(", ")}`);
+  }
   return lines.join("\n");
 }
 

@@ -39,7 +39,7 @@ describe("covering documents", () => {
     assert.equal(document.groups[0]?.part, undefined);
   });
 
-  it("writes a mixed covering document with parts, dependsOn, lookFor, and sources", async () => {
+  it("writes a mixed covering document with parts, dependsOn, lookFor, attention, and sources", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-mixed-"));
     roots.push(root);
     const repo = await createExampleRepo(root);
@@ -64,7 +64,7 @@ describe("covering documents", () => {
     assert.deepEqual(appTest?.dependsOn, [MIXED_GROUP_APP]);
     assert.equal(appTest?.part, MIXED_PART_APP);
     const app = document.groups.find((group) => group.id === MIXED_GROUP_APP);
-    assert.ok((app?.lookFor?.length ?? 0) > 0);
+    assert.equal(app?.attention?.kind, "contract");
     assert.equal(
       document.groups.reduce((sum, group) => sum + group.hunkRefs.length, 0),
       index.hunks.length,

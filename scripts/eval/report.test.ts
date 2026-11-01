@@ -97,7 +97,7 @@ describe("eval HTML report", () => {
     assert.match(html, /Must 1 of 1/);
     assert.match(html, /copies &lt;b&gt;args&lt;\/b&gt;/);
     assert.match(html, /Must not 1 of 1/);
-    assert.match(html, /lookFor 0 of 1 true/);
+    assert.match(html, /lookFor and attention 0 of 1 true/);
     assert.match(html, /no such directory/);
     assert.doesNotMatch(html, /<h3>Good/);
     assert.doesNotMatch(html, /comprehende-57\/site/);

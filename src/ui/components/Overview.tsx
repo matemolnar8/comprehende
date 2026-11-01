@@ -4,7 +4,6 @@ import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
-import { claimsFromLookFor } from "../lib/look-for.ts";
 import {
   dependsOnDepth,
   groupOrderIndex,
@@ -16,6 +15,7 @@ import {
 import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
 import type { Selection } from "../lib/selection.ts";
 import { shortSha } from "../api.ts";
+import { LookClosely } from "./Attention.tsx";
 import { Brief } from "./GroupBrief.tsx";
 import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
@@ -51,9 +51,9 @@ export function Overview(props: {
   parts: Part[];
   viewedPaths: ReadonlySet<string>;
   onSelect: (selection: Selection) => void;
-  focusLookForKey?: string;
+  focusClaimKey?: string;
 }) {
-  const { meta, parts, viewedPaths, onSelect, focusLookForKey } = props;
+  const { meta, parts, viewedPaths, onSelect, focusClaimKey } = props;
   const onOpenGroup = (id: string) => onSelect({ kind: "group", id });
   const since = meta.changes?.since.headSha;
   const mixed = isMixedReview(parts);
@@ -100,10 +100,7 @@ export function Overview(props: {
             <InlineMd text={meta.document.summary} />
           </p>
         </BriefField>
-        <LookForList
-          claims={claimsFromLookFor({ kind: "document" }, meta.document.lookFor)}
-          focusKey={focusLookForKey}
-        />
+        <LookForList items={meta.document.lookFor ?? []} focusKey={focusClaimKey} />
         <SourceList
           ids={sources.map((source) => source.id)}
           sources={sources}
@@ -218,6 +215,7 @@ function PartColumn(props: {
                   <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
                     <InlineMd text={group.summary} />
                   </span>
+                  {group.attention !== undefined ? <LookClosely className="mt-1" /> : null}
                 </span>
                 {reading !== null ? <ReadingMark paths={group.files} viewed={viewedPaths} /> : null}
               </HashLink>

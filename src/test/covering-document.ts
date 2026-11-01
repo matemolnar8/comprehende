@@ -53,9 +53,10 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       summary: "`src/app.ts` changes `name` from alpha to beta and updates the end marker.",
       part: MIXED_PART_APP,
       sources: ["s1"],
-      lookFor: [
-        "For the `name` export in `src/app.ts`, old is `alpha`; new is `beta`. `start()` returns the new name.",
-      ],
+      attention: {
+        kind: "contract",
+        note: "The `name` export in `src/app.ts` is now `beta`, and `start()` returns it. A caller that compares against `alpha` now gets a different value.",
+      },
       suggestedOrder: 0,
       hunkRefs: app,
     },
@@ -86,9 +87,10 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       summary: "`src/types.ts` changes `Id` from `string` to `string | number`.",
       part: MIXED_PART_LIB,
       sources: ["s2"],
-      lookFor: [
-        "Breaking. `Id` is now `string | number`. A caller that stored only strings still type-checks.",
-      ],
+      attention: {
+        kind: "risk",
+        note: "`Id` is now `string | number`. A caller that stores only strings still type-checks, so a number can reach code that expects a string. Decide whether that risk is accepted.",
+      },
       suggestedOrder: 3,
       hunkRefs: types,
     },
@@ -170,7 +172,7 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
     ],
     lookFor: [
       "[#1](source:s1) also asks for a CHANGELOG entry. No hunk touches CHANGELOG.",
-      "Subtle. [#1](source:s1) wants the new name visible to callers. The pad constants in `src/app.ts` keep their old numbers.",
+      "[#1](source:s1) wants the new name visible to callers. The pad constants in `src/app.ts` keep their old numbers.",
     ],
     groups,
   };

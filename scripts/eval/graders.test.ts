@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
 import {
   emptyRubricOutput,
-  lookForBullets,
+  claimBullets,
   parseRubricReply,
   rubricCounts,
   rubricPrompt,
@@ -79,7 +79,7 @@ describe("rubric grader", () => {
     );
   });
 
-  it("lists document bullets before group bullets", () => {
+  it("lists document lookFor before group attention notes", () => {
     const document: ReviewDocument = {
       version: 1,
       source: { baseRef: "a", headRef: "b" },
@@ -95,7 +95,7 @@ describe("rubric grader", () => {
           summary: "s",
           suggestedOrder: 1,
           hunkRefs: [{ path: "a.ts" }],
-          lookFor: ["in g1"],
+          attention: { kind: "contract", note: "in g1" },
         },
         {
           id: "g2",
@@ -107,9 +107,9 @@ describe("rubric grader", () => {
         },
       ],
     };
-    assert.deepEqual(lookForBullets(document), [
-      { where: "document", bullet: "doc one" },
-      { where: "group g1", bullet: "in g1" },
+    assert.deepEqual(claimBullets(document), [
+      { where: "document lookFor", bullet: "doc one" },
+      { where: "group g1 attention contract", bullet: "in g1" },
     ]);
   });
 

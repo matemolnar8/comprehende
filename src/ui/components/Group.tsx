@@ -32,7 +32,7 @@ export function Group(props: {
   document: ReviewMeta["document"];
   comments?: FileComment[];
   focusCommentId?: string;
-  focusLookForKey?: string;
+  focusClaimKey?: string;
 }) {
   const {
     group,
@@ -116,7 +116,7 @@ export function Group(props: {
               groups={groups}
               document={props.document}
               onOpenGroup={props.onOpenGroup}
-              focusLookForKey={props.focusLookForKey}
+              focusClaimKey={props.focusClaimKey}
             />
           ) : lockfiles ? (
             <Brief kicker="Lockfiles" title="Generated lockfiles" />

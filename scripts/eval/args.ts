@@ -2,7 +2,7 @@ import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
-Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each lookFor bullet against head. Grader verdicts do not change the exit code.
+Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each lookFor bullet and attention note against head. Grader verdicts do not change the exit code.
 
 Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}.
 

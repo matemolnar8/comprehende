@@ -78,7 +78,7 @@
       }
     },
     "lookFor": {
-      "description": "Whole-change and missing-work claims. Cite the source. Do not store a pass/fail.",
+      "description": "Source verdicts: a source item done differently, not done, or not true at head, and manual steps a source says the change needs. Cite the source.",
       "type": "array",
       "items": {
         "type": "string",
@@ -131,13 +131,31 @@
             "type": "string",
             "description": "One sentence: what this group is."
           },
-          "lookFor": {
-            "description": "Scannable bullets of what to inspect.",
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
+          "attention": {
+            "description": "The one judgment call a reviewer makes in this group. Most groups have none.",
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "contract",
+                  "tradeoff",
+                  "product",
+                  "risk"
+                ],
+                "description": "contract: a compatibility or API promise. tradeoff: a cost accepted for a gain. product: a product or scope call. risk: a risk accepted."
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1,
+                "description": "What the code at head does, where it matters, and the decision the reviewer makes."
+              }
+            },
+            "required": [
+              "kind",
+              "note"
+            ],
+            "additionalProperties": false
           },
           "dependsOn": {
             "description": "Ids of earlier groups this one depends on. Same story only.",
