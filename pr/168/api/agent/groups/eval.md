@@ -41,7 +41,7 @@ The why:
 
 The what:
 
-`claimBullets` in `graders.ts` hands the grader each document `lookFor` bullet and each attention note to check against head, and all 13 `expected.md` files gains a case-specific Must not and a note on where its Must claims live.
+`claimBullets` in `graders.ts` hands the grader each document `lookFor` bullet and each attention note to check against head, and all 13 `expected.md` files gain a case-specific Must not and a note on where its Must claims live.
 
 Attention (tradeoff):
 The grader's bullets count now includes attention notes, and each case has one more Must not. Totals from runs before this change are not directly comparable, in exchange for grading every claim the review states as fact.
