@@ -39,6 +39,7 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 - Do not cite ticket #2257 for the shared backing array cause; the ticket reports only the inserted `"--"`, and the PR body and review comments name the cause.
 - Do not say the copy changes the completions or the argument values that `ValidArgsFunction` receives; only `os.Args` stays untouched.
 - Do not write a focus range on the ten-line `completions.go` hunk; a hunk that short reads whole.
+- Do not write a note that repeats the comment above `trimmedArgs := make(...)` in `completions.go`; that comment already says the copy keeps the later append off the caller's backing array.
 - Do not write a group attention that proposes the three-index slice or another way to copy `trimmedArgs`, or that asks for more completion tests; the copy was settled in review, and a fix idea and a missing test are not attentions.
 - Do not write a group question that asks why the fix copies `trimmedArgs` instead of using the three-index slice; the review thread gives that reason.
 
