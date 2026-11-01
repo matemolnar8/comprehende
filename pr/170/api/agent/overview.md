@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 5f50618caf4f4029e5dbba2aa5e83419842b8460` and `git rev-parse --verify 73fa6a3083d3566e3fdecdab0e13391332c2643b` in this repository.
+   Run `git rev-parse --verify edf8493d0359215e44fbe8b801c108ca61c609a2` and `git rev-parse --verify e9f4feaea4f6a3725324ae13159d13fcb53ef6c9` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,25 +22,25 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  5f50618caf4f4029e5dbba2aa5e83419842b8460
+base (merge-base)  edf8493d0359215e44fbe8b801c108ca61c609a2
 
-head               73fa6a3083d3566e3fdecdab0e13391332c2643b
+head               e9f4feaea4f6a3725324ae13159d13fcb53ef6c9
 
-Named refs at pin: origin/t3/group-attention-164 ... HEAD
+Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames 5f50618caf4f4029e5dbba2aa5e83419842b8460 73fa6a3083d3566e3fdecdab0e13391332c2643b
+git diff --find-renames edf8493d0359215e44fbe8b801c108ca61c609a2 e9f4feaea4f6a3725324ae13159d13fcb53ef6c9
 
 Commits:
-- 73fa6a3 Size show's number column from the last line, not one past it
-- 323e023 Fix excerpt headers on an empty side, widen mid-block ranges, keep no-newline marks in show
-- bc2d036 Focus ranges and line notes inside hunks
+- e9f4fea Size show's number column from the last line, not one past it
+- 3c4f1ab Fix excerpt headers on an empty side, widen mid-block ranges, keep no-newline marks in show
+- 09e2e61 Focus ranges and line notes inside hunks
 
 Sources:
 - ticket #163 Per-group focus ranges and notes, loud validate checks, a collapsed hunk view, refresh rules per hunk status, and numbered show output.
   https://github.com/matemolnar8/comprehende/issues/163
-- pr PR #170 Implements #163 on top of the group attention PR, with decisions for review.
+- pr PR #170 Implements #163 on main, with decisions for review.
   https://github.com/matemolnar8/comprehende/pull/170
 
 The title:
