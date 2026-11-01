@@ -141,12 +141,11 @@ const attentionSchema = z.strictObject(
   { error: objectError },
 );
 
-const question = nonemptyString();
+const questionsError = "must be an array of at most 2 non-empty strings";
 
 const questionsSchema = z
-  .union([z.tuple([]), z.tuple([question]), z.tuple([question, question])], {
-    error: "must be an array of at most 2 non-empty strings",
-  })
+  .array(nonemptyString(), { error: questionsError })
+  .max(2, { error: questionsError })
   .optional()
   .meta({
     description:

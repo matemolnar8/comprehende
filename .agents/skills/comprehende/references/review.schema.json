@@ -159,42 +159,12 @@
           },
           "questions": {
             "description": "At most 2 questions that ask why the change is this way, where the code and the sources leave the reason open. When a source answers one, the answer goes in why.",
-            "anyOf": [
-              {
-                "type": "array",
-                "prefixItems": [],
-                "items": false,
-                "maxItems": 0
-              },
-              {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                ],
-                "items": false,
-                "minItems": 1,
-                "maxItems": 1
-              },
-              {
-                "type": "array",
-                "prefixItems": [
-                  {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  {
-                    "type": "string",
-                    "minLength": 1
-                  }
-                ],
-                "items": false,
-                "minItems": 2,
-                "maxItems": 2
-              }
-            ]
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
           },
           "dependsOn": {
             "description": "Ids of earlier groups this one depends on. Same story only.",
