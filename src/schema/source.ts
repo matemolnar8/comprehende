@@ -70,6 +70,9 @@ export function documentCitationRefs(document: ReviewDocument): CitationRef[] {
     (group.notes ?? []).forEach((note, j) => {
       add(`groups[${i}].notes[${j}].body`, note.body);
     });
+    for (const [path, note] of Object.entries(group.fileNotes ?? {})) {
+      add(`groups[${i}].fileNotes[${JSON.stringify(path)}]`, note);
+    }
   });
   return out;
 }
@@ -128,6 +131,7 @@ export function groupSourceIds(group: ReviewDocument["groups"][number]): string[
     ...(group.questions ?? []),
     ...(group.focus ?? []).map((range) => range.caption),
     ...(group.notes ?? []).map((note) => note.body),
+    ...Object.values(group.fileNotes ?? {}),
   ].flatMap(citationIds);
   return [...new Set([...named, ...cited])];
 }

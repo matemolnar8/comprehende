@@ -46,8 +46,8 @@ export type GroupRefresh = {
   reformatted: LiveHunk[];
   /** Added hunks a path ref of this group now covers. */
   newHunks: LiveHunk[];
-  /** Focus ranges and notes dropped because their hunk was edited. */
-  droppedAnchors: { focus: number; notes: number };
+  /** Focus ranges and notes dropped because their hunk was edited, file notes because their file was. */
+  droppedAnchors: { focus: number; notes: number; fileNotes: number };
   empty: boolean;
 };
 
@@ -165,6 +165,13 @@ export function refreshDocument(
   for (const hunk of delta.removed) {
     carried.set(hunkKey(hunk), undefined);
   }
+  const editedPaths = new Set(
+    [
+      ...[...delta.changed, ...delta.reformat].flatMap((match) => [match.previous, match.next]),
+      ...delta.added,
+      ...delta.removed,
+    ].map((hunk) => hunk.path),
+  );
 
   const groups: GroupRefresh[] = [];
   const unchanged: string[] = [];
@@ -176,7 +183,7 @@ export function refreshDocument(
       changed: [],
       reformatted: [],
       newHunks: [],
-      droppedAnchors: { focus: 0, notes: 0 },
+      droppedAnchors: { focus: 0, notes: 0, fileNotes: 0 },
       empty: false,
     };
     const refs: ReviewHunkRef[] = [];
@@ -235,16 +242,20 @@ export function refreshDocument(
       }
     }
     change.empty = refs.length === 0;
-    const { focus: _focus, notes: _notes, ...rest } = group;
+    const { focus: _focus, notes: _notes, fileNotes, ...rest } = group;
     const anchors = carryAnchors(group, previousLive, carried);
-    change.droppedAnchors = anchors.changed;
+    // A file note describes the whole file, so it holds only while every hunk of that file is the same.
+    const liveFileNotes = Object.entries(fileNotes ?? {}).filter(([path]) => nextByPath.has(path));
+    const keptFileNotes = liveFileNotes.filter(([path]) => !editedPaths.has(path));
+    const droppedFileNotes = liveFileNotes.length - keptFileNotes.length;
+    change.droppedAnchors = { ...anchors.changed, fileNotes: droppedFileNotes };
     if (
       change.dropped.length > 0 ||
       change.moved > 0 ||
       change.changed.length > 0 ||
       change.reformatted.length > 0 ||
       change.newHunks.length > 0 ||
-      anchors.changed.focus + anchors.changed.notes > 0
+      anchors.changed.focus + anchors.changed.notes + droppedFileNotes > 0
     ) {
       groups.push(change);
     } else {
@@ -254,6 +265,7 @@ export function refreshDocument(
       ...rest,
       ...(anchors.focus.length > 0 ? { focus: anchors.focus } : {}),
       ...(anchors.notes.length > 0 ? { notes: anchors.notes } : {}),
+      ...(keptFileNotes.length > 0 ? { fileNotes: Object.fromEntries(keptFileNotes) } : {}),
       hunkRefs: refs,
     };
   });
@@ -487,6 +499,9 @@ export function formatRefresh(
     }
     if (group.droppedAnchors.notes > 0) {
       bits.push(`${count(group.droppedAnchors.notes, "note")} dropped`);
+    }
+    if (group.droppedAnchors.fileNotes > 0) {
+      bits.push(`${count(group.droppedAnchors.fileNotes, "file note")} dropped`);
     }
     if (group.dropped.length > 0) {
       bits.push(`${count(group.dropped.length, "ref")} gone`);

@@ -6,7 +6,8 @@ import {
   noteAnchor,
   type LineAnchor,
 } from "../schema/anchor.ts";
-import { hunkKey } from "../schema/identity.ts";
+import { hunkKey, isDirHunkRef } from "../schema/identity.ts";
+import { isLockfilePath } from "../schema/lockfile.ts";
 import type { FocusRange, LineNote, LiveHunk, ReviewGroup, SourceSide } from "../schema/types.ts";
 import type { ReviewCoverage } from "./coverage.ts";
 
@@ -27,6 +28,30 @@ export function anchorErrors(coverage: ReviewCoverage): string[] {
   }
   return [
     `anchor: ${lines.length} focus range(s) or note(s) do not sit inside one live hunk of their group. Copy line numbers from show:\n${lines.join("\n")}`,
+  ];
+}
+
+/** One error that lists every file note whose path is not a file of its group. */
+export function fileNoteErrors(coverage: ReviewCoverage): string[] {
+  const lines: string[] = [];
+  for (const { group, hunks } of coverage.groups) {
+    const paths = new Set(hunks.map((hunk) => hunk.path));
+    for (const ref of group.hunkRefs) {
+      if (!isDirHunkRef(ref) && isLockfilePath(ref.path)) {
+        paths.add(ref.path);
+      }
+    }
+    for (const path of Object.keys(group.fileNotes ?? {})) {
+      if (!paths.has(path)) {
+        lines.push(`  ${group.id} fileNotes "${path}"`);
+      }
+    }
+  }
+  if (lines.length === 0) {
+    return [];
+  }
+  return [
+    `fileNotes: ${lines.length} note(s) name a path that is not a file of their group. Key each note by the head path of a file the group covers:\n${lines.join("\n")}`,
   ];
 }
 

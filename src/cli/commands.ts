@@ -2,7 +2,7 @@ import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import { readDiff, readHunkIndex, readPathDiff, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
-import { anchorErrors } from "../review/anchors.ts";
+import { anchorErrors, fileNoteErrors } from "../review/anchors.ts";
 import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
 import { buildDigest, digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
@@ -63,6 +63,7 @@ export async function cmdValidate(
     ...coverageErrors(coverage),
     ...dirRefErrors(coverage, files),
     ...anchorErrors(coverage),
+    ...fileNoteErrors(coverage),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
     ...legacyLookForErrors(document),

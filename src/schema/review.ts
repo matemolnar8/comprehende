@@ -222,6 +222,13 @@ const groupSchema = z.strictObject(
       .max(NOTES_MAX, { error: `must hold at most ${NOTES_MAX} notes` })
       .optional()
       .meta({ description: "Line-anchored notes the UI letters A, B, C." }),
+    fileNotes: z
+      .record(nonemptyString(), nonemptyString(), { error: "must be an object of strings" })
+      .optional()
+      .meta({
+        description:
+          "One line per file, keyed by the git path of a file this group covers: what changed in that file. Not a repeat of summary.",
+      }),
     dependsOn: stringList("Ids of earlier groups this one depends on. Same story only."),
     part: nonemptyString(
       "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs.",

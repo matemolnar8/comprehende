@@ -152,6 +152,10 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
       title: "Moved block",
       why: "The same block leaves `src/alpha.ts` and shows up in `src/beta.ts`.",
       summary: "`movedBlock` leaves `src/alpha.ts` and is added in `src/beta.ts`.",
+      fileNotes: {
+        "src/alpha.ts": "The block leaves; nothing else changes here.",
+        "src/beta.ts": "The same block lands at the end of the file.",
+      },
       part: MIXED_PART_LIB,
       suggestedOrder: 6,
       hunkRefs: [...alpha, ...beta],

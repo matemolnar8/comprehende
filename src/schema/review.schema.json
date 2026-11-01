@@ -251,6 +251,18 @@
               "additionalProperties": false
             }
           },
+          "fileNotes": {
+            "description": "One line per file, keyed by the git path of a file this group covers: what changed in that file. Not a repeat of summary.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "minLength": 1
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "dependsOn": {
             "description": "Ids of earlier groups this one depends on. Same story only.",
             "type": "array",
