@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/astral-sh/ruff/pull/29308",
+  "number": 29308,
+  "title": "[ty] Fix notebook cell lookups after cells with cell magics",
+  "body": "## Summary\n\nWe now resolve notebook requests to the correct Python cell after cells containing a cell magic such as `%%bash`. Previously, hovering `x` in an `x = 1` cell could show the type of `z` from the following `z = \"zz\"` cell.\n\nThe server identifies cells by their position in the notebook, but `Notebook::cell_range` used that index to look up offsets among Python cells only. We now translate between those indices and return no range for cells excluded from the Python source. Semantic token and folding range requests for those cells return no results instead of falling back to the whole notebook.\n",
+  "user": {
+    "login": "charliermarsh"
+  },
+  "merged_at": "2026-10-13T13:15:17Z",
+  "merge_commit_sha": "4d6a7db787130c5a4a95bd835369babd78e4a1f6",
+  "base": {
+    "ref": "charlie/notebook-position-clamp",
+    "sha": "867edce05c7e0b9136457ba5662f44327c734f46"
+  },
+  "head": {
+    "ref": "charlie/notebook-magic-cell-index",
+    "sha": "fc8c4fbd769794f4cd7310dc9e03113cb7f47bbf"
+  }
+}

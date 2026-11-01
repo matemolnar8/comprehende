@@ -1,0 +1,47 @@
+# ruff-29308: [ty] Fix notebook cell lookups after cells with cell magics
+
+PR #29308 in astral-sh/ruff, the top layer of a stack: `main` ← #29306 ← #29307 ← #29308. Its base branch `charlie/notebook-position-clamp` is the head branch of #29307, and `sources/pr-29307.json` holds that lower layer. Two bot comments report no ecosystem change and a benchmark gain. No human review comments. A small language-server fix in Rust with a unit test and an e2e test.
+
+## Story
+
+- Title: the PR title, or a short name for cell lookups after cell-magic cells.
+- Why: present, from the PR body. Hover on `x` in a cell after a `%%bash` cell showed the type of `z` from the next cell.
+- Size: small or medium. Eight files, 155 added lines, two of them snapshots.
+- Parts: one story, so no parts or one part.
+- Groups: 1 to 3.
+
+## Groups
+
+1. Cell index fix: `crates/ruff_notebook/src/notebook.rs`. `cell_range` maps the index among all cells to the index among Python cells, and the new unit test checks it.
+2. Server callers: `crates/ty_server/src/document/range.rs`, `crates/ty_server/src/document.rs`, `crates/ty_server/src/server/api/requests/folding_range.rs`, `crates/ty_server/src/server/api/requests/semantic_tokens.rs`. One shared `cell_range` helper replaces the same lookup in two request handlers.
+3. End-to-end test: `crates/ty_server/tests/e2e/notebook.rs` and its two snapshots. One test covers both groups above.
+
+One group for all eight files, the e2e test inside group 1 or 2, or the `range.rs` helper in group 1 with the code it wraps, is also good.
+
+## Must
+
+- `Notebook::cell_range` now converts the cell's index among all notebook cells to its index among valid Python code cells with a binary search on `valid_code_cells`, so a cell after a `%%bash` cell gets its own offsets.
+- `cell_range` and `cell_content_range` now return `None` for a cell that is not in the Python source, such as a Markdown cell or a cell-magic cell.
+- A new `cell_range` helper in `crates/ty_server/src/document/range.rs` replaces the duplicated notebook lookup in `folding_range.rs` and `semantic_tokens.rs`.
+- Folding range and semantic token requests now return no result when `cell_range` is `None`; at base a `None` range gave results for the whole notebook.
+- The review names PR #29307, the lower layer of the stack whose head branch is this request's base, as a `pr` source.
+- The new e2e test `cells_after_cell_magic` checks hover and semantic tokens on the `x = 1` cell after a `%%bash` cell, and empty tokens for the magic cell.
+
+## Good
+
+- Hover reaches the fix through position conversion in `range.rs`, which at base calls `cell_content_range` (added by PR #29307), which calls `cell_range`; so this layer also corrects #29307's clamp for cells after a magic cell.
+- The new unit test `cell_range_by_raw_cell_index` uses `valid.ipynb`, where the third cell is the second Python cell and the second cell is Markdown.
+- `cell_range` returns the range with the separator newline, and `cell_content_range` returns it without; the PR only adds doc comments to `cell_content_range`.
+
+## Must not
+
+- Do not describe the clamp of a position to the end of its cell (`offset.min(cell_range.end())`) as a change of this request; PR #29307 adds it and it is not in this diff.
+- Do not describe the notebook module range fix from PR #29306 as part of this request.
+- Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with `03ea17f`, not with this request's base.
+- Do not put a snapshot in a different group from the `cells_after_cell_magic` test that writes it.
+
+## Notes
+
+The harness hands the producer the base and head SHAs, so this case cannot check that the skill picks the stacked base on its own. The base is the forge's `base.sha` for #29307's head, not the `merge_commit_sha^1` that `pnpm eval:add` writes. The stack was squash-merged onto `main` one layer at a time, so `merge_commit_sha^1` is the squash of #29307 on `main`, and its three-dot diff with this head holds ten files, with files from #29306 and #29307 too. What the case checks is the other half of the rule: the lower layer is a `pr` source, and the review does not describe its code as this change.
+
+The link from hover to `cell_content_range` is `Good`, not `Must`: the reader has to open `range.rs` at base, outside the diff, to see it.
