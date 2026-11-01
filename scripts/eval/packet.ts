@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { hunksPayload, type ReviewContext } from "../../src/api/live.ts";
 import type { ApiGroupFile } from "../../src/api/types.ts";
+import { focusAnchor, formatAnchor, noteAnchor, noteLetter } from "../../src/schema/anchor.ts";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 
 export async function writeGradingPacket(
@@ -66,6 +67,12 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     for (const question of group.questions ?? []) {
       parts.push(`Question: ${question}`);
     }
+    for (const range of group.focus ?? []) {
+      parts.push(`Focus ${formatAnchor(focusAnchor(range))}: ${range.caption}`);
+    }
+    (group.notes ?? []).forEach((note, i) => {
+      parts.push(`Note ${noteLetter(i)} ${formatAnchor(noteAnchor(note))}: ${note.body}`);
+    });
     parts.push("");
     for (const file of payload.files) {
       parts.push(`#### ${fileHeading(file)}`);

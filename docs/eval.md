@@ -6,7 +6,7 @@ Producer and grader run in Muse Code (`muse exec`). Both default to `muse-spark-
 
 ## What decides pass or fail
 
-Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet and group `attention` note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.
+Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet, group `attention` note, focus caption, and line note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.
 
 The grader does not judge grouping or prose quality. Grouping is checked by `together` and `apart`. Prose is linted: em dashes, sentences over 25 words, summaries with more sentences than the skill allows, and summaries that read as a path list. Lints print on the case line and in the report and do not fail the case.
 

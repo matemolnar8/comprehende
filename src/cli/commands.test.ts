@@ -144,6 +144,14 @@ describe("cmdReview git work", { concurrent: false }, () => {
     const repo = await createExampleRepo(join(root, "repo"));
     const patch = await cmdShow(repo.root, repo.base, repo.head, { file: "src/types.ts" });
     assert.match(patch, /string \| number/);
+    assert.match(patch, /^diff --git a\/src\/types\.ts/);
+    assert.match(patch, /^@@ -\d+(,\d+)? \+\d+(,\d+)? @@/m);
+    assert.match(patch, /^1   -export type Id = string;$/m, "a removed line prints its old number");
+    assert.match(
+      patch,
+      /^ {2}1 \+export type Id = string \| number;$/m,
+      "an added line its new one",
+    );
     await assert.rejects(
       () => cmdShow(repo.root, repo.base, repo.head, { file: "nope.ts" }),
       /no diff for path/,

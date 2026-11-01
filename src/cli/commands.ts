@@ -1,17 +1,13 @@
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
-import {
-  filePatchFromGit,
-  readDiff,
-  readHunkIndex,
-  readPathDiff,
-  resolveSource,
-} from "../git/diff.ts";
+import { readDiff, readHunkIndex, readPathDiff, resolveSource } from "../git/diff.ts";
 import { defaultBaseRef } from "../git/repo.ts";
+import { anchorErrors } from "../review/anchors.ts";
 import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
 import { buildDigest, digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
+import { numberedPatch } from "../review/show.ts";
 import { formatRefresh, legacyLookForLine, refreshDocument } from "../review/refresh.ts";
 import { skeletonDocument } from "../review/skeleton.ts";
 import { writeDocument } from "../review/write.ts";
@@ -66,6 +62,7 @@ export async function cmdValidate(
   const errors = [
     ...coverageErrors(coverage),
     ...dirRefErrors(coverage, files),
+    ...anchorErrors(coverage),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
     ...legacyLookForErrors(document),
@@ -92,7 +89,7 @@ export async function cmdDigest(
 
 export type ShowRequest = { hunk?: string; file?: string };
 
-/** Full patch for one file or one hunk. The detail behind a digest line. */
+/** Full patch for one file or one hunk, with old and new line numbers. The detail behind a digest line. */
 export async function cmdShow(
   cwd: string,
   base: string | undefined,
@@ -123,7 +120,7 @@ export async function cmdShow(
     throw new Error(`no diff for path: ${parsed.path}`);
   }
   if (parsed.kind === "file") {
-    return file.patch;
+    return numberedPatch(file, file.hunks);
   }
   const hunk = file.hunks.find(
     (item) => item.oldStart === parsed.oldStart && item.newStart === parsed.newStart,
@@ -131,7 +128,7 @@ export async function cmdShow(
   if (hunk === undefined) {
     throw new Error(`no hunk matches: ${target}`);
   }
-  return filePatchFromGit(file, [hunk]);
+  return numberedPatch(file, [hunk]);
 }
 
 /**

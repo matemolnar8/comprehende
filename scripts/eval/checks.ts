@@ -352,6 +352,12 @@ function documentFields(document: ReviewDocument): { where: string; text: string
     for (const question of group.questions ?? []) {
       fields.push({ where: `group ${group.id} question`, text: question });
     }
+    for (const range of group.focus ?? []) {
+      fields.push({ where: `group ${group.id} focus`, text: range.caption });
+    }
+    for (const note of group.notes ?? []) {
+      fields.push({ where: `group ${group.id} note`, text: note.body });
+    }
   }
   return fields;
 }

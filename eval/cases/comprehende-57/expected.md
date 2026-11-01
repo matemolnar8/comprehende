@@ -30,6 +30,7 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - Legacy `tickets` become `sources` in a `.transform` on `reviewDocumentSchema`, and the JSON Schema is built from `reviewDocumentObject`, so `tickets` stays out of the JSON Schema, which `review.schema.test.ts` checks.
 - `isReviewSize` and `isSourceKind` in `types.ts` lose their last callers with the old parser and stay as unused exports.
 - The `parseHunkRef` export goes away with the old parser, and no other module imported it.
+- A focus range opens the 290-line `src/schema/review.ts` hunk on the `documentRules` lines that call `sourceCitationErrors`.
 
 ## Must not
 
@@ -38,6 +39,7 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - Do not say there is no test for unknown `patch` fields, because `parse.test.ts` has "rejects patch text fields".
 - Do not repeat the PR claim that citation checks "stay" in the parser as fact, because the old parser did not check citations.
 - Do not give the `types.ts` re-exports or `parse.test.ts` their own group, and do not put the Zod dependency in its own part.
+- Do not put a focus range or a note on a `review.schema.json` file; the three files are generated, and the reader skips them.
 - Do not write a group attention that asks to delete the unused `isReviewSize` and `isSourceKind` exports, to drop the `tickets` TODO, or to add more schema tests; a cleanup idea and a missing test are not attentions.
 - Do not write a group question that asks why the parser moves to Zod; the PR names the three copies of the document shape as the reason.
 
@@ -50,5 +52,7 @@ The JSON Schema claim was checked by a key-by-key compare of base and head: the 
 Past runs missed the JSON Schema equivalence in 3 of 3 runs and the Zod dependency claim in 2 of 3. Older runs made 5 to 7 groups, most often by splitting `review.ts`, `parse.ts`, and `types.ts` apart.
 
 `groups` is 2 to 5: group 3 can merge into group 1, and the canonical JSON can sit with the copies or with its generator. `parts` allows 0 or 1, because this is one story. `size` allows medium or large: the line count is mostly deletion and generated output, but `review.ts` is a contract that the other groups depend on.
+
+The `documentRules` focus range is `Good`: `review.ts` is one new 290-line hunk, and the citation check sits in a part of it. `documentRules` starts at line 213 at head, and its `sourceCitationErrors` call is at line 251.
 
 Homes: the citation check at the parse step fits a `contract` attention on the schema group, and the Zod dependency a `tradeoff` attention on the dependency group, or each group summary. The JSON Schema equivalence lives in the mechanical group summary, which says what the reader can skip.

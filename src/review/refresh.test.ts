@@ -319,6 +319,12 @@ describe("cmdRefresh", () => {
     assert.deepEqual(update?.hunkRefs, [{ path: "src/extra.ts" }]);
     assert.equal(appGroup?.attention?.kind, "contract", "prose is untouched");
     assert.equal(appGroup?.questions?.length, 2, "questions are untouched");
+    assert.equal(appGroup?.focus, undefined, "the focus sat on the changed hunk");
+    assert.deepEqual(
+      appGroup?.notes?.map((note) => note.line),
+      [101],
+      "the note on the same hunk follows it down one line",
+    );
 
     assert.match(report, /^Commits since [0-9a-f]{7}:\n- Add version, extra, revert README$/m);
     assert.match(
@@ -327,7 +333,10 @@ describe("cmdRefresh", () => {
     );
     assert.match(report, /^- src\/extra\.ts · added \+1\/-0 · logic · new · in update$/m);
     assert.match(report, /^- README\.md · gone · was in docs$/m);
-    assert.match(report, /^- app: 1 hunk changed · 1 ref re-pointed · 2 questions to re-check$/m);
+    assert.match(
+      report,
+      /^- app: 1 hunk changed · 1 focus range dropped · 2 notes dropped · 1 ref re-pointed · 2 questions to re-check$/m,
+    );
     assert.match(report, /^- docs: 1 ref gone · now empty$/m);
     assert.match(report, /^- update: draft · 1 uncovered hunk$/m);
     assert.match(report, /^- same: app-test, helpers, types, relocations, move-block$/m);

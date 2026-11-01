@@ -61,6 +61,35 @@ export function mixedCoveringDocument(index: HunkIndex): ReviewDocument {
         "Why does `name` change in place instead of adding a new export next to `alpha`?",
         "Why does the end marker change in the same commit as `name`?",
       ],
+      focus: [
+        {
+          path: "src/app.ts",
+          side: "new",
+          start: 1,
+          end: 4,
+          caption: "`start()` returns the renamed `name` export.",
+        },
+      ],
+      notes: [
+        {
+          path: "src/app.ts",
+          side: "new",
+          line: 1,
+          body: "`beta` is the value [#1](source:s1) asks for.",
+        },
+        {
+          path: "src/app.ts",
+          side: "new",
+          line: 5,
+          body: "Only `unusedMarker()` reads `marker`, and nothing calls it.",
+        },
+        {
+          path: "src/app.ts",
+          side: "new",
+          line: 100,
+          body: "The `-end` suffix stays; only the prefix follows `name`.",
+        },
+      ],
       suggestedOrder: 0,
       hunkRefs: app,
     },

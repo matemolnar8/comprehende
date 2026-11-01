@@ -166,6 +166,91 @@
               "minLength": 1
             }
           },
+          "focus": {
+            "description": "Ranges the UI opens a hunk to. Each sits inside one live hunk of this group and spans at most 25 lines. The whole hunk is one click away.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Git path of a file this group covers."
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "old",
+                    "new"
+                  ],
+                  "description": "old: a line of the base file. new: a line of the head file."
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "First line, 1-based, on that side."
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Last line, inclusive. At most 25 lines from start."
+                },
+                "caption": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "One sentence: what these lines show."
+                }
+              },
+              "required": [
+                "path",
+                "side",
+                "start",
+                "end",
+                "caption"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "notes": {
+            "description": "Line-anchored notes the UI letters A, B, C.",
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Git path of a file this group covers."
+                },
+                "side": {
+                  "type": "string",
+                  "enum": [
+                    "old",
+                    "new"
+                  ],
+                  "description": "old: a line of the base file. new: a line of the head file."
+                },
+                "line": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "1-based line on that side, inside a hunk this group covers."
+                },
+                "body": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "What the code alone does not say about this line."
+                }
+              },
+              "required": [
+                "path",
+                "side",
+                "line",
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
           "dependsOn": {
             "description": "Ids of earlier groups this one depends on. Same story only.",
             "type": "array",

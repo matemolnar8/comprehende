@@ -34,6 +34,8 @@ import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
 import { CommentPin } from "./components/CommentPin.tsx";
 import { MovedChip } from "./components/MovedChip.tsx";
+import { NotePin } from "./components/NotePin.tsx";
+import type { LetteredNote } from "./lib/focus.ts";
 import { movedMarkLabel, type MovedMark } from "./lib/relocation.ts";
 import type { FileComment } from "./lib/source-display.ts";
 import { commentsByLine } from "./lib/source-display.ts";
@@ -176,6 +178,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   wrap: boolean;
   themeType: "light" | "dark";
   loadFiles: boolean;
+  excerpt: boolean;
   annotations?: DiffLineAnnotation<RowMeta>[];
   onPostRender?: (node: HTMLElement) => void;
 }) {
@@ -192,7 +195,8 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       lineDiffType: "none" as const,
       // Pierre's expandUnchanged paints every gap open. Leave it off.
       expansionLineCount: EXPANSION_LINE_COUNT,
-      hunkSeparators: GAP_SEPARATOR,
+      // An excerpt hides changed lines too, so a gap's line count would read as unmodified code.
+      hunkSeparators: props.excerpt ? ("metadata" as const) : GAP_SEPARATOR,
       ...(props.loadFiles ? { loadDiffFiles } : {}),
       unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
       onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
@@ -200,7 +204,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
         onPostRenderRef.current?.(node);
       },
     }),
-    [props.loadFiles, props.split, props.themeType, props.wrap],
+    [props.excerpt, props.loadFiles, props.split, props.themeType, props.wrap],
   );
   return (
     <FileDiff
@@ -264,15 +268,30 @@ type RowMeta = {
   comments?: FileComment[];
   focusId?: string;
   movedLabel?: string;
+  notes?: LetteredNote[];
 };
 
 function rowAnnotations(
   comments: readonly FileComment[] | undefined,
   moves: readonly MovedMark[] | undefined,
+  notes: readonly LetteredNote[] | undefined,
   filePath: string,
   focusId?: string,
 ): DiffLineAnnotation<RowMeta>[] | undefined {
   const byKey = new Map<string, DiffLineAnnotation<RowMeta>>();
+  for (const note of notes ?? []) {
+    const key = `${note.side}:${note.line}`;
+    const existing = byKey.get(key);
+    if (existing === undefined) {
+      byKey.set(key, {
+        side: note.side === "old" ? "deletions" : "additions",
+        lineNumber: note.line,
+        metadata: { notes: [note] },
+      });
+    } else {
+      existing.metadata.notes?.push(note);
+    }
+  }
   if (comments !== undefined) {
     for (const list of commentsByLine(comments).values()) {
       const first = list[0];
@@ -280,11 +299,17 @@ function rowAnnotations(
         continue;
       }
       const key = `${first.side}:${first.line}`;
-      byKey.set(key, {
-        side: first.side === "old" ? "deletions" : "additions",
-        lineNumber: first.line,
-        metadata: { comments: list, focusId },
-      });
+      const existing = byKey.get(key);
+      if (existing === undefined) {
+        byKey.set(key, {
+          side: first.side === "old" ? "deletions" : "additions",
+          lineNumber: first.line,
+          metadata: { comments: list, focusId },
+        });
+      } else {
+        existing.metadata.comments = list;
+        existing.metadata.focusId = focusId;
+      }
     }
   }
   if (moves !== undefined) {
@@ -308,10 +333,11 @@ function rowAnnotations(
 }
 
 function renderRowAnnotation(annotation: DiffLineAnnotation<RowMeta>): ReactNode {
-  const { comments, focusId, movedLabel } = annotation.metadata;
+  const { comments, focusId, movedLabel, notes } = annotation.metadata;
   return (
     <>
       {movedLabel !== undefined ? <MovedChip label={movedLabel} /> : null}
+      {notes !== undefined && notes.length > 0 ? <NotePin notes={notes} /> : null}
       {comments !== undefined && comments.length > 0 ? (
         <CommentPin comments={comments} focusId={focusId} />
       ) : null}
@@ -361,8 +387,11 @@ export function PierreFileDiff(props: {
   onSplitRatio: (ratio: number) => void;
   /** False for grouped subset patches. Full-file blobs do not match those patches. */
   hydrate?: boolean;
+  /** Some hunks are cut down to their focus ranges. */
+  excerpt?: boolean;
   comments?: FileComment[];
   moves?: readonly MovedMark[];
+  notes?: readonly LetteredNote[];
   focusCommentId?: string;
 }) {
   const {
@@ -373,8 +402,10 @@ export function PierreFileDiff(props: {
     splitRatio,
     onSplitRatio,
     hydrate = true,
+    excerpt = false,
     comments,
     moves,
+    notes,
     focusCommentId,
   } = props;
   const { resolved } = useTheme();
@@ -450,8 +481,8 @@ export function PierreFileDiff(props: {
   };
 
   const annotations = useMemo(
-    () => rowAnnotations(comments, moves, path, focusCommentId),
-    [comments, focusCommentId, moves, path],
+    () => rowAnnotations(comments, moves, notes, path, focusCommentId),
+    [comments, focusCommentId, moves, notes, path],
   );
 
   if (fileDiff === undefined) {
@@ -477,6 +508,7 @@ export function PierreFileDiff(props: {
         wrap={wrap}
         themeType={resolved}
         loadFiles={hydrate}
+        excerpt={excerpt}
         annotations={annotations}
         onPostRender={onPostRender}
       />

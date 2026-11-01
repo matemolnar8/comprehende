@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { focusAnchor, formatAnchor, noteAnchor, noteLetter } from "../../src/schema/anchor.ts";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 import type { Rubric } from "./case.ts";
 import { GRADER_TIMEOUT_MS } from "./constants.ts";
@@ -46,7 +47,7 @@ export type RubricResult = {
 
 export type ClaimBullet = { where: string; bullet: string };
 
-/** Document lookFor bullets, then each group attention note. */
+/** Document lookFor bullets, then each group's attention note, focus captions, and line notes. */
 export function claimBullets(document: ReviewDocument): ClaimBullet[] {
   const bullets = (document.lookFor ?? []).map((bullet) => ({ where: "document lookFor", bullet }));
   for (const group of document.groups) {
@@ -56,6 +57,18 @@ export function claimBullets(document: ReviewDocument): ClaimBullet[] {
         bullet: group.attention.note,
       });
     }
+    for (const range of group.focus ?? []) {
+      bullets.push({
+        where: `group ${group.id} focus ${formatAnchor(focusAnchor(range))}`,
+        bullet: range.caption,
+      });
+    }
+    (group.notes ?? []).forEach((note, i) => {
+      bullets.push({
+        where: `group ${group.id} note ${noteLetter(i)} ${formatAnchor(noteAnchor(note))}`,
+        bullet: note.body,
+      });
+    });
   }
   return bullets;
 }
@@ -150,14 +163,14 @@ export function rubricPrompt(opts: {
     "Must not (mistakes a review makes on this change):",
     list(opts.rubric.mustNot),
     "",
-    "For each Must and Good item, answer yes when the review gives the reader the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, group attention, or group questions. Different wording and different symbol names still count. An item may carry more detail than the review, such as a second reason, a consequence, or a symbol name; the review still states it when it gives the main fact and says nothing that contradicts the rest. Answer no when the review is silent on the main fact, states the opposite, or states a weaker version that changes what the reader would conclude. On yes, quote the review sentence that states it.",
+    "For each Must and Good item, answer yes when the review gives the reader the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, group attention, group questions, focus captions, or line notes. Different wording and different symbol names still count. An item may carry more detail than the review, such as a second reason, a consequence, or a symbol name; the review still states it when it gives the main fact and says nothing that contradicts the rest. Answer no when the review is silent on the main fact, states the opposite, or states a weaker version that changes what the reader would conclude. On yes, quote the review sentence that states it.",
     "For each Must not item, answer yes when the review makes that mistake. On yes, quote the review text that shows it.",
     "",
-    "## lookFor bullets and attention notes the review wrote",
+    "## lookFor bullets, attention notes, focus captions, and line notes the review wrote",
     "",
     list(opts.bullets.map((item) => `(${item.where}) ${item.bullet}`)),
     "",
-    "For each bullet, holds is true when every factual claim in it is true of the code at head and of the frozen sources. Decide from the diffs in the packet where you can. Read a file in the work tree only for a bullet the packet cannot settle, and read at most four files in total. A bullet that says a source says X when the source says something else does not hold. A bullet that describes code that is not at head does not hold. On false, write one sentence on what head or the source actually does.",
+    "For each bullet, holds is true when every factual claim in it is true of the code at head and of the frozen sources. Decide from the diffs in the packet where you can. Read a file in the work tree only for a bullet the packet cannot settle, and read at most four files in total. A bullet that says a source says X when the source says something else does not hold. A bullet that describes code that is not at head does not hold. A focus caption or line note also does not hold when the lines it names (path, side, line numbers) do not show what it says. On false, write one sentence on what head or the source actually does.",
     "",
     "## Packet",
     "",

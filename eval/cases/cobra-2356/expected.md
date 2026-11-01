@@ -28,6 +28,7 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 - The slot that `"--"` overwrites holds the word being completed (`x` in the ticket and the test), because `trimmedArgs` drops only that last argument and keeps its capacity.
 - The copy at the top also protects the flag value path, where `checkIfFlagCompletion` returns `args[:len(args)-1]`, another sub-slice with a spare slot.
 - The PR body test plan names `TestCompletionDoesNotMutateArgs`, but the test at head is `TestCompletionDoesNotMutateOsArgs`, reworked from an earlier `SetArgs` test after marckhouzam asked for a test that checks `os.Args` itself.
+- A focus range opens the 58-line `completions_test.go` hunk on the lines where the test sets `os.Args`, or where it checks `os.Args` after `ExecuteC`.
 - The guard in `ExecuteC` skips `os.Args` only when the program name is `cobra.test`, so the rename from `"prog"` to `"root"` is the consistency nit from marckhouzam and does not change what the test checks.
 
 ## Must not
@@ -37,6 +38,7 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 - Do not say alexandear called the three-index slice cryptic, or that ccoVeille proposed copying `trimmedArgs` at the top of the function.
 - Do not cite ticket #2257 for the shared backing array cause; the ticket reports only the inserted `"--"`, and the PR body and review comments name the cause.
 - Do not say the copy changes the completions or the argument values that `ValidArgsFunction` receives; only `os.Args` stays untouched.
+- Do not write a focus range on the ten-line `completions.go` hunk; a hunk that short reads whole.
 - Do not write a group attention that proposes the three-index slice or another way to copy `trimmedArgs`, or that asks for more completion tests; the copy was settled in review, and a fix idea and a missing test are not attentions.
 - Do not write a group question that asks why the fix copies `trimmedArgs` instead of using the three-index slice; the review thread gives that reason.
 
