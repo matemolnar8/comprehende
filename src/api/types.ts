@@ -1,4 +1,5 @@
 import type {
+  Attention,
   DiffLine,
   FileStatus,
   HunkRef,
@@ -90,7 +91,7 @@ export type ApiReview = {
     title: string;
     why: string;
     summary: string;
-    lookFor: string[];
+    attention?: Attention;
     dependsOn: string[];
     part?: string;
     sources: string[];
@@ -128,6 +129,11 @@ export type ApiTextChanges = {
 
 export type ApiListChange = { added: string[]; removed: string[] };
 
+/** Added, removed, or rewritten. Null on the side where the group had none. */
+export type ApiAttentionChange =
+  | { before: Attention | null; after: Attention }
+  | { before: Attention; after: null };
+
 /** Live hunks, counted the way refresh tags them. */
 export type ApiHunkCounts = { new: number; changed: number; reformat: number };
 
@@ -136,7 +142,7 @@ export type ApiGroupChange = {
   state: "added" | "removed" | "kept";
   title: string;
   text: ApiTextChanges;
-  lookFor: ApiListChange;
+  attention?: ApiAttentionChange;
   files: ApiListChange;
   /** Missing when git no longer has the previous commits. */
   hunks?: ApiHunkCounts;

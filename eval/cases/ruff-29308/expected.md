@@ -39,9 +39,12 @@ One group for all eight files, the e2e test inside group 1 or 2, or the `range.r
 - Do not describe the notebook module range fix from PR #29306 as part of this request.
 - Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with `03ea17f`, not with this request's base.
 - Do not put a snapshot in a different group from the `cells_after_cell_magic` test that writes it.
+- Do not write a group attention that asks for more notebook tests, a cache for `valid_code_cells`, or a new name for `cell_range`; a missing test, a performance idea, and a nit are not attentions.
 
 ## Notes
 
 The harness hands the producer the base and head SHAs, so this case cannot check that the skill picks the stacked base on its own. The base is the forge's `base.sha` for #29307's head, not the `merge_commit_sha^1` that `pnpm eval:add` writes. The stack was squash-merged onto `main` one layer at a time, so `merge_commit_sha^1` is the squash of #29307 on `main`, and its three-dot diff with this head holds ten files, with files from #29306 and #29307 too. What the case checks is the other half of the rule: the lower layer is a `pr` source, and the review does not describe its code as this change.
 
 The link from hover to `cell_content_range` is `Good`, not `Must`: the reader has to open `range.rs` at base, outside the diff, to see it.
+
+Homes: the `cell_range` index fix and the `None` results live in the group summaries. The empty folding and token results for a `None` range fit a `contract` attention on the server group, or its summary. The lower layer #29307 is a `pr` source, and a review that says what #29307 owns does so in prose, not as an attention.

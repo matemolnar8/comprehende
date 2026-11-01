@@ -1,7 +1,8 @@
 import type { HunkDelta } from "../review/refresh.ts";
 import { groupsHoldingPath, hunkKey, isDirHunkRef } from "../schema/identity.ts";
-import type { LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
+import type { Attention, LiveHunk, ReviewDocument, ReviewGroup } from "../schema/types.ts";
 import type {
+  ApiAttentionChange,
   ApiChanges,
   ApiGroupChange,
   ApiHunkCounts,
@@ -35,12 +36,13 @@ export function changesPayload(
   for (const group of readingOrder(current.groups)) {
     const old = before.get(group.id);
     const hunks = count?.(code?.groups.get(group.id) ?? []);
+    const attention = attentionChange(old?.attention, group.attention);
     const change: ApiGroupChange = {
       id: group.id,
       state: old === undefined ? "added" : "kept",
       title: group.title,
       text: old === undefined ? {} : groupText(old, group),
-      lookFor: old === undefined ? noList() : listChange(old.lookFor, group.lookFor),
+      ...(attention === undefined ? {} : { attention }),
       files: old === undefined ? noList() : listChange(pathsBefore(old), pathsAfter(group)),
       ...(hunks === undefined ? {} : { hunks }),
     };
@@ -55,7 +57,6 @@ export function changesPayload(
         state: "removed",
         title: group.title,
         text: {},
-        lookFor: noList(),
         files: noList(),
       });
     }
@@ -143,6 +144,17 @@ function listChange(before: readonly string[] = [], after: readonly string[] = [
   };
 }
 
+function attentionChange(
+  before: Attention | undefined,
+  after: Attention | undefined,
+): ApiAttentionChange | undefined {
+  if (after !== undefined) {
+    const same = before?.kind === after.kind && before.note === after.note;
+    return same ? undefined : { before: before ?? null, after };
+  }
+  return before === undefined ? undefined : { before, after: null };
+}
+
 function noList(): ApiListChange {
   return { added: [], removed: [] };
 }
@@ -176,7 +188,7 @@ function hasChange(change: ApiGroupChange): boolean {
   const hunks = change.hunks;
   return (
     Object.keys(change.text).length > 0 ||
-    change.lookFor.added.length + change.lookFor.removed.length > 0 ||
+    change.attention !== undefined ||
     change.files.added.length + change.files.removed.length > 0 ||
     (hunks !== undefined && hunks.new + hunks.changed + hunks.reformat > 0)
   );

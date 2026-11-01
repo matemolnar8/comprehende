@@ -9,8 +9,7 @@ import { CopyPrompt } from "./CopyPrompt.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { BriefField, briefProse, Kicker } from "./Kicker.tsx";
-import { claimsFromLookFor } from "../lib/look-for.ts";
-import { LookForList } from "./LookForList.tsx";
+import { AttentionAlert } from "./Attention.tsx";
 import { SourceList } from "./SourceList.tsx";
 
 export function Brief(props: {
@@ -45,9 +44,9 @@ export function GroupBrief(props: {
   groups: ReviewMeta["groups"];
   document: ReviewMeta["document"];
   onOpenGroup: (id: string) => void;
-  focusLookForKey?: string;
+  focusClaimKey?: string;
 }) {
-  const { group, groups, document, onOpenGroup, focusLookForKey } = props;
+  const { group, groups, document, onOpenGroup, focusClaimKey } = props;
   const parts = groupParts(groups);
   const mixed = isMixedReview(parts);
   const index = groupOrderIndex(parts, group.id);
@@ -55,13 +54,6 @@ export function GroupBrief(props: {
   const listed = document.groups.find((item) => item.id === group.id);
   const sourceIds = listed !== undefined ? groupSourceIds(listed) : group.sources;
   const partTitle = mixed ? group.part : undefined;
-  const owner = {
-    kind: "group" as const,
-    id: group.id,
-    title: group.title,
-    index,
-    ...(group.part !== undefined ? { part: group.part } : {}),
-  };
   return (
     <Brief
       kicker={partTitle !== undefined ? `${partTitle} · ${padIndex(index)}` : padIndex(index)}
@@ -79,7 +71,9 @@ export function GroupBrief(props: {
             <InlineMd text={group.summary} />
           </p>
         </BriefField>
-        <LookForList claims={claimsFromLookFor(owner, group.lookFor)} focusKey={focusLookForKey} />
+        {group.attention !== undefined ? (
+          <AttentionAlert groupId={group.id} attention={group.attention} focusKey={focusClaimKey} />
+        ) : null}
         <SourceList ids={sourceIds} sources={document.sources ?? []} />
         <HopList label="Depends on" hops={nav.dependsOn} parts={parts} onOpenGroup={onOpenGroup} />
         <HopList label="Needed by" hops={nav.dependents} parts={parts} onOpenGroup={onOpenGroup} />

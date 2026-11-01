@@ -68,20 +68,20 @@ describe("sourceCitationErrors", () => {
     assert.deepEqual(sourceCitationErrors(known), []);
   });
 
-  it("names lookFor locations", () => {
+  it("names lookFor and attention locations", () => {
     const result = sourceCitationErrors(
       doc({
         lookFor: ["Check [the ticket](source:missing-doc)."],
         groups: [
           {
             ...group,
-            lookFor: ["Check [the flag](source:missing)."],
+            attention: { kind: "risk", note: "Check [the flag](source:missing)." },
           },
         ],
       }),
     );
-    assert.match(result.join("\n"), /lookFor\[0\]/);
-    assert.match(result.join("\n"), /groups\[0\]\.lookFor\[0\]/);
+    assert.match(result.join("\n"), /in lookFor\[0\]/);
+    assert.match(result.join("\n"), /groups\[0\]\.attention\.note/);
   });
 });
 

@@ -12,6 +12,7 @@ import {
   type Part,
 } from "../lib/parts.ts";
 import { readingStatus, type ReadingStatus } from "../lib/reading-progress.ts";
+import { LookClosely } from "./Attention.tsx";
 import { FilePeek } from "./FilePeek.tsx";
 import { HashLink } from "./HashLink.tsx";
 import { ReadingMark } from "./ReadingMark.tsx";
@@ -90,7 +91,7 @@ export function Sidebar(props: {
                           title={group.title}
                           files={group.files}
                           count={group.staleCount > 0 ? `${group.staleCount} stale` : undefined}
-                          lookForCount={group.lookFor.length}
+                          lookClosely={group.attention !== undefined}
                           colorIndex={colors.get(group.id)}
                           viewedPaths={viewedPaths}
                         />
@@ -143,6 +144,7 @@ function StackItem(props: {
   files?: readonly string[];
   count?: string;
   lookForCount?: number;
+  lookClosely?: boolean;
   index?: string;
   warn?: boolean;
   muted?: boolean;
@@ -160,7 +162,8 @@ function StackItem(props: {
       : props.muted
         ? "var(--muted-foreground)"
         : undefined;
-  const label = stackLabel(props.title, files, props.count, lookForCount, reading);
+  const lookClosely = props.lookClosely === true;
+  const label = stackLabel(props.title, files, props.count, lookForCount, lookClosely, reading);
   return (
     <HashLink
       selection={props.selection}
@@ -217,6 +220,7 @@ function StackItem(props: {
             Look for · {lookForCount}
           </span>
         ) : null}
+        {lookClosely ? <LookClosely className="mt-1 flex" /> : null}
       </span>
     </HashLink>
   );
@@ -227,6 +231,7 @@ function stackLabel(
   files: readonly string[],
   count: string | undefined,
   lookForCount: number,
+  lookClosely: boolean,
   reading: ReadingStatus | null,
 ): string | undefined {
   let label: string | undefined;
@@ -237,6 +242,9 @@ function stackLabel(
     }
     if (lookForCount > 0) {
       label += `, ${lookForCount} look for`;
+    }
+    if (lookClosely) {
+      label += ", look closely";
     }
   } else if (lookForCount > 0) {
     label = `${title}, ${lookForCount} look for`;

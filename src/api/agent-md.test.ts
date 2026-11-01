@@ -86,6 +86,7 @@ describe("agentMd", () => {
     assert.ok(prompt.includes("src/auth/session.ts@1+1"));
     assert.ok(prompt.includes("src/util.ts -> src/helpers.ts@4+4"));
     assert.ok(prompt.includes("assets/dot.png"));
+    assert.ok(prompt.includes("Attention (contract):\nThrows when httpOnly is false."));
     assert.equal(prompt.includes("src/api/login.ts"), false);
     assert.equal(prompt.includes("groups/login.md"), false);
     assert.equal(prompt.includes("+++"), false);
@@ -156,7 +157,7 @@ function sampleReview(): ApiReview {
           title: "Session cookie helper",
           why: "The login route needs one helper.",
           summary: "setSessionCookie applies the required options.",
-          lookFor: ["Breaking. Throws when httpOnly is false."],
+          attention: { kind: "contract", note: "Throws when httpOnly is false." },
           part: "Session cookie",
           suggestedOrder: 0,
           hunkRefs: [
@@ -196,7 +197,7 @@ function sampleReview(): ApiReview {
         title: "Session cookie helper",
         why: "The login route needs one helper.",
         summary: "setSessionCookie applies the required options.",
-        lookFor: ["Breaking. Throws when httpOnly is false."],
+        attention: { kind: "contract", note: "Throws when httpOnly is false." },
         dependsOn: [],
         part: "Session cookie",
         sources: [],
@@ -210,7 +211,6 @@ function sampleReview(): ApiReview {
         title: "Login route",
         why: "The route must set cookies through the helper.",
         summary: "The login route uses setSessionCookie.",
-        lookFor: [],
         dependsOn: ["cookie"],
         suggestedOrder: 1,
         sources: [],

@@ -346,8 +346,8 @@ function documentFields(document: ReviewDocument): { where: string; text: string
     fields.push({ where: `group ${group.id} title`, text: group.title });
     fields.push({ where: `group ${group.id} why`, text: group.why });
     fields.push({ where: `group ${group.id} summary`, text: group.summary });
-    for (const bullet of group.lookFor ?? []) {
-      fields.push({ where: `group ${group.id} lookFor`, text: bullet });
+    if (group.attention !== undefined) {
+      fields.push({ where: `group ${group.id} attention`, text: group.attention.note });
     }
   }
   return fields;

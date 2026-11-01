@@ -58,7 +58,11 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     }
     parts.push(`Why: ${group.why}`);
     parts.push(`Summary: ${group.summary}`);
-    parts.push(lookForBlock("lookFor", group.lookFor));
+    parts.push(
+      group.attention === undefined
+        ? "Attention: (none)"
+        : `Attention (${group.attention.kind}): ${group.attention.note}`,
+    );
     parts.push("");
     for (const file of payload.files) {
       parts.push(`#### ${fileHeading(file)}`);

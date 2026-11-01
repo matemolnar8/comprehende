@@ -196,6 +196,7 @@ describe("refreshDocument", () => {
         title: "B",
         why: "w",
         summary: "s",
+        legacyLookFor: ["Breaking. b throws."],
         suggestedOrder: 1,
         hunkRefs: [{ path: "b.ts" }],
       },
@@ -263,6 +264,7 @@ describe("refreshDocument", () => {
     assert.match(text, /^- g: 1 ref gone · now empty$/m);
     assert.match(text, /^- update-2: draft · 2 uncovered hunks$/m);
     assert.match(text, /^Pins off a live line: s9$/m);
+    assert.match(text, /^lookFor to convert to attention: b$/m);
   });
 });
 
@@ -313,7 +315,7 @@ describe("cmdRefresh", () => {
     const update = document.groups.at(-1);
     assert.equal(update?.id, "update");
     assert.deepEqual(update?.hunkRefs, [{ path: "src/extra.ts" }]);
-    assert.equal(appGroup?.lookFor?.length, 1, "prose is untouched");
+    assert.equal(appGroup?.attention?.kind, "contract", "prose is untouched");
 
     assert.match(report, /^Commits since [0-9a-f]{7}:\n- Add version, extra, revert README$/m);
     assert.match(

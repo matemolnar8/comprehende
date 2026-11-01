@@ -22,7 +22,7 @@ type ReviewPayload = {
   document: {
     parts?: { name: string; summary: string }[];
     lookFor?: string[];
-    groups: { id: string; dependsOn?: string[]; lookFor?: string[]; part?: string }[];
+    groups: { id: string; dependsOn?: string[]; attention?: { kind: string }; part?: string }[];
   };
 };
 
@@ -91,8 +91,8 @@ export async function runFixtureSmoke(
     const groupMd = await fetch(groupMdHref);
     assertStatus(groupMd, groupMdHref.href, 200);
     const groupText = await groupMd.text();
-    if (!groupText.includes(MIXED_PART_APP) || !groupText.includes("Look for:")) {
-      throw new Error(`group ${MIXED_GROUP_APP} markdown missing part or lookFor`);
+    if (!groupText.includes(MIXED_PART_APP) || !groupText.includes("Attention (")) {
+      throw new Error(`group ${MIXED_GROUP_APP} markdown missing part or attention`);
     }
 
     const relocationsHref = new URL(

@@ -60,9 +60,7 @@ export function documentCitationRefs(document: ReviewDocument): CitationRef[] {
   document.groups.forEach((group, i) => {
     add(`groups[${i}].why`, group.why);
     add(`groups[${i}].summary`, group.summary);
-    (group.lookFor ?? []).forEach((item, j) => {
-      add(`groups[${i}].lookFor[${j}]`, item);
-    });
+    add(`groups[${i}].attention.note`, group.attention?.note);
   });
   return out;
 }
@@ -114,7 +112,7 @@ export function groupIdForPinnedSource(
 
 export function groupSourceIds(group: ReviewDocument["groups"][number]): string[] {
   const named = group.sources ?? [];
-  const cited = [group.why, group.summary, ...(group.lookFor ?? [])].flatMap(citationIds);
+  const cited = [group.why, group.summary, group.attention?.note ?? ""].flatMap(citationIds);
   return [...new Set([...named, ...cited])];
 }
 

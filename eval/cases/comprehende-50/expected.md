@@ -36,6 +36,7 @@ PR #50. No ticket, no comments. A skill change plus a repo process note in `AGEN
 - Do not add a `dependsOn` from the `AGENTS.md` group to the skill group.
 - Do not invent a why, such as sharing the review with people who do not have the repo, when no source states one.
 - Do not say the Export branch runs both `export` and `serve`.
+- Do not write a group attention that asks for a test of the Export branch, a rename of `$EXPORT_DIR`, or a check that the pinned CLI has `export`; a missing test, a nit, and a check request are not attentions.
 
 ## Notes
 
@@ -44,3 +45,5 @@ The VibeDrop claims are `Must` because the PR body and the `AGENTS.md` hunk show
 The local-CLI mismatch is `Good`: the reader has to hold `AGENTS.md` and the skill's pinned commands side by side. The 0.6.0 `export` check and the released-skill note need reads outside the diff.
 
 `groups` allows 3 because a review may keep the draft mirror cluster (both `SKILL.md` copies) as a trailing group beside the Export group. `parts` allows 0 to 2 because a single story and a separate process part for `AGENTS.md` are both reasonable. `size` allows trivial because the change is two short docs edits.
+
+Homes: the VibeDrop claims are document `lookFor` bullets, because they compare the PR body with head. The Export branch and the identical copy live in the group summaries. The one-hour Netlify link fits a `tradeoff` attention on the `AGENTS.md` group, but it is `Good`.

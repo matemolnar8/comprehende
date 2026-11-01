@@ -65,7 +65,7 @@ cd fixtures/repo
 node ../../dist/cli/main.js serve --data ../example/review.json
 ```
 
-`pnpm fixture` writes a small git repo to `fixtures/repo` (gitignored) and a refs-only `fixtures/example/review.json` with stories, lookFor, and sources. Run `serve` or `export` with cwd set to `fixtures/repo`.
+`pnpm fixture` writes a small git repo to `fixtures/repo` (gitignored) and a refs-only `fixtures/example/review.json` with stories, attention, lookFor, and sources. Run `serve` or `export` with cwd set to `fixtures/repo`.
 
 To export a static copy from the same cwd:
 

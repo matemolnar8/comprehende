@@ -38,6 +38,7 @@ One group that holds all four files is equally good, because both hunks fix the 
 - Do not put a test in a different group from the code it checks, or make one group per file.
 - Do not split the change into two parts; one issue names both fixes as one story.
 - Do not present the "Development Versions" CI failure as a defect of this change.
+- Do not write a group attention that asks for more IPv6 tests, a note on the removed `t.cast`, or a refactor that shares one host parser between `app.py` and `testing.py`; a missing test, a nit, and a refactor idea are not attentions.
 
 ## Notes
 
@@ -48,3 +49,5 @@ The old expected outcome had a claim that IPv6 cookies work "because the cookie 
 The `sn_port is not None` and `//` claims sit in `Good`. The diff and the author's review comments show them, but a reader who misses them does not misjudge the fix. The lowercase claim needs knowledge of `urlsplit` beyond the diff.
 
 `groups` allows 3 as slack. A third group is unusual for four files, and `together` still catches a test that leaves its code. No `apart` pair: one group and two groups are both good, so no pair must stay apart.
+
+Homes: the two `urlsplit` fixes and the new tests live in the group summaries. Neither group needs an attention. The lowercase host is `Good`; a review can state it in a summary or as a `contract` attention.

@@ -96,8 +96,12 @@ describe("changesPayload", () => {
       sources: [{ id: "pr", kind: "pr", label: "#1" }],
       groups: [
         group("same"),
-        group("auth", { summary: "Uses a token.", lookFor: ["Token expiry."] }),
-        group("cache"),
+        group("auth", {
+          summary: "Uses a token.",
+          attention: { kind: "risk", note: "Tokens never expire." },
+        }),
+        group("cache", { attention: { kind: "tradeoff", note: "Stale reads for speed." } }),
+        group("flags", { attention: { kind: "product", note: "Flags default on." } }),
       ],
     });
     const current = document({
@@ -106,8 +110,15 @@ describe("changesPayload", () => {
       sources: [{ id: "ticket", kind: "ticket", label: "#2" }],
       groups: [
         group("same"),
-        group("auth", { summary: "Uses a cookie.", lookFor: ["Cookie flags."] }),
-        group("retry", { suggestedOrder: 1 }),
+        group("auth", {
+          summary: "Uses a cookie.",
+          attention: { kind: "contract", note: "The cookie drops `Max-Age`." },
+        }),
+        group("flags"),
+        group("retry", {
+          suggestedOrder: 1,
+          attention: { kind: "risk", note: "Retries do not back off." },
+        }),
       ],
     });
 
@@ -122,12 +133,41 @@ describe("changesPayload", () => {
       changes.groups.map((item) => [item.id, item.state]),
       [
         ["auth", "kept"],
+        ["flags", "kept"],
         ["retry", "added"],
         ["cache", "removed"],
       ],
     );
-    const auth = changes.groups[0];
+    const [auth, flags, retry, cache] = changes.groups;
     assert.deepEqual(auth?.text, { summary: { before: "Uses a token.", after: "Uses a cookie." } });
-    assert.deepEqual(auth?.lookFor, { added: ["Cookie flags."], removed: ["Token expiry."] });
+    assert.deepEqual(auth?.attention, {
+      before: { kind: "risk", note: "Tokens never expire." },
+      after: { kind: "contract", note: "The cookie drops `Max-Age`." },
+    });
+    assert.deepEqual(flags?.attention, {
+      before: { kind: "product", note: "Flags default on." },
+      after: null,
+    });
+    assert.deepEqual(retry?.attention, {
+      before: null,
+      after: { kind: "risk", note: "Retries do not back off." },
+    });
+    assert.equal(cache?.attention, undefined);
+  });
+
+  it("shows an added attention, and no change for the same attention", () => {
+    const attention = { kind: "risk", note: "Retries do not back off." } as const;
+    const added = changesPayload(
+      document({ groups: [group("retry")] }),
+      document({ groups: [group("retry", { attention })] }),
+      undefined,
+    );
+    assert.deepEqual(added.groups[0]?.attention, { before: null, after: attention });
+    const same = changesPayload(
+      document({ groups: [group("retry", { attention })] }),
+      document({ groups: [group("retry", { attention: { ...attention } })] }),
+      undefined,
+    );
+    assert.deepEqual(same.groups, []);
   });
 });

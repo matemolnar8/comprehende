@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { parseHunkRefString, parseStoredHunkRef } from "./identity.ts";
 import { sourceCitationErrors } from "./source.ts";
-import { REVIEW_SIZES, SOURCE_KINDS } from "./types.ts";
+import { ATTENTION_KINDS, REVIEW_SIZES, SOURCE_KINDS } from "./types.ts";
 
 const SCHEMA_ID = "https://github.com/matemolnar8/comprehende/src/schema/review.schema.json";
 const COMMENT_ONLY_KEYS = ["author", "body", "path", "side", "line"] as const;
@@ -126,6 +126,21 @@ function sourceRules(ctx: z.core.ParsePayload<z.infer<typeof sourceShape>>): voi
   }
 }
 
+const attentionSchema = z.strictObject(
+  {
+    kind: z
+      .enum(ATTENTION_KINDS, { error: () => `must be one of ${ATTENTION_KINDS.join(", ")}` })
+      .meta({
+        description:
+          "contract: a compatibility or API promise. tradeoff: a cost accepted for a gain. product: a product or scope call. risk: a risk accepted.",
+      }),
+    note: nonemptyString(
+      "What the code at head does, where it matters, and the decision the reviewer makes.",
+    ),
+  },
+  { error: objectError },
+);
+
 const groupSchema = z.strictObject(
   {
     id: nonemptyString(),
@@ -134,7 +149,9 @@ const groupSchema = z.strictObject(
       "Generated why this group exists. From a source when one applies, or that it enables later groups in the same story.",
     ),
     summary: anyString("One sentence: what this group is."),
-    lookFor: stringList("Scannable bullets of what to inspect."),
+    attention: attentionSchema.optional().meta({
+      description: "The one judgment call a reviewer makes in this group. Most groups have none.",
+    }),
     dependsOn: stringList("Ids of earlier groups this one depends on. Same story only."),
     part: nonemptyString(
       "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs.",
@@ -197,7 +214,7 @@ const reviewDocumentObject = z
           "Locators the skill read to write its prose. Ticket bodies, PR descriptions, and transcript text stay out. PR comment body is copied.",
       }),
       lookFor: stringList(
-        "Whole-change and missing-work claims. Cite the source. Do not store a pass/fail.",
+        "Source verdicts: a source item done differently, not done, or not true at head, manual steps a source says the change needs, and instructions a source gives a reviewer. Cite the source.",
       ),
       parts: z.array(reviewPartSchema, { error: "must be an array" }).optional().meta({
         description:
@@ -212,7 +229,15 @@ const reviewDocumentObject = z
     description: "Interpretation only: title, groups, summaries, and hunk pointers.",
   });
 
-const reviewDocumentInput = reviewDocumentObject.extend({
+// Older documents hold group findings in lookFor. Load them; validate asks for attention instead.
+const legacyGroupSchema = groupSchema.extend({ lookFor: stringList() });
+
+/** What a document may hold on disk and in api/review.json: legacy group lookFor round-trips. */
+const storedDocumentObject = reviewDocumentObject.extend({
+  groups: z.array(legacyGroupSchema, { error: "must be an array" }),
+});
+
+const reviewDocumentInput = storedDocumentObject.extend({
   tickets: z.array(legacyTicketSchema, { error: "must be an array" }).optional(),
 });
 
@@ -226,8 +251,9 @@ export const reviewDocumentSchema = reviewDocumentInput
         : { ...rest, sources: tickets.map(ticketToSource) };
     return {
       ...next,
-      groups: next.groups.map((group) => ({
+      groups: next.groups.map(({ lookFor, ...group }) => ({
         ...group,
+        ...(lookFor === undefined || lookFor.length === 0 ? {} : { legacyLookFor: lookFor }),
         hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
       })),
     };
@@ -294,7 +320,7 @@ function documentRules(ctx: z.core.ParsePayload<z.infer<typeof reviewDocumentInp
   for (const error of sourceCitationErrors({
     ...rest,
     sources,
-    groups: rest.groups.map((group) => ({
+    groups: rest.groups.map(({ lookFor: _lookFor, ...group }) => ({
       ...group,
       hunkRefs: group.hunkRefs.map(parseStoredHunkRef),
     })),
@@ -358,8 +384,20 @@ export type Source = z.infer<typeof sourceSchema>;
 export type ReviewPart = z.infer<typeof reviewPartSchema>;
 export type ReviewDocument = z.infer<typeof reviewDocumentSchema>;
 /** The on-disk form: hunk refs as strings. */
-export type StoredReviewDocument = z.infer<typeof reviewDocumentObject>;
+export type StoredReviewDocument = z.infer<typeof storedDocumentObject>;
 export type ReviewGroup = ReviewDocument["groups"][number];
+export type Attention = z.infer<typeof attentionSchema>;
+export type AttentionKind = Attention["kind"];
+
+/** One error per group that still holds the legacy lookFor. */
+export function legacyLookForErrors(document: ReviewDocument): string[] {
+  return document.groups
+    .filter((group) => group.legacyLookFor !== undefined)
+    .map(
+      (group) =>
+        `groups id "${group.id}" has lookFor; write its one judgment call as attention, or drop it`,
+    );
+}
 
 export function reviewJsonSchema(): Record<string, unknown> {
   const schema = z.toJSONSchema(reviewDocumentObject, {

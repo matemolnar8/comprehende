@@ -33,10 +33,11 @@ PR #24. No ticket, no comments. Two commits: a C fix that frees pending QuickJS 
 ## Must not
 
 - Do not say the first timer after each restart had id 0 before the fix; at base the counter was never reset, so only the first timer of the process got id 0.
-- Do not tag a race between `run_timeouts` and `timeout_shutdown`, or between the old and the new runtime: both functions run on the JS thread, and `js_runtime_stop` joins that thread before a new one starts.
+- Do not write a race between `run_timeouts` and `timeout_shutdown`, or between the old and the new runtime, as a `risk` attention or a claim: both functions run on the JS thread, and `js_runtime_stop` joins that thread before a new one starts.
 - Do not say the harness tests the restart path in `js_runtime.c`; it calls `timeout_shutdown` directly.
 - Do not give the one-line call in `js_runtime.c` or the declaration in `jslib.h` its own group.
 - Do not add document `lookFor` bullets about the PR test plan, the JS build commands, or the reload video; they are context, and every PR summary item is done as described.
+- Do not write a group attention that asks for a test of the restart path in `js_runtime.c`, or that moves `timeout_shutdown` into `js_runtime_stop`; a missing test and a refactor idea are not attentions.
 
 ## Notes
 
@@ -45,3 +46,4 @@ PR #24. No ticket, no comments. Two commits: a C fix that frees pending QuickJS 
 - The CI and CMake claim is `Must` because a reader who misses the `VITASDK` guard can think the Vita build now builds the harness.
 - `together` holds the three shutdown files, and the harness with `CMakeLists.txt`. It leaves out `ci.yml`, because a good review can give the CI step its own group or part. There is no `apart` pair: a review that puts the harness with the fix it checks is also good.
 - `parts` 0 to 2: one story, named or not, or two with the CI step apart. `groups` 1 to 3 for the same reason. `size` small only. `why` has no expect, because the PR body is mostly a what.
+- Homes: the timer ids that skip 0 fit a `contract` attention on the shutdown group, with the truthiness check as its trace. The shutdown order lives in the same group summary, and the CTest and CI guard in the harness group summary.

@@ -1,6 +1,8 @@
 import type { HunkRef, ReviewSource, Source } from "./review.ts";
 
 export type {
+  Attention,
+  AttentionKind,
   HunkRef,
   ReviewDocument,
   ReviewGroup,
@@ -36,6 +38,8 @@ export function basename(path: string): string {
   const slash = path.lastIndexOf("/");
   return slash === -1 ? path : path.slice(slash + 1);
 }
+
+export const ATTENTION_KINDS = ["contract", "tradeoff", "product", "risk"] as const;
 
 export const SOURCE_KINDS = ["ticket", "pr", "pr-comment", "commit", "transcript"] as const;
 

@@ -197,7 +197,7 @@ function rubricHtml(rubric: RubricResult): string[] {
   if (rubric.output.bullets.length > 0) {
     sections.push(
       block(
-        `lookFor ${counts.bullets.holds} of ${counts.bullets.total} true`,
+        `lookFor and attention ${counts.bullets.holds} of ${counts.bullets.total} true`,
         rubric.output.bullets.map((item) => bulletHtml(item)).join(""),
       ),
     );

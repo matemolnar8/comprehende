@@ -25,7 +25,7 @@ import {
   removeWorktree,
   thisRepoMirror,
 } from "./clone.ts";
-import { lookForBullets, runRubricGrader } from "./graders.ts";
+import { claimBullets, runRubricGrader } from "./graders.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
 import { producerPrompt, runProducer } from "./producer.ts";
@@ -241,7 +241,7 @@ async function evalOneCase(opts: {
           const ctx = await openReview(repoCwd, document);
           const packetPath = join(caseOut, "packet.md");
           const packet = await writeGradingPacket(ctx, frozen, packetPath);
-          const bullets = lookForBullets(document);
+          const bullets = claimBullets(document);
           const rubricSize =
             opts.rubric.must.length + opts.rubric.good.length + opts.rubric.mustNot.length;
           if (rubricSize + bullets.length > 0) {

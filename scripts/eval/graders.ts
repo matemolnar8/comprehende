@@ -44,13 +44,17 @@ export type RubricResult = {
   parseError?: string;
 };
 
-export type LookForBullet = { where: string; bullet: string };
+export type ClaimBullet = { where: string; bullet: string };
 
-export function lookForBullets(document: ReviewDocument): LookForBullet[] {
-  const bullets = (document.lookFor ?? []).map((bullet) => ({ where: "document", bullet }));
+/** Document lookFor bullets, then each group attention note. */
+export function claimBullets(document: ReviewDocument): ClaimBullet[] {
+  const bullets = (document.lookFor ?? []).map((bullet) => ({ where: "document lookFor", bullet }));
   for (const group of document.groups) {
-    for (const bullet of group.lookFor ?? []) {
-      bullets.push({ where: `group ${group.id}`, bullet });
+    if (group.attention !== undefined) {
+      bullets.push({
+        where: `group ${group.id} attention ${group.attention.kind}`,
+        bullet: group.attention.note,
+      });
     }
   }
   return bullets;
@@ -80,7 +84,7 @@ export function rubricCounts(output: RubricOutput): RubricCounts {
 export function parseRubricReply(
   text: string,
   rubric: Rubric,
-  bullets: LookForBullet[],
+  bullets: ClaimBullet[],
 ): RubricOutput {
   const reply = rubricReplySchema.parse(parseJsonReply(text));
   const zip = (
@@ -121,7 +125,7 @@ export function parseJsonReply(text: string): unknown {
 
 export function rubricPrompt(opts: {
   rubric: Rubric;
-  bullets: LookForBullet[];
+  bullets: ClaimBullet[];
   packet: string;
 }): string {
   const list = (items: string[]): string =>
@@ -146,10 +150,10 @@ export function rubricPrompt(opts: {
     "Must not (mistakes a review makes on this change):",
     list(opts.rubric.mustNot),
     "",
-    "For each Must and Good item, answer yes when the review gives the reader the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, or group lookFor. Different wording and different symbol names still count. An item may carry more detail than the review, such as a second reason, a consequence, or a symbol name; the review still states it when it gives the main fact and says nothing that contradicts the rest. Answer no when the review is silent on the main fact, states the opposite, or states a weaker version that changes what the reader would conclude. On yes, quote the review sentence that states it.",
+    "For each Must and Good item, answer yes when the review gives the reader the same fact in its own words, anywhere in its prose: document why, summary, lookFor, part summaries, group why, group summary, or group attention. Different wording and different symbol names still count. An item may carry more detail than the review, such as a second reason, a consequence, or a symbol name; the review still states it when it gives the main fact and says nothing that contradicts the rest. Answer no when the review is silent on the main fact, states the opposite, or states a weaker version that changes what the reader would conclude. On yes, quote the review sentence that states it.",
     "For each Must not item, answer yes when the review makes that mistake. On yes, quote the review text that shows it.",
     "",
-    "## lookFor bullets the review wrote",
+    "## lookFor bullets and attention notes the review wrote",
     "",
     list(opts.bullets.map((item) => `(${item.where}) ${item.bullet}`)),
     "",
@@ -178,7 +182,7 @@ export async function runRubricGrader(opts: {
   model: string;
   apiKey: string;
   rubric: Rubric;
-  bullets: LookForBullet[];
+  bullets: ClaimBullet[];
   packet: string;
 }): Promise<RubricResult> {
   const prompt = rubricPrompt(opts);

@@ -37,10 +37,12 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 - Do not say alexandear called the three-index slice cryptic, or that ccoVeille proposed copying `trimmedArgs` at the top of the function.
 - Do not cite ticket #2257 for the shared backing array cause; the ticket reports only the inserted `"--"`, and the PR body and review comments name the cause.
 - Do not say the copy changes the completions or the argument values that `ValidArgsFunction` receives; only `os.Args` stays untouched.
+- Do not write a group attention that proposes the three-index slice or another way to copy `trimmedArgs`, or that asks for more completion tests; the copy was settled in review, and a fix idea and a missing test are not attentions.
 
 ## Notes
 
 - The `TraverseChildren` trace is `Good` because it needs `Traverse`, `Find`, and `argsMinusFirstX` in `command.go`, which the diff does not touch. The PR body says only that the bug is "most visible" with `TraverseChildren`.
 - The test name mismatch is a true PR body divergence but minor, so it is `Good`. The three-index slice divergence is `Must` because it describes the fix itself.
-- Past runs missed the direct `os.Args` test in 22 of 23 runs and the aliasing mechanism in 21 of 23. Graders often flagged a `lookFor` that credited alexandear with "cryptic", and a `why` that cited the ticket for the backing array cause.
+- Past runs missed the direct `os.Args` test in 22 of 23 runs and the aliasing mechanism in 21 of 23. Graders often flagged a group `lookFor` bullet that credited alexandear with "cryptic", and a `why` that cited the ticket for the backing array cause.
 - `parts` 0 to 1: one story, named or not. `groups` 1 to 2: one group is best; two is slack for a review that repeats a hunk in a second concern, such as the reviewer-driven rework. `size` trivial to medium: small is best, the slice aliasing reads harder than the line count.
+- Homes: the aliasing mechanism, the copy at the top, and the direct `os.Args` test live in the group summary or why. The three-index slice claim is a document `lookFor` bullet, because the PR body describes an earlier fix. The group needs no attention: the change is a bug fix whose shape the review thread settled.

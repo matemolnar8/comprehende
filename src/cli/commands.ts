@@ -12,12 +12,13 @@ import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts
 import { buildDigest, digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
-import { formatRefresh, refreshDocument } from "../review/refresh.ts";
+import { formatRefresh, legacyLookForLine, refreshDocument } from "../review/refresh.ts";
 import { skeletonDocument } from "../review/skeleton.ts";
 import { writeDocument } from "../review/write.ts";
 import { listNewSubjects } from "../git/log.ts";
 import { parseHunkRefString } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
+import { legacyLookForErrors } from "../schema/review.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import {
   shortSha,
@@ -67,6 +68,7 @@ export async function cmdValidate(
     ...dirRefErrors(coverage, files),
     ...sourceCitationErrors(document),
     ...commentPinErrors(pins),
+    ...legacyLookForErrors(document),
   ];
   if (errors.length > 0) {
     throw new Error(errors.join("\n\n"));
@@ -250,7 +252,12 @@ export async function cmdRefresh(
   if (baseSha === previous.baseSha && headSha === previous.headSha) {
     return {
       document,
-      report: `nothing to refresh: ${source.range} still resolves to ${shortSha(baseSha)}...${shortSha(headSha)}`,
+      report: [
+        `nothing to refresh: ${source.range} still resolves to ${shortSha(baseSha)}...${shortSha(headSha)}`,
+        legacyLookForLine(document),
+      ]
+        .filter((line) => line !== undefined)
+        .join("\n"),
       changed: false,
     };
   }

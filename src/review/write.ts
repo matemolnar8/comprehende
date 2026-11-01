@@ -3,11 +3,13 @@ import { dirname } from "node:path";
 import { formatStoredHunkRef } from "../schema/identity.ts";
 import type { ReviewDocument, StoredReviewDocument } from "../schema/types.ts";
 
+/** Legacy group lookFor stays, so a later refresh can still name the groups to convert. */
 export function storedDocument(document: ReviewDocument): StoredReviewDocument {
   return {
     ...document,
-    groups: document.groups.map((group) => ({
+    groups: document.groups.map(({ legacyLookFor, ...group }) => ({
       ...group,
+      ...(legacyLookFor === undefined ? {} : { lookFor: legacyLookFor }),
       hunkRefs: group.hunkRefs.map((ref) => formatStoredHunkRef(ref)),
     })),
   };

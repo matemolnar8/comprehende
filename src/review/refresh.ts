@@ -491,7 +491,19 @@ export function formatRefresh(
   if (context.stalePins.length > 0) {
     lines.push(`Pins off a live line: ${context.stalePins.join(", ")}`);
   }
+  const legacy = legacyLookForLine(document);
+  if (legacy !== undefined) {
+    lines.push(legacy);
+  }
   return lines.join("\n");
+}
+
+/** Names the groups that still hold the old group lookFor. */
+export function legacyLookForLine(document: ReviewDocument): string | undefined {
+  const ids = document.groups
+    .filter((group) => group.legacyLookFor !== undefined)
+    .map((group) => group.id);
+  return ids.length === 0 ? undefined : `lookFor to convert to attention: ${ids.join(", ")}`;
 }
 
 function digestKey(file: DigestFile, hunk: DigestFile["hunks"][number]): string {

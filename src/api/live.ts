@@ -19,6 +19,7 @@ import { commentPinErrors, staleCommentPins, type StaleCommentPin } from "../rev
 import { matchHunks } from "../review/refresh.ts";
 import { storedDocument } from "../review/write.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
+import { legacyLookForErrors } from "../schema/review.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
 import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
@@ -177,7 +178,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
         title: group.group.title,
         why: group.group.why,
         summary: group.group.summary,
-        lookFor: group.group.lookFor ?? [],
+        ...(group.group.attention === undefined ? {} : { attention: group.group.attention }),
         dependsOn: group.group.dependsOn ?? [],
         part: group.group.part,
         sources: group.group.sources ?? [],
@@ -224,6 +225,7 @@ export function reviewProblems(ctx: ReviewContext): string[] {
     ...coverageErrors(ctx.coverage),
     ...sourceCitationErrors(ctx.document),
     ...commentPinErrors(ctx.staleCommentPins),
+    ...legacyLookForErrors(ctx.document),
   ];
 }
 
