@@ -91,8 +91,12 @@ export async function runFixtureSmoke(
     const groupMd = await fetch(groupMdHref);
     assertStatus(groupMd, groupMdHref.href, 200);
     const groupText = await groupMd.text();
-    if (!groupText.includes(MIXED_PART_APP) || !groupText.includes("Attention (")) {
-      throw new Error(`group ${MIXED_GROUP_APP} markdown missing part or attention`);
+    if (
+      !groupText.includes(MIXED_PART_APP) ||
+      !groupText.includes("Attention (") ||
+      !groupText.includes("Questions:")
+    ) {
+      throw new Error(`group ${MIXED_GROUP_APP} markdown missing part, attention, or questions`);
     }
 
     const relocationsHref = new URL(

@@ -30,6 +30,7 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 - The lockfile diff is only the `socks` promotion: `socks` 2.8.6 to 2.8.9, `ip-address` 9.0.5 to 10.4.0, and the dropped `jsbn` and `sprintf-js` 1.1.3 transitives.
 - The integration test proxy answers non-CONNECT requests with 502 and a contract test pins that, which resolves pomeh's review comment about the unused `proxy-direct` body.
 - The `fetchOnce` comment says the global `fetch` binding must stay because MSW patches `globalThis.fetch`.
+- A group question asks why the SOCKS branch has no `NO_PROXY` bypass; no source gives a reason, and the PR matrix lists `NO_PROXY` bypass as unchanged.
 
 ## Must not
 
@@ -39,6 +40,7 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 - Split `proxy.ts` from `proxy.test.ts`, or make one group per file.
 - Say `NO_PROXY` applies to the SOCKS path.
 - Write a group attention that asks for a test of `parseSocksUrl`, a lazy dispatcher, or a rename of `createProxyDispatcher`; a missing test, a refactor idea, and a nit are not attentions.
+- Write a group question that asks why PAC support or the HTTP proxy handling is not in this change; the conversation comments move PAC to a follow-up and the HTTP proxy work to #10905.
 
 ## Notes
 

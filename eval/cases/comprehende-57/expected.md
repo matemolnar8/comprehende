@@ -39,6 +39,7 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - Do not repeat the PR claim that citation checks "stay" in the parser as fact, because the old parser did not check citations.
 - Do not give the `types.ts` re-exports or `parse.test.ts` their own group, and do not put the Zod dependency in its own part.
 - Do not write a group attention that asks to delete the unused `isReviewSize` and `isSourceKind` exports, to drop the `tickets` TODO, or to add more schema tests; a cleanup idea and a missing test are not attentions.
+- Do not write a group question that asks why the parser moves to Zod; the PR names the three copies of the document shape as the reason.
 
 ## Notes
 

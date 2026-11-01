@@ -43,6 +43,7 @@ export function changesPayload(
       title: group.title,
       text: old === undefined ? {} : groupText(old, group),
       ...(attention === undefined ? {} : { attention }),
+      questions: listChange(old?.questions, group.questions),
       files: old === undefined ? noList() : listChange(pathsBefore(old), pathsAfter(group)),
       ...(hunks === undefined ? {} : { hunks }),
     };
@@ -57,6 +58,7 @@ export function changesPayload(
         state: "removed",
         title: group.title,
         text: {},
+        questions: noList(),
         files: noList(),
       });
     }
@@ -189,6 +191,7 @@ function hasChange(change: ApiGroupChange): boolean {
   return (
     Object.keys(change.text).length > 0 ||
     change.attention !== undefined ||
+    change.questions.added.length + change.questions.removed.length > 0 ||
     change.files.added.length + change.files.removed.length > 0 ||
     (hunks !== undefined && hunks.new + hunks.changed + hunks.reformat > 0)
   );

@@ -4,6 +4,7 @@ export type {
   Attention,
   AttentionKind,
   HunkRef,
+  Questions,
   ReviewDocument,
   ReviewGroup,
   ReviewHunkRef,

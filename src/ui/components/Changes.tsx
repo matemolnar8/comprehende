@@ -96,15 +96,17 @@ function GroupChange(props: {
           <InlineMd text={summary} />
         </p>
       ) : null}
-      {group.state === "added" && group.attention !== undefined ? (
-        <div className="mt-2">
-          <AttentionField change={group.attention} />
+      {group.state === "added" ? (
+        <div className="mt-2 empty:hidden">
+          {group.attention !== undefined ? <AttentionField change={group.attention} /> : null}
+          <ListField label="Questions" change={group.questions} />
         </div>
       ) : null}
       {group.state === "kept" ? (
         <div className="mt-2 empty:hidden">
           <TextFields text={group.text} />
           {group.attention !== undefined ? <AttentionField change={group.attention} /> : null}
+          <ListField label="Questions" change={group.questions} />
           <ListField label="Files" change={group.files} mono />
         </div>
       ) : null}

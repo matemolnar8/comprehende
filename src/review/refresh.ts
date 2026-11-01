@@ -477,6 +477,11 @@ export function formatRefresh(
     }
     if (group.empty) {
       bits.push("now empty");
+    } else {
+      const questions = document.groups.find((item) => item.id === group.id)?.questions ?? [];
+      if (questions.length > 0) {
+        bits.push(`${count(questions.length, "question")} to re-check`);
+      }
     }
     lines.push(`- ${group.id}: ${bits.join(" · ")}`);
   }

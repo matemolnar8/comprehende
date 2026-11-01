@@ -29,6 +29,7 @@ PR #24. No ticket, no comments. Two commits: a C fix that frees pending QuickJS 
 - The harness calls `timeout_shutdown` itself between the two runtimes and compiles only `timeout.c`, so it tests the cleanup function and not the new call in `js_runtime.c`.
 - The removed `timeout_ctx` static was set in `register_js_timeout` and never read.
 - `include(CTest)` turns `BUILD_TESTING` on by default, so the existing CI `cmake --build out` step also builds `timer_reload_harness` with no new configure flag.
+- A group question asks why timer ids now start at 1 and skip 0, because no source names that change.
 
 ## Must not
 

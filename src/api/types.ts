@@ -3,6 +3,7 @@ import type {
   DiffLine,
   FileStatus,
   HunkRef,
+  Questions,
   Relocation,
   ReviewHunkRef,
   SkippedFile,
@@ -92,6 +93,7 @@ export type ApiReview = {
     why: string;
     summary: string;
     attention?: Attention;
+    questions: Questions;
     dependsOn: string[];
     part?: string;
     sources: string[];
@@ -143,6 +145,7 @@ export type ApiGroupChange = {
   title: string;
   text: ApiTextChanges;
   attention?: ApiAttentionChange;
+  questions: ApiListChange;
   files: ApiListChange;
   /** Missing when git no longer has the previous commits. */
   hunks?: ApiHunkCounts;

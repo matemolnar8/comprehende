@@ -141,6 +141,18 @@ const attentionSchema = z.strictObject(
   { error: objectError },
 );
 
+const question = nonemptyString();
+
+const questionsSchema = z
+  .union([z.tuple([]), z.tuple([question]), z.tuple([question, question])], {
+    error: "must be an array of at most 2 non-empty strings",
+  })
+  .optional()
+  .meta({
+    description:
+      "At most 2 questions that ask why the change is this way, where the code and the sources leave the reason open. When a source answers one, the answer goes in why.",
+  });
+
 const groupSchema = z.strictObject(
   {
     id: nonemptyString(),
@@ -152,6 +164,7 @@ const groupSchema = z.strictObject(
     attention: attentionSchema.optional().meta({
       description: "The one judgment call a reviewer makes in this group. Most groups have none.",
     }),
+    questions: questionsSchema,
     dependsOn: stringList("Ids of earlier groups this one depends on. Same story only."),
     part: nonemptyString(
       "Short name of the independent story this group belongs to. Same name = same story. Different names could have been separate PRs.",
@@ -388,6 +401,7 @@ export type StoredReviewDocument = z.infer<typeof storedDocumentObject>;
 export type ReviewGroup = ReviewDocument["groups"][number];
 export type Attention = z.infer<typeof attentionSchema>;
 export type AttentionKind = Attention["kind"];
+export type Questions = NonNullable<ReviewGroup["questions"]>;
 
 /** One error per group that still holds the legacy lookFor. */
 export function legacyLookForErrors(document: ReviewDocument): string[] {

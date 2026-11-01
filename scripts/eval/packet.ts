@@ -63,6 +63,9 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
         ? "Attention: (none)"
         : `Attention (${group.attention.kind}): ${group.attention.note}`,
     );
+    for (const question of group.questions ?? []) {
+      parts.push(`Question: ${question}`);
+    }
     parts.push("");
     for (const file of payload.files) {
       parts.push(`#### ${fileHeading(file)}`);

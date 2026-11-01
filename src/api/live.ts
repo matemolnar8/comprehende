@@ -179,6 +179,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
         why: group.group.why,
         summary: group.group.summary,
         ...(group.group.attention === undefined ? {} : { attention: group.group.attention }),
+        questions: group.group.questions ?? [],
         dependsOn: group.group.dependsOn ?? [],
         part: group.group.part,
         sources: group.group.sources ?? [],

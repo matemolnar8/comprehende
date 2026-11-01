@@ -18,6 +18,8 @@
 
 **Attention.** The one judgment call a reviewer makes in a group: what the code at head does, where it matters, and the decision. At most one per group, and most groups have none. `kind` is `contract`, `tradeoff`, `product`, or `risk`. A bug, a missing test, a nit, a refactor idea, or anything settled in review is not an attention. Other tools hunt bugs; an attention points at the call only the maintainer can make.
 
+**Questions.** At most 2 per group. Each asks why the change is this way, where the code and the sources leave the reason open. When a source answers it, the answer goes in the why. The UI copies each question into a prompt for the agent that wrote the change.
+
 **Look for.** Document-level source verdicts: each source item done differently, not done, or not true at head, each manual step a source says the change needs, and each instruction a source gives a reviewer. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
 
 **Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. The pin is the line that comment still sits on at head, on an open thread. A resolved thread and an outdated comment keep the source and omit the pin. Transcripts have no URL.
@@ -26,7 +28,7 @@
 
 ## Code
 
-**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional attentions, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
+**Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional attentions, optional questions, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
 **Group.** Schema `groups` item. The UI uses the same word.
 

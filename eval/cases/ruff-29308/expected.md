@@ -40,6 +40,7 @@ One group for all eight files, the e2e test inside group 1 or 2, or the `range.r
 - Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with `03ea17f`, not with this request's base.
 - Do not put a snapshot in a different group from the `cells_after_cell_magic` test that writes it.
 - Do not write a group attention that asks for more notebook tests, a cache for `valid_code_cells`, or a new name for `cell_range`; a missing test, a performance idea, and a nit are not attentions.
+- Do not write a group question that asks why `cell_range` now maps the cell index to the index among Python cells; the PR body names the hover bug after a `%%bash` cell that this fixes.
 
 ## Notes
 

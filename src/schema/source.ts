@@ -61,6 +61,9 @@ export function documentCitationRefs(document: ReviewDocument): CitationRef[] {
     add(`groups[${i}].why`, group.why);
     add(`groups[${i}].summary`, group.summary);
     add(`groups[${i}].attention.note`, group.attention?.note);
+    (group.questions ?? []).forEach((item, j) => {
+      add(`groups[${i}].questions[${j}]`, item);
+    });
   });
   return out;
 }

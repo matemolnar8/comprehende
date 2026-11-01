@@ -37,6 +37,7 @@ PR #29024 in astral-sh/ruff. One small type-checker fix in Rust plus two corpus 
 - Do not claim the corpus files check the inferred type or that the PR adds an mdtest; they only guard against a panic.
 - Do not claim the PR fixes every reproducer in ty issue 4615.
 - Do not write a group attention that asks for an mdtest that checks the inferred type, or a new name for `is_non_divergent_dynamic`; a missing test and a nit are not attentions.
+- Do not write a group question that asks why a `Divergent` marker now becomes `(Divergent, /)` instead of `Parameters::unknown()`; the PR body says inference needs the marker to normalize the cycle.
 
 ## Notes
 
