@@ -41,6 +41,6 @@ One group for all eight files, or the e2e test inside group 1 or 2, is also good
 
 ## Notes
 
-The harness hands the producer the base and head SHAs, so this case cannot check that the skill picks the stacked base on its own. The base is the forge's `base.sha` for #29307's head, not the `merge_commit_sha^1` that `pnpm eval:add` writes. The stack was squash-merged onto `main` one layer at a time, so `merge_commit_sha^1` is the squash of #29307 on `main`, and its three-dot diff with this head holds ten files from #29306 and #29307 as well. What the case checks is the other half of the rule: the lower layer is a `pr` source, and the review does not describe its code as this change.
+The harness hands the producer the base and head SHAs, so this case cannot check that the skill picks the stacked base on its own. The base is the forge's `base.sha` for #29307's head, not the `merge_commit_sha^1` that `pnpm eval:add` writes. The stack was squash-merged onto `main` one layer at a time, so `merge_commit_sha^1` is the squash of #29307 on `main`, and its three-dot diff with this head holds ten files, with files from #29306 and #29307 too. What the case checks is the other half of the rule: the lower layer is a `pr` source, and the review does not describe its code as this change.
 
 The link from hover to `cell_content_range` is `Good`, not `Must`: the reader has to open `range.rs` at base, outside the diff, to see it.

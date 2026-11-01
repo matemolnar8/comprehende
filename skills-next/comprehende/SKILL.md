@@ -27,7 +27,7 @@ When a review document for this change already exists, follow Refresh instead.
 
 Each step is one tool call where the step says so. Batch the commands as written; every extra round trip re-sends the whole context. Spend one tool call per phase: the step-2 batch with its sources, one show batch, one write that ends in validate. Further calls only fix what validate names.
 
-1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. When the user names a ref that is not in the clone, `git fetch <remote> <ref>` goes first in the step-2 call. A request in a stack has the base branch its forge reports, the head branch of another request. That branch is the base, so the review covers this layer only. The request with that head branch is the lower layer: fetch its body with the step-2 sources, add it as a `pr` source, and cite it where a group uses its code. Done when both ref names are chosen.
+1. Name base and head. Use the refs the user named; three-dot (`base...head`) is the merge request or branch diff. When the change is already on the default branch, use the request's recorded base and head SHAs; the moving default-branch `HEAD` includes later merges. When only the head SHA is known, base is the merge-base of that head with the named base branch. When the user names a ref that is not in the clone, `git fetch <remote> <ref>` goes first in the step-2 call. When the base branch the forge reports for a request is the head branch of another request, the request is in a stack. That branch is the base, so the review covers this layer only. The request with that head branch is the lower layer: fetch its body with the step-2 sources, add it as a `pr` source, and cite it where a group uses its code. Done when both ref names are chosen.
 2. One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources. `$REVIEW_DIR` comes from `mktemp -d` in that call, outside the repository. `&&` stops the shell before `pregroup` when a ref does not resolve; tell the user which ref failed.
 
    ```sh
@@ -116,7 +116,7 @@ The previous document is the `review.json` the user names, or the `document` fie
 REVIEW_DIR=$(mktemp -d) && echo "$REVIEW_DIR" && node -e 'fetch(process.argv[1]).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }).then((j) => require("fs").writeFileSync(process.argv[2], JSON.stringify(j.document, null, 2)))' "<site-url>/api/review.json" "$REVIEW_DIR/review.json"
 ```
 
-1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another. When the lower layer of a stack merged, pass `--base` with the base branch the forge now reports.
+1. One shell call: fetch the refs, refresh, and print the document. The refs default to the document's own `baseRef` and `headRef`, resolved again; pass `--head` or `--base` when the user names another. When the lower layer of a stack has merged, pass `--base` with the base branch the forge now reports.
 
    ```sh
    git fetch --quiet <remote> && {
