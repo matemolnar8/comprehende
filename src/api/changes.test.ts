@@ -148,7 +148,10 @@ describe("changesPayload", () => {
       before: { kind: "product", note: "Flags default on." },
       after: null,
     });
-    assert.equal(retry?.attention, undefined, "a new group shows its attention on the group");
+    assert.deepEqual(retry?.attention, {
+      before: null,
+      after: { kind: "risk", note: "Retries do not back off." },
+    });
     assert.equal(cache?.attention, undefined);
   });
 

@@ -36,8 +36,7 @@ export function changesPayload(
   for (const group of readingOrder(current.groups)) {
     const old = before.get(group.id);
     const hunks = count?.(code?.groups.get(group.id) ?? []);
-    const attention =
-      old === undefined ? undefined : attentionChange(old.attention, group.attention);
+    const attention = attentionChange(old?.attention, group.attention);
     const change: ApiGroupChange = {
       id: group.id,
       state: old === undefined ? "added" : "kept",
