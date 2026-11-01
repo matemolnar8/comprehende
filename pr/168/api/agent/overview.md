@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify b0813d8f6515448b400c20b7da21f2a33c0aa0e0` and `git rev-parse --verify 843230cb6e4245c73cf07b7fb1db23e79a77c5ba` in this repository.
+   Run `git rev-parse --verify ab3657b132459560b80abcec91c97929e6786a15` and `git rev-parse --verify 5f50618caf4f4029e5dbba2aa5e83419842b8460` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,23 +22,24 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  b0813d8f6515448b400c20b7da21f2a33c0aa0e0
+base (merge-base)  ab3657b132459560b80abcec91c97929e6786a15
 
-head               843230cb6e4245c73cf07b7fb1db23e79a77c5ba
+head               5f50618caf4f4029e5dbba2aa5e83419842b8460
 
 Named refs at pin: origin/main ... t3/group-attention-164
 
 Read the diff:
 
-git diff --find-renames b0813d8f6515448b400c20b7da21f2a33c0aa0e0 843230cb6e4245c73cf07b7fb1db23e79a77c5ba
+git diff --find-renames ab3657b132459560b80abcec91c97929e6786a15 5f50618caf4f4029e5dbba2aa5e83419842b8460
 
 Commits:
-- 843230c Document lookFor names the instruction bullet from #166; flask-6096-planted gets the attention Must not
-- 198165f Keep legacy group lookFor in api/review.json too
-- d93596f Refresh names legacy lookFor groups even with nothing to refresh; What changed shows a new group's attention; source verdicts keep their fetch reason
-- 2d333b2 Name attention in the review hint; an empty legacy lookFor needs no conversion
-- f433477 Skill, glossary, and eval: attention plus document lookFor
-- 335d5d0 Group attention replaces group lookFor
+- 5f50618 ruff-29308 gets the attention Must not and a Homes note
+- 6bc908b Document lookFor names the instruction bullet from #166; flask-6096-planted gets the attention Must not
+- 8617487 Keep legacy group lookFor in api/review.json too
+- e33f8c4 Refresh names legacy lookFor groups even with nothing to refresh; What changed shows a new group's attention; source verdicts keep their fetch reason
+- 3710802 Name attention in the review hint; an empty legacy lookFor needs no conversion
+- 6284efe Skill, glossary, and eval: attention plus document lookFor
+- 3f04597 Group attention replaces group lookFor
 
 Sources:
 - ticket #164 Replace group lookFor with one typed attention per group; keep document lookFor for source verdicts; legacy parse for old documents.
@@ -119,7 +120,7 @@ Depends on:
 
 ### 06 Eval grades attention notes (`eval`)
 
-`claimBullets` in `graders.ts` hands the grader each document `lookFor` bullet and each attention note to check against head, and every `expected.md` gains a case-specific Must not and a note on where its Must claims live.
+`claimBullets` in `graders.ts` hands the grader each document `lookFor` bullet and each attention note to check against head, and all 13 `expected.md` files gains a case-specific Must not and a note on where its Must claims live.
 
 Attention (tradeoff):
 The grader's bullets count now includes attention notes, and each case has one more Must not. Totals from runs before this change are not directly comparable, in exchange for grading every claim the review states as fact.
