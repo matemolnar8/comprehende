@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d6b0b7728aa0777132d7a1685f6d136672588918` and `git rev-parse --verify cf1b6f04c4b41e0e3246d6f78432f82241d29e36` in this repository.
+   Run `git rev-parse --verify d6b0b7728aa0777132d7a1685f6d136672588918` and `git rev-parse --verify c93429c344e61d4d4c5eaa1fe1a573547253be84` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  d6b0b7728aa0777132d7a1685f6d136672588918
 
-head               cf1b6f04c4b41e0e3246d6f78432f82241d29e36
+head               c93429c344e61d4d4c5eaa1fe1a573547253be84
 
 Named refs at pin: origin/main ... t3/skill-substeps
 
 Read the diff:
 
-git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 cf1b6f04c4b41e0e3246d6f78432f82241d29e36
+git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 c93429c344e61d4d4c5eaa1fe1a573547253be84
 
 Commits:
+- c93429c3 Skill review fixes: stacked and exported refresh read their references
 - cf1b6f04 Skill: Workflow steps as lettered substeps, branch-only material in references
 
 Sources:

@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify d6b0b7728aa0777132d7a1685f6d136672588918` and `git rev-parse --verify cf1b6f04c4b41e0e3246d6f78432f82241d29e36` in this repository.
+   Run `git rev-parse --verify d6b0b7728aa0777132d7a1685f6d136672588918` and `git rev-parse --verify c93429c344e61d4d4c5eaa1fe1a573547253be84` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 cf1b6f04c4b41e0e3246d6f78432f82241d29e36 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 c93429c344e61d4d4c5eaa1fe1a573547253be84 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,13 +25,13 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  d6b0b7728aa0777132d7a1685f6d136672588918
 
-head               cf1b6f04c4b41e0e3246d6f78432f82241d29e36
+head               c93429c344e61d4d4c5eaa1fe1a573547253be84
 
 Named refs at pin: origin/main ... t3/skill-substeps
 
 Read the diff:
 
-git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 cf1b6f04c4b41e0e3246d6f78432f82241d29e36
+git diff --find-renames d6b0b7728aa0777132d7a1685f6d136672588918 c93429c344e61d4d4c5eaa1fe1a573547253be84
 
 Review concern 02 of 03: Branch-only material moves to references (`disclosure`)
 
