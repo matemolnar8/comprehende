@@ -145,7 +145,7 @@
   .center p, .center h1 { margin-left: auto; margin-right: auto; }
   .title-logo { font-size: 5em; margin-bottom: 0.3em; }
   .hero-q { font-size: 7em; }
-  @media (max-width: 800px) { .cols, .groups { grid-template-columns: 1fr; } .slide { padding: 5vh 6vw; } }
+  @media (max-width: 800px) { .cols, .groups { grid-template-columns: 1fr; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
 </head>
 <body>
@@ -212,10 +212,12 @@
       <ul>
         <li><strong>Groups by review concern.</strong> Each group has a why, a what, and a size that means review burden, not file count.</li>
         <li><strong>Parts.</strong> Work that could have been its own pull request gets its own story and a suggested reading order.</li>
-        <li><strong>Look for.</strong> Claims the diff does not make obvious, with the source cited. No pass or fail.</li>
-        <li><strong>Sources.</strong> The tickets, pull request comments, commits, and agent transcripts the agent read, each with a gist.</li>
+        <li><strong>Look closely.</strong> The one call in a group that only you can make: a contract, a tradeoff, a product call, or a risk. Most groups have none.</li>
+        <li><strong>Sources.</strong> The tickets, pull request comments, commits, and agent transcripts the agent read, each with a gist. Look for shows where the code and a source do not agree.</li>
       </ul>
       <ul>
+        <li><strong>Focus and notes.</strong> One line on what changed in each file. In a long hunk, the lines that matter open first, with lettered notes on single lines.</li>
+        <li><strong>Ask the agent.</strong> Up to two questions per group about why the code is this way. One click opens one in Claude Code, Codex, Cursor, or T3 Code.</li>
         <li><strong>Full files and git blame.</strong> One click from any hunk. The diff always comes from live git.</li>
         <li><strong>Refresh.</strong> New commits keep the old groups. The What changed page shows the delta.</li>
         <li><strong>Mechanical groups.</strong> Renames and generated output, marked so you know what to skip.</li>
@@ -239,7 +241,7 @@
     <h2>Non-goals</h2>
     <ul>
       <li><strong>Review for you.</strong> It gives you a view to hold against the diff. You still read the diff.</li>
-      <li><strong>Judge.</strong> No approve or reject and no score. Look for items are claims to check, not verdicts.</li>
+      <li><strong>Judge.</strong> No approve or reject and no score. Look for items are claims to check, and Look closely names a call for you. Neither is a verdict.</li>
       <li><strong>Replace git.</strong> No stored patches and no second source of truth.</li>
       <li><strong>Know your forge.</strong> GitHub, GitLab, Bitbucket, and Jira live in the skill, not in the tool. The core is plain git.</li>
       <li><strong>Generate UI.</strong> The model never draws a screen.</li>
@@ -252,10 +254,10 @@
 npx skills add matemolnar8/comprehende
 
 <span class="c"># in your coding agent, name what to review</span>
-<span class="p">/comprehende</span> PR 154
+<span class="p">/comprehende</span> PR 154 <span class="c"># in a stack, only its own layer</span>
 <span class="p">/comprehende</span> the changes from the last turn
 <span class="p">/comprehende</span> feature/auth against main</pre>
-    <p class="muted">The agent writes <code>review.json</code> and prints a local URL. Needs Node.js 24+ and git. The diff never leaves your machine.</p>
+    <p class="muted">The agent writes <code>review.json</code> and prints a local URL. Needs Node.js 24+ and git, on macOS, Linux, or Windows. The diff never leaves your machine.</p>
   </section>
 
   <section class="slide center">
