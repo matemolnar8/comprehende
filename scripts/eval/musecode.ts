@@ -19,6 +19,7 @@ export type AgentRunResult = {
   cacheReadTokens?: number;
   steps: number;
   toolCalls: ToolCallRecord[];
+  sessionId?: string;
   error?: string;
 };
 
@@ -266,6 +267,7 @@ export async function runMuseCodeAgent(opts: {
       "exec",
       "--json",
       "--trust-workspace",
+      "--no-foreign-personal-context",
       "--prompt-file",
       promptPath,
       "--model",
@@ -329,6 +331,7 @@ export async function runMuseCodeAgent(opts: {
       cacheReadTokens: usage.cachedTokens,
       steps: parsed.steps,
       toolCalls: parsed.toolCalls,
+      sessionId: parsed.sessionId,
     };
   } finally {
     await rm(tmp, { recursive: true, force: true });
