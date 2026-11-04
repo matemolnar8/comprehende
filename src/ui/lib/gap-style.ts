@@ -1,7 +1,7 @@
 /** Lines revealed per click. A shorter gap opens in one click. */
 export const EXPANSION_LINE_COUNT = 10;
 
-/** Compact full-width bar. Unfold from either end. */
+/** A compact gap row. Unfold from either end. */
 export const GAP_SEPARATOR = "line-info-basic" as const;
 
 export const GAP_CSS = `
@@ -10,9 +10,10 @@ export const GAP_CSS = `
   outline-offset: -2px;
 }
 
+/* Like the hidden-lines row: the canvas, muted text, and the actions in primary. */
 [data-separator="line-info-basic"] {
   height: 24px;
-  background: var(--diffs-bg-separator);
+  background: var(--diffs-bg);
   position: relative;
 }
 
@@ -26,12 +27,8 @@ export const GAP_CSS = `
     gap: 0;
     width: max-content;
     background: transparent;
-    color: var(--diffs-fg-number);
+    color: var(--muted-foreground);
     font-size: var(--diff-font-size, 0.75rem);
-    margin-left: calc(-2ch - 2px);
-  }
-
-  [data-separator-wrapper][data-separator-multi-button] {
     margin-left: calc(-3ch - 2px);
   }
 
@@ -51,6 +48,10 @@ export const GAP_CSS = `
     font: inherit;
   }
 
+  [data-expand-button] {
+    color: var(--primary);
+  }
+
   [data-expand-button]:not([data-expand-all-button]) {
     min-width: 1.4rem;
     justify-content: center;
@@ -62,7 +63,7 @@ export const GAP_CSS = `
       content: "↑";
     }
     &[data-expand-both]::before {
-      content: "↕";
+      content: "⇅";
     }
 
     svg {
@@ -70,8 +71,20 @@ export const GAP_CSS = `
     }
   }
 
+  [data-separator-wrapper]:not([data-separator-multi-button]) [data-expand-button]:not([data-expand-all-button]) {
+    box-sizing: border-box;
+    width: 2.8rem;
+    padding-left: 1.4rem;
+  }
+
   [data-separator-content] {
     margin-left: 0.4ch;
+  }
+
+  [data-separator-content],
+  [data-expand-all-button] {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
   }
 
   [data-expand-all-button] {
@@ -81,7 +94,6 @@ export const GAP_CSS = `
     text-transform: lowercase;
 
     &:hover {
-      color: var(--diffs-fg);
       text-decoration: underline;
     }
   }
@@ -96,13 +108,17 @@ export const GAP_CSS = `
     height: 3px;
     margin-top: -1px;
     border-radius: 2px;
-    background-color: var(--diffs-fg-number);
+    background-color: var(--muted-foreground);
     pointer-events: none;
   }
 
-  [data-separator-content]:hover,
-  [data-expand-button]:hover {
-    color: var(--diffs-fg);
+  [data-expand-index] [data-unmodified-lines] {
+    cursor: pointer;
+
+    &:hover {
+      color: var(--diffs-fg);
+      text-decoration: underline;
+    }
   }
 }
 `;

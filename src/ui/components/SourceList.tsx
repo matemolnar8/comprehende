@@ -1,5 +1,4 @@
-import { useId, useState } from "react";
-import { ChevronDownIcon } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 import type { Source } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { partColor, type Part } from "../lib/parts.ts";
@@ -7,11 +6,10 @@ import { SOURCE_KIND_ICON, SOURCE_KIND_LABEL } from "../lib/source-display.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import type { Selection } from "../lib/selection.ts";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
-import { briefRows } from "./Kicker.tsx";
+import { blockGap, briefRows, DisclosureToggle, labelText } from "./Kicker.tsx";
 import styles from "./SourceList.module.css";
 
-const gistText = "block text-pretty leading-[1.45] text-foreground";
-const motion = "duration-[var(--motion)] ease-[var(--motion-ease)]";
+const gistText = "block text-pretty leading-[1.5] text-foreground";
 
 export function SourceList(props: {
   ids: readonly string[];
@@ -19,8 +17,10 @@ export function SourceList(props: {
   mixed?: boolean;
   parts?: Part[];
   className?: string;
+  /** Lines under the Sources row, such as "Needed by". */
+  trailing?: ReactNode;
 }) {
-  const { ids, sources, mixed = false, parts = [], className } = props;
+  const { ids, sources, mixed = false, parts = [], className, trailing } = props;
   const handle = useSources();
   const onOpenSource = handle?.onOpenSource;
   const selectionForSource = handle?.selectionForSource;
@@ -32,39 +32,24 @@ export function SourceList(props: {
   const [open, setOpen] = useState(false);
   const headingId = useId();
   const listId = useId();
-  if (rows.length === 0) {
+  if (rows.length === 0 && trailing === undefined) {
     return null;
   }
 
   return (
-    <section className={cn("mb-4 last:mb-0", className)} aria-labelledby={headingId}>
-      <h2
-        id={headingId}
-        className="font-mono text-[11px] font-normal leading-[1.45] text-muted-foreground"
-      >
-        <button
-          type="button"
-          className={cn(
-            "flex w-full items-center gap-1 rounded-sm border-0 bg-transparent p-0 text-left font-mono text-[11px] font-normal leading-[1.45] text-inherit outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50",
-            motion,
-            open && "mb-1",
-          )}
-          aria-expanded={open}
-          aria-controls={open ? listId : undefined}
-          onClick={() => setOpen((value) => !value)}
-        >
-          <ChevronDownIcon
-            aria-hidden
-            className={cn("size-3 shrink-0 transition-transform", motion, !open && "-rotate-90")}
+    <section className={cn(blockGap, className)} aria-labelledby={headingId}>
+      {rows.length > 0 ? (
+        <h2 id={headingId} className={cn(labelText, open && "mb-1")}>
+          <DisclosureToggle
+            label="Sources"
+            count={rows.length}
+            open={open}
+            controls={listId}
+            onToggle={() => setOpen((value) => !value)}
           />
-          <span>Sources</span>
-          <span aria-hidden className="shrink-0">
-            ·
-          </span>
-          <span className="tabular-nums">{rows.length}</span>
-        </button>
-      </h2>
-      {open ? (
+        </h2>
+      ) : null}
+      {open && rows.length > 0 ? (
         <ul id={listId} className={cn(briefRows, styles.scroll)}>
           {rows.map((source) => (
             <SourceRow
@@ -76,6 +61,9 @@ export function SourceList(props: {
             />
           ))}
         </ul>
+      ) : null}
+      {trailing !== undefined ? (
+        <div className={cn("flex flex-col gap-1", rows.length > 0 && "mt-1.5")}>{trailing}</div>
       ) : null}
     </section>
   );

@@ -1,22 +1,24 @@
-import { hunkRangeLabel } from "../../schema/hunk-meta.ts";
 import { PierreFileDiff } from "../PierreDiff.tsx";
 import { fetchPatch } from "../api.ts";
-import type { FocusRange } from "../../schema/types.ts";
-import { FocusBar, HiddenLines } from "./FocusBar.tsx";
-import { ImageDiff } from "./ImageDiff.tsx";
+import { basename, type FocusRange } from "../../schema/types.ts";
+import { DiffStat } from "./DiffStat.tsx";
+import { FocusBar, HiddenLines, HunkGap } from "./FocusBar.tsx";
+import { ImageDiff, ImageModeControl } from "./ImageDiff.tsx";
 import { InlineMd } from "./InlineMd.tsx";
+import { ViewedToggle } from "./ViewedToggle.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
-import { fileFocus, focusBlocks, onFile, type LetteredNote } from "../lib/focus.ts";
-import type { GroupFile } from "../lib/group-files.ts";
+import { fileFocus, focusBlocks, onFile, toggleHunk, type LetteredNote } from "../lib/focus.ts";
+import { gutterDigits, hunkGaps } from "../lib/hunk-gaps.ts";
+import { IMAGE_STATUS, IMAGE_TONE_CLASS, type GroupFile } from "../lib/group-files.ts";
 import { isPureRelocation, movedMarks, relocationWord } from "../lib/relocation.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
-import { ChevronDownIcon } from "lucide-react";
-import { useEffect, useId, useMemo, useState, type MouseEvent } from "react";
+import { ChevronDownIcon, Maximize2Icon } from "lucide-react";
+import { Fragment, useEffect, useId, useMemo, useState, type MouseEvent } from "react";
 
 const motion = "duration-[var(--motion)] ease-[var(--motion-ease)]";
 
@@ -58,8 +60,10 @@ export function HunkView(props: {
   const [collapsed, setCollapsed] = useState(viewed || deferred);
   const [patch, setPatch] = useState(file.patch);
   const [patchError, setPatchError] = useState<string | null>(null);
-  const first = file.hunks[0];
+  const [imageCardWidth, setImageCardWidth] = useState<number>();
   const label = file.oldPath !== undefined ? `${file.oldPath} → ${file.path}` : file.path;
+  const name = basename(file.path);
+  const labelDir = label.slice(0, label.length - name.length);
   const word = relocationWord(file);
   const pure = isPureRelocation(file);
   const moves = useMemo(() => movedMarks(file.hunks), [file.hunks]);
@@ -89,19 +93,13 @@ export function HunkView(props: {
         : [],
     [file, focus],
   );
-  const [wholeHunks, setWholeHunks] = useState<ReadonlySet<number>>(() => new Set());
+  const [open, setOpen] = useState<ReadonlySet<string>>(() => new Set());
   const blocks = useMemo(
-    () => focusBlocks(patch, file.hunks, hunkFocus, wholeHunks, lineNotes),
-    [file.hunks, hunkFocus, lineNotes, patch, wholeHunks],
+    () => focusBlocks(patch, file.hunks, hunkFocus, open, lineNotes),
+    [file.hunks, hunkFocus, lineNotes, open, patch],
   );
-  const toggleWhole = (hunk: number) =>
-    setWholeHunks((current) => {
-      const next = new Set(current);
-      if (!next.delete(hunk)) {
-        next.add(hunk);
-      }
-      return next;
-    });
+  const gaps = useMemo(() => hunkGaps(blocks ?? [], file.hunks), [blocks, file.hunks]);
+  const digits = useMemo(() => gutterDigits(file.hunks), [file.hunks]);
 
   useEffect(() => {
     setCollapsed(viewed || deferred);
@@ -146,39 +144,59 @@ export function HunkView(props: {
 
   const relocationBadge =
     word !== undefined ? (
-      <Badge variant="outline" className="shrink-0 font-normal">
+      <Badge variant="outline" className="shrink-0 font-medium">
         {word}
         {file.relocation?.similarity !== undefined ? (
-          <span className="font-mono font-normal tabular-nums text-muted-foreground">
+          <span className="font-normal tabular-nums text-muted-foreground">
             {file.relocation.similarity}%
           </span>
         ) : null}
       </Badge>
     ) : null;
 
+  const compare =
+    file.kind === "image" && !collapsed && file.status !== "added" && file.status !== "deleted";
+
+  const imageStatus = file.kind === "image" ? IMAGE_STATUS[file.status] : undefined;
+  const meta =
+    imageStatus !== undefined
+      ? imageStatus.label
+      : file.kind === "lockfile"
+        ? "Lockfile"
+        : pure
+          ? null
+          : file.hunkCount === 1
+            ? "1 hunk"
+            : `${file.hunkCount} hunks`;
+
   return (
     <article
       className={cn(
-        "min-w-0 overflow-hidden rounded-lg border bg-card",
-        active ? "border-2 border-primary" : "border-border",
+        "min-w-0 overflow-hidden rounded-lg border bg-card transition-[border-color]",
+        motion,
+        active ? "border-primary/50" : "border-border",
       )}
       data-hunk={index}
+      style={
+        imageCardWidth !== undefined ? { maxWidth: `max(${imageCardWidth}px, 24rem)` } : undefined
+      }
     >
       <header
         className={cn(
           "sticky top-0 z-10 bg-card px-3 py-2",
+          file.kind === "image" && "@container/card",
           pure ? null : "cursor-pointer",
           collapsed || pure ? null : "border-b border-border",
         )}
         onClick={pure ? undefined : toggleCollapsed}
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-h-7 min-w-0 flex-wrap items-center gap-x-2 gap-y-1 min-[800px]:flex-nowrap @max-[36rem]/card:flex-wrap">
           {pure ? null : (
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="size-6"
+              className="size-6 text-muted-foreground"
               aria-expanded={!collapsed}
               aria-controls={bodyId}
               aria-label={collapsed ? "Expand file" : "Collapse file"}
@@ -195,62 +213,87 @@ export function HunkView(props: {
                 type="button"
                 variant="link"
                 className={cn(
-                  "h-auto min-w-0 max-w-full shrink justify-start truncate p-0 text-left font-mono text-xs transition-colors min-[800px]:text-sm",
+                  "h-auto min-w-0 max-w-full shrink justify-start p-0 text-left font-mono text-xs text-foreground underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary min-[800px]:text-[13px] @max-[36rem]/card:flex-1",
                   motion,
                   viewed && "text-muted-foreground",
                 )}
                 onClick={() => onOpen(file.path)}
               >
-                {label}
+                <span className="flex min-w-0">
+                  {labelDir === "" ? null : (
+                    // Cut from the start: the last folder tells same-named files apart.
+                    <span dir="rtl" className="min-w-[2ch] truncate">
+                      <bdi>{labelDir.replace(/\/$/, "")}</bdi>
+                    </span>
+                  )}
+                  <span className="min-w-0 shrink-0 truncate">
+                    {labelDir.endsWith("/") ? "/" : null}
+                    {name}
+                  </span>
+                </span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Open file</TooltipContent>
+            <TooltipContent>Open the full file</TooltipContent>
           </Tooltip>
-          <div className="ml-auto flex shrink-0 items-center gap-3">
-            {pure ? null : (
-              <code className="font-mono text-xs text-muted-foreground max-[799px]:hidden">
-                {file.kind === "image"
-                  ? "image"
-                  : file.kind === "lockfile"
-                    ? "lockfile"
-                    : file.hunkCount === 1 && first !== undefined
-                      ? hunkRangeLabel(first.header)
-                      : `${file.hunkCount} hunks`}
-              </code>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="-my-1.5 -mr-2 ml-auto h-10 min-w-10 shrink-0 font-normal text-muted-foreground min-[800px]:hidden"
+            aria-label="Open file"
+            onClick={() => onOpen(file.path)}
+          >
+            <Maximize2Icon className="size-4" />
+            Open
+          </Button>
+          <div
+            className={cn(
+              "flex basis-full items-center gap-x-2 min-[800px]:contents @max-[36rem]/card:flex",
+              pure ? null : "pl-8",
             )}
-            {file.kind === "image" && word === undefined ? (
-              <span className="font-mono text-[11px] text-muted-foreground">{file.status}</span>
-            ) : file.kind === "image" || pure ? null : (
-              <span className="font-mono text-[11px] tabular-nums">
-                <span className="text-del">−{file.removed}</span>{" "}
-                <span className="text-add">+{file.added}</span>
+          >
+            {file.kind === "text" && !pure ? (
+              <DiffStat removed={file.removed} added={file.added} />
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="hidden h-6 shrink-0 px-1.5 font-normal text-muted-foreground hover:text-foreground min-[800px]:inline-flex @max-[36rem]/card:-ml-1.5"
+              onClick={() => onOpen(file.path)}
+            >
+              <Maximize2Icon className="size-3.5" />
+              Open file
+            </Button>
+            <div className="contents min-[800px]:ml-auto min-[800px]:flex min-[800px]:shrink-0 min-[800px]:items-center min-[800px]:gap-4">
+              {meta !== null ? (
+                <span
+                  className={cn(
+                    "text-xs tabular-nums",
+                    IMAGE_TONE_CLASS[imageStatus?.tone ?? "muted"],
+                  )}
+                >
+                  {meta}
+                </span>
+              ) : null}
+              <span className="ml-auto flex min-[800px]:ml-0">
+                <ViewedToggle viewed={viewed} onChange={(next) => onViewed(file.path, next)} />
               </span>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-muted-foreground select-none">
-                  <input
-                    type="checkbox"
-                    className="size-3.5 accent-primary"
-                    checked={viewed}
-                    onChange={(event) => onViewed(file.path, event.target.checked)}
-                  />
-                  <span className="max-[799px]:hidden">Viewed</span>
-                </label>
-              </TooltipTrigger>
-              <TooltipContent>
-                {viewed ? "Mark as not viewed" : "Mark as viewed"} (v)
-              </TooltipContent>
-            </Tooltip>
+            </div>
           </div>
         </div>
-        {relocationBadge !== null || fileNote !== undefined ? (
-          <div className={cn("mt-1 flex flex-wrap items-center gap-1.5", pure ? null : "pl-9")}>
+        {relocationBadge !== null || fileNote !== undefined || compare ? (
+          <div className={cn("mt-1 flex flex-wrap items-center gap-2", pure ? null : "pl-8")}>
             {relocationBadge}
             {fileNote !== undefined ? (
-              <p className="min-w-0 text-xs leading-snug text-muted-foreground">
+              <p className="min-w-0 text-[13px] leading-snug text-foreground/85">
                 <InlineMd text={fileNote} />
               </p>
+            ) : null}
+            {compare ? (
+              <div className="ml-auto">
+                <ImageModeControl />
+              </div>
             ) : null}
           </div>
         ) : null}
@@ -258,46 +301,50 @@ export function HunkView(props: {
       {pure ? null : (
         <div id={bodyId} hidden={collapsed}>
           {collapsed ? null : file.kind === "image" ? (
-            <ImageDiff path={file.path} status={file.status} />
+            <ImageDiff path={file.path} status={file.status} onCardWidth={setImageCardWidth} />
           ) : patchError !== null ? (
             <p className="px-3 py-2 text-sm text-warn">{patchError}</p>
           ) : deferred && patch === "" ? (
             <WaitMark label={waitCopy.lockfile} />
           ) : (
-            (blocks ?? [{ kind: "diff", key: "file", patch } as const]).map((block) =>
-              block.kind === "bar" ? (
-                <FocusBar
-                  key={block.key}
-                  focus={block.focus}
-                  whole={block.whole}
-                  onToggle={() => toggleWhole(block.hunk)}
-                />
-              ) : block.kind === "hidden" ? (
-                <HiddenLines
-                  key={block.key}
-                  count={block.count}
-                  where={block.where}
-                  notes={block.notes}
-                  onShow={() => toggleWhole(block.hunk)}
-                />
-              ) : (
-                <PierreFileDiff
-                  key={block.key}
-                  path={file.path}
-                  patch={block.patch}
-                  split={split}
-                  wrap={wrap}
-                  splitRatio={splitRatio}
-                  onSplitRatio={onSplitRatio}
-                  hydrate={blocks === undefined && file.complete}
-                  excerpt={blocks !== undefined}
-                  comments={fileComments}
-                  moves={moves}
-                  notes={lineNotes}
-                  focusCommentId={focusCommentId}
-                />
-              ),
-            )
+            (blocks ?? [{ kind: "diff", key: "file", patch } as const]).map((block) => {
+              const gap = gaps.get(block.key);
+              return (
+                <Fragment key={block.key}>
+                  {gap !== undefined ? <HunkGap lines={gap} /> : null}
+                  {block.kind === "bar" ? (
+                    <FocusBar
+                      focus={block.focus}
+                      whole={block.whole}
+                      onToggle={() => setOpen((current) => toggleHunk(current, block))}
+                    />
+                  ) : block.kind === "hidden" ? (
+                    <HiddenLines
+                      count={block.count}
+                      notes={block.notes}
+                      onShow={() => setOpen((current) => new Set([...current, block.key]))}
+                    />
+                  ) : (
+                    <PierreFileDiff
+                      path={file.path}
+                      patch={block.patch}
+                      added={file.status === "added"}
+                      split={split}
+                      wrap={wrap}
+                      splitRatio={splitRatio}
+                      onSplitRatio={onSplitRatio}
+                      hydrate={blocks === undefined && file.complete}
+                      excerpt={blocks !== undefined}
+                      gutterDigits={blocks === undefined ? undefined : digits}
+                      comments={fileComments}
+                      moves={moves}
+                      notes={lineNotes}
+                      focusCommentId={focusCommentId}
+                    />
+                  )}
+                </Fragment>
+              );
+            })
           )}
         </div>
       )}

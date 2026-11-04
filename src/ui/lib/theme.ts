@@ -5,9 +5,10 @@ export type ResolvedTheme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "comprehende.theme";
 
+/** Registered in `PierreDiff.tsx` from GitHub's themes; see `lib/syntax-theme.ts`. */
 export const DIFF_THEMES = {
-  dark: "github-dark",
-  light: "github-light",
+  dark: "comprehende-dark",
+  light: "comprehende-light",
 } as const;
 
 export function parseThemePreference(raw: string | null): ThemePreference {

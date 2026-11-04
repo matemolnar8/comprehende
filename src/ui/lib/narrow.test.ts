@@ -3,16 +3,12 @@ import { describe, it } from "vite-plus/test";
 import { resolveWrap } from "./narrow.ts";
 
 describe("resolveWrap", () => {
-  it("wraps by default on narrow screens", () => {
-    assert.equal(resolveWrap(null, true), true);
+  it("wraps by default", () => {
+    assert.equal(resolveWrap(null), true);
   });
 
-  it("scrolls by default on wide screens", () => {
-    assert.equal(resolveWrap(null, false), false);
-  });
-
-  it("lets an explicit toggle win on either width", () => {
-    assert.equal(resolveWrap(false, true), false);
-    assert.equal(resolveWrap(true, false), true);
+  it("lets an explicit toggle win", () => {
+    assert.equal(resolveWrap(false), false);
+    assert.equal(resolveWrap(true), true);
   });
 });

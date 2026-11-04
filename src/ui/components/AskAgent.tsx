@@ -19,22 +19,27 @@ const COPIED_MS = 1600;
 
 const COPIED = "Copied";
 
-const ASK_CTA = {
-  overview: { label: "Ask AI about this", about: "This review." },
-  group: { label: "Ask AI about this", about: "This group." },
-  question: { label: "Ask agent", about: "This question." },
+const ASK_LABEL = "Ask agent";
+
+/** A question row already says what the ask is about, so the label stays short. */
+const QUESTION_ASK_LABEL = "Ask";
+
+const ASK_ABOUT = {
+  overview: "about this review",
+  group: "about this group",
+  question: "about this question",
 } as const;
 
-export function AskAgent(props: { prompt: string; scope: keyof typeof ASK_CTA }) {
+export function AskAgent(props: { prompt: string; scope: keyof typeof ASK_ABOUT }) {
   const { target, setTarget, repo } = useAgentTarget();
   const [copied, setCopied] = useState(false);
-  const { label, about } = ASK_CTA[props.scope];
+  const about = ASK_ABOUT[props.scope];
   const question = props.scope === "question";
   const link = agentLink(target, props.prompt, repo);
   const hint =
     link === null
-      ? `Copy a prompt for your coding agent. ${about}`
-      : `Open a draft prompt in ${AGENT_TARGETS[target].label}. ${about}`;
+      ? `Copy a prompt ${about} for your coding agent`
+      : `Open a prompt ${about} in ${AGENT_TARGETS[target].label}`;
 
   useEffect(() => {
     setCopied(false);
@@ -48,19 +53,23 @@ export function AskAgent(props: { prompt: string; scope: keyof typeof ASK_CTA })
     return () => window.clearTimeout(id);
   }, [copied]);
 
-  const variant = question ? "ghost" : "outline";
-  const tone = question && "-my-1 h-7 text-muted-foreground hover:text-foreground";
+  // Outlined so it reads as a button, but not filled, so it does not outweigh the title.
+  const variant = "outline";
+  const tone = cn(
+    "bg-card text-foreground data-[state=open]:bg-accent [&_svg]:text-muted-foreground",
+    question && "-my-1 h-7 px-2 has-[>svg]:px-2",
+  );
   const content = (
     <>
       <SparkleIcon aria-hidden className="size-3.5" />
-      <span className="max-[799px]:hidden">{copied ? COPIED : label}</span>
+      <span>{copied ? COPIED : question ? QUESTION_ASK_LABEL : ASK_LABEL}</span>
     </>
   );
   const main = {
     size: "sm",
     variant,
-    className: cn("rounded-r-none max-[799px]:size-8 max-[799px]:px-0", tone),
-    "aria-label": hint,
+    className: cn(!question && "rounded-r-none", tone),
+    "aria-label": copied ? COPIED : `${ASK_LABEL} ${about}`,
   } as const;
 
   return (
@@ -90,40 +99,40 @@ export function AskAgent(props: { prompt: string; scope: keyof typeof ASK_CTA })
         </TooltipTrigger>
         <TooltipContent>{copied ? COPIED : hint}</TooltipContent>
       </Tooltip>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            size="sm"
-            variant={variant}
-            className={cn(
-              "rounded-l-none border-l-0 px-1.5 has-[>svg]:px-1.5 max-[799px]:px-2.5",
-              tone,
-            )}
-            aria-label="Choose where to ask"
-          >
-            <ChevronDownIcon aria-hidden className="size-3.5" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Ask with</DropdownMenuLabel>
-          <DropdownMenuRadioGroup
-            value={target}
-            onValueChange={(value) => {
-              const next = AGENT_TARGET_IDS.find((id) => id === value);
-              if (next !== undefined) {
-                setTarget(next);
-              }
-            }}
-          >
-            {AGENT_TARGET_IDS.map((id) => (
-              <DropdownMenuRadioItem key={id} value={id}>
-                {AGENT_TARGETS[id].label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* A question ask uses the target chosen on the main Ask agent menu, so it has no menu. */}
+      {question ? null : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              variant={variant}
+              className={cn("-ml-px rounded-l-none px-1.5 has-[>svg]:px-1.5", tone)}
+              aria-label="Choose where to ask"
+            >
+              <ChevronDownIcon aria-hidden className="size-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Where to ask</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={target}
+              onValueChange={(value) => {
+                const next = AGENT_TARGET_IDS.find((id) => id === value);
+                if (next !== undefined) {
+                  setTarget(next);
+                }
+              }}
+            >
+              {AGENT_TARGET_IDS.map((id) => (
+                <DropdownMenuRadioItem key={id} value={id}>
+                  {AGENT_TARGETS[id].label}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

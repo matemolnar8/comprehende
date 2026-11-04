@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
 import {
   colorIndexByGroupId,
-  dependsOnDepth,
   groupOrderIndex,
   groupParts,
   isMixedReview,
@@ -123,18 +122,6 @@ describe("groupParts", () => {
     const colors = colorIndexByGroupId(parts);
     assert.equal(colors.get("a"), 0);
     assert.equal(colors.get("b"), 1);
-  });
-
-  it("counts dependsOn depth inside one part", () => {
-    const groups = [
-      { id: "cookie", part: "Session cookie", suggestedOrder: 0 },
-      { id: "login", part: "Session cookie", suggestedOrder: 1, dependsOn: ["cookie"] },
-      { id: "tests", part: "Session cookie", suggestedOrder: 2, dependsOn: ["login"] },
-    ];
-    const ids = new Set(["cookie", "login", "tests"]);
-    assert.equal(dependsOnDepth(groups, "cookie", ids), 0);
-    assert.equal(dependsOnDepth(groups, "login", ids), 1);
-    assert.equal(dependsOnDepth(groups, "tests", ids), 2);
   });
 });
 

@@ -17,6 +17,19 @@ export type GroupFile = {
   hunks: LiveHunk[];
 };
 
+export const IMAGE_TONE_CLASS = {
+  add: "text-add",
+  del: "text-del",
+  muted: "text-muted-foreground",
+} as const;
+
+export const IMAGE_STATUS = {
+  added: { label: "Added image", tone: "add" },
+  deleted: { label: "Deleted image", tone: "del" },
+  modified: { label: "Changed image", tone: "muted" },
+  renamed: { label: "Renamed image", tone: "muted" },
+} as const satisfies Record<FileStatus, { label: string; tone: keyof typeof IMAGE_TONE_CLASS }>;
+
 export function filesFromPayload(
   files: {
     path: string;

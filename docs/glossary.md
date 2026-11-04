@@ -26,7 +26,7 @@
 
 **File note.** One line on one file of a group: what changed in that file, past what the group summary says. Keyed by the file's head path. A generated or mechanical file gets a short one. `validate` fails a note on a path the group does not cover.
 
-**Look for.** Document-level source verdicts: each source item done differently, not done, or not true at head, each manual step a source says the change needs, and each instruction a source gives a reviewer. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
+**Things to check.** Schema `lookFor`. Document-level source verdicts: each source item done differently, not done, or not true at head, each manual step a source says the change needs, and each instruction a source gives a reviewer. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
 
 **Source.** A ticket, pull request, PR comment, commit, or transcript the skill read to write its prose. Locators plus a gist. PR comments also copy author, body, and an optional line pin. The pin is the line that comment still sits on at head, on an open thread. A resolved thread and an outdated comment keep the source and omit the pin. Transcripts have no URL.
 

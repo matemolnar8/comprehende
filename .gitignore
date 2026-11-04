@@ -8,6 +8,8 @@ dist/
 fixtures/repo/
 fixtures/example/review.json
 fixtures/site/
+fixtures/screenshots/
+fixtures/screenshot-repos/
 eval/.cache/
 eval/runs/
 *.tgz

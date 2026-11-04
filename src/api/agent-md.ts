@@ -144,7 +144,7 @@ function lookForBlock(lookFor: string[]): string | null {
   if (lookFor.length === 0) {
     return null;
   }
-  return ["Look for:", ...lookFor.map((item) => `- ${item}`)].join("\n");
+  return ["Things to check:", ...lookFor.map((item) => `- ${item}`)].join("\n");
 }
 
 function attentionBlock(attention: Attention | undefined): string | null {

@@ -21,7 +21,6 @@ type ThemeContextValue = {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   setPreference: (preference: ThemePreference) => void;
-  toggleTheme: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -36,12 +35,6 @@ export function ThemeProvider(props: { children: ReactNode }) {
     setPreferenceState(next);
   }, []);
 
-  const toggleTheme = useCallback(() => {
-    const next: ThemePreference =
-      preference === "auto" ? "light" : preference === "light" ? "dark" : "auto";
-    setPreference(next);
-  }, [preference, setPreference]);
-
   useEffect(() => {
     applyResolvedTheme(resolved);
   }, [resolved]);
@@ -54,8 +47,8 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ preference, resolved, setPreference, toggleTheme }),
-    [preference, resolved, setPreference, toggleTheme],
+    () => ({ preference, resolved, setPreference }),
+    [preference, resolved, setPreference],
   );
 
   return <ThemeContext.Provider value={value}>{props.children}</ThemeContext.Provider>;

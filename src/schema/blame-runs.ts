@@ -2,18 +2,16 @@ export type BlameRunLine = {
   sha: string;
   author: string;
   timestamp: number;
+  summary: string;
   line: number;
 };
 
-export type BlameRun = {
+export type BlameRun = Omit<BlameRunLine, "line"> & {
   lineNumber: number;
-  sha: string;
-  author: string;
-  timestamp: number;
   lines: number;
 };
 
-export function groupBlameRuns(lines: BlameRunLine[]): BlameRun[] {
+export function groupBlameRuns(lines: readonly BlameRunLine[]): BlameRun[] {
   const runs: BlameRun[] = [];
   for (const line of lines) {
     const last = runs[runs.length - 1];
@@ -26,6 +24,7 @@ export function groupBlameRuns(lines: BlameRunLine[]): BlameRun[] {
       sha: line.sha,
       author: line.author,
       timestamp: line.timestamp,
+      summary: line.summary,
       lines: 1,
     });
   }

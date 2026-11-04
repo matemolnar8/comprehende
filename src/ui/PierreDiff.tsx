@@ -1,6 +1,8 @@
 import {
   hydratePartialDiff,
   parsePatchFiles,
+  registerCustomTheme,
+  resolveTheme,
   type DiffLineAnnotation,
   type FileDiffLoadedFiles,
   type FileDiffMetadata,
@@ -29,16 +31,26 @@ import {
   watchGapPin,
   type GapPin,
 } from "@/lib/pin-gap-expand.ts";
+import { SYNTAX_RECOLORS, recolorTheme } from "@/lib/syntax-theme.ts";
 import { DIFF_THEMES } from "@/lib/theme.ts";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import { CommentPin } from "./components/CommentPin.tsx";
 import { MovedChip } from "./components/MovedChip.tsx";
 import { NotePin } from "./components/NotePin.tsx";
 import type { LetteredNote } from "./lib/focus.ts";
-import { movedMarkLabel, type MovedMark } from "./lib/relocation.ts";
+import { movedMarkLabel, type MovedLabel, type MovedMark } from "./lib/relocation.ts";
 import type { FileComment } from "./lib/source-display.ts";
 import { commentsByLine } from "./lib/source-display.ts";
+
+for (const mode of ["light", "dark"] as const) {
+  const recolor = SYNTAX_RECOLORS[mode];
+  registerCustomTheme(DIFF_THEMES[mode], async () =>
+    recolorTheme(await resolveTheme(recolor.base), DIFF_THEMES[mode], recolor),
+  );
+}
 
 /** GitHub Primer diffblob colors, mapped into Pierre's shadow tree. */
 const PIERRE_UNSAFE_CSS = `
@@ -85,6 +97,19 @@ const PIERRE_UNSAFE_CSS = `
   background-color: var(--diff-del-num) !important;
 }
 
+/* Pins sit on the canvas; the gutter beside them must not read as a grey slab. */
+[data-gutter-buffer="annotation"],
+[data-line-annotation] {
+  background-color: var(--diff-canvas) !important;
+}
+
+[data-overflow="scroll"] [data-code] {
+  mask-image: linear-gradient(to right, black calc(100% - 1.5rem), transparent);
+}
+[data-overflow="scroll"] [data-line] {
+  padding-inline-end: calc(1ch + 1.5rem) !important;
+}
+
 [data-diff-type="split"][data-overflow="scroll"] {
   grid-template-columns: minmax(0, var(--comprehende-split-left, 1fr)) minmax(0, var(--comprehende-split-right, 1fr)) !important;
 }
@@ -113,6 +138,41 @@ const PIERRE_UNSAFE_CSS = `
     minmax(0, var(--comprehende-split-right, 1fr)) !important;
 }
 `;
+
+/**
+ * A blame stamp spans the code column only. Its gutter cell gets the same fill and top line and no
+ * gap seam, so each stamp row is one band from the card edge, like the stamp over the file.
+ */
+const BLAME_CSS = `
+[data-gutter-buffer="annotation"] {
+  background-color: color-mix(in srgb, var(--muted) 50%, var(--diff-canvas)) !important;
+  border-right: 0 !important;
+  box-shadow: inset 0 1px 0 var(--border);
+}
+`;
+
+/**
+ * A line whose commit is in the reviewed range gets a primary gutter bar: "touched in this review", not "added".
+ * The bar starts on the gutter cell of the run's stamp, so it is one line down the card edge.
+ */
+export function blameGutterCss(runs: readonly FileAnnotation["metadata"][]): string {
+  const inRange = runs.filter((run) => run.inRange);
+  const cells = inRange
+    .flatMap((run) => Array.from({ length: run.lines }, (_, i) => run.start + i))
+    .map((line) => `[data-column-number="${line}"]`);
+  if (cells.length === 0) return "";
+  const stamps = inRange
+    .filter((run) => run.start > 1)
+    .map((run) => `[data-column-number="${run.start - 1}"] + [data-gutter-buffer="annotation"]`);
+  const lineRule = `:is(${cells.join(",")}) {
+  box-shadow: inset 2px 0 0 var(--primary);
+}`;
+  if (stamps.length === 0) return lineRule;
+  return `${lineRule}
+:is(${stamps.join(",")}) {
+  box-shadow: inset 2px 0 0 var(--primary), inset 0 1px 0 var(--border);
+}`;
+}
 
 const MIN_SPLIT = 0.2;
 const MAX_SPLIT = 0.8;
@@ -179,6 +239,7 @@ const StableFileDiff = memo(function StableFileDiff(props: {
   themeType: "light" | "dark";
   loadFiles: boolean;
   excerpt: boolean;
+  extraCss: string;
   annotations?: DiffLineAnnotation<RowMeta>[];
   onPostRender?: (node: HTMLElement) => void;
 }) {
@@ -199,13 +260,13 @@ const StableFileDiff = memo(function StableFileDiff(props: {
       // there would include changed lines the cut hides, so a plain bar marks real gaps.
       hunkSeparators: props.excerpt ? ("simple" as const) : GAP_SEPARATOR,
       ...(props.loadFiles ? { loadDiffFiles } : {}),
-      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}`,
+      unsafeCSS: `${PIERRE_UNSAFE_CSS}\n${GAP_CSS}\n${props.extraCss}`,
       onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
         if (phase === "unmount") return;
         onPostRenderRef.current?.(node);
       },
     }),
-    [props.excerpt, props.loadFiles, props.split, props.themeType, props.wrap],
+    [props.excerpt, props.extraCss, props.loadFiles, props.split, props.themeType, props.wrap],
   );
   return (
     <FileDiff
@@ -224,7 +285,11 @@ const StablePierreFile = memo(function StablePierreFile(props: {
   wrap: boolean;
   themeType: "light" | "dark";
   annotations?: FileAnnotation[];
+  extraCss?: string;
+  onGutterWidth?: (width: number) => void;
 }) {
+  const onGutterWidthRef = useRef(props.onGutterWidth);
+  onGutterWidthRef.current = props.onGutterWidth;
   const file = useMemo(
     () => ({
       name: props.path,
@@ -240,9 +305,20 @@ const StablePierreFile = memo(function StablePierreFile(props: {
       overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
       disableFileHeader: true,
       stickyHeader: false,
-      unsafeCSS: PIERRE_UNSAFE_CSS,
+      onPostRender: (node: HTMLElement, _instance: unknown, phase: string) => {
+        if (phase === "unmount") return;
+        const cell = (node.shadowRoot ?? node).querySelector("[data-column-number]");
+        if (cell !== null) {
+          onGutterWidthRef.current?.(cell.getBoundingClientRect().width);
+        }
+      },
+      unsafeCSS: [
+        PIERRE_UNSAFE_CSS,
+        props.annotations === undefined ? "" : BLAME_CSS,
+        props.extraCss ?? "",
+      ].join("\n"),
     }),
-    [props.themeType, props.wrap],
+    [props.annotations === undefined, props.extraCss, props.themeType, props.wrap],
   );
   return (
     <File
@@ -261,14 +337,19 @@ export type FileAnnotation = {
     sha: string;
     author: string;
     timestamp: number;
+    summary: string;
     lines: number;
+    /** First line of the run this stamp heads. */
+    start: number;
+    /** The commit is one of the commits under review. */
+    inRange: boolean;
   };
 };
 
 type RowMeta = {
   comments?: FileComment[];
   focusId?: string;
-  movedLabel?: string;
+  movedLabel?: MovedLabel;
   notes?: LetteredNote[];
 };
 
@@ -315,13 +396,13 @@ function rowAnnotations(
   }
   if (moves !== undefined) {
     for (const mark of moves) {
-      const key = `${mark.side}:${mark.line}`;
+      const key = `${mark.side}:${mark.anchor}`;
       const existing = byKey.get(key);
       const movedLabel = movedMarkLabel(filePath, mark);
       if (existing === undefined) {
         byKey.set(key, {
           side: mark.side === "old" ? "deletions" : "additions",
-          lineNumber: mark.line,
+          lineNumber: mark.anchor,
           metadata: { movedLabel },
         });
       } else {
@@ -335,35 +416,132 @@ function rowAnnotations(
 
 function renderRowAnnotation(annotation: DiffLineAnnotation<RowMeta>): ReactNode {
   const { comments, focusId, movedLabel, notes } = annotation.metadata;
+  // The moved chip comes last: it hangs on the line before its block, so it sits just above it.
   return (
     <>
-      {movedLabel !== undefined ? <MovedChip label={movedLabel} /> : null}
       {notes !== undefined && notes.length > 0 ? <NotePin notes={notes} /> : null}
       {comments !== undefined && comments.length > 0 ? (
         <CommentPin comments={comments} focusId={focusId} />
       ) : null}
+      {movedLabel !== undefined ? <MovedChip label={movedLabel} /> : null}
     </>
   );
 }
 
 function renderBlameAnnotation(annotation: LineAnnotation<FileAnnotation["metadata"]>): ReactNode {
-  const meta = annotation.metadata;
-  const day = new Date(meta.timestamp * 1000).toISOString().slice(0, 10);
+  return <BlameStamp meta={annotation.metadata} />;
+}
+
+// A fixed locale and zone, so a stamp reads the same on every machine.
+const STAMP_DATE = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+export function InReviewBadge() {
   return (
-    <div className="flex min-w-0 items-baseline gap-2 px-2 py-1 font-sans text-[11px] text-muted-foreground">
-      <code className="text-primary">{shortSha(meta.sha)}</code>
-      <span className="min-w-0 truncate">{meta.author}</span>
-      <span className="shrink-0 tabular-nums">{day}</span>
-      {meta.lines > 1 ? <span className="shrink-0 tabular-nums">{meta.lines} lines</span> : null}
-    </div>
+    <Badge variant="ref" size="sm" className="h-4 shrink-0 px-1">
+      In this review
+    </Badge>
   );
 }
+
+/** Heads one blame run: the commit that last changed the lines below it. */
+export function BlameStamp(props: {
+  meta: FileAnnotation["metadata"];
+  /** Set on the stamp over the file, which sits outside Pierre's code column. */
+  indent?: number;
+}) {
+  const { meta } = props;
+  const day = STAMP_DATE.format(new Date(meta.timestamp * 1000));
+  const end = meta.start + meta.lines - 1;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          style={{ paddingLeft: props.indent === undefined ? undefined : props.indent + 12 }}
+          className={cn(
+            "grid h-[var(--diff-line-height)] min-w-0 cursor-default [grid-template-columns:3.75rem_6rem_minmax(0,1fr)_minmax(0,auto)_auto] items-center gap-2 bg-[color-mix(in_srgb,var(--muted)_50%,var(--diff-canvas))] px-3 font-sans text-xs leading-none text-muted-foreground",
+            props.indent === undefined
+              ? "border-t border-border"
+              : meta.inRange && "shadow-[inset_2px_0_0_var(--primary)]",
+          )}
+        >
+          <code className="font-mono text-foreground">{shortSha(meta.sha)}</code>
+          <span className="flex">{meta.inRange ? <InReviewBadge /> : null}</span>
+          <span className="truncate">{meta.inRange ? meta.summary : null}</span>
+          <span className="truncate">
+            {meta.author}
+            <span aria-hidden> · </span>
+            <span className="tabular-nums">{day}</span>
+          </span>
+          <span className="min-w-[6.5rem] pl-2 text-right tabular-nums">
+            {meta.lines === 1 ? `Line ${meta.start}` : `Lines ${meta.start}–${end}`}
+          </span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="max-w-[min(32rem,calc(100vw-2rem))]">
+        {meta.summary !== "" ? <span className="block">{meta.summary}</span> : null}
+        <span className="block text-background/70">
+          {meta.author}
+          <span aria-hidden> · </span>
+          <span className="tabular-nums">{day}</span>
+        </span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * Moved lines are not new code. A slate wash, a slate gutter bar, and plain line numbers keep them
+ * apart from real adds and deletes. The bar and the number colour read Pierre's add/del base, so
+ * the rule points that base at `--moved` for these lines only.
+ */
+function movedLinesCss(moves: readonly MovedMark[] | undefined): string {
+  if (moves === undefined || moves.length === 0) {
+    return "";
+  }
+  const rule = (type: string, side: MovedMark["side"]) => {
+    const numbers = moves
+      .filter((mark) => mark.side === side)
+      .flatMap((mark) => Array.from({ length: mark.end - mark.line + 1 }, (_, i) => mark.line + i));
+    if (numbers.length === 0) {
+      return "";
+    }
+    const match = numbers.map((n) => `[data-line="${n}"],[data-column-number="${n}"]`).join(",");
+    return `[data-line-type="${type}"]:is(${match}) {
+  --diffs-deletion-base: var(--moved) !important;
+  --diffs-addition-base: var(--moved) !important;
+  background-color: color-mix(in srgb, var(--moved) 14%, var(--diff-canvas)) !important;
+}
+[data-line-type="${type}"][data-column-number]:is(${match}) {
+  background-color: color-mix(in srgb, var(--moved) 14%, var(--diff-canvas)) !important;
+  color: color-mix(in srgb, var(--diff-fg) 80%, transparent) !important;
+}`;
+  };
+  return `${rule("change-deletion", "old")}\n${rule("change-addition", "new")}`;
+}
+
+const ADDED_FILE_CSS = `
+[data-line-type="change-addition"] {
+  background-color: var(--diff-canvas) !important;
+}
+[data-line-type="change-addition"][data-column-number] {
+  background-color: var(--diff-canvas) !important;
+  color: var(--add) !important;
+}`;
 
 export function PierreFile(props: {
   path: string;
   contents: string;
   wrap: boolean;
   annotations?: FileAnnotation[];
+  /** Extra CSS for Pierre's shadow tree, such as blame gutter tints. */
+  extraCss?: string;
+  /** Width of the line-number gutter once Pierre has painted it. */
+  onGutterWidth?: (width: number) => void;
 }) {
   const { resolved } = useTheme();
   return (
@@ -374,6 +552,8 @@ export function PierreFile(props: {
         wrap={props.wrap}
         themeType={resolved}
         annotations={props.annotations}
+        extraCss={props.extraCss}
+        onGutterWidth={props.onGutterWidth}
       />
     </div>
   );
@@ -390,10 +570,14 @@ export function PierreFileDiff(props: {
   hydrate?: boolean;
   /** One block of a focused file. Separators show no line counts. */
   excerpt?: boolean;
+  /** Digits of the file's largest line number, so every block of one file has the same gutter. */
+  gutterDigits?: number;
   comments?: FileComment[];
   moves?: readonly MovedMark[];
   notes?: readonly LetteredNote[];
   focusCommentId?: string;
+  /** A new file. Its lines keep the green gutter but drop the green line wash. */
+  added?: boolean;
 }) {
   const {
     path,
@@ -404,12 +588,18 @@ export function PierreFileDiff(props: {
     onSplitRatio,
     hydrate = true,
     excerpt = false,
+    gutterDigits,
     comments,
     moves,
     notes,
     focusCommentId,
+    added = false,
   } = props;
   const { resolved } = useTheme();
+  const extraCss = useMemo(
+    () => `${added ? ADDED_FILE_CSS : ""}\n${movedLinesCss(moves)}`,
+    [added, moves],
+  );
   const parsed = useMemo(() => parseGitPatch(patch, path), [patch, path]);
   const [fileDiff, setFileDiff] = useState(parsed);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -500,6 +690,8 @@ export function PierreFileDiff(props: {
         {
           "--comprehende-split-left": `${splitRatio}fr`,
           "--comprehende-split-right": `${1 - splitRatio}fr`,
+          "--diffs-min-number-column-width":
+            gutterDigits === undefined ? undefined : `${gutterDigits}ch`,
         } as CSSProperties
       }
     >
@@ -510,6 +702,7 @@ export function PierreFileDiff(props: {
         themeType={resolved}
         loadFiles={hydrate}
         excerpt={excerpt}
+        extraCss={extraCss}
         annotations={annotations}
         onPostRender={onPostRender}
       />

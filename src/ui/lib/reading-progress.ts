@@ -5,9 +5,9 @@ export type ReadingCounts = {
 };
 
 export type ReadingStatus = ReadingCounts & {
-  /** Short mark for a row: "3 left" or "Viewed". */
+  /** Short mark for a row: "1/3" or "Viewed". */
   label: string;
-  /** Standalone mark: "3 files left", "1 file left", or "All files viewed". */
+  /** Standalone mark: "1 of 3 files viewed", "0 of 1 file viewed", or "All files viewed". */
   filesLabel: string;
 };
 
@@ -37,12 +37,10 @@ export function readingStatus(
   const done = counts.left === 0;
   return {
     ...counts,
-    label: done ? "Viewed" : `${counts.left} left`,
+    label: done ? "Viewed" : `${counts.viewed}/${counts.total}`,
     filesLabel: done
       ? "All files viewed"
-      : counts.left === 1
-        ? "1 file left"
-        : `${counts.left} files left`,
+      : `${counts.viewed} of ${counts.total} ${counts.total === 1 ? "file" : "files"} viewed`,
   };
 }
 

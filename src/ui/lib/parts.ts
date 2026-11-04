@@ -84,27 +84,6 @@ export function groupOrderIndex(parts: readonly Part[], id: string): number {
   return 0;
 }
 
-export function dependsOnDepth(
-  groups: readonly PartGroup[],
-  id: string,
-  partIds: ReadonlySet<string>,
-): number {
-  const byId = new Map(groups.map((group) => [group.id, group]));
-  const walk = (current: string, path: ReadonlySet<string>): number => {
-    if (path.has(current)) {
-      return 0;
-    }
-    const deps = (byId.get(current)?.dependsOn ?? []).filter((dep) => partIds.has(dep));
-    if (deps.length === 0) {
-      return 0;
-    }
-    const next = new Set(path);
-    next.add(current);
-    return 1 + Math.max(0, ...deps.map((dep) => walk(dep, next)));
-  };
-  return walk(id, new Set());
-}
-
 export function colorIndexByGroupId(parts: readonly Part[]): Map<string, number> {
   const map = new Map<string, number>();
   for (const part of parts) {

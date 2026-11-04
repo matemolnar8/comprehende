@@ -15,7 +15,7 @@ export function SourceCite(props: {
   const Icon = SOURCE_KIND_ICON[source.kind];
   const jump = source.path !== undefined && source.side !== undefined && source.line !== undefined;
   const className = cn(
-    "cursor-pointer font-medium text-primary underline-offset-2 hover:underline",
+    "cursor-pointer font-medium whitespace-nowrap text-primary underline-offset-2 hover:underline",
     stale && "text-warn",
   );
 
@@ -35,12 +35,13 @@ export function SourceCite(props: {
     <Tooltip>
       <TooltipTrigger asChild>
         <span role="link" tabIndex={0} className={className} onClick={onClick}>
-          <Icon aria-hidden className="mr-[0.18em] inline size-[0.8em] align-[-0.12em]" />
+          <Icon aria-hidden className="mr-0.5 inline-block size-3.5 align-[-0.15em]" />
           {children}
         </span>
       </TooltipTrigger>
       <TooltipContent className="max-w-sm space-y-1 border border-border bg-popover px-3 py-2 text-popover-foreground shadow-card">
-        <p className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <Icon aria-hidden className="size-3.5" />
           {SOURCE_KIND_LABEL[source.kind]}
         </p>
         <p className="font-medium text-foreground">{source.label}</p>

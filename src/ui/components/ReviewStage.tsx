@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useMemo, type RefObject } from "react";
 import type { ReviewMeta } from "../api.ts";
 import { REVIEW_BUCKETS } from "../../api/types.ts";
 import type { GroupFile } from "../lib/group-files.ts";
@@ -9,7 +9,12 @@ import { Changes } from "./Changes.tsx";
 import { Overview } from "./Overview.tsx";
 import { Group } from "./Group.tsx";
 import { cn } from "@/lib/utils.ts";
-import type { Selection } from "../lib/selection.ts";
+import {
+  sameSelection,
+  selectionNavLabel,
+  selectionStack,
+  type Selection,
+} from "../lib/selection.ts";
 import type { Part } from "../lib/parts.ts";
 
 export function ReviewStage(props: {
@@ -41,7 +46,12 @@ export function ReviewStage(props: {
   focusCommentId?: string;
   focusClaimKey?: string;
 }) {
-  const pad = props.compact === true ? "px-4 py-4" : "px-10 py-8";
+  const pad = props.compact === true ? "px-4 py-4" : "px-8 py-7";
+  const next = nextSelection(props.meta, props.selection);
+  const rangeShas = useMemo(
+    () => new Set(props.meta.commits.map((commit) => commit.sha)),
+    [props.meta.commits],
+  );
   if (props.inspector !== null) {
     return (
       <Inspector
@@ -49,6 +59,7 @@ export function ReviewStage(props: {
         wrap={props.wrap}
         setInspector={props.setInspector}
         onClose={props.onCloseInspector}
+        rangeShas={rangeShas}
       />
     );
   }
@@ -101,8 +112,18 @@ export function ReviewStage(props: {
           comments={props.comments}
           focusCommentId={props.focusCommentId}
           focusClaimKey={props.focusClaimKey}
+          next={next}
+          nextLabel={selectionNavLabel(props.meta, next)}
+          onSelect={props.onSelect}
         />
       )}
     </main>
   );
+}
+
+/** The page after this one in reading order: groups, then Unassigned and Lockfiles, then back to Overview. */
+function nextSelection(meta: ReviewMeta, selection: Selection | null): Selection {
+  const stack = selectionStack(meta);
+  const current = stack.findIndex((item) => sameSelection(item, selection));
+  return (current >= 0 ? stack[current + 1] : undefined) ?? { kind: "overview" };
 }

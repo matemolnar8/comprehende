@@ -281,7 +281,7 @@ describe("story and part selection", () => {
     assert.deepEqual(ids, ["cookie", "login", "docs"]);
   });
 
-  it("stays inside one part for [ and ]", () => {
+  it("walks every group across parts for [ and ]", () => {
     assert.deepEqual(neighborSelection(story, { kind: "overview" }, 1), {
       kind: "group",
       id: "cookie",
@@ -291,15 +291,15 @@ describe("story and part selection", () => {
       kind: "group",
       id: "login",
     });
-    assert.equal(neighborSelection(story, { kind: "group", id: "login" }, 1), undefined);
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "login" }, -1), {
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "login" }, 1), {
       kind: "group",
-      id: "cookie",
-    });
-    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, -1), {
-      kind: "overview",
+      id: "docs",
     });
     assert.deepEqual(neighborSelection(story, { kind: "group", id: "docs" }, -1), {
+      kind: "group",
+      id: "login",
+    });
+    assert.deepEqual(neighborSelection(story, { kind: "group", id: "cookie" }, -1), {
       kind: "overview",
     });
     assert.equal(neighborSelection(story, { kind: "group", id: "docs" }, 1), undefined);
@@ -341,7 +341,6 @@ describe("story and part selection", () => {
     assert.deepEqual(nextGroup, { kind: "group", id: "cookie" });
     assert.equal(serializeHash(nextGroup!), "#group/cookie");
     assert.equal(hashWriteMode(story, "#overview", nextGroup!, true), "push");
-    assert.equal(neighborSelection(story, { kind: "group", id: "login" }, 1), undefined);
     const nextPart = takePartShift({ kind: "group", id: "login" }, 1);
     assert.deepEqual(nextPart, { kind: "group", id: "docs" });
     assert.equal(serializeHash(nextPart!), "#group/docs");
