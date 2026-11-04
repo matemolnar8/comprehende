@@ -1,0 +1,1 @@
+{"path":"src/ui/lib/inline-md.ts","ref":"587e7aebf3074a2288cf7bee6eacfddba4bb3073","side":"old","content":"export const INLINE_MD_ELEMENTS = [\"code\", \"em\", \"strong\", \"a\"] as const;\n\nexport function flattenInline(source: string): string {\n  return source.replace(/\\s+/g, \" \").trim();\n}\n","language":"typescript"}

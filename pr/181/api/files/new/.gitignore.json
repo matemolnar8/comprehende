@@ -1,0 +1,1 @@
+{"path":".gitignore","ref":"bb865b7baa24a3c16de3c9282e41c4d095c15628","side":"new","content":"node_modules/\ndist/\n*.log\n.DS_Store\n.env\n.env.*\n!.env.example\nfixtures/repo/\nfixtures/example/review.json\nfixtures/site/\nfixtures/screenshots/\nfixtures/screenshot-repos/\neval/.cache/\neval/runs/\n*.tgz\n","language":"plaintext"}
