@@ -62,6 +62,8 @@ export type ApiBlameLine = {
   sha: string;
   author: string;
   timestamp: number;
+  /** First line of the commit message. */
+  summary: string;
   line: number;
   text: string;
 };

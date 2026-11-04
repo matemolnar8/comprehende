@@ -83,25 +83,28 @@ export function rangeLines(lines: readonly DiffLine[], range: FocusRange): numbe
 export type FocusBlock =
   | { kind: "bar"; key: string; hunk: number; focus: HunkFocus; whole: boolean }
   | { kind: "diff"; key: string; patch: string }
-  | {
-      kind: "hidden";
-      key: string;
-      hunk: number;
-      count: number;
-      where: "above" | "between" | "below";
-      notes: LetteredNote[];
-    };
+  | { kind: "hidden"; key: string; hunk: number; count: number; notes: LetteredNote[] };
+
+type BarBlock = Extract<FocusBlock, { kind: "bar" }>;
+
+export type LineSpan = { from: number; to: number };
+
+const barKey = (hunk: number) => `bar-${hunk}`;
+const hiddenPrefix = (hunk: number) => `hidden-${hunk}-`;
+const hiddenKey = (hunk: number, from: number) => `${hiddenPrefix(hunk)}${from}`;
 
 /**
  * One diff per focused hunk, so each focus bar sits on its hunk. A cut hunk shows its ranges, with
- * a hidden-lines row at each cut edge that names the notes it hides. Undefined when no hunk has a
- * range, or when the patch's `@@` lines do not line up with `hunks`: the file then renders whole.
+ * a hidden-lines row at each cut edge that names the notes it hides. `open` holds the keys of the
+ * bars and hidden rows the reader opened: a bar opens its whole hunk, a row opens only its own
+ * lines. Undefined when no hunk has a range, or when the patch's `@@` lines do not line up with
+ * `hunks`: the file then renders whole.
  */
 export function focusBlocks(
   patch: string,
   hunks: readonly LiveHunk[],
   focus: readonly HunkFocus[],
-  whole: ReadonlySet<number>,
+  open: ReadonlySet<string>,
   notes: readonly LetteredNote[],
 ): FocusBlock[] | undefined {
   const lines = patch.replace(/\n$/, "").split("\n");
@@ -132,23 +135,33 @@ export function focusBlocks(
       return;
     }
     flush(i);
-    const isWhole = whole.has(i);
-    blocks.push({ kind: "bar", key: `bar-${i}`, hunk: i, focus: entry, whole: isWhole });
+    const cuts = parts(entry.shown, hunk.lines.length).flatMap((part) =>
+      part.kind === "cut" ? [part.span] : [],
+    );
+    const opened = cuts.filter((cut) => open.has(hiddenKey(i, cut.from)));
+    const shown = [
+      ...entry.shown,
+      ...opened.flatMap(({ from, to }) =>
+        Array.from({ length: to - from + 1 }, (_, k) => from + k),
+      ),
+    ].sort((a, b) => a - b);
+    const isWhole = open.has(barKey(i)) || (opened.length > 0 && opened.length === cuts.length);
+    blocks.push({ kind: "bar", key: barKey(i), hunk: i, focus: entry, whole: isWhole });
     if (isWhole) {
       blocks.push(diff(`hunk-${i}`, chunk));
       return;
     }
-    const hidden = (where: "above" | "between" | "below", from: number, to: number) => {
-      if (to < from) {
-        return;
+    for (const part of parts(shown, hunk.lines.length)) {
+      if (part.kind === "run") {
+        blocks.push(diff(`cut-${i}-${part.run[0] ?? 0}`, subHunk(hunk, part.run)));
+        continue;
       }
-      const cutLines = hunk.lines.slice(from, to + 1);
+      const cutLines = hunk.lines.slice(part.span.from, part.span.to + 1);
       blocks.push({
         kind: "hidden",
-        key: `hidden-${i}-${from}`,
+        key: hiddenKey(i, part.span.from),
         hunk: i,
         count: cutLines.length,
-        where,
         notes: notes.filter(
           (note) =>
             onHunk(note, hunk) &&
@@ -157,18 +170,39 @@ export function focusBlocks(
             ),
         ),
       });
-    };
-    const cut = runs(entry.shown);
-    cut.forEach((run, j) => {
-      const first = run[0] ?? 0;
-      const previous = cut[j - 1]?.at(-1);
-      hidden(j === 0 ? "above" : "between", previous === undefined ? 0 : previous + 1, first - 1);
-      blocks.push(diff(`cut-${i}-${first}`, subHunk(hunk, run)));
-    });
-    hidden("below", (cut.at(-1)?.at(-1) ?? -1) + 1, hunk.lines.length - 1);
+    }
   });
   flush(hunks.length);
   return blocks;
+}
+
+/** The open set after a bar's toggle: it opens the whole hunk, or closes the hunk and its rows. */
+export function toggleHunk(open: ReadonlySet<string>, bar: BarBlock): ReadonlySet<string> {
+  if (!bar.whole) {
+    return new Set([...open, bar.key]);
+  }
+  const rows = hiddenPrefix(bar.hunk);
+  return new Set([...open].filter((key) => key !== bar.key && !key.startsWith(rows)));
+}
+
+type Part = { kind: "run"; run: number[] } | { kind: "cut"; span: LineSpan };
+
+/** A hunk's lines in order: the runs `shown` holds, and the index spans it leaves out. */
+function parts(shown: readonly number[], length: number): Part[] {
+  const out: Part[] = [];
+  let next = 0;
+  for (const run of runs(shown)) {
+    const first = run[0] ?? next;
+    if (first > next) {
+      out.push({ kind: "cut", span: { from: next, to: first - 1 } });
+    }
+    out.push({ kind: "run", run });
+    next = (run.at(-1) ?? first) + 1;
+  }
+  if (next < length) {
+    out.push({ kind: "cut", span: { from: next, to: length - 1 } });
+  }
+  return out;
 }
 
 function onHunk(note: LineNote, hunk: LiveHunk): boolean {

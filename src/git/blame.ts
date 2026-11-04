@@ -5,6 +5,8 @@ export type BlameLine = {
   sha: string;
   author: string;
   timestamp: number;
+  /** First line of the commit message. */
+  summary: string;
   line: number;
   text: string;
 };
@@ -16,15 +18,16 @@ export async function blameFile(cwd: string, ref: string, path: string): Promise
   return parseBlamePorcelain(stdout);
 }
 
-function parseBlamePorcelain(text: string): BlameLine[] {
+export function parseBlamePorcelain(text: string): BlameLine[] {
   const lines: BlameLine[] = [];
   const raw = text.split("\n");
   let sha = "";
   let author = "";
   let timestamp = 0;
+  let summary = "";
   let lineNo = 0;
   for (const line of raw) {
-    const header = /^([0-9a-f]{40}) (\d+) (\d+)(?: (\d+))?$/.exec(line);
+    const header = /^([0-9a-f]{40}(?:[0-9a-f]{24})?) (\d+) (\d+)(?: (\d+))?$/.exec(line);
     if (header && header[1] !== undefined && header[3] !== undefined) {
       sha = header[1];
       lineNo = Number(header[3]);
@@ -38,8 +41,12 @@ function parseBlamePorcelain(text: string): BlameLine[] {
       timestamp = Number(line.slice("author-time ".length));
       continue;
     }
+    if (line.startsWith("summary ")) {
+      summary = line.slice("summary ".length);
+      continue;
+    }
     if (line.startsWith("\t")) {
-      lines.push({ sha, author, timestamp, line: lineNo, text: line.slice(1) });
+      lines.push({ sha, author, timestamp, summary, line: lineNo, text: line.slice(1) });
     }
   }
   return lines;

@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 export const NARROW_QUERY = "(max-width: 799px)";
 
-/** Narrow screens wrap by default so a line fits the card. An explicit toggle wins. */
-export function resolveWrap(override: boolean | null, narrow: boolean): boolean {
-  return override ?? narrow;
+/** Long lines wrap by default. An explicit toggle wins. */
+export function resolveWrap(override: boolean | null): boolean {
+  return override ?? true;
 }
 
 export function useNarrow(): boolean {

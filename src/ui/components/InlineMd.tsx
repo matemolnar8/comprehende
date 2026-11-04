@@ -1,13 +1,33 @@
-import { createElement, type ReactNode } from "react";
+import { createElement, Fragment, type ReactNode } from "react";
 import Markdown, { type Components } from "react-markdown";
 import { defaultUrlTransform } from "react-markdown";
-import { flattenInline, INLINE_MD_ELEMENTS } from "../lib/inline-md.ts";
+import { codeBreakParts, flattenInline, INLINE_MD_ELEMENTS } from "../lib/inline-md.ts";
 import { parseSourceHref, SOURCE_HREF_PREFIX } from "../../schema/source.ts";
 import { useSources } from "../lib/sources-context.tsx";
 import { SourceCite, StaleCite } from "./SourceCite.tsx";
 
-const CODE_CLASS =
-  "mx-[0.08em] box-decoration-clone rounded-[0.22em] bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)] px-[0.32em] py-[0.12em] font-mono text-[0.86em] font-medium not-italic";
+/** Code in prose: mono only, no chip, so a sentence still reads as a sentence. */
+const CODE_CLASS = "font-mono text-[0.92em] not-italic";
+/** Short tokens such as `--ui` never break. Longer ones break only after `/` or `.`, never mid-name. */
+const NOWRAP_MAX = 24;
+
+function InlineCode(props: { children: ReactNode }): ReactNode {
+  const { children } = props;
+  if (typeof children !== "string") {
+    return createElement("code", { className: CODE_CLASS }, children);
+  }
+  const parts = children.length <= NOWRAP_MAX ? [children] : codeBreakParts(children);
+  if (parts.length === 1 && children.length > NOWRAP_MAX) {
+    return createElement("code", { className: `${CODE_CLASS} break-all` }, children);
+  }
+  return createElement(
+    "code",
+    { className: `${CODE_CLASS} whitespace-nowrap` },
+    parts.map((part, i) =>
+      createElement(Fragment, { key: i }, i > 0 ? createElement("wbr") : null, part),
+    ),
+  );
+}
 
 function urlTransform(value: string): string {
   if (value.startsWith(SOURCE_HREF_PREFIX)) {
@@ -23,7 +43,7 @@ export function InlineMd(props: { text: string }): ReactNode {
     return null;
   }
   const components = {
-    code: ({ children }) => createElement("code", { className: CODE_CLASS }, children),
+    code: ({ children }) => createElement(InlineCode, { children }),
     strong: ({ children }) => createElement("strong", { className: "font-semibold" }, children),
     a: ({ href, children }) => {
       const id = parseSourceHref(href);

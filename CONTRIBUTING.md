@@ -78,3 +78,12 @@ The folder holds the UI, frozen `api/*.json` payloads, and image bytes, with no 
 ```sh
 python3 -m http.server --directory ../../fixtures/site 8080
 ```
+
+## UI screenshots
+
+```sh
+pnpm exec playwright install chromium   # once per machine
+pnpm ui:screenshots
+```
+
+It builds the UI, serves the `cigster-99` eval case with the review in `scripts/ui-screenshots.review.json`, and writes 6 desktop and mobile shots to `fixtures/screenshots/` (gitignored). Pass `--out <dir>` to write them somewhere else. Use them for UI PR bodies and to compare a UI change before and after.

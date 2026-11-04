@@ -1,17 +1,25 @@
 import {
   useEffect,
-  useId,
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type Ref,
 } from "react";
 import { resourceHref } from "../api.ts";
 import { diffRgba } from "../../schema/image-diff.ts";
-import { fitImageStage, fitTwoColumnStage, stageCaption } from "../lib/image-stage.ts";
-import { Button } from "@/components/ui/button.tsx";
+import { ChevronsLeftRightIcon } from "lucide-react";
+import {
+  crispScale,
+  fitImageStage,
+  fitTwoColumnStage,
+  stageScaleLabel,
+  type ImageStageSize,
+  type ImageZoom,
+} from "../lib/image-stage.ts";
+import { Segmented, SegmentedItem } from "@/components/ui/segmented.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import type { FileStatus } from "../api.ts";
@@ -19,8 +27,46 @@ import styles from "./ImageDiff.module.css";
 
 export type ImageMode = "side-by-side" | "slider" | "diff";
 
-export function ImageDiff(props: { path: string; status: FileStatus }) {
-  const { path, status } = props;
+const PAD = 12;
+// A small image grows to fill the card, at most to twice its size.
+const MAX_UPSCALE = 2;
+const GAP = 12;
+// The 1px ring room around the stage and the card border, on both sides.
+const CARD_CHROME = 4;
+
+/** One choice for every image card: switching one card switches them all. */
+function sharedChoice<T>(initial: T) {
+  let value = initial;
+  const listeners = new Set<() => void>();
+  const subscribe = (listener: () => void) => {
+    listeners.add(listener);
+    return () => {
+      listeners.delete(listener);
+    };
+  };
+  const set = (next: T) => {
+    value = next;
+    for (const listener of listeners) {
+      listener();
+    }
+  };
+  const use = () => useSyncExternalStore(subscribe, () => value);
+  return [use, set] as const;
+}
+
+const [useSharedMode, setSharedMode] = sharedChoice<ImageMode>("side-by-side");
+const [useSharedZoom, setSharedZoom] = sharedChoice<ImageZoom>("fit");
+
+/**
+ * `onCardWidth` gets the width a one-sided card needs to show its image at the fit height,
+ * so the card does not leave empty space beside a narrow image.
+ */
+export function ImageDiff(props: {
+  path: string;
+  status: FileStatus;
+  onCardWidth: (width: number) => void;
+}) {
+  const { path, status, onCardWidth } = props;
   const hasOld = status !== "added";
   const hasNew = status !== "deleted";
   const oldUrl = hasOld ? resourceHref({ kind: "image", path, side: "old" }) : undefined;
@@ -29,168 +75,168 @@ export function ImageDiff(props: { path: string; status: FileStatus }) {
   const oldImage = useLoadedImage(oldUrl);
   const newImage = useLoadedImage(newUrl);
   const host = useHostBox();
-  const [mode, setMode] = useState<ImageMode>("side-by-side");
+  const mode = useSharedMode();
+  const zoom = useSharedZoom();
   const [wipe, setWipe] = useState(50);
 
   const naturalWidth = Math.max(oldImage.naturalWidth, newImage.naturalWidth);
   const naturalHeight = Math.max(oldImage.naturalHeight, newImage.naturalHeight);
-  const columns = mode === "side-by-side" || !both;
-  const stage = columns
-    ? fitTwoColumnStage(naturalWidth, naturalHeight, host.width, host.maxHeight)
-    : fitImageStage(naturalWidth, naturalHeight, host.width, host.maxHeight);
+  const inner = Math.max(0, host.width - PAD * 2);
+  const stage =
+    zoom === "actual"
+      ? { width: naturalWidth, height: naturalHeight, scale: 1 }
+      : both && mode === "side-by-side"
+        ? fitTwoColumnStage(naturalWidth, naturalHeight, inner, host.maxHeight, GAP, MAX_UPSCALE)
+        : fitImageStage(naturalWidth, naturalHeight, inner, host.maxHeight, MAX_UPSCALE);
   const ready = stage.width > 0 && (oldImage.ok || newImage.ok);
+  const singleWidth = both
+    ? 0
+    : zoom === "actual"
+      ? naturalWidth
+      : fitImageStage(naturalWidth, naturalHeight, Infinity, host.maxHeight, MAX_UPSCALE).width;
+
+  useEffect(() => {
+    if (singleWidth > 0) {
+      onCardWidth(singleWidth + PAD * 2 + CARD_CHROME);
+    }
+  }, [onCardWidth, singleWidth]);
   const missing =
     oldImage.error && newImage.error
       ? "These images are not in this clone. Fetch Git LFS objects, then refresh."
       : oldImage.error
-        ? "The old image is not in this clone. Fetch Git LFS objects, then refresh."
+        ? "The base image is not in this clone. Fetch Git LFS objects, then refresh."
         : newImage.error
-          ? "The new image is not in this clone. Fetch Git LFS objects, then refresh."
+          ? "The head image is not in this clone. Fetch Git LFS objects, then refresh."
           : null;
 
   return (
     <div ref={host.ref} className="min-w-0">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border px-3 py-2">
-        {both ? (
-          <div className="flex overflow-hidden rounded-md border border-input">
-            <ModeButton
-              active={mode === "side-by-side"}
-              onClick={() => setMode("side-by-side")}
-              hint="Old and new at the same size"
-            >
-              Side by side
-            </ModeButton>
-            <ModeButton
-              active={mode === "slider"}
-              onClick={() => setMode("slider")}
-              hint="Drag to reveal new over old"
-            >
-              Slider
-            </ModeButton>
-            <ModeButton
-              active={mode === "diff"}
-              onClick={() => setMode("diff")}
-              hint="Pixels that differ"
-            >
-              Diff
-            </ModeButton>
-          </div>
-        ) : (
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {status === "added" ? "Added" : "Deleted"}
-          </span>
-        )}
-        {ready ? (
-          <span className="ml-auto font-mono text-[11px] tabular-nums text-muted-foreground">
-            {stageCaption(naturalWidth, naturalHeight, stage.scale)}
-          </span>
-        ) : null}
-      </div>
       {missing !== null ? <p className="px-3 py-2 text-sm text-warn">{missing}</p> : null}
       {!ready && missing === null ? (
         <p className="px-3 py-2 text-sm text-muted-foreground">Reading image…</p>
       ) : null}
-      <div className="flex w-full justify-center">
-        {ready && (mode === "side-by-side" || !both) ? (
-          <div className="flex">
-            {hasOld ? (
-              <LabeledStage label="Old" width={stage.width} height={stage.height} rule={hasNew}>
-                {oldUrl !== undefined && !oldImage.error ? (
-                  <StageImage src={oldUrl} alt="Old" width={stage.width} height={stage.height} />
-                ) : (
-                  <Missing />
-                )}
-              </LabeledStage>
-            ) : (
-              <LabeledStage label="Old" width={stage.width} height={stage.height}>
-                <Missing text="Added — no old image" />
-              </LabeledStage>
-            )}
-            {hasNew ? (
-              <LabeledStage label="New" width={stage.width} height={stage.height}>
-                {newUrl !== undefined && !newImage.error ? (
-                  <StageImage src={newUrl} alt="New" width={stage.width} height={stage.height} />
-                ) : (
-                  <Missing />
-                )}
-              </LabeledStage>
-            ) : (
-              <LabeledStage label="New" width={stage.width} height={stage.height}>
-                <Missing text="Deleted — no new image" />
-              </LabeledStage>
-            )}
+      {ready ? (
+        <figure className="flex w-full flex-col items-center gap-2" style={{ padding: PAD }}>
+          <div className={cn("w-full", zoom === "actual" && "max-h-[70vh] overflow-auto")}>
+            <div className="mx-auto w-max p-px">
+              {mode === "side-by-side" || !both ? (
+                <div className="flex" style={{ gap: GAP }}>
+                  {hasOld ? (
+                    <Labeled width={stage.width} left="Base">
+                      <StageFrame width={stage.width} height={stage.height}>
+                        {oldUrl !== undefined && !oldImage.error ? (
+                          <StageImage src={oldUrl} alt="Base" stage={stage} />
+                        ) : (
+                          <Missing />
+                        )}
+                      </StageFrame>
+                    </Labeled>
+                  ) : null}
+                  {hasNew ? (
+                    <Labeled width={stage.width} left="Head">
+                      <StageFrame width={stage.width} height={stage.height}>
+                        {newUrl !== undefined && !newImage.error ? (
+                          <StageImage src={newUrl} alt="Head" stage={stage} />
+                        ) : (
+                          <Missing />
+                        )}
+                      </StageFrame>
+                    </Labeled>
+                  ) : null}
+                </div>
+              ) : null}
+              {mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
+                <WipeStage
+                  oldUrl={oldUrl}
+                  newUrl={newUrl}
+                  stage={stage}
+                  wipe={wipe}
+                  onWipe={setWipe}
+                />
+              ) : null}
+              {mode === "diff" && both && oldImage.element !== null && newImage.element !== null ? (
+                <PixelStage
+                  oldImage={oldImage.element}
+                  newImage={newImage.element}
+                  naturalWidth={naturalWidth}
+                  naturalHeight={naturalHeight}
+                  stage={stage}
+                />
+              ) : null}
+            </div>
           </div>
-        ) : null}
-        {ready && mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
-          <WipeStage
-            oldUrl={oldUrl}
-            newUrl={newUrl}
-            width={stage.width}
-            height={stage.height}
-            wipe={wipe}
-            onWipe={setWipe}
-          />
-        ) : null}
-        {ready &&
-        mode === "diff" &&
-        both &&
-        oldImage.element !== null &&
-        newImage.element !== null ? (
-          <PixelStage
-            oldImage={oldImage.element}
-            newImage={newImage.element}
-            naturalWidth={naturalWidth}
-            naturalHeight={naturalHeight}
-            width={stage.width}
-            height={stage.height}
-          />
-        ) : null}
-      </div>
+          <figcaption className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs tabular-nums text-muted-foreground">
+            <span>
+              {naturalWidth} × {naturalHeight} px · {stageScaleLabel(stage.scale)}
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden className="text-foreground">
+                    Zoom <span className="text-muted-foreground">· all images</span>
+                  </span>
+                  <Segmented label="Zoom" size="sm">
+                    <SegmentedItem active={zoom === "fit"} onClick={() => setSharedZoom("fit")}>
+                      Fit
+                    </SegmentedItem>
+                    <SegmentedItem
+                      active={zoom === "actual"}
+                      onClick={() => setSharedZoom("actual")}
+                    >
+                      100%
+                    </SegmentedItem>
+                  </Segmented>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Applies to every image</TooltipContent>
+            </Tooltip>
+          </figcaption>
+        </figure>
+      ) : null}
     </div>
   );
 }
 
-function ModeButton(props: {
-  active: boolean;
-  onClick: () => void;
-  children: string;
-  hint: string;
-}) {
+/** The compare mode for every image card. Each copy shows and sets the same shared mode. */
+export function ImageModeControl() {
+  const mode = useSharedMode();
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          size="sm"
-          variant={props.active ? "secondary" : "ghost"}
-          className="rounded-none border-0"
-          aria-pressed={props.active}
-          onClick={props.onClick}
-        >
-          {props.children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{props.hint}</TooltipContent>
-    </Tooltip>
+    <Segmented label="Compare" size="sm">
+      <SegmentedItem
+        active={mode === "side-by-side"}
+        onClick={() => setSharedMode("side-by-side")}
+        hint="Base and head next to each other"
+      >
+        Side by side
+      </SegmentedItem>
+      <SegmentedItem
+        active={mode === "slider"}
+        onClick={() => setSharedMode("slider")}
+        hint="Drag across the image to compare"
+      >
+        Slider
+      </SegmentedItem>
+      <SegmentedItem
+        active={mode === "diff"}
+        onClick={() => setSharedMode("diff")}
+        hint="Show only the pixels that differ"
+      >
+        Pixel diff
+      </SegmentedItem>
+    </Segmented>
   );
 }
 
-function LabeledStage(props: {
-  label: string;
-  width: number;
-  height: number;
-  children: ReactNode;
-  rule?: boolean;
-}) {
+/** Labels in a row on the frame edges, so they never cover a pixel. */
+function Labeled(props: { width: number; left: string; right?: string; children: ReactNode }) {
   return (
-    <figure className={cn("w-fit shrink-0", props.rule === true && "border-r border-border")}>
-      <figcaption className="border-b border-border px-3 py-1 font-mono text-[11px] text-muted-foreground">
-        {props.label}
-      </figcaption>
-      <StageFrame width={props.width} height={props.height}>
-        {props.children}
-      </StageFrame>
-    </figure>
+    <div className="flex flex-col gap-1.5" style={{ width: props.width }}>
+      <div className="flex h-4 items-center justify-between gap-2 text-xs leading-none font-medium text-muted-foreground tabular-nums">
+        <span className="truncate">{props.left}</span>
+        {props.right !== undefined ? <span className="shrink-0">{props.right}</span> : null}
+      </div>
+      {props.children}
+    </div>
   );
 }
 
@@ -206,7 +252,11 @@ function StageFrame(props: {
   return (
     <div
       ref={props.ref}
-      className={cn(styles.stage, "relative shrink-0 overflow-hidden", props.className)}
+      className={cn(
+        styles.stage,
+        "relative shrink-0 overflow-hidden rounded-md ring-1 ring-border",
+        props.className,
+      )}
       style={{ width: props.width, height: props.height }}
       onPointerDown={props.onPointerDown}
       onPointerMove={props.onPointerMove}
@@ -216,42 +266,40 @@ function StageFrame(props: {
   );
 }
 
-function StageImage(props: { src: string; alt: string; width: number; height: number }) {
+function StageImage(props: { src: string; alt: string; stage: ImageStageSize }) {
+  const { width, height, scale } = props.stage;
   return (
     <img
       src={props.src}
       alt={props.alt}
-      width={props.width}
-      height={props.height}
+      width={width}
+      height={height}
       className="absolute top-0 left-0 max-w-none"
       style={{
-        width: props.width,
-        height: props.height,
+        width,
+        height,
         objectFit: "contain",
         objectPosition: "left top",
+        imageRendering: crispScale(scale) ? "pixelated" : "auto",
       }}
     />
   );
 }
 
-function Missing(props: { text?: string }) {
+function Missing() {
   return (
-    <p className="flex h-full items-center px-3 text-sm text-muted-foreground">
-      {props.text ?? "Image missing"}
-    </p>
+    <p className="flex h-full items-center px-3 text-sm text-muted-foreground">Image missing</p>
   );
 }
 
 function WipeStage(props: {
   oldUrl: string;
   newUrl: string;
-  width: number;
-  height: number;
+  stage: ImageStageSize;
   wipe: number;
   onWipe: (value: number) => void;
 }) {
-  const { oldUrl, newUrl, width, height, wipe, onWipe } = props;
-  const id = useId();
+  const { oldUrl, newUrl, stage, wipe, onWipe } = props;
   const frameRef = useRef<HTMLDivElement>(null);
 
   const move = (clientX: number) => {
@@ -279,46 +327,48 @@ function WipeStage(props: {
     move(event.clientX);
   };
 
+  // Base sits on the left and head on the right, the same as side by side.
   return (
-    <figure className="mx-auto w-fit shrink-0">
-      <StageFrame
-        ref={frameRef}
-        width={width}
-        height={height}
-        className="cursor-col-resize touch-none"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-      >
-        <StageImage src={oldUrl} alt="Old" width={width} height={height} />
-        <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${wipe}%` }}>
-          <StageImage src={newUrl} alt="New" width={width} height={height} />
-        </div>
-        <div
-          className="pointer-events-none absolute inset-y-0"
-          style={{ left: `${wipe}%` }}
-          aria-hidden
+    <figure className="group relative shrink-0">
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={Math.round(wipe)}
+        aria-label="Drag to compare"
+        className="sr-only"
+        onChange={(event) => onWipe(Number(event.target.value))}
+      />
+      <Labeled width={stage.width} left="Base" right="Head">
+        <StageFrame
+          ref={frameRef}
+          width={stage.width}
+          height={stage.height}
+          className="cursor-col-resize touch-none"
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
         >
-          <span className="absolute inset-y-0 left-0 w-px -translate-x-1/2 bg-primary" />
-          <span className="absolute top-1/2 left-0 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary bg-card" />
-        </div>
-      </StageFrame>
-      <label
-        className="flex w-full items-center gap-3 px-3 py-2 font-mono text-[11px] text-muted-foreground"
-        htmlFor={id}
-      >
-        Old
-        <input
-          id={id}
-          type="range"
-          min={0}
-          max={100}
-          value={wipe}
-          aria-label="Wipe between old and new"
-          className="min-w-0 flex-1 accent-primary"
-          onChange={(event) => onWipe(Number(event.target.value))}
-        />
-        New
-      </label>
+          <StageImage src={newUrl} alt="Head" stage={stage} />
+          <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${wipe}%` }}>
+            <StageImage src={oldUrl} alt="Base" stage={stage} />
+          </div>
+          <div
+            className="pointer-events-none absolute inset-y-0"
+            style={{ left: `${wipe}%` }}
+            aria-hidden
+          >
+            <span className="absolute inset-y-0 left-0 w-0.5 -translate-x-1/2 bg-primary" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="pointer-events-auto absolute top-1/2 left-0 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-card group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-ring/60">
+                  <ChevronsLeftRightIcon className="size-4" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Drag to compare</TooltipContent>
+            </Tooltip>
+          </div>
+        </StageFrame>
+      </Labeled>
     </figure>
   );
 }
@@ -328,8 +378,7 @@ function PixelStage(props: {
   newImage: HTMLImageElement;
   naturalWidth: number;
   naturalHeight: number;
-  width: number;
-  height: number;
+  stage: ImageStageSize;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stats, setStats] = useState<{ changed: number; total: number } | null>(null);
@@ -357,15 +406,23 @@ function PixelStage(props: {
   }, [props.naturalHeight, props.naturalWidth, props.newImage, props.oldImage]);
 
   return (
-    <figure className="mx-auto w-fit shrink-0">
-      <StageFrame width={props.width} height={props.height}>
-        <canvas ref={canvasRef} className="block size-full" />
-      </StageFrame>
-      {stats !== null ? (
-        <figcaption className="px-3 py-2 font-mono text-[11px] tabular-nums text-muted-foreground">
-          {stats.changed.toLocaleString()} of {stats.total.toLocaleString()} pixels differ
-        </figcaption>
-      ) : null}
+    <figure className="shrink-0">
+      <Labeled
+        width={props.stage.width}
+        left={
+          stats === null
+            ? ""
+            : `${stats.changed.toLocaleString()} of ${stats.total.toLocaleString()} pixels differ`
+        }
+      >
+        <StageFrame width={props.stage.width} height={props.stage.height}>
+          <canvas
+            ref={canvasRef}
+            className="block size-full"
+            style={{ imageRendering: crispScale(props.stage.scale) ? "pixelated" : "auto" }}
+          />
+        </StageFrame>
+      </Labeled>
     </figure>
   );
 }

@@ -34,9 +34,11 @@
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --text-title: 2.25rem;
+  --text-title: 1.75rem;
   --text-title--line-height: 1.15;
-  --text-title-sm: 1.5rem;
+  --text-title-md: 1.5rem;
+  --text-title-md--line-height: 1.15;
+  --text-title-sm: 1.375rem;
   --text-title-sm--line-height: 1.15;
 }
 
@@ -58,7 +60,7 @@
   --secondary: #e8ecf1;
   --secondary-foreground: #171b22;
   --muted: #e8ecf1;
-  --muted-foreground: #5c6570;
+  --muted-foreground: #545d68;
   --accent: #e4e8f4;
   --accent-foreground: #171b22;
   --destructive: #cf222e;
@@ -67,26 +69,27 @@
   --ring: #3d4fd8;
   --add: #1a7f37;
   --del: #cf222e;
-  --warn: #9a6700;
+  --warn: #8a5a00;
   --add-bg: color-mix(in srgb, #1a7f37 16%, transparent);
   --del-bg: color-mix(in srgb, #cf222e 16%, transparent);
   --diff-font-size: 13px;
   --diff-line-height: 20px;
   --diff-canvas: #ffffff;
   --diff-fg: #1f2328;
-  --diff-add-line: #e6ffec;
+  --diff-add-line: #f3fdf5;
   --diff-add-num: #ccffd8;
   --diff-add-word: #abf2bc;
-  --diff-del-line: #ffebe9;
+  --diff-del-line: #fff5f4;
   --diff-del-num: #ffd7d5;
   --diff-del-word: #ff818266;
   --diff-hunk: #ddf4ff;
   --diff-hover: #f6f8fa;
-  --strand-0: #2458b5;
-  --strand-1: #9a5b00;
-  --strand-2: #6b3d96;
-  --strand-3: #0b6e78;
-  --strand-4: #9a356e;
+  --moved: #64748b;
+  --strand-0: #0f766e;
+  --strand-1: #6b3d96;
+  --strand-2: #a24a1e;
+  --strand-3: #0369a1;
+  --strand-4: #4d7c0f;
   --strand-5: #3a5366;
 }
 
@@ -103,7 +106,7 @@
   --secondary: #252a33;
   --secondary-foreground: #e6eaf0;
   --muted: #252a33;
-  --muted-foreground: #8b939e;
+  --muted-foreground: #a8b2c1;
   --accent: #2a3148;
   --accent-foreground: #e6eaf0;
   --destructive: #f85149;
@@ -115,28 +118,29 @@
   --warn: #d4a017;
   --add-bg: color-mix(in srgb, #3fb950 16%, transparent);
   --del-bg: color-mix(in srgb, #f85149 16%, transparent);
-  --diff-canvas: #0d1117;
+  --diff-canvas: #1a1e27;
   --diff-fg: #e6edf3;
   --diff-add-line: rgba(46, 160, 67, 0.15);
-  --diff-add-num: rgba(46, 160, 67, 0.4);
+  --diff-add-num: rgba(46, 160, 67, 0.15);
   --diff-add-word: rgba(46, 160, 67, 0.4);
   --diff-del-line: rgba(248, 81, 73, 0.15);
-  --diff-del-num: rgba(248, 81, 73, 0.4);
+  --diff-del-num: rgba(248, 81, 73, 0.15);
   --diff-del-word: rgba(248, 81, 73, 0.4);
   --diff-hunk: rgba(56, 139, 253, 0.1);
-  --diff-hover: #161b22;
-  --strand-0: #8fb4f0;
-  --strand-1: #e0a64a;
-  --strand-2: #c9a3e8;
-  --strand-3: #6ed0d6;
-  --strand-4: #e399c0;
+  --diff-hover: #20252f;
+  --moved: #94a3b8;
+  --strand-0: #5ccfc0;
+  --strand-1: #c9a3e8;
+  --strand-2: #f0a07a;
+  --strand-3: #7cc4f0;
+  --strand-4: #a3d977;
   --strand-5: #9ab0c2;
 }
 
 @media (max-width: 799px) {
   :root {
-    --diff-font-size: 11px;
-    --diff-line-height: 17px;
+    --diff-font-size: 13px;
+    --diff-line-height: 19px;
   }
 }
 
@@ -173,7 +177,7 @@ diffs-container {
 
   @media (max-width: 799px) {
     body {
-      font-size: 13px;
+      font-size: 15px;
       line-height: 1.5;
     }
   }

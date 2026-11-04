@@ -37,50 +37,62 @@ export function isPureRelocation(file: {
 
 export type MovedMark = {
   side: "old" | "new";
+  /** First line of the block. */
   line: number;
+  /** Last line of the block. */
+  end: number;
+  /** The line the chip hangs under: the line before the block, else the block's first line. */
+  anchor: number;
   peerPath: string;
   peerLine: number;
 };
 
-/** First line of each contiguous moved block. */
+/** One mark per contiguous moved block. */
 export function movedMarks(hunks: readonly { lines: readonly DiffLine[] }[]): MovedMark[] {
   const marks: MovedMark[] = [];
-  let prev: MovedMark | undefined;
   for (const hunk of hunks) {
-    for (const line of hunk.lines) {
-      if (line.moved === undefined || (line.kind !== "add" && line.kind !== "del")) {
-        prev = undefined;
-        continue;
+    let open: MovedMark | undefined;
+    hunk.lines.forEach((line, index) => {
+      const side = line.kind === "add" ? "new" : line.kind === "del" ? "old" : undefined;
+      const lineNo = side === "new" ? line.newNumber : side === "old" ? line.oldNumber : null;
+      if (line.moved === undefined || side === undefined || lineNo === null) {
+        open = undefined;
+        return;
       }
-      const side = line.kind === "add" ? "new" : "old";
-      const lineNo = side === "new" ? line.newNumber : line.oldNumber;
-      if (lineNo === null) {
-        prev = undefined;
-        continue;
+      if (
+        open !== undefined &&
+        open.side === side &&
+        open.peerPath === line.moved.path &&
+        lineNo === open.end + 1 &&
+        line.moved.line === open.peerLine + (open.end - open.line) + 1
+      ) {
+        open.end = lineNo;
+        return;
       }
-      const continues =
-        prev !== undefined &&
-        prev.side === side &&
-        prev.peerPath === line.moved.path &&
-        lineNo === prev.line + 1 &&
-        line.moved.line === prev.peerLine + 1;
-      const mark: MovedMark = {
+      const before = hunk.lines[index - 1];
+      const anchor =
+        before === undefined ? null : side === "new" ? before.newNumber : before.oldNumber;
+      open = {
         side,
         line: lineNo,
+        end: lineNo,
+        anchor: anchor ?? lineNo,
         peerPath: line.moved.path,
         peerLine: line.moved.line,
       };
-      if (!continues) {
-        marks.push(mark);
-      }
-      prev = mark;
-    }
+      marks.push(open);
+    });
   }
   return marks;
 }
 
-export function movedMarkLabel(filePath: string, mark: MovedMark): string {
-  const where =
-    mark.peerPath === filePath ? `line ${mark.peerLine}` : `${mark.peerPath}:${mark.peerLine}`;
-  return mark.side === "new" ? `from ${where}` : `to ${where}`;
+/** "Lines 2–6 moved to" and the peer path, which the chip sets in mono. A move inside the file names only the line. */
+export type MovedLabel = { text: string; path?: string };
+
+export function movedMarkLabel(filePath: string, mark: MovedMark): MovedLabel {
+  const lines = mark.line === mark.end ? `Line ${mark.line}` : `Lines ${mark.line}–${mark.end}`;
+  const text = `${lines} moved ${mark.side === "new" ? "from" : "to"}`;
+  return mark.peerPath === filePath
+    ? { text: `${text} line ${mark.peerLine}` }
+    : { text, path: `${mark.peerPath}:${mark.peerLine}` };
 }

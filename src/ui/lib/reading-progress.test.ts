@@ -16,14 +16,18 @@ describe("reading progress", () => {
     });
   });
 
-  it("names files still to read, and a list the reader finished", () => {
+  it("names viewed files out of the total, and a list the reader finished", () => {
     const none = readingStatus(["a.ts", "b.ts"], new Set());
-    assert.equal(none?.label, "2 left");
-    assert.equal(none?.filesLabel, "2 files left");
+    assert.equal(none?.label, "0/2");
+    assert.equal(none?.filesLabel, "0 of 2 files viewed");
+
+    const half = readingStatus(["a.ts", "b.ts"], new Set(["b.ts"]));
+    assert.equal(half?.label, "1/2");
+    assert.equal(half?.filesLabel, "1 of 2 files viewed");
 
     const one = readingStatus(["a.ts"], new Set());
-    assert.equal(one?.label, "1 left");
-    assert.equal(one?.filesLabel, "1 file left");
+    assert.equal(one?.label, "0/1");
+    assert.equal(one?.filesLabel, "0 of 1 file viewed");
 
     const done = readingStatus(["a.ts"], new Set(["a.ts"]));
     assert.equal(done?.left, 0);

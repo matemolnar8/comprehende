@@ -1,16 +1,38 @@
 import { useId } from "react";
+import {
+  FileSignatureIcon,
+  LightbulbIcon,
+  ScaleIcon,
+  TriangleAlertIcon,
+  type LucideIcon,
+} from "lucide-react";
 import type { Attention, AttentionKind } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { attentionKey } from "../lib/claims.ts";
 import { useClaimFocus } from "../lib/use-claim-focus.ts";
 import { InlineMd } from "./InlineMd.tsx";
-import { briefProse } from "./Kicker.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip.tsx";
+import { blockGap, briefProse, labelText } from "./Kicker.tsx";
 
 export const ATTENTION_TITLES: Record<AttentionKind, string> = {
   contract: "A contract to check",
   tradeoff: "A tradeoff to weigh",
   product: "A product call",
   risk: "A risk to judge",
+};
+
+const ATTENTION_SHORT: Record<AttentionKind, string> = {
+  contract: "Contract",
+  tradeoff: "Tradeoff",
+  product: "Product call",
+  risk: "Risk",
+};
+
+const ATTENTION_ICONS: Record<AttentionKind, LucideIcon> = {
+  contract: FileSignatureIcon,
+  tradeoff: ScaleIcon,
+  product: LightbulbIcon,
+  risk: TriangleAlertIcon,
 };
 
 export function AttentionAlert(props: {
@@ -22,6 +44,7 @@ export function AttentionAlert(props: {
   const key = attentionKey(groupId);
   const headingId = useId();
   useClaimFocus(focusKey === key ? key : undefined);
+  const Icon = ATTENTION_ICONS[attention.kind];
   return (
     <section
       role="note"
@@ -29,15 +52,13 @@ export function AttentionAlert(props: {
       data-claim={key}
       aria-current={focusKey === key ? "location" : undefined}
       className={cn(
-        "mb-4 max-w-[calc(68ch+1.5rem)] rounded-md border border-warn/30 bg-warn/[0.06] px-3 py-2.5 last:mb-0",
+        "rounded-md border border-warn/30 bg-warn/[0.06] px-3 py-2.5",
+        blockGap,
         focusKey === key && "ring-2 ring-warn/40",
       )}
     >
-      <h2
-        id={headingId}
-        className="mb-1 flex items-center gap-2 font-mono text-[11px] font-normal leading-[1.45] text-warn"
-      >
-        <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current" />
+      <h2 id={headingId} className={cn("mb-1 flex items-center gap-1.5", labelText, "text-warn")}>
+        <Icon aria-hidden className="size-3.5 shrink-0" />
         {ATTENTION_TITLES[attention.kind]}
       </h2>
       <p className={briefProse}>
@@ -47,16 +68,23 @@ export function AttentionAlert(props: {
   );
 }
 
-export function LookClosely(props: { className?: string }) {
+/** The attention glyph and its kind as a word: on Overview rows and in the sidebar. */
+export function AttentionMark(props: { kind: AttentionKind; side?: "top" | "right" }) {
+  const title = ATTENTION_TITLES[props.kind];
+  const Icon = ATTENTION_ICONS[props.kind];
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 font-mono text-[11px] leading-snug text-warn",
-        props.className,
-      )}
-    >
-      <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-current" />
-      Look closely
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          role="img"
+          aria-label={title}
+          className="flex h-5 shrink-0 items-center gap-1 text-xs font-medium text-warn"
+        >
+          <Icon aria-hidden className="size-3.5" />
+          {ATTENTION_SHORT[props.kind]}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side={props.side}>{title}</TooltipContent>
+    </Tooltip>
   );
 }

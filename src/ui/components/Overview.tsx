@@ -1,30 +1,35 @@
-import type { CSSProperties } from "react";
-import { InfoIcon } from "lucide-react";
+import { useRef } from "react";
+import { ArrowRightIcon, InfoIcon } from "lucide-react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
 import { cn } from "@/lib/utils.ts";
 import { askAgentPrompt } from "../lib/agent-prompt.ts";
-import {
-  dependsOnDepth,
-  groupOrderIndex,
-  isMixedReview,
-  partColor,
-  partSummary,
-  type Part,
-} from "../lib/parts.ts";
+import { groupOrderIndex, isMixedReview, partColor, partSummary, type Part } from "../lib/parts.ts";
 import { readingStatus, reviewReadingPaths, skippedBinaryNote } from "../lib/reading-progress.ts";
+import { useScrollEdges } from "../lib/scroll-edges.ts";
 import type { Selection } from "../lib/selection.ts";
 import { shortSha } from "../api.ts";
-import { LookClosely } from "./Attention.tsx";
-import { Brief } from "./GroupBrief.tsx";
+import { Brief, ProseField } from "./GroupBrief.tsx";
 import { AskAgent } from "./AskAgent.tsx";
+import { AttentionMark } from "./Attention.tsx";
 import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kbd } from "./Kbd.tsx";
-import { BriefField, briefProse } from "./Kicker.tsx";
+import {
+  briefProse,
+  briefRail,
+  contentColumn,
+  labelText,
+  scrollFade,
+  splitAside,
+  splitMain,
+  splitRoot,
+  splitRow,
+  stackedNoFade,
+} from "./Kicker.tsx";
 import { LookForList } from "./LookForList.tsx";
-import { ReadingMark } from "./ReadingMark.tsx";
 import { SourceList } from "./SourceList.tsx";
+import { buttonVariants } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 
 function SkippedFiles(props: { paths: string }) {
@@ -34,13 +39,13 @@ function SkippedFiles(props: { paths: string }) {
         <button
           type="button"
           aria-label="Skipped files"
-          className="ml-1.5 inline-flex size-3.5 translate-y-px items-center justify-center border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
+          className="inline-flex size-3.5 items-center justify-center border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
         >
           <InfoIcon aria-hidden className="size-3.5" />
         </button>
       </TooltipTrigger>
-      <TooltipContent className="max-w-xs border border-border bg-popover px-3 py-2 font-mono text-[11px] leading-[1.45] text-popover-foreground shadow-card">
-        Skipped: {props.paths}
+      <TooltipContent className="max-w-xs border border-border bg-popover px-3 py-2 text-xs leading-[1.45] text-popover-foreground shadow-card">
+        Skipped: <span className="font-mono">{props.paths}</span>
       </TooltipContent>
     </Tooltip>
   );
@@ -58,180 +63,240 @@ export function Overview(props: {
   const since = meta.changes?.since.headSha;
   const mixed = isMixedReview(parts);
   const byId = new Map(meta.groups.map((group) => [group.id, group]));
-  const why = meta.document.why;
   const sources = meta.document.sources ?? [];
+  const groupCount = meta.groups.length;
   const fileCount = reviewReadingPaths(meta).length;
   const skipped = skippedBinaryNote(meta.skipped);
+  const firstId = parts[0]?.groupIds[0];
+  const first = firstId === undefined ? undefined : byId.get(firstId);
+  const asideRef = useRef<HTMLElement>(null);
+  useScrollEdges(asideRef);
 
   return (
-    <div className="mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]">
-      <Brief
-        kicker={
-          <>
-            {sizeLabel(meta.document.size)} · {fileCount} {fileCount === 1 ? "file" : "files"}
-            {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
-            {meta.changes !== undefined ? (
+    <div
+      className={cn(
+        splitRoot,
+        "mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]",
+      )}
+    >
+      <div className={splitRow}>
+        <aside
+          ref={asideRef}
+          className={cn(
+            splitAside("overview"),
+            scrollFade,
+            stackedNoFade,
+            "flex items-stretch gap-3 min-[800px]:gap-4",
+          )}
+        >
+          <span aria-hidden className={cn(briefRail, "bg-border")} />
+          <Brief
+            kicker={
               <>
-                {" · "}
-                <HashLink
-                  selection={{ kind: "changes" }}
-                  onSelect={onSelect}
-                  className={hashLinkText}
-                >
-                  {since === undefined ? "What changed" : `What changed since ${shortSha(since)}`}
-                </HashLink>
-                <Kbd className="ml-1.5 max-sm:hidden">h</Kbd>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-default">
+                      {groupCount} {groupCount === 1 ? "group" : "groups"} · {fileCount}{" "}
+                      {fileCount === 1 ? "file" : "files"}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{reviewSizeLabel(meta.document.size)}</TooltipContent>
+                </Tooltip>
+                {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
+                {meta.changes !== undefined ? (
+                  <>
+                    <span aria-hidden>·</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <HashLink
+                            selection={{ kind: "changes" }}
+                            onSelect={onSelect}
+                            className={cn("text-primary", hashLinkText)}
+                          >
+                            {since === undefined
+                              ? "What changed"
+                              : `What changed since ${shortSha(since)}`}
+                          </HashLink>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="flex items-center gap-2">
+                        Open the changes since the last review <Kbd>h</Kbd>
+                      </TooltipContent>
+                    </Tooltip>
+                  </>
+                ) : null}
               </>
+            }
+            title={meta.document.title}
+            titleSize="overview"
+            className="min-w-0 flex-1"
+            kickerExtra={<AskAgent prompt={askAgentPrompt("overview")} scope="overview" />}
+          >
+            {first !== undefined ? (
+              <p className="mt-1 mb-6 flex min-w-0">
+                <HashLink
+                  selection={{ kind: "group", id: first.id }}
+                  onSelect={() => onOpenGroup(first.id)}
+                  className={cn(buttonVariants({ size: "sm" }), "max-w-full")}
+                >
+                  <span className="min-w-0 truncate">
+                    Start with {padIndex(groupOrderIndex(parts, first.id))} {first.title}
+                  </span>
+                  <ArrowRightIcon aria-hidden />
+                </HashLink>
+              </p>
             ) : null}
-          </>
-        }
-        title={meta.document.title}
-        kickerExtra={<AskAgent prompt={askAgentPrompt("overview")} scope="overview" />}
-      >
-        {why !== undefined ? (
-          <BriefField kicker="Why" kickerId="review-why">
-            <p className={briefProse}>
-              <InlineMd text={why} />
-            </p>
-          </BriefField>
-        ) : null}
-        <BriefField kicker="What" kickerId="review-what">
-          <p className={briefProse}>
-            <InlineMd text={meta.document.summary} />
-          </p>
-        </BriefField>
-        <LookForList items={meta.document.lookFor ?? []} focusKey={focusClaimKey} />
-        <SourceList
-          ids={sources.map((source) => source.id)}
-          sources={sources}
-          mixed={mixed}
-          parts={parts}
-        />
-      </Brief>
-      <div
-        className={
-          mixed
-            ? "mt-8 grid grid-flow-col auto-cols-[minmax(16rem,1fr)] items-start gap-4 overflow-x-auto pb-1"
-            : "mt-8"
-        }
-      >
-        {parts.map((part) => (
-          <PartColumn
-            key={part.groupIds.join("\0")}
-            part={part}
-            parts={parts}
-            mixed={mixed}
-            groups={meta.groups}
-            listedParts={meta.document.parts}
-            byId={byId}
-            viewedPaths={viewedPaths}
-            onOpenGroup={onOpenGroup}
-          />
-        ))}
+            <ProseField kicker="Why" kickerId="review-why" text={meta.document.why} />
+            <ProseField kicker="What" kickerId="review-what" text={meta.document.summary} />
+            <LookForList items={meta.document.lookFor ?? []} focusKey={focusClaimKey} />
+            <SourceList
+              ids={sources.map((source) => source.id)}
+              sources={sources}
+              mixed={mixed}
+              parts={parts}
+            />
+          </Brief>
+        </aside>
+        <div
+          className={cn(
+            splitMain,
+            contentColumn,
+            "mt-8 @min-[60rem]/review:mt-0 @min-[60rem]/review:max-w-none",
+          )}
+        >
+          <h2 className={cn("mb-1.5 flex min-h-8 items-center", labelText)}>Groups</h2>
+          <div className="flex flex-col gap-7">
+            {parts.map((part) => (
+              <PartSection
+                key={part.groupIds.join("\0")}
+                part={part}
+                parts={parts}
+                mixed={mixed}
+                listedParts={meta.document.parts}
+                byId={byId}
+                viewedPaths={viewedPaths}
+                onOpenGroup={onOpenGroup}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function PartColumn(props: {
+function reviewSizeLabel(size: ReviewMeta["document"]["size"]): string {
+  const label = sizeLabel(size);
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)} review`;
+}
+
+function PartSection(props: {
   part: Part;
   parts: Part[];
   mixed: boolean;
-  groups: ReviewMeta["groups"];
   listedParts: ReviewMeta["document"]["parts"];
   byId: Map<string, ReviewMeta["groups"][number]>;
   viewedPaths: ReadonlySet<string>;
   onOpenGroup: (id: string) => void;
 }) {
-  const { part, mixed, groups, listedParts, byId, viewedPaths, onOpenGroup } = props;
-  const color = partColor(part.colorIndex);
+  const { part, parts, mixed, listedParts, byId, viewedPaths, onOpenGroup } = props;
   const firstId = part.groupIds[0];
-  const summary = partSummary(listedParts, part.title);
+  const summary = part.groupIds.length > 1 ? partSummary(listedParts, part.title) : undefined;
   return (
-    <section
-      className={cn("min-w-0", mixed && "rounded-md border border-border py-2")}
-      style={mixed ? partStyle(color) : undefined}
-      aria-label={part.title}
-    >
+    <section className="min-w-0" aria-label={part.title ?? "Groups"}>
       {mixed && part.title !== undefined && firstId !== undefined ? (
-        <header className="mb-1 px-4 pt-2">
+        <header className="mb-2.5">
           <HashLink
             selection={{ kind: "group", id: firstId }}
             onSelect={() => onOpenGroup(firstId)}
-            className="flex w-full items-center gap-2 text-left font-mono text-[11px] tracking-[0.14em] uppercase text-muted-foreground"
+            className="inline-flex min-h-8 items-center gap-2 rounded-sm text-sm leading-[1.45] font-semibold text-foreground underline-offset-2 hover:underline"
             ariaLabel={`Open part ${part.title}`}
           >
             <span
               aria-hidden
               className="size-2 shrink-0 rounded-full"
-              style={{ backgroundColor: color }}
+              style={{ backgroundColor: partColor(part.colorIndex) }}
             />
-            <span>{part.title}</span>
+            {part.title}
           </HashLink>
           {summary !== undefined ? (
-            <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
+            <p className={cn(briefProse, "text-muted-foreground")}>
               <InlineMd text={summary} />
-            </span>
+            </p>
           ) : null}
         </header>
       ) : null}
-      <ol className={cn("m-0 list-none p-0", !mixed && "divide-y divide-border")}>
-        {part.groupIds.map((id) => {
-          const group = byId.get(id);
-          if (group === undefined) {
-            return null;
-          }
-          const index = groupOrderIndex(props.parts, id);
-          const depth = dependsOnDepth(groups, id, new Set(part.groupIds));
-          const reading = readingStatus(group.files, viewedPaths);
-          return (
-            <li key={group.id} className={mixed ? "mb-2 last:mb-0" : undefined}>
-              <HashLink
-                selection={{ kind: "group", id: group.id }}
-                onSelect={() => onOpenGroup(group.id)}
-                className={cn(
-                  "group flex h-auto w-full min-w-0 items-start justify-start rounded-md px-4 text-left font-normal whitespace-normal no-underline",
-                  "gap-3 rounded-none py-2.5 min-[800px]:py-3",
-                  mixed && "rounded-md",
-                )}
-                style={
-                  depth > 0
-                    ? { paddingInlineStart: `${16 + Math.min(depth, 3) * 12}px` }
-                    : undefined
-                }
-              >
-                <span className="mt-px w-5 shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-                  {padIndex(index)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <strong
-                    className={cn(
-                      "block font-medium text-foreground",
-                      reading !== null && reading.left === 0 && "opacity-60",
-                    )}
-                  >
-                    {group.title}
-                  </strong>
-                  <span className="mt-0.5 block leading-[1.45] text-muted-foreground line-clamp-2">
-                    <InlineMd text={group.summary} />
+      <div className="flex items-stretch gap-3">
+        <span
+          aria-hidden
+          className={briefRail}
+          style={{
+            backgroundColor: mixed ? partColor(part.colorIndex) : "var(--muted-foreground)",
+          }}
+        />
+        <ol className="m-0 flex min-w-0 flex-1 list-none flex-col p-0">
+          {part.groupIds.map((id) => {
+            const group = byId.get(id);
+            if (group === undefined) {
+              return null;
+            }
+            const needs = (group.dependsOn ?? []).flatMap((dep) => {
+              const index = groupOrderIndex(parts, dep);
+              const title = byId.get(dep)?.title;
+              return index > 0
+                ? [title === undefined ? padIndex(index) : `${padIndex(index)} ${title}`]
+                : [];
+            });
+            const reading = readingStatus(group.files, viewedPaths);
+            const done = reading !== null && reading.left === 0;
+            const fileCount = group.files.length;
+            return (
+              <li key={group.id}>
+                <HashLink
+                  selection={{ kind: "group", id: group.id }}
+                  onSelect={() => onOpenGroup(group.id)}
+                  className="flex w-full min-w-0 items-start gap-3 rounded-md px-2 py-2 text-left no-underline transition-colors duration-[var(--motion)] ease-[var(--motion-ease)] hover:bg-accent/50"
+                >
+                  <span className="w-5 shrink-0 text-xs leading-5 font-medium tabular-nums text-muted-foreground">
+                    {padIndex(groupOrderIndex(parts, id))}
                   </span>
-                  {group.attention !== undefined ? <LookClosely className="mt-1" /> : null}
-                </span>
-                {reading !== null ? <ReadingMark paths={group.files} viewed={viewedPaths} /> : null}
-              </HashLink>
-            </li>
-          );
-        })}
-      </ol>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex min-w-0 items-start gap-1.5">
+                      <strong
+                        className={cn(
+                          "min-w-0 text-sm leading-5 font-medium text-foreground",
+                          done && "text-muted-foreground",
+                        )}
+                      >
+                        {group.title}
+                      </strong>
+                      {group.attention !== undefined ? (
+                        <AttentionMark kind={group.attention.kind} />
+                      ) : null}
+                      {fileCount > 0 ? (
+                        <span className="shrink-0 text-xs leading-5 text-muted-foreground tabular-nums">
+                          · {fileCount} {fileCount === 1 ? "file" : "files"}
+                        </span>
+                      ) : null}
+                    </span>
+                    {needs.length > 0 ? (
+                      <span className="mt-0.5 block max-w-[72ch] text-[13px] leading-[1.5] text-muted-foreground">
+                        Depends on {needs.join(", ")}
+                      </span>
+                    ) : null}
+                    {group.summary.trim() !== "" ? (
+                      <span className="mt-0.5 line-clamp-2 max-w-[72ch] text-[13px] leading-[1.5] text-muted-foreground">
+                        <InlineMd text={group.summary} />
+                      </span>
+                    ) : null}
+                  </span>
+                </HashLink>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </section>
   );
-}
-
-function partStyle(color: string): CSSProperties {
-  return {
-    "--strand": color,
-    borderLeftWidth: 3,
-    borderLeftColor: color,
-    backgroundColor: `color-mix(in srgb, ${color} 5%, var(--card))`,
-  } as CSSProperties;
 }

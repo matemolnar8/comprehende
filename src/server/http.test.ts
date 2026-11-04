@@ -9,6 +9,7 @@ import { refCoversPath } from "../schema/identity.ts";
 import { reviewFileBody, writeCoveringDocument } from "../test/covering-document.ts";
 import { startServer } from "./http.ts";
 import { apiHref } from "../api/paths.ts";
+import type { ApiBlame } from "../api/types.ts";
 import { createExampleRepo, SECRET_ADD, SECRET_DEL } from "../test/example-repo.ts";
 import { git } from "../git/exec.ts";
 import { showFile } from "../git/show.ts";
@@ -118,8 +119,11 @@ describe("serve API", () => {
       new URL(apiHref({ kind: "blame", path: "src/app.ts", side: "new" }), `${running.url}/`),
     );
     assert.equal(blameRes.status, 200);
-    const blame = (await blameRes.json()) as { lines: unknown[] };
+    const blame = (await blameRes.json()) as ApiBlame;
     assert.ok(blame.lines.length > 0);
+    assert.ok(
+      blame.lines.some((line) => line.summary === "Split app hunks, rename util, widen Id"),
+    );
 
     const overviewMd = await fetch(
       new URL(apiHref({ kind: "agent-md", target: "overview" }), `${running.url}/`),

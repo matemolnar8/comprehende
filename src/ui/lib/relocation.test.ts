@@ -34,39 +34,65 @@ describe("relocationWord", () => {
 });
 
 describe("movedMarks", () => {
-  it("emits one mark per contiguous block", () => {
-    const del = (line: number, text: string, peer: number): DiffLine => ({
-      kind: "del",
-      oldNumber: line,
-      newNumber: null,
-      text,
-      moved: { path: "src/beta.ts", line: peer },
-    });
-    const add = (line: number, text: string, peer: number): DiffLine => ({
-      kind: "add",
-      oldNumber: null,
-      newNumber: line,
-      text,
-      moved: { path: "src/alpha.ts", line: peer },
-    });
+  const ctx = (old: number, now: number): DiffLine => ({
+    kind: "ctx",
+    oldNumber: old,
+    newNumber: now,
+    text: "",
+  });
+  const del = (line: number, peer: number): DiffLine => ({
+    kind: "del",
+    oldNumber: line,
+    newNumber: null,
+    text: "",
+    moved: { path: "src/beta.ts", line: peer },
+  });
+  const add = (line: number, peer: number): DiffLine => ({
+    kind: "add",
+    oldNumber: null,
+    newNumber: line,
+    text: "",
+    moved: { path: "src/alpha.ts", line: peer },
+  });
+
+  it("emits one mark per contiguous block, anchored on the line before it", () => {
     const marks = movedMarks([
-      {
-        lines: [del(2, "export function moved() {", 3), del(3, "  return 1;", 4), del(4, "}", 5)],
-      },
-      {
-        lines: [add(3, "export function moved() {", 2), add(4, "  return 1;", 3), add(5, "}", 4)],
-      },
+      { lines: [ctx(1, 1), del(2, 3), del(3, 4), del(4, 5)] },
+      { lines: [add(3, 2), add(4, 3), add(5, 4)] },
     ]);
     assert.deepEqual(marks, [
-      { side: "old", line: 2, peerPath: "src/beta.ts", peerLine: 3 },
-      { side: "new", line: 3, peerPath: "src/alpha.ts", peerLine: 2 },
+      { side: "old", line: 2, end: 4, anchor: 1, peerPath: "src/beta.ts", peerLine: 3 },
+      { side: "new", line: 3, end: 5, anchor: 3, peerPath: "src/alpha.ts", peerLine: 2 },
     ]);
-    assert.equal(movedMarkLabel("src/alpha.ts", marks[0]!), "to src/beta.ts:3");
-    assert.equal(movedMarkLabel("src/beta.ts", marks[1]!), "from src/alpha.ts:2");
-    assert.equal(
-      movedMarkLabel("src/app.ts", { side: "new", line: 8, peerPath: "src/app.ts", peerLine: 2 }),
-      "from line 2",
+  });
+
+  it("starts a new block where the peer lines stop running on", () => {
+    const marks = movedMarks([{ lines: [del(2, 3), del(3, 9)] }]);
+    assert.deepEqual(
+      marks.map((mark) => [mark.line, mark.end, mark.anchor]),
+      [
+        [2, 2, 2],
+        [3, 3, 2],
+      ],
     );
+  });
+
+  it("names the moved range and its peer", () => {
+    const [toBeta, fromAlpha] = movedMarks([
+      { lines: [ctx(1, 1), del(2, 2), del(3, 3), del(4, 4), del(5, 5), del(6, 6)] },
+      { lines: [add(8, 2)] },
+    ]);
+    assert.deepEqual(movedMarkLabel("src/alpha.ts", toBeta!), {
+      text: "Lines 2–6 moved to",
+      path: "src/beta.ts:2",
+    });
+    assert.deepEqual(movedMarkLabel("src/beta.ts", fromAlpha!), {
+      text: "Line 8 moved from",
+      path: "src/alpha.ts:2",
+    });
+    assert.deepEqual(movedMarkLabel("src/alpha.ts", fromAlpha!), {
+      text: "Line 8 moved from line 2",
+    });
   });
 });
 

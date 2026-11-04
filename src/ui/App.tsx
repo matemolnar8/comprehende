@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useDefaultLayout } from "react-resizable-panels";
+import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
 import { REVIEW_BUCKETS } from "../api/types.ts";
 import { Header } from "./components/Header.tsx";
@@ -59,13 +59,23 @@ export function App() {
   const hashReady = useRef(false);
   const appliedHash = useRef<string | null>(null);
   const narrow = useNarrow();
-  const wrap = resolveWrap(wrapOverride, narrow);
+  const wrap = resolveWrap(wrapOverride);
   const toggleWrap = useCallback(() => setWrapOverride(!wrap), [wrap]);
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
     id: "comprehende-shell-overlay",
     panelIds: ["stack", "main"],
     onlySaveAfterUserInteractions: true,
   });
+  const sidebarRef = usePanelRef();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const toggleSidebar = useCallback(() => {
+    const panel = sidebarRef.current;
+    if (panel?.isCollapsed() === true) {
+      panel.expand();
+    } else {
+      panel?.collapse();
+    }
+  }, [sidebarRef]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -240,18 +250,13 @@ export function App() {
       }
       if (event.key === "w") {
         toggleWrap();
+      } else if (event.key === "b" && !narrow) {
+        toggleSidebar();
       } else if (event.key === "c") {
         const pinned = linePinnedSources(meta?.document.sources);
         if (pinned.length > 0) {
           setShowComments((value) => !value);
         }
-      } else if (event.key === "s") {
-        setSplit((value) => {
-          if (!value) {
-            setSplitRatio(0.5);
-          }
-          return !value;
-        });
       } else if (event.key === "r") {
         void load();
       } else if (event.key === "o") {
@@ -276,6 +281,13 @@ export function App() {
         shiftPartSelection(meta, selection, selectFromNav, 1);
       } else if (inspector !== null) {
         return;
+      } else if (event.key === "s") {
+        setSplit((value) => {
+          if (!value) {
+            setSplitRatio(0.5);
+          }
+          return !value;
+        });
       } else if (event.key === "j") {
         const files = filesFromPayload(payloadFiles);
         const current = fileIndexAtHunk(files, activeHunk);
@@ -307,10 +319,12 @@ export function App() {
     payloadFiles,
     load,
     meta,
+    narrow,
     scrollToHunk,
     selectFromNav,
     selection,
     setFileViewed,
+    toggleSidebar,
     toggleWrap,
     viewedPaths,
   ]);
@@ -460,6 +474,7 @@ export function App() {
                 viewedPaths={viewedPaths}
                 wrap={wrap}
                 onWrap={toggleWrap}
+                onRefresh={() => void load()}
                 comments={showComments}
                 onComments={
                   pinnedComments.length > 0 ? () => setShowComments((value) => !value) : undefined
@@ -475,6 +490,9 @@ export function App() {
                   onSelect={selectFromNav}
                   wrap={wrap}
                   split={split}
+                  inspectorOpen={inspector !== null}
+                  sidebarOpen={sidebarOpen}
+                  onSidebar={toggleSidebar}
                   onWrap={toggleWrap}
                   onUnified={() => setSplit(false)}
                   onSplit={() => {
@@ -501,6 +519,9 @@ export function App() {
                     id="stack"
                     defaultSize="20"
                     minSize="14%"
+                    collapsible
+                    panelRef={sidebarRef}
+                    onResize={(size) => setSidebarOpen(size.asPercentage > 0)}
                     className="min-h-0 min-w-0"
                   >
                     <Sidebar

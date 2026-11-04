@@ -76,7 +76,7 @@ describe("agentMd", () => {
     assert.ok(prompt.indexOf("## Pin") < prompt.indexOf("## Review concerns"));
     assert.ok(prompt.includes("groups/cookie.md"));
     assert.ok(prompt.includes("groups/login.md"));
-    assert.ok(prompt.includes("Look for:"));
+    assert.ok(prompt.includes("Things to check:"));
     assert.ok(prompt.includes("Questions:\n- Why does the helper throw"));
     assert.equal(prompt.match(/Questions:/g)?.length, 1);
     assert.ok(prompt.includes("Overview and group both have CopyPrompt."));
@@ -125,7 +125,7 @@ describe("agentMd", () => {
     assert.doesNotMatch(prompt, /Ticket #24 needs a prompt a coding agent can paste/);
     assert.doesNotMatch(prompt, /Tickets:/);
     assert.doesNotMatch(prompt, /Sources:/);
-    assert.doesNotMatch(prompt, /Look for:/);
+    assert.doesNotMatch(prompt, /Things to check:/);
     assert.doesNotMatch(prompt, /Unassigned live hunks/);
     assert.doesNotMatch(prompt, /^Commits:/m);
     assert.match(prompt, /The what \(medium\):/);

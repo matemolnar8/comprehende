@@ -46,7 +46,41 @@ export function fileBasename(path: string): string {
   return basename(path);
 }
 
-export function fileDirname(path: string): string {
+/** `undefined` for a root-level file. */
+export function fileDirname(path: string): string | undefined {
   const slash = path.lastIndexOf("/");
-  return slash === -1 ? "" : path.slice(0, slash);
+  return slash === -1 ? undefined : path.slice(0, slash);
+}
+
+/** The parent folder to show before a basename, such as `seed/`. Only a basename that two paths share gets one. */
+export function repeatedNameFolders(paths: readonly string[]): (string | undefined)[] {
+  const counts = new Map<string, number>();
+  for (const path of paths) {
+    const name = basename(path);
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
+  return paths.map((path) => {
+    const dir = fileDirname(path);
+    return (counts.get(basename(path)) ?? 0) < 2 || dir === undefined
+      ? undefined
+      : `${basename(dir)}/`;
+  });
+}
+
+type Span = { top: number; bottom: number };
+
+/**
+ * How far to scroll a list so the row is fully in view, with the least movement.
+ * Scrolling down stops on the first of `rowTops` that shows the row, so no row is cut at the top.
+ */
+export function scrollDeltaToShow(view: Span, row: Span, rowTops: readonly number[] = []): number {
+  if (row.top < view.top) {
+    return row.top - view.top;
+  }
+  if (row.bottom > view.bottom) {
+    const least = row.bottom - view.bottom;
+    const stop = rowTops.map((top) => top - view.top).find((delta) => delta >= least) ?? least;
+    return Math.min(stop, row.top - view.top);
+  }
+  return 0;
 }
