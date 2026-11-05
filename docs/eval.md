@@ -47,4 +47,4 @@ The eval workflow uploads `eval/runs` as the artifact `eval-run`. `gh run downlo
 
 ## Muse setup
 
-Runs need `MUSE_CODE_API_KEY`, or pass `--cli-login` to use the `muse` CLI login instead. The `muse` CLI must be on `PATH`. The eval workflow installs it. Locally, install the CLI the way `.github/workflows/eval.yml` does.
+Runs use `MUSE_CODE_API_KEY` when it is set, else the `muse` CLI login (`muse login`), which spends the subscription instead of API credit. `--cli-login` uses the login even when a key is set. CI uses the key. The `muse` CLI must be on `PATH`. The eval workflow installs it. Locally, install the CLI the way `.github/workflows/eval.yml` does.

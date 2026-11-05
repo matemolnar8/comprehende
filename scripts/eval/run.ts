@@ -62,14 +62,9 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   }
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   await loadDotEnv(packageRoot);
-  // --cli-login wins over a key in the environment or .env, so a key with a billing problem cannot shadow the login.
+  // An empty key makes muse use its CLI login, which spends the subscription instead of API credit.
   const apiKey = request.cliLogin ? "" : (process.env.MUSE_CODE_API_KEY ?? "");
   const gradersOn = request.graders;
-  const needsModel = rescoreDir === undefined || gradersOn;
-  if (needsModel && apiKey === "" && !request.cliLogin) {
-    console.error("MUSE_CODE_API_KEY is not set (or pass --cli-login to use the muse CLI login)");
-    return 1;
-  }
   const casesDir = join(packageRoot, "eval/cases");
   const selected = selectEvalCases(await listEvalCases(casesDir), {
     ids: request.ids,
