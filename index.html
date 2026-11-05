@@ -57,7 +57,7 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-size: clamp(16px, 1.6vw, 26px);
+    font-size: clamp(16px, min(2vw, 3.6vh), 96px);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
@@ -68,7 +68,7 @@
   .slide {
     position: absolute; inset: 0;
     display: flex; flex-direction: column; justify-content: center;
-    padding: 6vh 9vw;
+    padding: 6vh 7vw 9vh;
     opacity: 0; visibility: hidden; transform: translateY(8px);
     transition: opacity var(--motion) var(--motion-ease), transform var(--motion) var(--motion-ease), visibility 0s linear var(--motion);
   }
@@ -85,7 +85,8 @@
   .slide > ul { font-size: 1.3em; }
   .slide > ul li { margin-bottom: 0.6em; }
   .cols.big { font-size: 1.3em; align-items: stretch; }
-  .demo { font-size: 4em; margin: 0; }
+  .demo { font-size: 4em; margin: 0 0 0.25em; }
+  .demo-link { color: var(--primary); text-underline-offset: 0.2em; }
   .lead { font-size: 1.15em; max-width: 30em; }
 
   ul, ol { margin: 0; padding: 0; list-style: none; }
@@ -117,7 +118,10 @@
     font-size: 0.7em; font-weight: 500; line-height: 1; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 0.3em; opacity: 0.8; vertical-align: middle;
   }
 
-  .illus { width: 100%; max-height: 52vh; margin-top: 0.6em; overflow: visible; }
+  .illus { flex: 1 1 0; min-height: 0; width: 100%; margin-top: 0.4em; overflow: visible; }
+  .slide:has(.illus) > h2 { margin-bottom: 0.5em; }
+  .slide:has(.illus) > ul { font-size: 1em; }
+  .slide:has(.illus) > ul li { margin-bottom: 0.3em; }
   .illus .link { fill: none; stroke-width: 1.6; opacity: 0.55; stroke-dasharray: 1; stroke-dashoffset: 1; }
   .slide.active .illus .link { animation: draw 900ms var(--motion-ease) forwards; animation-delay: calc(var(--k) * 40ms + 150ms); }
   .illus .dep { fill: none; stroke-width: 2; stroke-dasharray: 4 4; }
@@ -130,7 +134,7 @@
 
   .hud {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
-    padding: 1.2vh 2vw; font-size: 0.6em; color: var(--muted-foreground);
+    padding: 1.2vh 2vw; font-size: 0.45em; color: var(--muted-foreground);
   }
   .hud .logo { font-size: 1.4em; }
   .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--primary); transition: width var(--motion) var(--motion-ease); }
@@ -139,27 +143,27 @@
   .center { text-align: center; align-items: center; }
   .center p, .center h1 { margin-left: auto; margin-right: auto; }
   .title-logo { font-size: 4.4em; margin-bottom: 0.3em; }
-  .hero-mark { width: 5em; height: 5em; margin-bottom: 1em; }
+  .hero-mark { width: 3.4em; height: 3.4em; margin-bottom: 0.7em; }
 
   .slide:has(.shot-layout) { padding: 4vh 4vw 7vh; }
   .shot-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2.5vw; align-items: center; }
-  .shot-layout h2 { font-size: 1.55em; margin-bottom: 0.8em; }
-  .shot { position: relative; margin: 0; width: min(69vw, 128vh); line-height: 0; }
+  .shot-layout h2 { font-size: 1.5em; margin-bottom: 0.7em; }
+  .shot { position: relative; margin: 0; width: min(64vw, 124vh); line-height: 0; }
   .shot img { width: 100%; border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.3); box-shadow: 0 2px 4px color-mix(in srgb, var(--foreground) 7%, transparent), 0 8px 32px color-mix(in srgb, var(--foreground) 8%, transparent); }
   .shot img.light, html.light .shot img.dark { display: none; }
   html.light .shot img.light { display: block; }
   .phone { width: min(38vh, 34vw); }
   .phone img { border-radius: 1.2em; }
   .pin {
-    display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; line-height: 1;
+    display: inline-grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 999px; font-size: 0.75em; font-weight: 700; line-height: 1;
     background: var(--primary); color: var(--primary-foreground);
   }
   .shot .pin { position: absolute; translate: -50% -50%; box-shadow: 0 0 0 2px var(--background); }
-  .notes { font-size: 0.95em; line-height: 1.35; }
+  .notes { font-size: 0.85em; line-height: 1.3; }
   .notes li { padding-left: 2.1em; margin-bottom: 0.9em; }
   .notes li::before { content: none; }
   .notes .pin { position: absolute; left: 0; top: 0.05em; }
-  .more { font-size: 1em; line-height: 1.35; }
+  .more { font-size: 0.9em; line-height: 1.3; }
   .more li { margin-bottom: 0.55em; max-width: none; }
   @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .shot .pin { width: 1.1rem; height: 1.1rem; font-size: 0.62rem; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
@@ -275,9 +279,9 @@
       <figure class="shot">
         <img class="dark" src="shots/overview.dark.png" alt="The Comprehende overview page: why and what for the whole change, things to check, and the groups in reading order." />
         <img class="light" src="shots/overview.light.png" alt="" />
-        <span class="pin" style="left:28.4%;top:28.4%">A</span>
-        <span class="pin" style="left:32.8%;top:55.4%">B</span>
-        <span class="pin" style="left:60.4%;top:11.1%">C</span>
+        <span class="pin" style="left:21.2%;top:28.4%">A</span>
+        <span class="pin" style="left:21.2%;top:56.3%">B</span>
+        <span class="pin" style="left:59.6%;top:11.1%">C</span>
       </figure>
     </div>
   </section>
@@ -295,9 +299,9 @@
       <figure class="shot">
         <img class="dark" src="shots/group.dark.png" alt="A group page: the brief with why, what, and an attention on the left, and the live diff on the right." />
         <img class="light" src="shots/group.light.png" alt="" />
-        <span class="pin" style="left:28.4%;top:19.7%">A</span>
+        <span class="pin" style="left:21.2%;top:19.7%">A</span>
         <span class="pin" style="left:44.4%;top:44.2%">B</span>
-        <span class="pin" style="left:74.2%;top:14.8%">C</span>
+        <span class="pin" style="left:74.2%;top:15.3%">C</span>
       </figure>
     </div>
   </section>
@@ -316,8 +320,8 @@
         <img class="dark" src="shots/blame.dark.png" alt="The file inspector in Blame mode, with stamps that name each run of lines and mark the commits in this review." />
         <img class="light" src="shots/blame.light.png" alt="" />
         <span class="pin" style="left:73.4%;top:10.7%">A</span>
-        <span class="pin" style="left:77.4%;top:18.1%">B</span>
-        <span class="pin" style="left:64.6%;top:36.9%">C</span>
+        <span class="pin" style="left:76.8%;top:18.1%">B</span>
+        <span class="pin" style="left:70.8%;top:36.9%">C</span>
       </figure>
     </div>
   </section>
@@ -347,6 +351,7 @@
 
   <section class="slide center">
     <h1 class="demo">Live demo</h1>
+    <a class="demo-link" href="https://matemolnar8.github.io/comprehende/site/vitadeck-144/" target="_blank" rel="noopener">VitaDeck PR #144, 14 groups</a>
   </section>
 
   <section class="slide">
