@@ -127,11 +127,6 @@
   .illus .dep { fill: none; stroke-width: 2; stroke-dasharray: 4 4; }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 
-  .arrow { display: flex; align-items: center; gap: 1.2em; font-family: var(--font-display); font-size: 1.6em; font-weight: 600; margin: 0.6em 0 1.2em; }
-  .arrow .from { color: var(--del); text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--del) 60%, transparent); }
-  .arrow .to { color: var(--add); }
-  .arrow .sep { color: var(--muted-foreground); font-weight: 400; }
-
   .hud {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
     padding: 1.2vh 2vw; font-size: 0.45em; color: var(--muted-foreground);
@@ -190,9 +185,8 @@
   </section>
 
   <section class="slide">
-    <h2>From surrender back to offloading</h2>
-    <div class="arrow"><span class="from">surrender</span><span class="sep">→</span><span class="to">offloading</span></div>
-    <div class="cols">
+    <h2>Hand off the code, keep the understanding</h2>
+    <div class="cols big">
       <div class="card bad">
         <h3>Surrender</h3>
         <ul>
