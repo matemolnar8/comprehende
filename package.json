@@ -36,6 +36,7 @@
     "prepack": "pnpm run build",
     "dev": "tsx src/cli/main.ts",
     "typecheck": "vp check --no-fmt --no-lint",
+    "check:changed": "tsx scripts/check-changed.ts",
     "test": "vp test run",
     "eval": "pnpm build && tsx scripts/eval/run.ts",
     "eval:add": "tsx scripts/eval/add-case.ts",
