@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Comprehende — offload, don't surrender</title>
+<title>Comprehende</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -82,6 +82,10 @@
   h2 { font-family: var(--font-display); font-weight: 400; font-size: 2em; line-height: 1.1; letter-spacing: -0.015em; margin: 0 0 0.9em; }
   p { margin: 0 0 0.6em; max-width: 36em; }
   .muted { color: var(--muted-foreground); }
+  .slide > ul { font-size: 1.3em; }
+  .slide > ul li { margin-bottom: 0.6em; }
+  .cols.big { font-size: 1.3em; align-items: stretch; }
+  .demo { font-size: 4em; margin: 0; }
   .lead { font-size: 1.15em; max-width: 30em; }
 
   ul, ol { margin: 0; padding: 0; list-style: none; }
@@ -124,14 +128,6 @@
   .arrow .to { color: var(--add); }
   .arrow .sep { color: var(--muted-foreground); font-weight: 400; }
 
-  .steps { counter-reset: step; }
-  .steps li { padding-left: 2.2em; margin-bottom: 0.9em; max-width: 38em; }
-  .steps li::before {
-    counter-increment: step; content: counter(step);
-    top: 0.1em; width: 1.5em; height: 1.5em; border-radius: 999px; background: var(--primary); color: var(--primary-foreground);
-    font-family: var(--font-mono); font-size: 0.75em; font-weight: 500; display: grid; place-items: center;
-  }
-
   .hud {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
     padding: 1.2vh 2vw; font-size: 0.6em; color: var(--muted-foreground);
@@ -159,11 +155,11 @@
     background: var(--primary); color: var(--primary-foreground);
   }
   .shot .pin { position: absolute; translate: -50% -50%; box-shadow: 0 0 0 2px var(--background); }
-  .notes { font-size: 0.8em; line-height: 1.4; }
+  .notes { font-size: 0.95em; line-height: 1.35; }
   .notes li { padding-left: 2.1em; margin-bottom: 0.9em; }
   .notes li::before { content: none; }
   .notes .pin { position: absolute; left: 0; top: 0.05em; }
-  .more { font-size: 0.82em; line-height: 1.4; }
+  .more { font-size: 1em; line-height: 1.35; }
   .more li { margin-bottom: 0.55em; max-width: none; }
   @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .shot .pin { width: 1.1rem; height: 1.1rem; font-size: 0.62rem; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
@@ -181,10 +177,10 @@
   <section class="slide">
     <h2>Agents write faster than we can understand</h2>
     <ul>
-      <li>A pull request lists files in alphabetical order. That is how git stores them, not the order in which a change makes sense.</li>
-      <li>The tests pass and the code looks clean, so we approve it without understanding it. That is <strong>cognitive surrender</strong>.</li>
-      <li>Each change we do not understand adds <strong>comprehension debt</strong>. Nobody chose it and nobody can see it.</li>
-      <li>The debt comes due in an incident or a long debug session.</li>
+      <li>Pull requests list files alphabetically</li>
+      <li>Tests pass, so we approve</li>
+      <li><strong>Cognitive surrender.</strong> No view of our own</li>
+      <li><strong>Comprehension debt.</strong> Invisible until something breaks</li>
     </ul>
   </section>
 
@@ -195,17 +191,17 @@
       <div class="card bad">
         <h3>Surrender</h3>
         <ul>
-          <li>The agent decides what the change is and you take its word.</li>
-          <li>You have no view of your own to compare with the code.</li>
-          <li>The pull request is approved and the understanding is gone.</li>
+          <li>Agent decides what the change is</li>
+          <li>No view of your own</li>
+          <li>Approved, not understood</li>
         </ul>
       </div>
       <div class="card good">
         <h3>Offloading</h3>
         <ul>
-          <li>The agent still writes the <em>how</em>. That part stays offloaded.</li>
-          <li>Comprehende gives you the <em>why</em> and the <em>what</em> for each group of hunks.</li>
-          <li>You check that view against the live diff. The understanding stays with you.</li>
+          <li>Agent writes the <em>how</em></li>
+          <li>You get the <em>why</em> and the <em>what</em></li>
+          <li>You check them against the diff</li>
         </ul>
       </div>
     </div>
@@ -213,17 +209,57 @@
 
   <section class="slide">
     <h2>A review assistant for any git diff</h2>
-    <p class="lead">Your coding agent reads the diff and groups the hunks by review concern. Groups that belong to one story sit together. A fixed local web UI shows them next to the real diff from git.</p>
-    <svg class="illus" id="illus" viewBox="0 0 960 450" aria-label="Hunks from a diff, grouped into review concerns and stories"></svg>
+    <ul>
+      <li>Your agent groups the changes by review concern</li>
+      <li>Related groups stay together</li>
+      <li>The UI shows each group next to the real diff</li>
+    </ul>
+    <svg class="illus" id="illus" viewBox="0 0 960 450" aria-label="Changes from a diff, sorted into review concerns and stories"></svg>
   </section>
 
   <section class="slide">
-    <h2>How it works</h2>
-    <ol class="steps">
-      <li><strong>The CLI indexes <code>base...head</code></strong> and writes a skeleton. One entry per changed file, hunk refs, stub prose.</li>
-      <li><strong>The agent fills the interpretation.</strong> Title, groups, why, what, things to check, sources. It never invents a hunk ref.</li>
-      <li><strong>Validate, then serve or export.</strong> Every ref must resolve in live git. The UI reads the diff from git when you open it.</li>
-    </ol>
+    <h2>Who writes what</h2>
+    <div class="cols big">
+      <div class="card">
+        <h3>Git</h3>
+        <ul>
+          <li>The diff</li>
+          <li>Full files</li>
+          <li>Blame</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Your agent</h3>
+        <ul>
+          <li>Groups</li>
+          <li>Why and what</li>
+          <li>Things to check</li>
+          <li>Sources</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <h2>Goals</h2>
+    <ul>
+      <li><strong>Accuracy.</strong> The diff comes from git</li>
+      <li><strong>Coverage.</strong> Every change is in a group</li>
+      <li><strong>Fixed UI.</strong> Only the data changes</li>
+      <li><strong>Local.</strong> No hosted service, no account</li>
+      <li><strong>Plain words.</strong> Simplified Technical English</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <h2>Non-goals</h2>
+    <ul>
+      <li><strong>Review for you.</strong> Understanding stays your job</li>
+      <li><strong>Judge.</strong> No approve, reject, or score</li>
+      <li><strong>Replace git.</strong> No stored patches</li>
+      <li><strong>Know your forge.</strong> GitHub and Jira stay in the skill</li>
+      <li><strong>Generate UI.</strong> The model never draws a screen</li>
+    </ul>
   </section>
 
   <section class="slide">
@@ -231,10 +267,10 @@
       <div>
         <h2>Start with the whole change</h2>
         <ul class="notes">
-        <li><span class="pin">A</span><strong>Why and what.</strong> Your view of the change, before any diff.</li>
-        <li><span class="pin">B</span><strong>Things to check.</strong> Where the code and a source do not agree, with a citation.</li>
-        <li><span class="pin">C</span><strong>Groups in reading order.</strong> Work that could have been its own pull request gets its own part.</li>
-      </ul>
+          <li><span class="pin">A</span><strong>Why and what.</strong> Before any diff</li>
+          <li><span class="pin">B</span><strong>Things to check.</strong> Where code and sources disagree</li>
+          <li><span class="pin">C</span><strong>Reading order.</strong> Groups, split into parts</li>
+        </ul>
       </div>
       <figure class="shot">
         <img class="dark" src="shots/overview.dark.png" alt="The Comprehende overview page: why and what for the whole change, things to check, and the groups in reading order." />
@@ -251,10 +287,10 @@
       <div>
         <h2>Then one group at a time</h2>
         <ul class="notes">
-        <li><span class="pin">A</span><strong>One review concern.</strong> Each group says why it exists and what it does.</li>
-        <li><span class="pin">B</span><strong>Attention.</strong> The one call only you can make: a contract, a tradeoff, a product call, or a risk. Most groups have none.</li>
-        <li><span class="pin">C</span><strong>The real diff.</strong> From live git, with one line on what changed in each file.</li>
-      </ul>
+          <li><span class="pin">A</span><strong>One concern.</strong> Why it exists, what it does</li>
+          <li><span class="pin">B</span><strong>Attention.</strong> The one call only you can make</li>
+          <li><span class="pin">C</span><strong>The real diff.</strong> With a note on each file</li>
+        </ul>
       </div>
       <figure class="shot">
         <img class="dark" src="shots/group.dark.png" alt="A group page: the brief with why, what, and an attention on the left, and the live diff on the right." />
@@ -271,10 +307,10 @@
       <div>
         <h2>Go past the diff</h2>
         <ul class="notes">
-        <li><span class="pin">A</span><strong>Open file.</strong> The full file at base or head, one click from any hunk.</li>
-        <li><span class="pin">B</span><strong>Blame.</strong> Each run of lines names its commit, author, and date.</li>
-        <li><span class="pin">C</span><strong>In this review.</strong> Lines from commits in this change show the commit summary.</li>
-      </ul>
+          <li><span class="pin">A</span><strong>Full file.</strong> At base or head</li>
+          <li><span class="pin">B</span><strong>Blame.</strong> Commit, author, date</li>
+          <li><span class="pin">C</span><strong>In this review.</strong> Commits from this change</li>
+        </ul>
       </div>
       <figure class="shot">
         <img class="dark" src="shots/blame.dark.png" alt="The file inspector in Blame mode, with stamps that name each run of lines and mark the commits in this review." />
@@ -291,14 +327,15 @@
       <div>
         <h2>Also in the UI</h2>
         <ul class="more">
-          <li><strong>Focus and notes.</strong> In a long hunk, the lines that matter open first, with lettered notes on single lines.</li>
-          <li><strong>Ask agent.</strong> Up to two questions per group about why the code is this way. One click opens one in Claude Code, Codex, Cursor, or T3 Code.</li>
-          <li><strong>Sources.</strong> The tickets, pull request comments, commits, and agent transcripts the agent read, each with a gist. Citations in the text link to them.</li>
-          <li><strong>Refresh.</strong> New commits keep the old groups. The What changed page shows the delta.</li>
-          <li><strong>Mechanical groups.</strong> Renames and generated output sit apart, so you know what to skip.</li>
-          <li><strong>Images.</strong> Side by side, slider, or pixel diff.</li>
-          <li><strong>Keyboard.</strong> <kbd>[</kbd> <kbd>]</kbd> move between groups, <kbd>j</kbd> <kbd>k</kbd> between files, <kbd>v</kbd> marks viewed, <kbd>o</kbd> opens the overview. Every view has a URL you can share.</li>
-          <li><strong>Any screen.</strong> The same review on a phone, in light or dark.</li>
+          <li><strong>Focus and notes.</strong> Key lines open first</li>
+          <li><strong>Ask agent.</strong> Send a question to your coding agent</li>
+          <li><strong>Sources.</strong> Tickets, comments, commits, transcripts</li>
+          <li><strong>Refresh.</strong> Keeps groups, shows what changed</li>
+          <li><strong>Mechanical groups.</strong> Renames and generated files to skip</li>
+          <li><strong>Images.</strong> Side by side, slider, pixel diff</li>
+          <li><strong>Keyboard.</strong> <kbd>[</kbd> <kbd>]</kbd> groups, <kbd>j</kbd> <kbd>k</kbd> files, <kbd>v</kbd> viewed</li>
+          <li><strong>Links.</strong> Every view has a URL</li>
+          <li><strong>Any screen.</strong> Phone, light, dark</li>
         </ul>
       </div>
       <figure class="shot phone">
@@ -308,26 +345,8 @@
     </div>
   </section>
 
-  <section class="slide">
-    <h2>Goals</h2>
-    <ul>
-      <li><strong>Accuracy.</strong> Live git wins. The review file holds interpretation only and never stores diff text.</li>
-      <li><strong>Coverage.</strong> Every hunk is in a group, or <code>validate</code> fails.</li>
-      <li><strong>Fixed UI.</strong> The same UI every time. Only the data changes.</li>
-      <li><strong>Local.</strong> No hosted service and no account.</li>
-      <li><strong>Plain words.</strong> Simplified Technical English in the UI and in the generated text.</li>
-    </ul>
-  </section>
-
-  <section class="slide">
-    <h2>Non-goals</h2>
-    <ul>
-      <li><strong>Review for you.</strong> It gives you a view to hold against the diff. Understanding the change is still your job.</li>
-      <li><strong>Judge.</strong> No approve or reject and no score. Things to check are claims, and an attention names a call for you. Neither is a verdict.</li>
-      <li><strong>Replace git.</strong> No stored patches and no second source of truth.</li>
-      <li><strong>Know your forge.</strong> GitHub, GitLab, Bitbucket, and Jira live in the skill, not in the tool. The core is plain git.</li>
-      <li><strong>Generate UI.</strong> The model never draws a screen.</li>
-    </ul>
+  <section class="slide center">
+    <h1 class="demo">Live demo</h1>
   </section>
 
   <section class="slide">
@@ -336,15 +355,15 @@
 npx skills add matemolnar8/comprehende
 
 <span class="c"># in your coding agent, name what to review</span>
-<span class="p">/comprehende</span> PR 154 <span class="c"># in a stack, only its own layer</span>
+<span class="p">/comprehende</span> PR 154
 <span class="p">/comprehende</span> the changes from the last turn
 <span class="p">/comprehende</span> feature/auth against main</pre>
-    <p class="muted">The agent writes <code>review.json</code> and prints a local URL. Needs Node.js 24+ and git, on macOS, Linux, or Windows. The diff never leaves your machine.</p>
+    <p class="muted">Needs Node.js 24+ and git, on macOS, Linux, or Windows.</p>
   </section>
 
   <section class="slide center">
     <img class="hero-mark" src="favicon.svg" alt="" />
-    <h1 style="font-size:2.2em">Understanding is the part you cannot delegate.<small>The agent writes the how. Comprehende shows you what changed and why, so the understanding stays yours.</small></h1>
+    <h1 style="font-size:2.2em">Understanding is the part you cannot delegate.<small>The agent writes the how. You keep the why and the what.</small></h1>
     <pre style="text-align:left;display:inline-block">npx skills add matemolnar8/comprehende</pre>
     <p class="muted" style="font-size:0.8em">github.com/matemolnar8/comprehende</p>
   </section>
