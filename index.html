@@ -150,22 +150,23 @@
   .shot-layout h2 { font-size: 1.5em; margin-bottom: 0.7em; }
   .shot { position: relative; margin: 0; width: min(64vw, 124vh); line-height: 0; }
   .shot img { width: 100%; border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.3); box-shadow: 0 2px 4px color-mix(in srgb, var(--foreground) 7%, transparent), 0 8px 32px color-mix(in srgb, var(--foreground) 8%, transparent); }
-  .shot img.light, html.light .shot img.dark { display: none; }
-  html.light .shot img.light { display: block; }
+  img.light, html.light img.dark { display: none; }
+  html.light img.light { display: block; }
   .phone { width: min(38vh, 34vw); }
   .phone img { border-radius: 1.2em; }
-  .pin {
-    display: inline-grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 999px; font-size: 0.75em; font-weight: 700; line-height: 1;
-    background: var(--primary); color: var(--primary-foreground);
-  }
-  .shot .pin { position: absolute; translate: -50% -50%; box-shadow: 0 0 0 2px var(--background); }
-  .notes { font-size: 0.85em; line-height: 1.3; }
-  .notes li { padding-left: 2.1em; margin-bottom: 0.9em; }
-  .notes li::before { content: none; }
-  .notes .pin { position: absolute; left: 0; top: 0.05em; }
+  .slide.zoom { padding: 3vh 3vw 8vh; justify-content: flex-start; }
+  .zoom h2 { font-size: 1.5em; margin: 0 0 0.1em; }
+  .captions { display: grid; font-size: 1.15em; min-height: 1.5em; }
+  .captions li { grid-area: 1 / 1; margin: 0; padding: 0; max-width: none; opacity: 0; transition: opacity var(--motion) var(--motion-ease); }
+  .captions li::before { content: none; }
+  .captions li.on { opacity: 1; }
+  .stage { position: relative; flex: 1; min-height: 0; margin-top: 1.5vh; overflow: hidden; }
+  .frame { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; transition: transform 600ms var(--motion-ease), clip-path 600ms var(--motion-ease); }
+  .frame img { width: 100%; height: 100%; }
+  @media (prefers-reduced-motion: reduce) { .frame { transition: none; } }
   .more { font-size: 0.9em; line-height: 1.3; }
   .more li { margin-bottom: 0.55em; max-width: none; }
-  @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .shot .pin { width: 1.1rem; height: 1.1rem; font-size: 0.62rem; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
+  @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
 </head>
 <body>
@@ -175,7 +176,7 @@
   <section class="slide center">
     <div class="logo title-logo"><img src="favicon.svg" alt="" />Comprehende</div>
     <p class="lead">Pay attention where it counts.</p>
-    <p class="muted" style="font-size:0.8em;margin-top:1.5em">The agent writes the <em>how</em>. Comprehende gives you the <em>why</em> and the <em>what</em>.</p>
+    <p class="muted" style="font-size:0.8em;margin-top:1.5em">The agent writes the code. Comprehende gives you the <em>why</em> and the <em>what</em>.</p>
   </section>
 
   <section class="slide">
@@ -203,7 +204,7 @@
       <div class="card good">
         <h3>Offloading</h3>
         <ul>
-          <li>Agent writes the <em>how</em></li>
+          <li>Agent writes the code</li>
           <li>You get the <em>why</em> and the <em>what</em></li>
           <li>You check them against the diff</li>
         </ul>
@@ -266,63 +267,51 @@
     </ul>
   </section>
 
-  <section class="slide">
-    <div class="shot-layout">
-      <div>
-        <h2>Start with the whole change</h2>
-        <ul class="notes">
-          <li><span class="pin">A</span><strong>Why and what.</strong> Before any diff</li>
-          <li><span class="pin">B</span><strong>Things to check.</strong> Where code and sources disagree</li>
-          <li><span class="pin">C</span><strong>Reading order.</strong> Groups, split into parts</li>
-        </ul>
-      </div>
-      <figure class="shot">
+  <section class="slide zoom" data-stops='[[0,0,1440,900],[327,240,438,250],[327,495,438,355],[780,85,620,395]]'>
+    <h2>Start with the whole change</h2>
+    <ul class="captions">
+      <li></li>
+      <li><strong>Why and what.</strong> Before any diff</li>
+      <li><strong>Things to check.</strong> Where code and sources disagree</li>
+      <li><strong>Reading order.</strong> Groups, split into parts</li>
+    </ul>
+    <div class="stage">
+      <div class="frame">
         <img class="dark" src="shots/overview.dark.png" alt="The Comprehende overview page: why and what for the whole change, things to check, and the groups in reading order." />
         <img class="light" src="shots/overview.light.png" alt="" />
-        <span class="pin" style="left:21.2%;top:28.4%">A</span>
-        <span class="pin" style="left:21.2%;top:56.3%">B</span>
-        <span class="pin" style="left:59.6%;top:11.1%">C</span>
-      </figure>
+      </div>
     </div>
   </section>
 
-  <section class="slide">
-    <div class="shot-layout">
-      <div>
-        <h2>Then one group at a time</h2>
-        <ul class="notes">
-          <li><span class="pin">A</span><strong>One concern.</strong> Why it exists, what it does</li>
-          <li><span class="pin">B</span><strong>Attention.</strong> The one call only you can make</li>
-          <li><span class="pin">C</span><strong>The real diff.</strong> With a note on each file</li>
-        </ul>
-      </div>
-      <figure class="shot">
+  <section class="slide zoom" data-stops='[[0,0,1440,900],[327,85,338,305],[340,395,325,220],[690,85,720,335]]'>
+    <h2>Then one group at a time</h2>
+    <ul class="captions">
+      <li></li>
+      <li><strong>One concern.</strong> Why it exists, what it does</li>
+      <li><strong>Attention.</strong> The one call only you can make</li>
+      <li><strong>The real diff.</strong> With a note on each file</li>
+    </ul>
+    <div class="stage">
+      <div class="frame">
         <img class="dark" src="shots/group.dark.png" alt="A group page: the brief with why, what, and an attention on the left, and the live diff on the right." />
         <img class="light" src="shots/group.light.png" alt="" />
-        <span class="pin" style="left:21.2%;top:19.7%">A</span>
-        <span class="pin" style="left:44.4%;top:44.2%">B</span>
-        <span class="pin" style="left:74.2%;top:15.3%">C</span>
-      </figure>
+      </div>
     </div>
   </section>
 
-  <section class="slide">
-    <div class="shot-layout">
-      <div>
-        <h2>Go past the diff</h2>
-        <ul class="notes">
-          <li><span class="pin">A</span><strong>Full file.</strong> At base or head</li>
-          <li><span class="pin">B</span><strong>Blame.</strong> Commit, author, date</li>
-          <li><span class="pin">C</span><strong>In this review.</strong> Commits from this change</li>
-        </ul>
-      </div>
-      <figure class="shot">
+  <section class="slide zoom" data-stops='[[0,0,1440,900],[1075,70,335,52],[327,150,1083,290],[327,320,683,120]]'>
+    <h2>Go past the diff</h2>
+    <ul class="captions">
+      <li></li>
+      <li><strong>Full file or blame.</strong> At base or head</li>
+      <li><strong>Blame.</strong> Commit, author, date</li>
+      <li><strong>In this review.</strong> Commits from this change</li>
+    </ul>
+    <div class="stage">
+      <div class="frame">
         <img class="dark" src="shots/blame.dark.png" alt="The file inspector in Blame mode, with stamps that name each run of lines and mark the commits in this review." />
         <img class="light" src="shots/blame.light.png" alt="" />
-        <span class="pin" style="left:73.4%;top:10.7%">A</span>
-        <span class="pin" style="left:76.8%;top:18.1%">B</span>
-        <span class="pin" style="left:70.8%;top:36.9%">C</span>
-      </figure>
+      </div>
     </div>
   </section>
 
@@ -368,7 +357,7 @@ npx skills add matemolnar8/comprehende
 
   <section class="slide center">
     <img class="hero-mark" src="favicon.svg" alt="" />
-    <h1 style="font-size:2.2em">Understanding is the part you cannot delegate.<small>The agent writes the how. You keep the why and the what.</small></h1>
+    <h1 style="font-size:2.2em">Understanding is the part you cannot delegate.<small>The agent writes the code. You keep the why and the what.</small></h1>
     <pre style="text-align:left;display:inline-block">npx skills add matemolnar8/comprehende</pre>
     <p class="muted" style="font-size:0.8em">github.com/matemolnar8/comprehende</p>
   </section>
@@ -383,25 +372,49 @@ npx skills add matemolnar8/comprehende
   const counter = document.getElementById("counter");
   const progress = document.getElementById("progress");
   let i = Math.min(slides.length - 1, Math.max(0, (parseInt(location.hash.slice(1), 10) || 1) - 1));
-  function show(n) {
+  let stop = 0;
+  const stopsOf = (slide) => JSON.parse(slide.dataset.stops ?? "[[]]");
+  function applyStop() {
+    const slide = slides[i];
+    if (!slide.classList.contains("zoom")) return;
+    const stage = slide.querySelector(".stage");
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const [x, y, w, h] = stopsOf(slide)[stop];
+    // The frame is 1440 by 900 screenshot pixels. Never zoom past 600 of them across the stage.
+    const s = Math.min(W / w, H / h, W / 600);
+    const frame = slide.querySelector(".frame");
+    frame.style.transform = `translate(${(W - s * w) / 2 - s * x}px, ${(H - s * h) / 2 - s * y}px) scale(${s})`;
+    frame.style.clipPath = `inset(${y}px ${1440 - x - w}px ${900 - y - h}px ${x}px round 8px)`;
+    slide.querySelectorAll(".captions li").forEach((li, k) => li.classList.toggle("on", k === stop));
+  }
+  function next() {
+    if (stop < stopsOf(slides[i]).length - 1) { stop++; applyStop(); } else show(i + 1);
+  }
+  function previous() {
+    if (stop > 0) { stop--; applyStop(); } else if (i > 0) show(i - 1, stopsOf(slides[i - 1]).length - 1);
+  }
+  function show(n, atStop = 0) {
     i = Math.min(slides.length - 1, Math.max(0, n));
+    stop = atStop;
     slides.forEach((s, k) => s.classList.toggle("active", k === i));
     counter.textContent = `${i + 1} / ${slides.length}`;
     progress.style.width = `${((i + 1) / slides.length) * 100}%`;
     history.replaceState(null, "", `#${i + 1}`);
+    applyStop();
   }
   addEventListener("keydown", (e) => {
-    if (["ArrowRight", " ", "PageDown", "j", "l"].includes(e.key)) { e.preventDefault(); show(i + 1); }
-    else if (["ArrowLeft", "PageUp", "k", "h"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    if (["ArrowRight", " ", "PageDown", "j", "l"].includes(e.key)) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "PageUp", "k", "h"].includes(e.key)) { e.preventDefault(); previous(); }
     else if (e.key === "Home") show(0);
     else if (e.key === "End") show(slides.length - 1);
   });
   addEventListener("click", (e) => {
     if (e.target.closest("button, a, pre")) return;
-    show(e.clientX > innerWidth / 2 ? i + 1 : i - 1);
+    if (e.clientX > innerWidth / 2) next(); else previous();
   });
   addEventListener("hashchange", () => show((parseInt(location.hash.slice(1), 10) || 1) - 1));
   document.getElementById("theme").addEventListener("click", () => document.documentElement.classList.toggle("light"));
+  addEventListener("resize", applyStop);
   show(i);
 
   (() => {
