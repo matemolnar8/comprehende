@@ -10,6 +10,7 @@ import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { ADD_CASE_USAGE, parseAddCaseArgv } from "./args.ts";
 import { caseIdFor, githubRepoUrl, linkedIssueNumbers, parseGithubPrUrl } from "./github.ts";
+import { evalCacheDir } from "./checkout.ts";
 import { CASE_BUNDLE, ensureBareClone, thisRepoMirror, writeCaseBundle } from "./clone.ts";
 
 const execFileAsync = promisify(execFile);
@@ -68,7 +69,7 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
   const mergeSha = typeof pr.merge_commit_sha === "string" ? pr.merge_commit_sha : undefined;
   const repoUrl = githubRepoUrl(parsed.owner, parsed.repo);
   const bare = await ensureBareClone({
-    cacheDir: join(packageRoot, "eval/.cache"),
+    cacheDir: await evalCacheDir(packageRoot),
     repoUrl,
     localMirror: await thisRepoMirror(packageRoot, repoUrl),
   });

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, describe, it } from "vite-plus/test";
+import { afterAll, describe, it, onTestFinished } from "vite-plus/test";
 import { git } from "../../src/git/exec.ts";
 import { initEmptyRepo } from "../../src/test/init-repo.ts";
-import { cloneCaseBundle, writeCaseBundle } from "./clone.ts";
+import { cloneCaseBundle, cloneCaseFromCache, withLock, writeCaseBundle } from "./clone.ts";
 
 const roots: string[] = [];
 afterAll(() => {
@@ -61,5 +61,58 @@ describe("case bundle", () => {
       writeCaseBundle(root, second, first, join(root, "x.bundle")),
       /not an ancestor/,
     );
+  });
+});
+
+describe("clone cache", () => {
+  it("fills one cache entry when parallel runs start on a cold cache", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-cache-"));
+    roots.push(root);
+    const src = join(root, "src");
+    await initEmptyRepo(src);
+    await git(src, ["remote", "add", "origin", "https://github.com/o/r.git"]);
+    const base = await commit(src, "a.txt", "base");
+    const head = await commit(src, "b.txt", "head");
+    const cacheDir = join(root, "cache");
+    // Point the GitHub URL at the local repo so the fetch stays offline.
+    process.env.GIT_CONFIG_COUNT = "1";
+    process.env.GIT_CONFIG_KEY_0 = `url.${src}.insteadOf`;
+    process.env.GIT_CONFIG_VALUE_0 = "https://github.com/o/r.git";
+    onTestFinished(() => {
+      delete process.env.GIT_CONFIG_COUNT;
+      delete process.env.GIT_CONFIG_KEY_0;
+      delete process.env.GIT_CONFIG_VALUE_0;
+    });
+    const dests = [1, 2, 3, 4].map((n) => join(root, `run-${n}.git`));
+    await Promise.all(
+      dests.map((dest) =>
+        cloneCaseFromCache({
+          cacheDir,
+          repoUrl: "https://github.com/o/r.git",
+          localMirror: src,
+          pr: 1,
+          base,
+          head,
+          dest,
+        }),
+      ),
+    );
+    for (const dest of dests) {
+      assert.equal((await git(dest, ["rev-parse", "refs/eval/head"])).trim(), head);
+      assert.equal(
+        (await git(dest, ["config", "--get", "remote.origin.url"])).trim(),
+        "https://github.com/o/r.git",
+      );
+    }
+    assert.deepEqual(await readdir(cacheDir), ["o-r.git"]);
+  });
+
+  it("takes over a lock whose owner died", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-lock-"));
+    roots.push(root);
+    const lock = join(root, "x.lock");
+    await mkdir(lock);
+    await writeFile(join(lock, "pid"), "999999999");
+    assert.equal(await withLock(lock, async () => "ran"), "ran");
   });
 });

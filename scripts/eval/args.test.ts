@@ -17,7 +17,24 @@ describe("eval argv", () => {
       cliLogin: false,
       graders: true,
       rescore: undefined,
+      repeat: 1,
+      jobs: 1,
+      skill: undefined,
+      keep: false,
     });
+  });
+
+  it("parses --repeat, --jobs, --skill, and --keep", () => {
+    const req = parseEvalArgv(["--repeat", "3", "--jobs", "4", "--skill", "/tmp/s", "--keep"]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.equal(req.repeat, 3);
+      assert.equal(req.jobs, 4);
+      assert.equal(req.skill, "/tmp/s");
+      assert.equal(req.keep, true);
+    }
+    assert.equal(parseEvalArgv(["--repeat", "0"]).kind, "error");
+    assert.equal(parseEvalArgv(["--jobs", "1.5"]).kind, "error");
   });
 
   it("defaults producer and grader to Muse", () => {

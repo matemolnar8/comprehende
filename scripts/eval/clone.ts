@@ -1,7 +1,8 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 import { git, gitOk } from "../../src/git/exec.ts";
 import { parseGithubRepo } from "../pages-review.ts";
@@ -15,27 +16,105 @@ export function cachePath(cacheDir: string, repoUrl: string): string {
   return join(cacheDir, githubCacheName(parsed.owner, parsed.repo));
 }
 
+/** Clone into a temp dir and rename it into place, so a killed clone never looks complete. */
 export async function ensureBareClone(opts: {
   cacheDir: string;
   repoUrl: string;
   localMirror?: string;
 }): Promise<string> {
   const dest = cachePath(opts.cacheDir, opts.repoUrl);
+  if (existsSync(join(dest, "HEAD"))) {
+    return dest;
+  }
   const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
   const remoteUrl = authedGitUrl(opts.repoUrl, token);
-  if (!existsSync(join(dest, "HEAD"))) {
-    await mkdir(opts.cacheDir, { recursive: true });
+  await mkdir(opts.cacheDir, { recursive: true });
+  const partial = `${dest}.partial-${process.pid}`;
+  await rm(partial, { recursive: true, force: true });
+  try {
     if (opts.localMirror !== undefined && existsSync(join(opts.localMirror, ".git"))) {
-      await git(opts.cacheDir, ["clone", "--bare", opts.localMirror, dest]);
-      const remotes = (await git(dest, ["remote"])).trim().split("\n");
+      await git(opts.cacheDir, ["clone", "--bare", opts.localMirror, partial]);
+      const remotes = (await git(partial, ["remote"])).trim().split("\n");
       if (!remotes.includes("github")) {
-        await git(dest, ["remote", "add", "github", remoteUrl]);
+        await git(partial, ["remote", "add", "github", remoteUrl]);
       }
     } else {
-      await git(dirname(dest), ["clone", "--bare", remoteUrl, dest]);
+      await git(opts.cacheDir, ["clone", "--bare", remoteUrl, partial]);
     }
+    await rm(dest, { recursive: true, force: true });
+    await rename(partial, dest);
+  } finally {
+    await rm(partial, { recursive: true, force: true });
   }
   return dest;
+}
+
+/**
+ * Give one case run its own bare clone. The shared cache entry is filled and fetched under a
+ * lock, then hardlink-cloned, so parallel runs and sibling worktrees never fetch into it at once.
+ */
+export async function cloneCaseFromCache(opts: {
+  cacheDir: string;
+  repoUrl: string;
+  localMirror?: string;
+  pr: number;
+  base: string;
+  head: string;
+  dest: string;
+}): Promise<void> {
+  await mkdir(opts.cacheDir, { recursive: true });
+  const cached = cachePath(opts.cacheDir, opts.repoUrl);
+  await withLock(`${cached}.lock`, async () => {
+    await ensureBareClone(opts);
+    await fetchCaseRefs(cached, opts.pr, opts.base, opts.head);
+    await git(opts.cacheDir, ["clone", "--bare", "--quiet", cached, opts.dest]);
+  });
+  await git(opts.dest, ["remote", "set-url", "origin", opts.repoUrl]);
+  // The cache keeps head and base under refs that a bare clone does not copy.
+  await git(opts.dest, ["update-ref", "refs/eval/head", opts.head]);
+  await git(opts.dest, ["update-ref", "refs/eval/base", opts.base]);
+}
+
+/** A cross-process lock: a directory that holds the owner's pid. A dead owner's lock is taken over. */
+export async function withLock<T>(lockDir: string, fn: () => Promise<T>): Promise<T> {
+  for (;;) {
+    try {
+      await mkdir(lockDir);
+      break;
+    } catch (error) {
+      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
+        throw error;
+      }
+      if (await lockOwnerDead(lockDir)) {
+        await rm(lockDir, { recursive: true, force: true });
+      } else {
+        await sleep(250);
+      }
+    }
+  }
+  try {
+    await writeFile(join(lockDir, "pid"), String(process.pid));
+    return await fn();
+  } finally {
+    await rm(lockDir, { recursive: true, force: true });
+  }
+}
+
+async function lockOwnerDead(lockDir: string): Promise<boolean> {
+  let pid: number;
+  try {
+    pid = Number(await readFile(join(lockDir, "pid"), "utf8"));
+  } catch {
+    // The owner made the dir and has not written its pid yet, or died before it could.
+    const made = await stat(lockDir).catch(() => undefined);
+    return made !== undefined && Date.now() - made.mtimeMs > 60_000;
+  }
+  try {
+    process.kill(pid, 0);
+    return false;
+  } catch (error) {
+    return error instanceof Error && "code" in error && error.code === "ESRCH";
+  }
 }
 
 export async function fetchCaseRefs(
@@ -141,11 +220,6 @@ export async function cloneCaseBundle(opts: {
 export async function addDetachedWorktree(bare: string, dest: string, head: string): Promise<void> {
   await git(bare, ["worktree", "prune"], { allowFail: true });
   await git(bare, ["worktree", "add", "--detach", dest, head]);
-}
-
-export async function removeWorktree(bare: string, dest: string): Promise<void> {
-  await git(bare, ["worktree", "remove", "--force", dest], { allowFail: true });
-  await git(bare, ["worktree", "prune"], { allowFail: true });
 }
 
 export async function thisRepoMirror(

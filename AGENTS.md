@@ -66,7 +66,7 @@ Type safety helps humans and agents alike. Parse at the boundary, where the sche
 ## The three ways to hurt yourself
 
 1. **Editing generated copies.** `skills/comprehende/` and `.agents/skills/comprehende/` are outputs of `pnpm release:skill` and `pnpm sync:skill`. Never edit them by hand. After any edit under `skills-next/comprehende/`, run `pnpm sync:skill` and commit the synced copies with it; the `check:skill` pre-commit hook blocks the commit otherwise. Leave `fixtures/` output alone too.
-2. **Running the full eval by habit.** Full `pnpm eval` needs `MUSE_CODE_API_KEY` (or `--cli-login` when the `muse` CLI is logged in), costs money and time, and CI runs it when it matters. Default to `pnpm eval -- --tag smoke --no-graders`. Run the full suite only for a skill redesign, and only when asked.
+2. **Running the full eval by habit.** Full `pnpm eval` costs money and time, and CI runs it when it matters. Default to `pnpm eval -- --tag smoke --no-graders`. Run the full suite only for a skill redesign, and only when asked.
 3. **Storing patch text.** The review document holds interpretation and hunk refs, never diff content. Live git wins. Never invent a hunk ref, never paste patch text into `review.json`.
 
 ## Before calling work done
@@ -110,11 +110,11 @@ Releases happen manually. Do not change `package.json` version unless the user a
 - Never make a PR unless the developer explicitly asks you to.
 - When opening a pull request, run `pnpm build`, then follow `skills-next/comprehende/SKILL.md` (not a globally installed comprehende skill, which may lag behind it), running `node <repo>/dist/cli/main.js` where it says `npx comprehende@<version>`. Its `pregroup` writes the draft; do not paste hunk refs by hand. Export the review, put any screenshots in the export folder, and host that folder once with the pages skill. Put the printed URL in the PR body.
 
-After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `MUSE_CODE_API_KEY`, or `--cli-login` when the `muse` CLI is logged in. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
+After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs a logged-in `muse` CLI or `MUSE_CODE_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
 A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `MUSE_CODE_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
 
-Eval commands, run times, and what to do when a run aborts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
+Eval commands, run times, parallel and repeated runs, debriefing a failed case, and CI artifacts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
 
 Judgement rules for review: [.cursor/BUGBOT.md](./.cursor/BUGBOT.md).
 

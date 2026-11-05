@@ -19,11 +19,32 @@ The grader does not judge grouping or prose quality. Grouping is checked by `tog
 
 ## Long runs
 
-- Start the run in tmux with output going to a log file. Wait with `AwaitShell`. Do not poll with repeated `grep` or `ps` calls.
-- Run one eval process at a time. Parallel runs share one `node_modules` and race `pnpm` and the shared esbuild store.
+- Run the eval in the background with output going to a log file. Arm one wake-up for when the process exits, and do not poll the log or `ps`.
+- `pnpm eval` runs `pnpm build` first, and two builds at once race on `dist/`. For parallel streams, run `pnpm build` once, then start `tsx scripts/eval/run.ts --case <id>` per stream. `run.ts` does not build, so after a code change it runs the old `dist/` until you build again. `--jobs <n>` runs n cases in one process instead.
+- To stop a run, kill only the processes whose cwd is your checkout, for example `pgrep -f scripts/eval/run.ts` and then `lsof -a -d cwd -p <pid>` for each pid. A broad `pkill` also stops evals in sibling worktrees.
+- Clones of case repos are cached in `comprehende-eval-cache/` under `git rev-parse --git-common-dir`, so all worktrees share one cache. A lock lets parallel runs fill it safely. Each case then gets its own clone in the temp dir.
 - A failed producer retries once when it wrote no `review.json`. Validate and size failures do not retry. The grader retries only when the model returned text that is not the expected JSON, so a stall does not spend another full timeout.
 - Each run writes `eval/runs/<stamp>/summary.json`. Read the failed case's `result.json` there for the full error. Producer failures also print to stderr as soon as the producer returns, before the graders finish.
+- The run copies the skill to `eval/runs/<stamp>/skill/` at the start, and every case uses that copy. You can edit the skill while a run goes. `skillTree` in `summary.json` is the tree of that copy, so it differs from `HEAD` when the skill has uncommitted edits.
+
+## Debrief a failing case
+
+Run the case with `--keep`, so its clone stays on disk. Then, from the case's `result.json`, take `clone` (the producer's cwd) and `producer.sessionId`, and resume the session from that cwd:
+
+```sh
+cd <clone> && muse exec --session-id <sessionId> --disable-write --disable-shell --json "<question>"
+```
+
+`--repeat <n>` with `--keep` gives n sessions to compare. Delete the kept clones in your temp dir when you are done.
+
+## CI artifacts
+
+The eval workflow uploads `eval/runs` as the artifact `eval-run`. `gh run download <run id> -D <dir>` puts each case at `<dir>/eval-run/<stamp>/<case>/`, or `<case>.t<n>/` for trial n of a `--repeat` run. Each case folder has `result.json`, plus `review.json`, `producer.md`, `packet.md`, `rubric.json`, and `site/` when that step ran. `scripts/eval/result.ts` defines the shape of `result.json` and `summary.json`.
+
+## Known flaky expects
+
+`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
 
 ## Muse setup
 
-Runs need `MUSE_CODE_API_KEY`, or pass `--cli-login` to use the `muse` CLI login instead. The `muse` CLI must be on `PATH`. The eval workflow installs it. Locally, install the CLI the way `.github/workflows/eval.yml` does.
+Runs use `MUSE_CODE_API_KEY` when it is set, else the `muse` CLI login (`muse login`), which spends the subscription instead of API credit. `--cli-login` uses the login even when a key is set. CI uses the key. The `muse` CLI must be on `PATH`. The eval workflow installs it. Locally, install the CLI the way `.github/workflows/eval.yml` does.
