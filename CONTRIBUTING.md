@@ -12,7 +12,7 @@ On Windows, run `irm https://vite.plus/ps1 | iex`. See the [Vite+ guide](https:/
 
 `.claude/skills` is a symlink to `.agents/skills`. On Windows, git writes it as a plain text file unless it can make symlinks. To get the link, turn on Developer Mode, run `git config core.symlinks true`, delete `.claude/skills`, and run `git checkout -- .claude/skills`.
 
-T3 Code worktrees need `vp` too. `t3.json` runs `node scripts/setup-worktree.ts` for each new worktree, and that script installs dependencies with `vp i`.
+T3 Code worktrees need `vp` too. `t3.json` runs `node scripts/setup-worktree.ts` for each new worktree. The script installs dependencies with `vp i` and links `.env` from the project root: `T3CODE_PROJECT_ROOT` when set, else the main checkout. Run it by hand in any other fresh worktree.
 
 `pnpm build` writes `dist/cli` and `dist/ui`. `prepack` runs the build, so `pnpm pack` and `pnpm publish` always ship the UI.
 

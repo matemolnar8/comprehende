@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 
+import { execFile } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
+import { z } from "zod";
 import { git, gitOk } from "../src/git/exec.ts";
 
 export const PAGES_BRANCH = "gh-pages";
@@ -47,10 +50,19 @@ export type PagesResult = {
   pushed: boolean;
 };
 
+export type GithubRepo = { owner: string; repo: string };
+
+export type PublishResult = PagesResult & {
+  /** The gh-pages commit the remote now holds. Its Pages run builds this SHA. */
+  commit: string;
+  github?: GithubRepo;
+};
+
 export const PAGES_USAGE = `Usage: pnpm exec tsx scripts/pages-review.ts <command>
 
 Commands:
-  publish --dir <export> (--pr <n> | --name <slug>)   Copy a static site onto gh-pages
+  publish --dir <export> (--pr <n> | --name <slug>) [--no-wait]
+                                                      Copy a static site onto gh-pages, then wait for its Pages deploy
   prune [--pr <n>] [--name <slug>] [--ttl-days <n>] [--keep <slug>]...
                                                       Remove a site and/or sites older than the TTL
   init                                                Create gh-pages with .nojekyll if it is missing
@@ -64,6 +76,7 @@ Options:
   --name <slug>     Named site (dest site/<slug>/)
   --ttl-days <n>    Age in days after which a site is removed (default: ${DEFAULT_TTL_DAYS})
   --keep <slug>     Named site the TTL never removes (repeatable)
+  --no-wait         Print the URL without waiting for the pages-build-deployment run
 `;
 
 export function parsePrNumber(raw: string): number {
@@ -80,7 +93,7 @@ export function parseSiteName(raw: string): string {
   return raw;
 }
 
-export function parseGithubRepo(remoteUrl: string): { owner: string; repo: string } | undefined {
+export function parseGithubRepo(remoteUrl: string): GithubRepo | undefined {
   const trimmed = remoteUrl.trim().replace(/\.git$/u, "");
   const https = trimmed.match(/^https?:\/\/(?:[^@/]+@)?github\.com\/([^/]+)\/([^/]+)$/u);
   if (https?.[1] !== undefined && https[2] !== undefined) {
@@ -132,7 +145,7 @@ export function pagesIndexHtml(sites: PublishedMeta[]): string {
 `;
 }
 
-export async function publishPagesReview(opts: PublishPagesOpts): Promise<PagesResult> {
+export async function publishPagesReview(opts: PublishPagesOpts): Promise<PublishResult> {
   const dest = requireDest(opts.dest);
   const indexPath = join(opts.dir, "index.html");
   const index = await readFile(indexPath, "utf8").catch(() => "");
@@ -152,8 +165,113 @@ export async function publishPagesReview(opts: PublishPagesOpts): Promise<PagesR
       await writeFile(join(folder, PUBLISHED_FILE), `${JSON.stringify(meta)}\n`);
       await writeScaffold(pages);
     });
-    return { url: pagesUrlOrUndefined(remoteUrl, dest), removed: [], pushed };
+    return {
+      url: pagesUrlOrUndefined(remoteUrl, dest),
+      removed: [],
+      pushed,
+      commit: (await git(pages, ["rev-parse", "HEAD"])).trim(),
+      github: parseGithubRepo(remoteUrl),
+    };
   });
+}
+
+const PAGES_RUN_PATH = "dynamic/pages/pages-build-deployment";
+
+const PagesRunsResponse = z.object({
+  workflow_runs: z.array(
+    z.object({
+      id: z.number(),
+      path: z.string(),
+      status: z.string().nullable(),
+      conclusion: z.string().nullable(),
+      run_attempt: z.number(),
+      html_url: z.string(),
+    }),
+  ),
+});
+
+type PagesRun = z.infer<typeof PagesRunsResponse>["workflow_runs"][number];
+
+export type DeployStatus =
+  | { state: "success"; runUrl: string }
+  | { state: "failure"; runUrl: string; conclusion: string }
+  | { state: "running"; runUrl: string }
+  | { state: "missing" };
+
+export type WaitDeployOpts = GithubRepo & {
+  sha: string;
+  gh?: (args: string[]) => Promise<string>;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+  pollMs?: number;
+  /** Give up when no run for the SHA shows up in this time: Pages is off or never started. */
+  appearMs?: number;
+  timeoutMs?: number;
+};
+
+const execFileAsync = promisify(execFile);
+
+async function runGh(args: string[]): Promise<string> {
+  return (await execFileAsync("gh", args, { maxBuffer: 16 * 1024 * 1024 })).stdout;
+}
+
+/**
+ * Waits for the pages-build-deployment run of `sha`. A run that fails gets one rerun, because
+ * the usual failure is "in progress deployment" from an earlier publish that still holds the lock.
+ */
+export async function waitForPagesDeploy(opts: WaitDeployOpts): Promise<DeployStatus> {
+  const gh = opts.gh ?? runGh;
+  const sleep = opts.sleep ?? ((ms) => new Promise<void>((done) => setTimeout(done, ms)));
+  const now = opts.now ?? Date.now;
+  const start = now();
+  const appearBy = start + (opts.appearMs ?? 2 * 60_000);
+  const deadline = start + (opts.timeoutMs ?? 10 * 60_000);
+  const slug = `${opts.owner}/${opts.repo}`;
+  let rerunAfterAttempt: number | undefined;
+  for (;;) {
+    const run = await findPagesRun(gh, slug, opts.sha);
+    const fresh = run !== undefined && run.run_attempt > (rerunAfterAttempt ?? 0);
+    if (run !== undefined && fresh && run.status === "completed") {
+      if (run.conclusion === "success") {
+        return { state: "success", runUrl: run.html_url };
+      }
+      if (rerunAfterAttempt !== undefined) {
+        return { state: "failure", runUrl: run.html_url, conclusion: run.conclusion ?? "unknown" };
+      }
+      await gh(["run", "rerun", String(run.id), "--repo", slug]);
+      rerunAfterAttempt = run.run_attempt;
+    }
+    if (run === undefined && now() >= appearBy) {
+      return { state: "missing" };
+    }
+    if (run !== undefined && now() >= deadline) {
+      return { state: "running", runUrl: run.html_url };
+    }
+    await sleep(opts.pollMs ?? 10_000);
+  }
+}
+
+async function findPagesRun(
+  gh: (args: string[]) => Promise<string>,
+  slug: string,
+  sha: string,
+): Promise<PagesRun | undefined> {
+  const raw = await gh(["api", `repos/${slug}/actions/runs?head_sha=${sha}&event=dynamic`]);
+  const { workflow_runs } = PagesRunsResponse.parse(JSON.parse(raw));
+  return workflow_runs.find((run) => run.path === PAGES_RUN_PATH);
+}
+
+export function deployStatusLine(status: DeployStatus, sha: string): string {
+  switch (status.state) {
+    case "success":
+      return `deploy success: ${status.runUrl}`;
+    case "failure":
+      return `deploy ${status.conclusion} after one rerun: ${status.runUrl}`;
+    case "running":
+      return `deploy still running: ${status.runUrl}`;
+    case "missing":
+      return `deploy missing: no pages-build-deployment run for ${sha}. Is Pages on for gh-pages?`;
+  }
 }
 
 export async function prunePagesReviews(opts: PrunePagesOpts): Promise<PagesResult> {
@@ -498,7 +616,13 @@ export async function runPagesReview(argv: string[]): Promise<number> {
       if (result.url !== undefined) {
         console.log(result.url);
       }
-      return 0;
+      if (flags.noWait || result.github === undefined) {
+        return 0;
+      }
+      console.error(`waiting for pages-build-deployment of ${result.commit}`);
+      const status = await waitForPagesDeploy({ ...result.github, sha: result.commit });
+      console.log(deployStatusLine(status, result.commit));
+      return status.state === "success" ? 0 : 1;
     }
     if (command === "prune") {
       const ttlDays = flags.ttlDays === undefined ? undefined : Number(flags.ttlDays);
@@ -549,6 +673,7 @@ type Flags = {
   name?: string;
   ttlDays?: string;
   keep: string[];
+  noWait: boolean;
 };
 
 function publishDest(flags: Flags): PagesDest | undefined {
@@ -565,7 +690,7 @@ function publishDest(flags: Flags): PagesDest | undefined {
 }
 
 function parseFlags(args: string[]): Flags {
-  const flags: Flags = { keep: [] };
+  const flags: Flags = { keep: [], noWait: false };
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const next = args[i + 1];
@@ -602,6 +727,10 @@ function parseFlags(args: string[]): Flags {
     if (arg === "--ttl-days" && next !== undefined) {
       flags.ttlDays = next;
       i++;
+      continue;
+    }
+    if (arg === "--no-wait") {
+      flags.noWait = true;
       continue;
     }
     if (arg === "--keep" && next !== undefined) {

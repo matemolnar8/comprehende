@@ -42,11 +42,14 @@ The CLI indexes `base...head` and writes a covering skeleton `review.json`: one 
 - `skills-next/comprehende/` - skill source. The only skill text you edit.
 - `.agents/skills/` - skills for agents that work in this repo. `.claude/skills` is a symlink to it, because Claude Code does not read `.agents/skills`.
 - `src/schema/` - review document schema. The source of truth. Parse at the boundary, infer inside.
-- `src/review/` - grouping logic: `review`, `pregroup`, `digest`, `show`.
-- `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export payloads, live git reads.
+- `src/review/` - review-document logic behind the commands: `skeleton.ts` (`review`), `digest.ts`, `coverage.ts`, `anchors.ts`, `pins.ts` (`validate`), `refresh.ts`, `show.ts`. `pregroup` lives in `src/cli/commands.ts`.
+- `src/api/` - UI payloads: `types.ts`, `changes.ts` (What changed), `agent-md.ts`, `live.ts`. A new review field passes through here.
+- `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export server, live git reads.
 - `src/ui/` - fixed UI. Only the data changes.
 - `eval/cases/`, `scripts/eval/` - eval cases and runner.
 - `scripts/` - `fixture`, `sync-skill`, schema build.
+
+A fresh worktree with no `node_modules` or `.env`: run `node scripts/setup-worktree.ts`.
 
 ## Project rules
 
@@ -62,8 +65,8 @@ Type safety helps humans and agents alike. Parse at the boundary, where the sche
 
 ## The three ways to hurt yourself
 
-1. **Editing generated copies.** `skills/comprehende/` and `.agents/skills/comprehende/` are outputs of `pnpm release:skill` and `pnpm sync:skill`. Never edit them by hand. Leave `fixtures/` output alone too.
-2. **Running the full eval by habit.** Full `pnpm eval` needs `MUSE_CODE_API_KEY`, costs money and time, and CI runs it when it matters. Default to `pnpm eval -- --tag smoke --no-graders`. Run the full suite only for a skill redesign, and only when asked.
+1. **Editing generated copies.** `skills/comprehende/` and `.agents/skills/comprehende/` are outputs of `pnpm release:skill` and `pnpm sync:skill`. Never edit them by hand. After any edit under `skills-next/comprehende/`, run `pnpm sync:skill` and commit the synced copies with it; the `check:skill` pre-commit hook blocks the commit otherwise. Leave `fixtures/` output alone too.
+2. **Running the full eval by habit.** Full `pnpm eval` needs `MUSE_CODE_API_KEY` (or `--cli-login` when the `muse` CLI is logged in), costs money and time, and CI runs it when it matters. Default to `pnpm eval -- --tag smoke --no-graders`. Run the full suite only for a skill redesign, and only when asked.
 3. **Storing patch text.** The review document holds interpretation and hunk refs, never diff content. Live git wins. Never invent a hunk ref, never paste patch text into `review.json`.
 
 ## Before calling work done
@@ -72,17 +75,19 @@ The most common defect here is a change that fixes one layer and misses the rest
 
 - **Skill.** Does the rule still fit any repo, in simple words?
 - **Schema.** Does `src/schema/` still accept what the skill writes?
-- **Review code.** Do `review`, `pregroup`, `digest`, `show` still agree with both?
+- **Review code.** Do the commands in `src/review/` and `src/cli/commands.ts` (`review`, `pregroup`, `digest`, `show`, `validate`, `refresh`) still agree with both?
 - **UI.** The UI is fixed, only data changes. Does the existing UI show the new data with no narration?
 - **Eval.** Do cases under `eval/cases/` still expect the current behavior?
 - **Docs.** Check whether the change makes existing guidance wrong. See Documentation below.
 
+Adding a review-document field: `git grep -l <sibling field> -- src scripts eval skills-next docs` lists every layer, including text-only ones such as CLI help and docs that typecheck misses. Then run `pnpm generate:schema` to rewrite `src/schema/review.schema.json`; the pre-commit hook fails without it.
+
 ## Verifying
 
-- Smallest proof that the change works. Focused tests for the files you touched (`vp test run <files>`), and `vp check <files>` for format, lint, and types on the files you changed.
+- Smallest proof that the change works. Focused tests for the files you touched (`vp test run <files>`), and `pnpm check:changed` for format, lint, and types on the files you changed (pass `--fix` to fix them).
 - Do not run repo-wide checks unless asked. No full `vp test`, no full `vp check`, no full `pnpm eval`. CI owns the full suite.
 - Test observable behavior, not implementation. Do not render components to static markup to assert props, and do not add tests that only mirror the code.
-- A UI change gets screenshots in the PR body.
+- A UI change gets screenshots in the PR body: `pnpm ui:screenshots` (CONTRIBUTING › UI screenshots). When the change shows a new review field, add it to `scripts/ui-screenshots.review.json` so the shots show it.
 
 ## Documentation
 
@@ -103,9 +108,9 @@ Releases happen manually. Do not change `package.json` version unless the user a
 ## Pull requests
 
 - Never make a PR unless the developer explicitly asks you to.
-- When opening a pull request, run the local built CLI `comprehende review --data <path>` to write the covering skeleton (one path per changed file, stub prose). Fill interpretation with the comprehende skill from skills-next. Do not paste hunk refs by hand. Export the review, then host that folder with the pages skill. Put the printed URL in the PR body.
+- When opening a pull request, run `pnpm build`, then follow `skills-next/comprehende/SKILL.md` (not a globally installed comprehende skill, which may lag behind it), running `node <repo>/dist/cli/main.js` where it says `npx comprehende@<version>`. Its `pregroup` writes the draft; do not paste hunk refs by hand. Export the review, put any screenshots in the export folder, and host that folder once with the pages skill. Put the printed URL in the PR body.
 
-After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `MUSE_CODE_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
+After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs `MUSE_CODE_API_KEY`, or `--cli-login` when the `muse` CLI is logged in. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
 A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `MUSE_CODE_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
 
