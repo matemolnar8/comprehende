@@ -109,7 +109,7 @@ After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`
 
 A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `MUSE_CODE_API_KEY`. A failed job is the regression ping. If that secret is unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
 
-Eval commands, run times, and what to do when a run aborts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
+Eval commands, run times, parallel and repeated runs, debriefing a failed case, and CI artifacts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
 
 Judgement rules for review: [.cursor/BUGBOT.md](./.cursor/BUGBOT.md).
 
