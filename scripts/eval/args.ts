@@ -22,7 +22,7 @@ Options:
   --no-graders            Skip the rubric grader
   -h, --help
 
-Needs MUSE_CODE_API_KEY in the environment or .env (a worktree also reads the main checkout's .env) unless --rescore with --no-graders. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs MUSE_CODE_API_KEY in the environment or .env (a worktree also reads the main checkout's .env) unless --rescore with --no-graders. Pass --cli-login to use the muse CLI login; it ignores MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>

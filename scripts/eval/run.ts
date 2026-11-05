@@ -62,7 +62,8 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   }
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   await loadDotEnv(packageRoot);
-  const apiKey = process.env.MUSE_CODE_API_KEY ?? "";
+  // --cli-login wins over a key in the environment or .env, so a key with a billing problem cannot shadow the login.
+  const apiKey = request.cliLogin ? "" : (process.env.MUSE_CODE_API_KEY ?? "");
   const gradersOn = request.graders;
   const needsModel = rescoreDir === undefined || gradersOn;
   if (needsModel && apiKey === "" && !request.cliLogin) {
