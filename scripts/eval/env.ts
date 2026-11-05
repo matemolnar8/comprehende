@@ -1,11 +1,24 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { mainCheckoutDir } from "./checkout.ts";
 
-/** Load KEY=VALUE lines from <packageRoot>/.env. Real environment wins. Missing file is fine. */
+/**
+ * Load KEY=VALUE lines from <packageRoot>/.env, then from the main checkout's .env so a worktree
+ * needs no copy. The first value set wins: real environment, then the worktree, then main.
+ * Missing files are fine.
+ */
 export async function loadDotEnv(packageRoot: string): Promise<void> {
+  const main = await mainCheckoutDir(packageRoot);
+  await loadDotEnvFile(join(packageRoot, ".env"));
+  if (main !== undefined) {
+    await loadDotEnvFile(join(main, ".env"));
+  }
+}
+
+async function loadDotEnvFile(path: string): Promise<void> {
   let text: string;
   try {
-    text = await readFile(join(packageRoot, ".env"), "utf8");
+    text = await readFile(path, "utf8");
   } catch {
     return;
   }

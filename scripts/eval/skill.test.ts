@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { cp, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
+import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
+import { initEmptyRepo } from "../../src/test/init-repo.ts";
 import { skillPaths } from "../../src/schema/skill-paths.ts";
-import { copySkillForEval } from "./skill.ts";
+import { snapshotSkill } from "./skill.ts";
 
 const roots: string[] = [];
 afterAll(() => {
@@ -71,14 +73,33 @@ describe("next skill workflow", () => {
   });
 });
 
-describe("eval skill copy", () => {
-  it("rewrites the pin", async () => {
-    const root = findPackageRoot();
-    const dest = await mkdtemp(join(tmpdir(), "eval-skill-"));
-    roots.push(dest);
-    await copySkillForEval(root, dest, "/tmp/dist/cli/main.js");
-    const md = await readFile(join(dest, "SKILL.md"), "utf8");
+describe("eval skill snapshot", () => {
+  it("rewrites the pin and records the tree of what it copied", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-skill-"));
+    roots.push(root);
+    const repo = join(root, "repo");
+    await initEmptyRepo(repo);
+    await cp(skillPaths(findPackageRoot()).nextSkill, join(repo, "skill"), { recursive: true });
+    await git(repo, ["add", "."]);
+    await git(repo, ["commit", "-m", "skill"]);
+    const committed = (await git(repo, ["rev-parse", "HEAD:skill"])).trim();
+
+    const clean = await snapshotSkill(
+      join(repo, "skill"),
+      join(root, "a"),
+      "/tmp/dist/cli/main.js",
+    );
+    assert.equal(clean, committed);
+    const md = await readFile(join(root, "a/SKILL.md"), "utf8");
     assert.match(md, /node \/tmp\/dist\/cli\/main\.js/);
     assert.doesNotMatch(md, /npx comprehende@/);
+
+    await writeFile(join(repo, "skill/extra.md"), "uncommitted\n");
+    const dirty = await snapshotSkill(
+      join(repo, "skill"),
+      join(root, "b"),
+      "/tmp/dist/cli/main.js",
+    );
+    assert.notEqual(dirty, committed);
   });
 });

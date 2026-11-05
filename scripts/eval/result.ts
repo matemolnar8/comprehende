@@ -7,6 +7,8 @@ import { rubricCounts, type RubricCounts, type RubricResult } from "./graders.ts
 
 export type CaseResult = {
   id: string;
+  /** 1-based, set only when the run repeats each case. */
+  trial?: number;
   ok: boolean;
   durationMs: number;
   tokens: number;
@@ -18,16 +20,26 @@ export type CaseResult = {
   checks?: DeterministicReport;
   rubric?: RubricResult;
   site?: string;
+  /** The producer's cwd, kept by --keep. Resume its session from here. */
+  clone?: string;
 };
 
 export type RunSummary = {
   stamp: string;
+  /** Git tree hash of the skill snapshot every case ran with. */
   skillTree: string;
+  /** The --skill folder, when the run did not use skills-next/comprehende. */
+  skill?: string;
   producerModel: string;
   graderModel: string;
   graders: boolean;
   cases: CaseResult[];
 };
+
+/** Names the case folder in the run dir, and the case in printed lines and the report. */
+export function caseKey(result: Pick<CaseResult, "id" | "trial">): string {
+  return result.trial === undefined ? result.id : `${result.id}.t${result.trial}`;
+}
 
 export function caseFailed(result: CaseResult): boolean {
   if (result.producerError !== undefined || result.validateError !== undefined) {
@@ -44,7 +56,7 @@ export function producerFailureReason(error: string): string {
 }
 
 export function formatCaseLine(result: CaseResult): string {
-  const bits = [result.id];
+  const bits = [caseKey(result)];
   if (result.producerError !== undefined) {
     bits.push(`producer FAIL: ${producerFailureReason(result.producerError)}`);
   } else {
@@ -105,7 +117,7 @@ export function formatBaselineDelta(
   previous: CaseResult | undefined,
 ): string | undefined {
   if (previous === undefined) {
-    return `${current.id}  new`;
+    return `${caseKey(current)}  new`;
   }
   const bits: string[] = [];
   if (caseFailed(current) !== caseFailed(previous)) {
@@ -133,7 +145,17 @@ export function formatBaselineDelta(
   if (bits.length === 0) {
     return undefined;
   }
-  return `${current.id}  ${bits.join("  ")}`;
+  return `${caseKey(current)}  ${bits.join("  ")}`;
+}
+
+/** One line per case of a repeated run: passes out of trials, and which trials failed. */
+export function formatTrialTotals(cases: readonly CaseResult[]): string[] {
+  const byId = Map.groupBy(cases, (item) => item.id);
+  return [...byId].map(([id, trials]) => {
+    const failedTrials = trials.filter(caseFailed).map((item) => `t${item.trial ?? 1}`);
+    const line = `${id}  pass ${trials.length - failedTrials.length}/${trials.length}`;
+    return failedTrials.length === 0 ? line : `${line}  failed ${failedTrials.join(" ")}`;
+  });
 }
 
 export async function writeCaseArtifacts(

@@ -12,17 +12,17 @@ import { cmdValidate } from "../../src/cli/commands.ts";
 import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { loadDocument } from "../../src/review/load.ts";
+import { skillPaths } from "../../src/schema/skill-paths.ts";
 import { EVAL_USAGE, parseEvalArgv } from "./args.ts";
 import { listEvalCases, selectEvalCases, type EvalCase, type Rubric } from "./case.ts";
 import { loadFrozenSourceValues, runDeterministicChecks } from "./checks.ts";
+import { evalCacheDir } from "./checkout.ts";
 import { loadDotEnv } from "./env.ts";
 import {
   addDetachedWorktree,
   CASE_BUNDLE,
   cloneCaseBundle,
-  ensureBareClone,
-  fetchCaseRefs,
-  removeWorktree,
+  cloneCaseFromCache,
   thisRepoMirror,
 } from "./clone.ts";
 import { claimBullets, runRubricGrader } from "./graders.ts";
@@ -31,16 +31,23 @@ import { writeGradingPacket } from "./packet.ts";
 import { producerPrompt, runProducer } from "./producer.ts";
 import {
   caseFailed,
+  caseKey,
   formatBaselineDelta,
   formatCaseLine,
   formatRunTotals,
+  formatTrialTotals,
   producerFailureReason,
   writeCaseArtifacts,
   type CaseResult,
   type RunSummary,
 } from "./result.ts";
 import { writeEvalReport } from "./report.ts";
-import { copySkillForEval } from "./skill.ts";
+import { snapshotSkill } from "./skill.ts";
+
+/** A run either produces new reviews with one skill snapshot, or rescores saved reviews. */
+type CaseMode =
+  | { kind: "produce"; cliPath: string; skillMd: string }
+  | { kind: "rescore"; dir: string };
 
 export async function runEval(argv: string[], packageRoot = findPackageRoot()): Promise<number> {
   const request = parseEvalArgv(argv);
@@ -74,30 +81,72 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   const stamp = new Date().toISOString().replaceAll(/[:.]/g, "-");
   const runDir = join(packageRoot, "eval/runs", stamp);
   await mkdir(runDir, { recursive: true });
-  const skillTree = (await git(packageRoot, ["rev-parse", "HEAD:skills-next/comprehende"])).trim();
-  const summary: RunSummary = {
-    stamp,
-    skillTree,
-    producerModel: request.producerModel,
-    graderModel: request.graderModel,
-    graders: gradersOn,
-    cases: [],
-  };
-  for (const item of selected) {
+  let mode: CaseMode;
+  let skillTree: string;
+  if (rescoreDir === undefined) {
+    const cliPath = resolve(packageRoot, "dist/cli/main.js");
+    if (!existsSync(cliPath)) {
+      console.error("dist/cli/main.js is missing. Run pnpm build, or use pnpm eval.");
+      return 1;
+    }
+    const source =
+      request.skill === undefined ? skillPaths(packageRoot).nextSkill : resolve(request.skill);
+    const skillDir = join(runDir, "skill");
+    skillTree = await snapshotSkill(source, skillDir, cliPath);
+    if (request.skill === undefined) {
+      const committed = await git(packageRoot, ["rev-parse", "HEAD:skills-next/comprehende"], {
+        allowFail: true,
+      });
+      if (committed.trim() !== skillTree) {
+        console.error(
+          "skills-next/comprehende has uncommitted edits. This run uses them. skillTree in summary.json is the tree of the edited copy.",
+        );
+      }
+    }
+    mode = { kind: "produce", cliPath, skillMd: join(skillDir, "SKILL.md") };
+  } else {
+    skillTree = (await readSummary(rescoreDir).catch(() => undefined))?.skillTree ?? "unknown";
+    mode = { kind: "rescore", dir: rescoreDir };
+  }
+  const cacheDir = await evalCacheDir(packageRoot);
+  const runs = selected.flatMap((item) =>
+    Array.from({ length: request.repeat }, (_, index) => ({
+      item,
+      trial: request.repeat > 1 ? index + 1 : undefined,
+    })),
+  );
+  const cases = await mapPool(runs, request.jobs, async ({ item, trial }) => {
     const result = await evalOneCase({
       packageRoot,
       runDir,
+      cacheDir,
       spec: item.spec,
+      trial,
       rubric: item.rubric,
       caseDir: item.dir,
       producerModel: request.producerModel,
       graderModel: request.graderModel,
       graders: gradersOn,
       apiKey,
-      rescoreDir,
+      mode,
+      keep: request.keep,
     });
-    summary.cases.push(result);
     console.log(formatCaseLine(result));
+    return result;
+  });
+  const summary: RunSummary = {
+    stamp,
+    skillTree,
+    skill: request.skill,
+    producerModel: request.producerModel,
+    graderModel: request.graderModel,
+    graders: gradersOn,
+    cases,
+  };
+  if (request.repeat > 1) {
+    for (const line of formatTrialTotals(cases)) {
+      console.log(line);
+    }
   }
   console.log(formatRunTotals(summary));
   await writeFile(join(runDir, "summary.json"), `${JSON.stringify(summary, null, 2)}\n`);
@@ -112,38 +161,67 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   return summary.cases.some(caseFailed) ? 1 : 0;
 }
 
+/** Like Promise.all over items, with at most `size` calls in flight. Keeps input order. */
+async function mapPool<T, R>(
+  items: readonly T[],
+  size: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const queue = [...items.entries()];
+  const out: R[] = [];
+  const worker = async (): Promise<void> => {
+    for (let next = queue.shift(); next !== undefined; next = queue.shift()) {
+      const [index, item] = next;
+      out[index] = await fn(item);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+  return out;
+}
+
 async function evalOneCase(opts: {
   packageRoot: string;
   runDir: string;
+  cacheDir: string;
   spec: EvalCase;
+  trial: number | undefined;
   rubric: Rubric;
   caseDir: string;
   producerModel: string;
   graderModel: string;
   graders: boolean;
   apiKey: string;
-  rescoreDir?: string;
+  mode: CaseMode;
+  keep: boolean;
 }): Promise<CaseResult> {
   const started = Date.now();
-  const result: CaseResult = { id: opts.spec.id, ok: true, durationMs: 0, tokens: 0 };
-  const caseOut = join(opts.runDir, opts.spec.id);
+  const result: CaseResult = {
+    id: opts.spec.id,
+    trial: opts.trial,
+    ok: true,
+    durationMs: 0,
+    tokens: 0,
+  };
+  const key = caseKey(result);
+  const caseOut = join(opts.runDir, key);
   await mkdir(caseOut, { recursive: true });
-  const tmp = await mkdtemp(join(tmpdir(), `comprehende-eval-${opts.spec.id}-`));
+  const tmp = await mkdtemp(join(tmpdir(), `comprehende-eval-${key}-`));
   const repoCwd = join(tmp, "repo");
-  const cacheDir = join(opts.packageRoot, "eval/.cache");
-  let bare: string | undefined;
   try {
+    const bare = join(tmp, "repo.git");
     const bundle = join(opts.caseDir, CASE_BUNDLE);
     if (existsSync(bundle)) {
-      bare = join(tmp, "repo.git");
       await cloneCaseBundle({ bundle, dest: bare, base: opts.spec.base, repoUrl: opts.spec.repo });
     } else {
-      bare = await ensureBareClone({
-        cacheDir,
+      await cloneCaseFromCache({
+        cacheDir: opts.cacheDir,
         repoUrl: opts.spec.repo,
         localMirror: await thisRepoMirror(opts.packageRoot, opts.spec.repo),
+        pr: opts.spec.pr,
+        base: opts.spec.base,
+        head: opts.spec.head,
+        dest: bare,
       });
-      await fetchCaseRefs(bare, opts.spec.pr, opts.spec.base, opts.spec.head);
     }
     await addDetachedWorktree(bare, repoCwd, opts.spec.head);
     const sourcesDir = join(tmp, "sources");
@@ -155,28 +233,22 @@ async function evalOneCase(opts: {
     } else {
       await mkdir(sourcesDir);
     }
-    if (opts.rescoreDir !== undefined) {
-      const saved = join(opts.rescoreDir, opts.spec.id, "review.json");
+    if (opts.mode.kind === "rescore") {
+      const saved = join(opts.mode.dir, key, "review.json");
       if (!existsSync(saved)) {
         result.producerError = `no saved review at ${saved}`;
       } else {
         await cp(saved, reviewPath);
       }
     } else {
-      const cliPath = resolve(opts.packageRoot, "dist/cli/main.js");
-      if (!existsSync(cliPath)) {
-        throw new Error("dist/cli/main.js is missing. pnpm eval runs the build first.");
-      }
-      const skillDir = join(tmp, "skill");
-      await copySkillForEval(opts.packageRoot, skillDir, cliPath);
       const prompt = producerPrompt({
         repoCwd,
-        skillMd: join(skillDir, "SKILL.md"),
+        skillMd: opts.mode.skillMd,
         sourcesDir,
         outPath: reviewPath,
         base: opts.spec.base,
         head: opts.spec.head,
-        cliPath,
+        cliPath: opts.mode.cliPath,
       });
       const runProducerOnce = (): Promise<
         Awaited<ReturnType<typeof runProducer>> | { thrown: string }
@@ -192,7 +264,7 @@ async function evalOneCase(opts: {
       const attemptFailed =
         "thrown" in producer || producer.status !== "finished" || producer.error !== undefined;
       if (attemptFailed && !existsSync(reviewPath)) {
-        console.error(`${opts.spec.id} producer attempt 1 failed, retrying once`);
+        console.error(`${key} producer attempt 1 failed, retrying once`);
         producer = await runProducerOnce();
       }
       if ("thrown" in producer) {
@@ -207,9 +279,7 @@ async function evalOneCase(opts: {
         }
       }
       if (result.producerError !== undefined) {
-        console.error(
-          `${opts.spec.id} producer FAIL: ${producerFailureReason(result.producerError)}`,
-        );
+        console.error(`${key} producer FAIL: ${producerFailureReason(result.producerError)}`);
       }
     }
 
@@ -267,10 +337,11 @@ async function evalOneCase(opts: {
   } catch (error) {
     result.producerError ??= error instanceof Error ? error.message : String(error);
   } finally {
-    if (bare !== undefined) {
-      await removeWorktree(bare, repoCwd);
+    if (opts.keep) {
+      result.clone = repoCwd;
+    } else {
+      await rm(tmp, { recursive: true, force: true });
     }
-    await rm(tmp, { recursive: true, force: true });
   }
   result.ok = !caseFailed(result);
   result.tokens = (result.producer?.tokens ?? 0) + (result.rubric?.run.tokens ?? 0);
@@ -279,14 +350,16 @@ async function evalOneCase(opts: {
   return result;
 }
 
+async function readSummary(runDir: string): Promise<RunSummary> {
+  return JSON.parse(await readFile(join(resolve(runDir), "summary.json"), "utf8")) as RunSummary;
+}
+
 async function printBaseline(baselineDir: string, summary: RunSummary): Promise<void> {
-  const previous = JSON.parse(
-    await readFile(join(resolve(baselineDir), "summary.json"), "utf8"),
-  ) as RunSummary;
-  const byId = new Map(previous.cases.map((item) => [item.id, item]));
+  const previous = await readSummary(baselineDir);
+  const byKey = new Map(previous.cases.map((item) => [caseKey(item), item]));
   console.log("baseline deltas");
   for (const item of summary.cases) {
-    const line = formatBaselineDelta(item, byId.get(item.id));
+    const line = formatBaselineDelta(item, byKey.get(caseKey(item)));
     if (line !== undefined) {
       console.log(line);
     }

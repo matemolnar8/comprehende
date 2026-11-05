@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
 import { escapeHtml, evalReportHtml } from "./report.ts";
-import type { CaseResult, RunSummary } from "./result.ts";
+import { formatTrialTotals, type CaseResult, type RunSummary } from "./result.ts";
 
 const checksOk = {
   failures: [] as { check: string; message: string }[],
@@ -144,5 +144,35 @@ describe("eval HTML report", () => {
       escapeHtml(`<a href="x">'&</a>`),
       "&lt;a href=&quot;x&quot;&gt;&#39;&amp;&lt;/a&gt;",
     );
+  });
+});
+
+describe("repeated runs", () => {
+  const failing = { ...checksOk, failures: [{ check: "size", message: "got small" }] };
+  const trials = [
+    caseResult({ id: "comprehende-57", trial: 1, site: "x" }),
+    caseResult({ id: "comprehende-57", trial: 2, checks: failing }),
+    caseResult({ id: "comprehende-57", trial: 3 }),
+    caseResult({ id: "comprehende-50", trial: 1 }),
+  ];
+
+  it("counts passes per case and names the failed trials", () => {
+    assert.deepEqual(formatTrialTotals(trials), [
+      "comprehende-57  pass 2/3  failed t2",
+      "comprehende-50  pass 1/1",
+    ]);
+  });
+
+  it("links each trial to its own folder", () => {
+    const html = evalReportHtml({
+      stamp: "s",
+      skillTree: "963f6069f91e1b36d3fc5afb6f3beaac6f525d25",
+      producerModel: "m",
+      graderModel: "m",
+      graders: false,
+      cases: trials,
+    });
+    assert.match(html, /href="\.\/comprehende-57\.t1\/site\/index\.html"/);
+    assert.match(html, /id="comprehende-57\.t2"/);
   });
 });

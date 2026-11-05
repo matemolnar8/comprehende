@@ -2,13 +2,17 @@ import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
-Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each lookFor bullet, attention note, focus caption, and line note against head. Grader verdicts do not change the exit code.
+Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each claim the review wrote against head. Grader verdicts do not change the exit code.
 
 Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}.
 
 Options:
   --case <id>             Run this case (repeatable)
   --tag <tag>             Run cases with this tag
+  --repeat <n>            Run each case n times and print a pass count per case
+  --jobs <n>              Run n cases at a time. Default 1
+  --skill <dir>           Use this skill folder in place of skills-next/comprehende
+  --keep                  Keep each case's clone so you can resume the producer session
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
   --rescore <dir>         Re-check and regrade eval/runs/<stamp> reviews. No producer
   --json                  Also print summary.json to stdout
@@ -18,7 +22,7 @@ Options:
   --no-graders            Skip the rubric grader
   -h, --help
 
-Needs MUSE_CODE_API_KEY in the environment or .env unless --rescore with --no-graders. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Needs MUSE_CODE_API_KEY in the environment or .env (a worktree also reads the main checkout's .env) unless --rescore with --no-graders. Pass --cli-login to use the muse CLI login instead of MUSE_CODE_API_KEY. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -46,6 +50,10 @@ export type EvalRunRequest =
       cliLogin: boolean;
       graders: boolean;
       rescore?: string;
+      repeat: number;
+      jobs: number;
+      skill?: string;
+      keep: boolean;
     };
 
 export type AddCaseRequest =
@@ -68,6 +76,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let json = false;
     let graders = true;
     let rescore: string | undefined;
+    let repeat = 1;
+    let jobs = 1;
+    let skill: string | undefined;
+    let keep = false;
     for (let i = 0; i < args.length; i += 1) {
       const arg = args[i];
       if (arg === undefined) {
@@ -85,8 +97,15 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
         cliLogin = true;
         continue;
       }
+      if (arg === "--keep") {
+        keep = true;
+        continue;
+      }
       if (
         arg === "--case" ||
+        arg === "--repeat" ||
+        arg === "--jobs" ||
+        arg === "--skill" ||
         arg === "--tag" ||
         arg === "--baseline" ||
         arg === "--rescore" ||
@@ -106,6 +125,12 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
           baseline = value;
         } else if (arg === "--rescore") {
           rescore = value;
+        } else if (arg === "--repeat") {
+          repeat = positiveInt(arg, value);
+        } else if (arg === "--jobs") {
+          jobs = positiveInt(arg, value);
+        } else if (arg === "--skill") {
+          skill = value;
         } else if (arg === "--producer-model") {
           producerModel = value;
         } else {
@@ -126,10 +151,22 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       cliLogin,
       graders,
       rescore,
+      repeat,
+      jobs,
+      skill,
+      keep,
     };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }
+}
+
+function positiveInt(flag: string, value: string): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) {
+    throw new Error(`${flag} needs a whole number of 1 or more, got ${value}`);
+  }
+  return n;
 }
 
 export function parseAddCaseArgv(argv: string[]): AddCaseRequest {

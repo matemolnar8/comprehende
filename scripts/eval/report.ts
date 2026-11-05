@@ -6,7 +6,7 @@ import {
   type ItemVerdict,
   type RubricResult,
 } from "./graders.ts";
-import { caseFailed, formatCaseLine, type CaseResult, type RunSummary } from "./result.ts";
+import { caseFailed, caseKey, formatCaseLine, type CaseResult, type RunSummary } from "./result.ts";
 
 export async function writeEvalReport(runDir: string, summary: RunSummary): Promise<string> {
   const path = evalReportPath(runDir);
@@ -99,13 +99,16 @@ li { margin: 0.2rem 0; }
 <h1>Eval ${escapeHtml(summary.stamp)}</h1>
 <p class="meta">producer ${escapeHtml(summary.producerModel)} · ${
     summary.graders ? `grader ${escapeHtml(summary.graderModel)}` : "graders off"
-  } · skill ${escapeHtml(summary.skillTree.slice(0, 7))}</p>
+  } · skill ${escapeHtml(summary.skillTree.slice(0, 7))}${
+    summary.skill === undefined ? "" : ` from ${escapeHtml(summary.skill)}`
+  }</p>
 <p class="headline">${escapeHtml(headline)}</p>
 <nav>
 ${summary.cases
   .map((item) => {
     const fail = caseFailed(item);
-    return `<a href="#${escapeHtml(item.id)}"><span class="mark ${fail ? "fail" : "ok"}">${fail ? "FAIL" : "ok"}</span> ${escapeHtml(item.id)}</a>`;
+    const key = escapeHtml(caseKey(item));
+    return `<a href="#${key}"><span class="mark ${fail ? "fail" : "ok"}">${fail ? "FAIL" : "ok"}</span> ${key}</a>`;
   })
   .join("\n")}
 </nav>
@@ -118,9 +121,10 @@ ${summary.cases.map((item) => caseHtml(item)).join("\n")}
 
 function caseHtml(result: CaseResult): string {
   const fail = caseFailed(result);
+  const key = escapeHtml(caseKey(result));
   const parts: string[] = [
-    `<section class="case ${fail ? "fail" : "ok"}" id="${escapeHtml(result.id)}">`,
-    `<h2>${escapeHtml(result.id)} <span class="mark ${fail ? "fail" : "ok"}">${fail ? "FAIL" : "ok"}</span></h2>`,
+    `<section class="case ${fail ? "fail" : "ok"}" id="${key}">`,
+    `<h2>${key} <span class="mark ${fail ? "fail" : "ok"}">${fail ? "FAIL" : "ok"}</span></h2>`,
     `<p class="line">${escapeHtml(formatCaseLine(result))}</p>`,
   ];
   if (result.producerError !== undefined) {
@@ -227,11 +231,12 @@ function bulletHtml(item: BulletVerdict): string {
 
 function fileLinks(result: CaseResult): string | undefined {
   const hrefs: string[] = [];
+  const dir = encodeURIComponent(caseKey(result));
   if (result.site !== undefined) {
-    hrefs.push(`<a href="./${encodeURIComponent(result.id)}/site/index.html">Produced review</a>`);
+    hrefs.push(`<a href="./${dir}/site/index.html">Produced review</a>`);
   }
   if (result.producer !== undefined) {
-    hrefs.push(`<a href="./${encodeURIComponent(result.id)}/producer.md">Producer notes</a>`);
+    hrefs.push(`<a href="./${dir}/producer.md">Producer notes</a>`);
   }
   if (hrefs.length === 0) {
     return undefined;
