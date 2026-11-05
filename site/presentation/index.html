@@ -4,9 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Comprehende — offload, don't surrender</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 <style>
   :root {
     color-scheme: dark;
@@ -16,16 +17,15 @@
     --primary: #8b9cff;
     --primary-foreground: #12151c;
     --muted: #252a33;
-    --muted-foreground: #8b939e;
+    --muted-foreground: #a8b2c1;
     --accent: #2a3148;
     --border: #2c3340;
     --add: #3fb950;
     --del: #f85149;
     --warn: #d4a017;
-    --strand-0: #8fb4f0;
-    --strand-1: #e0a64a;
-    --strand-2: #c9a3e8;
-    --strand-3: #6ed0d6;
+    --strand-0: #5ccfc0;
+    --strand-1: #c9a3e8;
+    --strand-2: #f0a07a;
     --radius: 0.45rem;
     --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
     --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
@@ -41,16 +41,15 @@
     --primary: #3d4fd8;
     --primary-foreground: #ffffff;
     --muted: #e8ecf1;
-    --muted-foreground: #5c6570;
+    --muted-foreground: #545d68;
     --accent: #e4e8f4;
     --border: #d5dbe3;
     --add: #1a7f37;
     --del: #cf222e;
-    --warn: #9a6700;
-    --strand-0: #2458b5;
-    --strand-1: #9a5b00;
-    --strand-2: #6b3d96;
-    --strand-3: #0b6e78;
+    --warn: #8a5a00;
+    --strand-0: #0f766e;
+    --strand-1: #6b3d96;
+    --strand-2: #a24a1e;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -75,12 +74,12 @@
   }
   .slide.active { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
 
-  .logo { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.01em; line-height: 1; }
-  .logo .q { color: var(--primary); }
+  .logo { display: inline-flex; align-items: center; gap: 0.32em; font-family: var(--font-display); font-weight: 600; letter-spacing: -0.01em; line-height: 1; }
+  .logo img { width: 1.15em; height: 1.15em; }
 
-  h1 { font-family: var(--font-display); font-weight: 700; font-size: 2.6em; line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 0.6em; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: 2.6em; line-height: 1.08; letter-spacing: -0.015em; margin: 0 0 0.6em; }
   h1 small { display: block; font-family: var(--font-sans); font-weight: 400; font-size: 0.42em; color: var(--muted-foreground); letter-spacing: 0; margin-top: 0.6em; line-height: 1.4; }
-  h2 { font-family: var(--font-display); font-weight: 700; font-size: 2em; line-height: 1.1; letter-spacing: -0.015em; margin: 0 0 0.9em; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: 2em; line-height: 1.1; letter-spacing: -0.015em; margin: 0 0 0.9em; }
   p { margin: 0 0 0.6em; max-width: 36em; }
   .muted { color: var(--muted-foreground); }
   .lead { font-size: 1.15em; max-width: 30em; }
@@ -96,7 +95,7 @@
     padding: 1.1em 1.3em;
     box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 7%, transparent), 0 2px 8px color-mix(in srgb, var(--foreground) 4%, transparent);
   }
-  .card h3 { font-family: var(--font-display); font-size: 1.1em; font-weight: 700; margin: 0 0 0.5em; }
+  .card h3 { font-family: var(--font-display); font-size: 1.1em; font-weight: 600; margin: 0 0 0.5em; }
   .card li::before { background: var(--muted-foreground); }
   .card.good h3 { color: var(--add); }
   .card.good li::before { background: var(--add); }
@@ -110,8 +109,8 @@
   pre .c { color: var(--muted-foreground); }
   pre .p { color: var(--primary); }
   kbd {
-    display: inline-block; font-size: 0.7em; line-height: 1; padding: 0.3em 0.45em;
-    border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 0.3em; background: var(--muted); color: var(--foreground); vertical-align: middle;
+    display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; padding: 0 0.35em;
+    font-size: 0.7em; font-weight: 500; line-height: 1; border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 0.3em; opacity: 0.8; vertical-align: middle;
   }
 
   .illus { width: 100%; max-height: 52vh; margin-top: 0.6em; overflow: visible; }
@@ -120,7 +119,7 @@
   .illus .dep { fill: none; stroke-width: 2; stroke-dasharray: 4 4; }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 
-  .arrow { display: flex; align-items: center; gap: 1.2em; font-family: var(--font-display); font-size: 1.6em; font-weight: 700; margin: 0.6em 0 1.2em; }
+  .arrow { display: flex; align-items: center; gap: 1.2em; font-family: var(--font-display); font-size: 1.6em; font-weight: 600; margin: 0.6em 0 1.2em; }
   .arrow .from { color: var(--del); text-decoration: line-through; text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--del) 60%, transparent); }
   .arrow .to { color: var(--add); }
   .arrow .sep { color: var(--muted-foreground); font-weight: 400; }
@@ -135,7 +134,7 @@
 
   .hud {
     position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: center;
-    padding: 1.2vh 2vw; font-family: var(--font-mono); font-size: 0.6em; color: var(--muted-foreground);
+    padding: 1.2vh 2vw; font-size: 0.6em; color: var(--muted-foreground);
   }
   .hud .logo { font-size: 1.4em; }
   .progress { position: fixed; left: 0; top: 0; height: 3px; background: var(--primary); transition: width var(--motion) var(--motion-ease); }
@@ -143,9 +142,30 @@
   .hud button:hover { background: var(--muted); }
   .center { text-align: center; align-items: center; }
   .center p, .center h1 { margin-left: auto; margin-right: auto; }
-  .title-logo { font-size: 5em; margin-bottom: 0.3em; }
-  .hero-q { font-size: 7em; }
-  @media (max-width: 800px) { .cols, .groups { grid-template-columns: 1fr; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
+  .title-logo { font-size: 4.4em; margin-bottom: 0.3em; }
+  .hero-mark { width: 5em; height: 5em; margin-bottom: 1em; }
+
+  .slide:has(.shot-layout) { padding: 4vh 4vw 7vh; }
+  .shot-layout { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2.5vw; align-items: center; }
+  .shot-layout h2 { font-size: 1.55em; margin-bottom: 0.8em; }
+  .shot { position: relative; margin: 0; width: min(69vw, 128vh); line-height: 0; }
+  .shot img { width: 100%; border: 1px solid var(--border); border-radius: calc(var(--radius) * 1.3); box-shadow: 0 2px 4px color-mix(in srgb, var(--foreground) 7%, transparent), 0 8px 32px color-mix(in srgb, var(--foreground) 8%, transparent); }
+  .shot img.light, html.light .shot img.dark { display: none; }
+  html.light .shot img.light { display: block; }
+  .phone { width: min(38vh, 34vw); }
+  .phone img { border-radius: 1.2em; }
+  .pin {
+    display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; line-height: 1;
+    background: var(--primary); color: var(--primary-foreground);
+  }
+  .shot .pin { position: absolute; translate: -50% -50%; box-shadow: 0 0 0 2px var(--background); }
+  .notes { font-size: 0.8em; line-height: 1.4; }
+  .notes li { padding-left: 2.1em; margin-bottom: 0.9em; }
+  .notes li::before { content: none; }
+  .notes .pin { position: absolute; left: 0; top: 0.05em; }
+  .more { font-size: 0.82em; line-height: 1.4; }
+  .more li { margin-bottom: 0.55em; max-width: none; }
+  @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .shot .pin { width: 1.1rem; height: 1.1rem; font-size: 0.62rem; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
 </head>
 <body>
@@ -153,7 +173,7 @@
 <div class="deck" id="deck">
 
   <section class="slide center">
-    <div class="logo title-logo">Comprehende<span class="q">?</span></div>
+    <div class="logo title-logo"><img src="favicon.svg" alt="" />Comprehende</div>
     <p class="lead">Pay attention where it counts.</p>
     <p class="muted" style="font-size:0.8em;margin-top:1.5em">The agent writes the <em>how</em>. Comprehende gives you the <em>why</em> and the <em>what</em>.</p>
   </section>
@@ -201,28 +221,90 @@
     <h2>How it works</h2>
     <ol class="steps">
       <li><strong>The CLI indexes <code>base...head</code></strong> and writes a skeleton. One entry per changed file, hunk refs, stub prose.</li>
-      <li><strong>The agent fills the interpretation.</strong> Title, groups, why, what, look for, sources. It never invents a hunk ref.</li>
+      <li><strong>The agent fills the interpretation.</strong> Title, groups, why, what, things to check, sources. It never invents a hunk ref.</li>
       <li><strong>Validate, then serve or export.</strong> Every ref must resolve in live git. The UI reads the diff from git when you open it.</li>
     </ol>
   </section>
 
   <section class="slide">
-    <h2>What you get in the UI</h2>
-    <div class="cols">
-      <ul>
-        <li><strong>Groups by review concern.</strong> Each group has a why, a what, and a size that means review burden, not file count.</li>
-        <li><strong>Parts.</strong> Work that could have been its own pull request gets its own story and a suggested reading order.</li>
-        <li><strong>Look closely.</strong> The one call in a group that only you can make: a contract, a tradeoff, a product call, or a risk. Most groups have none.</li>
-        <li><strong>Sources.</strong> The tickets, pull request comments, commits, and agent transcripts the agent read, each with a gist. Look for shows where the code and a source do not agree.</li>
+    <div class="shot-layout">
+      <div>
+        <h2>Start with the whole change</h2>
+        <ul class="notes">
+        <li><span class="pin">A</span><strong>Why and what.</strong> Your view of the change, before any diff.</li>
+        <li><span class="pin">B</span><strong>Things to check.</strong> Where the code and a source do not agree, with a citation.</li>
+        <li><span class="pin">C</span><strong>Groups in reading order.</strong> Work that could have been its own pull request gets its own part.</li>
       </ul>
-      <ul>
-        <li><strong>Focus and notes.</strong> One line on what changed in each file. In a long hunk, the lines that matter open first, with lettered notes on single lines.</li>
-        <li><strong>Ask the agent.</strong> Up to two questions per group about why the code is this way. One click opens one in Claude Code, Codex, Cursor, or T3 Code.</li>
-        <li><strong>Full files and git blame.</strong> One click from any hunk. The diff always comes from live git.</li>
-        <li><strong>Refresh.</strong> New commits keep the old groups. The What changed page shows the delta.</li>
-        <li><strong>Mechanical groups.</strong> Renames and generated output, marked so you know what to skip.</li>
-        <li><strong>Keyboard.</strong> <kbd>j</kbd> <kbd>k</kbd> move, <kbd>v</kbd> marks viewed, <kbd>o</kbd> opens the overview. Every view has a URL you can share.</li>
+      </div>
+      <figure class="shot">
+        <img class="dark" src="shots/overview.dark.png" alt="The Comprehende overview page: why and what for the whole change, things to check, and the groups in reading order." />
+        <img class="light" src="shots/overview.light.png" alt="" />
+        <span class="pin" style="left:28.4%;top:28.4%">A</span>
+        <span class="pin" style="left:32.8%;top:55.4%">B</span>
+        <span class="pin" style="left:60.4%;top:11.1%">C</span>
+      </figure>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="shot-layout">
+      <div>
+        <h2>Then one group at a time</h2>
+        <ul class="notes">
+        <li><span class="pin">A</span><strong>One review concern.</strong> Each group says why it exists and what it does.</li>
+        <li><span class="pin">B</span><strong>Attention.</strong> The one call only you can make: a contract, a tradeoff, a product call, or a risk. Most groups have none.</li>
+        <li><span class="pin">C</span><strong>The real diff.</strong> From live git, with one line on what changed in each file.</li>
       </ul>
+      </div>
+      <figure class="shot">
+        <img class="dark" src="shots/group.dark.png" alt="A group page: the brief with why, what, and an attention on the left, and the live diff on the right." />
+        <img class="light" src="shots/group.light.png" alt="" />
+        <span class="pin" style="left:28.4%;top:19.7%">A</span>
+        <span class="pin" style="left:44.4%;top:44.2%">B</span>
+        <span class="pin" style="left:74.2%;top:14.8%">C</span>
+      </figure>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="shot-layout">
+      <div>
+        <h2>Go past the diff</h2>
+        <ul class="notes">
+        <li><span class="pin">A</span><strong>Open file.</strong> The full file at base or head, one click from any hunk.</li>
+        <li><span class="pin">B</span><strong>Blame.</strong> Each run of lines names its commit, author, and date.</li>
+        <li><span class="pin">C</span><strong>In this review.</strong> Lines from commits in this change show the commit summary.</li>
+      </ul>
+      </div>
+      <figure class="shot">
+        <img class="dark" src="shots/blame.dark.png" alt="The file inspector in Blame mode, with stamps that name each run of lines and mark the commits in this review." />
+        <img class="light" src="shots/blame.light.png" alt="" />
+        <span class="pin" style="left:73.4%;top:10.7%">A</span>
+        <span class="pin" style="left:77.4%;top:18.1%">B</span>
+        <span class="pin" style="left:64.6%;top:36.9%">C</span>
+      </figure>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="shot-layout">
+      <div>
+        <h2>Also in the UI</h2>
+        <ul class="more">
+          <li><strong>Focus and notes.</strong> In a long hunk, the lines that matter open first, with lettered notes on single lines.</li>
+          <li><strong>Ask agent.</strong> Up to two questions per group about why the code is this way. One click opens one in Claude Code, Codex, Cursor, or T3 Code.</li>
+          <li><strong>Sources.</strong> The tickets, pull request comments, commits, and agent transcripts the agent read, each with a gist. Citations in the text link to them.</li>
+          <li><strong>Refresh.</strong> New commits keep the old groups. The What changed page shows the delta.</li>
+          <li><strong>Mechanical groups.</strong> Renames and generated output sit apart, so you know what to skip.</li>
+          <li><strong>Images.</strong> Side by side, slider, or pixel diff.</li>
+          <li><strong>Keyboard.</strong> <kbd>[</kbd> <kbd>]</kbd> move between groups, <kbd>j</kbd> <kbd>k</kbd> between files, <kbd>v</kbd> marks viewed, <kbd>o</kbd> opens the overview. Every view has a URL you can share.</li>
+          <li><strong>Any screen.</strong> The same review on a phone, in light or dark.</li>
+        </ul>
+      </div>
+      <figure class="shot phone">
+        <img class="dark" src="shots/mobile.dark.png" alt="A group page on a phone." />
+        <img class="light" src="shots/mobile.light.png" alt="" />
+      </figure>
     </div>
   </section>
 
@@ -241,7 +323,7 @@
     <h2>Non-goals</h2>
     <ul>
       <li><strong>Review for you.</strong> It gives you a view to hold against the diff. Understanding the change is still your job.</li>
-      <li><strong>Judge.</strong> No approve or reject and no score. Look for items are claims to check, and Look closely names a call for you. Neither is a verdict.</li>
+      <li><strong>Judge.</strong> No approve or reject and no score. Things to check are claims, and an attention names a call for you. Neither is a verdict.</li>
       <li><strong>Replace git.</strong> No stored patches and no second source of truth.</li>
       <li><strong>Know your forge.</strong> GitHub, GitLab, Bitbucket, and Jira live in the skill, not in the tool. The core is plain git.</li>
       <li><strong>Generate UI.</strong> The model never draws a screen.</li>
@@ -261,7 +343,7 @@ npx skills add matemolnar8/comprehende
   </section>
 
   <section class="slide center">
-    <div class="logo hero-q"><span class="q">?</span></div>
+    <img class="hero-mark" src="favicon.svg" alt="" />
     <h1 style="font-size:2.2em">Understanding is the part you cannot delegate.<small>The agent writes the how. Comprehende shows you what changed and why, so the understanding stays yours.</small></h1>
     <pre style="text-align:left;display:inline-block">npx skills add matemolnar8/comprehende</pre>
     <p class="muted" style="font-size:0.8em">github.com/matemolnar8/comprehende</p>
@@ -269,7 +351,7 @@ npx skills add matemolnar8/comprehende
 
 </div>
 <div class="hud">
-  <span class="logo">Comprehende<span class="q">?</span></span>
+  <span class="logo"><img src="favicon.svg" alt="" />Comprehende</span>
   <span><span id="counter"></span> &nbsp;·&nbsp; <kbd>←</kbd> <kbd>→</kbd> &nbsp; <button id="theme" type="button">theme</button></span>
 </div>
 <script>
