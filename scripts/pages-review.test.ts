@@ -14,6 +14,7 @@ import {
   prunePagesReviews,
   publishPagesReview,
   runPagesReview,
+  waitForPagesDeploy,
   type PagesDest,
 } from "./pages-review.ts";
 
@@ -288,6 +289,93 @@ describe("pages-review publish and prune", () => {
       ]),
       1,
     );
+  });
+});
+
+describe("pages-review deploy wait", () => {
+  const sha = "abc123";
+  const RUN = "https://github.com/o/r/actions/runs/7";
+
+  type Run = { status: string; conclusion?: string; attempt?: number; path?: string };
+
+  function fakeGh(responses: Run[][]) {
+    const calls: string[][] = [];
+    let polls = 0;
+    let clock = 0;
+    const gh = async (args: string[]) => {
+      calls.push(args);
+      if (args[0] !== "api") {
+        return "";
+      }
+      const runs = responses[Math.min(polls++, responses.length - 1)] ?? [];
+      return JSON.stringify({
+        workflow_runs: runs.map((run) => ({
+          id: 7,
+          path: run.path ?? "dynamic/pages/pages-build-deployment",
+          status: run.status,
+          conclusion: run.conclusion ?? null,
+          run_attempt: run.attempt ?? 1,
+          html_url: RUN,
+        })),
+      });
+    };
+    const wait = () =>
+      waitForPagesDeploy({
+        owner: "o",
+        repo: "r",
+        sha,
+        gh,
+        now: () => clock,
+        sleep: async (ms) => {
+          clock += ms;
+        },
+        pollMs: 1000,
+        appearMs: 5000,
+        timeoutMs: 20000,
+      });
+    const reruns = () => calls.filter((args) => args[0] === "run");
+    return { calls, wait, reruns };
+  }
+
+  it("waits until the run for the pushed SHA succeeds", async () => {
+    const { calls, wait, reruns } = fakeGh([
+      [],
+      [{ status: "queued" }],
+      [{ status: "completed", conclusion: "success" }],
+    ]);
+    assert.deepEqual(await wait(), { state: "success", runUrl: RUN });
+    assert.equal(reruns().length, 0);
+    assert.match(
+      calls[0]?.[1] ?? "",
+      /^repos\/o\/r\/actions\/runs\?head_sha=abc123&event=dynamic$/,
+    );
+  });
+
+  it("reruns a failed deploy once and reports the new attempt", async () => {
+    const { wait, reruns } = fakeGh([
+      [{ status: "completed", conclusion: "failure" }],
+      [{ status: "completed", conclusion: "failure" }],
+      [{ status: "in_progress", attempt: 2 }],
+      [{ status: "completed", conclusion: "success", attempt: 2 }],
+    ]);
+    assert.deepEqual(await wait(), { state: "success", runUrl: RUN });
+    assert.deepEqual(reruns(), [["run", "rerun", "7", "--repo", "o/r"]]);
+  });
+
+  it("reports failure when the rerun fails too", async () => {
+    const { wait, reruns } = fakeGh([
+      [{ status: "completed", conclusion: "failure" }],
+      [{ status: "completed", conclusion: "failure", attempt: 2 }],
+    ]);
+    assert.deepEqual(await wait(), { state: "failure", runUrl: RUN, conclusion: "failure" });
+    assert.equal(reruns().length, 1);
+  });
+
+  it("reports a missing run and a run that outlasts the timeout", async () => {
+    const missing = fakeGh([[{ status: "completed", conclusion: "success", path: "other.yml" }]]);
+    assert.deepEqual(await missing.wait(), { state: "missing" });
+    const stuck = fakeGh([[{ status: "in_progress" }]]);
+    assert.deepEqual(await stuck.wait(), { state: "running", runUrl: RUN });
   });
 });
 
