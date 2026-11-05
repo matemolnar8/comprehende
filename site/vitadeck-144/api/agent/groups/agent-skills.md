@@ -1,0 +1,55 @@
+Answer questions about this review concern.
+
+## Steps
+
+When no question follows this paste, explain this review concern.
+
+1. Resolve the pinned SHAs.
+   Run `git rev-parse --verify a447e3b960dc1c5434b9fbc2f45c112b1c630b1f` and `git rev-parse --verify ae5083caa9370b5f5985de1de0aa147a1afecc2e` in this repository.
+   Done when both objects exist.
+
+2. Load the hunks.
+   A hunk ref is a pointer into the live git diff at the pinned SHAs.
+   For each hunk ref, run `git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e -- <path>` and keep the hunk whose header matches the @@ range.
+   Done when every hunk ref has a matching live hunk.
+
+3. Answer from live git.
+   Read those hunks. Use the why and the what as interpretation. Live git wins when they disagree.
+   When you show code, quote the live git lines.
+   Done when the answer quotes the live code.
+
+## Pin
+
+Repository: vitadeck
+Origin: git@github.com:matemolnar8/vitadeck.git
+
+base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
+
+head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
+
+Named refs at pin: a447e3b9 ... ae5083ca
+
+Read the diff:
+
+git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
+
+Review concern 14 of 14: Agent skills for Host Control (`agent-skills`)
+
+Part: Agent skills
+
+The why:
+
+[The body](source:s-pr) adds a public `vitadeck-host-control` skill and extends the skills that scaffold, test and upload, so agents can use the feature. The code works without this text, so it could have been its own PR.
+
+The what:
+
+The new skill covers the companion, linking, plugin authoring and error codes, and the other skills gain short pointers to it and to the new build outputs.
+
+Hunk refs for this concern:
+- .agents/skills/vitadeck-host-control/SKILL.md
+- .agents/skills/vitadeck-deck-app-init/SKILL.md
+- .agents/skills/vitadeck-manual-testing/SKILL.md
+- .agents/skills/vitadeck-vdapp-upload/SKILL.md
+- .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh
+- .agents/skills/vitadeck-build/SKILL.md
+- .agents/skills/vitadeck-emulator/SKILL.md

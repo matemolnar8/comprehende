@@ -1,0 +1,1 @@
+{"path":"js/packages/sdk/cli/templates/host-plugin-only/.gitignore","ref":"ae5083caa9370b5f5985de1de0aa147a1afecc2e","side":"new","content":"node_modules/\ndist/\n.DS_Store\n","language":"plaintext"}

@@ -1,0 +1,1 @@
+{"path":"js/examples/host-control/src/vitadeck-env.d.ts","ref":"ae5083caa9370b5f5985de1de0aa147a1afecc2e","side":"new","lines":[{"sha":"959cfda2993dcd5b4c2341a58e6ebbb51e607ced","author":"Máté Molnár","timestamp":1793226900,"summary":"feat(examples): Host Control demo Deck App, docs, and agent-check","line":1,"text":"/// <reference types=\"@vitadeck/sdk/deck-app-env\" />"}]}

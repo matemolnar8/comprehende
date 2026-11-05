@@ -1,0 +1,1 @@
+{"path":"js/packages/host-companion/test/fixtures/greeting.d.cts","ref":"ae5083caa9370b5f5985de1de0aa147a1afecc2e","side":"new","content":"export declare function greeting(name: string): string;\n","language":"typescript"}

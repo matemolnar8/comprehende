@@ -1,0 +1,1 @@
+{"path":"src/platform/lan_address.h","ref":"ae5083caa9370b5f5985de1de0aa147a1afecc2e","side":"new","content":"#ifndef VD_LAN_ADDRESS_H\n#define VD_LAN_ADDRESS_H\n\n#include <stddef.h>\n\n// Writes this device's IPv4 address on the LAN, or 127.0.0.1 when it has none.\nvoid lan_address_detect(char *out, size_t out_size);\n\n#endif /* VD_LAN_ADDRESS_H */\n","language":"plaintext"}

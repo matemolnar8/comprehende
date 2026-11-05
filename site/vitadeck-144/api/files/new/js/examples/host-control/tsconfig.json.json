@@ -1,0 +1,1 @@
+{"path":"js/examples/host-control/tsconfig.json","ref":"ae5083caa9370b5f5985de1de0aa147a1afecc2e","side":"new","content":"{\n  \"extends\": \"@vitadeck/sdk/tsconfig\",\n  \"include\": [\"src\", \".vitadeck/**/*.d.ts\"]\n}\n","language":"json"}
