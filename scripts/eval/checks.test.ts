@@ -7,7 +7,7 @@ import { afterAll, describe, it } from "vite-plus/test";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 import { git } from "../../src/git/exec.ts";
 import { initEmptyRepo } from "../../src/test/init-repo.ts";
-import { proseLints, runDeterministicChecks } from "./checks.ts";
+import { proseLints, reviewWords, runDeterministicChecks } from "./checks.ts";
 
 const roots: string[] = [];
 afterAll(() => {
@@ -392,7 +392,7 @@ describe("eval deterministic checks", () => {
     assert.deepEqual(onHead.failures, []);
   });
 
-  it("lints summaries that run past one sentence or read as a path list", () => {
+  it("lints summaries that run past their sentence limit or read as a path list", () => {
     const document = doc({
       summary: "One. Two. Three sentences is one too many.",
       groups: [
@@ -408,7 +408,7 @@ describe("eval deterministic checks", () => {
           id: "docs",
           title: "Docs",
           why: "Docs.",
-          summary: "The README names the flag. The example shows it.",
+          summary: "One. Two. Three. Four. Five. Six.",
           suggestedOrder: 1,
           hunkRefs: [hunk("README.md")],
         },
@@ -417,7 +417,29 @@ describe("eval deterministic checks", () => {
     assert.deepEqual(proseLints(document), [
       "summary has 3 sentences",
       "group core summary names 4 paths",
-      "group docs summary has 2 sentences",
+      "group docs summary has 6 sentences",
     ]);
+  });
+
+  it("counts the words a review wrote, and not a copied comment body", () => {
+    const document = doc({
+      title: "Two words",
+      summary: "[Three](source:s1) words here.",
+      sources: [
+        { id: "s1", kind: "pr", label: "PR #1", gist: "Four words of gist." },
+        { id: "s2", kind: "pr-comment", label: "c", author: "a", body: "Not counted at all." },
+      ],
+      groups: [
+        {
+          id: "core",
+          title: "One",
+          summary: "Two words.",
+          fileNotes: { "a.ts": "Three more words." },
+          suggestedOrder: 0,
+          hunkRefs: [hunk("a.ts")],
+        },
+      ],
+    });
+    assert.equal(reviewWords(document), 2 + 3 + 4 + 1 + 2 + 3);
   });
 });

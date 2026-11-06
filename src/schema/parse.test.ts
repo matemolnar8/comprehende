@@ -728,16 +728,6 @@ describe("parseReviewDocument", () => {
         match: /size must be one of/,
       },
       {
-        name: "missing group why",
-        input: {
-          ...docBase,
-          groups: [
-            { id: "g1", title: "CLI", summary: "Adds a command.", suggestedOrder: 0, hunkRefs: [] },
-          ],
-        },
-        match: /groups\[0\]\.why must be a string/,
-      },
-      {
         name: "missing document title",
         input: { ...docBase, title: undefined, groups: [groupBase] },
         match: /title must be a string/,

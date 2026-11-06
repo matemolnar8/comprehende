@@ -94,7 +94,7 @@ export type ApiReview = {
   groups: {
     id: string;
     title: string;
-    why: string;
+    why?: string;
     summary: string;
     attention?: Attention;
     questions: Questions;

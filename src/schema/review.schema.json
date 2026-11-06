@@ -125,11 +125,11 @@
           "why": {
             "type": "string",
             "minLength": 1,
-            "description": "Generated why this group exists. From a source when one applies, or that it enables later groups in the same story."
+            "description": "Why this group exists, when a source states a reason the document why and this summary do not."
           },
           "summary": {
             "type": "string",
-            "description": "One sentence: what this group is."
+            "description": "One easy sentence: what this group does and how its hunks relate."
           },
           "attention": {
             "description": "The one judgment call a reviewer makes in this group. Most groups have none.",
@@ -252,7 +252,7 @@
             }
           },
           "fileNotes": {
-            "description": "One line per file, keyed by the git path of a file this group covers: what changed in that file. Not a repeat of summary.",
+            "description": "Keyed by the git path of a file this group covers: what changed in that file, past what the summary says. One per file in a group of two or more.",
             "type": "object",
             "propertyNames": {
               "type": "string",
@@ -300,7 +300,6 @@
         "required": [
           "id",
           "title",
-          "why",
           "summary",
           "suggestedOrder",
           "hunkRefs"
@@ -355,7 +354,7 @@
         "gist": {
           "type": "string",
           "minLength": 1,
-          "description": "One or two sentences, written by the skill, saying why this source matters."
+          "description": "A short phrase, written by the skill, saying why this source matters. Omit when title says it."
         },
         "part": {
           "type": "string",

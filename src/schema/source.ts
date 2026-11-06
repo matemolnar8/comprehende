@@ -125,7 +125,7 @@ export function groupIdForPinnedSource(
 export function groupSourceIds(group: ReviewDocument["groups"][number]): string[] {
   const named = group.sources ?? [];
   const cited = [
-    group.why,
+    group.why ?? "",
     group.summary,
     group.attention?.note ?? "",
     ...(group.questions ?? []),

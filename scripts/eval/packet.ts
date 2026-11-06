@@ -57,7 +57,7 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     if (group.dependsOn !== undefined && group.dependsOn.length > 0) {
       parts.push(`dependsOn: ${group.dependsOn.join(", ")}`);
     }
-    parts.push(`Why: ${group.why}`);
+    parts.push(`Why: ${group.why ?? "(omitted)"}`);
     parts.push(`Summary: ${group.summary}`);
     parts.push(
       group.attention === undefined

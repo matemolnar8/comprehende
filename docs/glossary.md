@@ -10,7 +10,7 @@
 
 **The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
 
-**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any existing human or agent generated that's related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on every group. A group with no source of its own may exist to enable later groups. Do not invent a motive from the patch.
+**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any existing human or agent generated that's related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on a group only when a source states a reason for that group that the whole-change why and the group's what do not give. Do not invent a motive from the patch.
 
 **The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
 
@@ -24,7 +24,7 @@
 
 **Note.** One or two sentences pinned to one line of a hunk the group covers. It says what the code alone does not say. At most three per group, lettered A, B, C in the UI. A judgment call is an attention, not a note.
 
-**File note.** One line on one file of a group: what changed in that file, past what the group summary says. Keyed by the file's head path. A generated or mechanical file gets a short one. `validate` fails a note on a path the group does not cover.
+**File note.** One line on one file of a group of two or more files: what changed in that file, past what the group summary says. A generated or mechanical file gets a short one. Keyed by the file's head path. `validate` fails a note on a path the group does not cover.
 
 **Things to check.** Schema `lookFor`. Document-level source verdicts: each source item done differently, not done, or not true at head, each manual step a source says the change needs, and each instruction a source gives a reviewer. Cite the source. Do not store a pass/fail. The skill writes the comparison; the field is only the place for it.
 

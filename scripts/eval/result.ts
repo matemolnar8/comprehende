@@ -82,6 +82,7 @@ export function formatCaseLine(result: CaseResult): string {
     if (checks.lints.length > 0) {
       bits.push(`lint ${checks.lints.length}`);
     }
+    bits.push(`words ${checks.words}`);
   }
   if (result.rubric !== undefined) {
     bits.push(...rubricBits(result.rubric));
@@ -127,6 +128,11 @@ export function formatBaselineDelta(
   const prevFail = previous.checks?.failures.length ?? 0;
   if (curFail !== prevFail) {
     bits.push(`checks ${prevFail}->${curFail}`);
+  }
+  const curWords = current.checks?.words;
+  const prevWords = previous.checks?.words;
+  if (curWords !== undefined && prevWords !== undefined && curWords !== prevWords) {
+    bits.push(`words ${prevWords}->${curWords}`);
   }
   if (current.rubric !== undefined && previous.rubric !== undefined) {
     const cur = rubricCounts(current.rubric.output);
@@ -221,6 +227,7 @@ export function formatRunTotals(summary: RunSummary): string {
   const graderTools = sum(summary.cases, (item) => item.rubric?.run.toolCalls.length ?? 0);
   const bits = [
     "total",
+    `words ${sum(summary.cases, (item) => item.checks?.words ?? 0)}`,
     formatTokens(producerTokens + graderTokens),
     `producer ${formatTokens(producerTokens)}`,
     ...efficiencyBits(producerTools, producerInput, producerCacheRead, producerOutput),
