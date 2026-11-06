@@ -33,24 +33,17 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 07 of 14: Shell toggle and Host Control screen (`shell`)
+Review concern 10 of 26: Shell link row and screen (`shell`)
 
 Part: Host Control
 
-The why:
-
-[#111](source:s-111) asks for a Host Control screen that lists links. An always-on listener also needs an off switch, and [an empty Shell must not put the first Cross on it](source:k-empty-shell).
-
 The what:
 
-Home gains **Upload and link** and **Host Control** rows after the packages, and `home_first_row` and `keep_entry_focus` [hold focus on the right row](source:k-keep-focus) as packages arrive.
-
-Questions:
-- Why does `toggle_listener` keep Off only in memory, so the next launch starts listening again?
+[PR #144](source:s1) adds an Upload and link row and a Host Control screen to the Shell. Commit subjects also name Home focus fixes here; those hunks were not fetched.
 
 Depends on:
-- 05 One always-on LAN Listener replaces the upload server (`lan-listener`)
-- 04 Native link store and getter (`link-store`)
+- 07 LAN Listener (`listener`)
+- 09 Linked hosts for JS (`js-getter`)
 
 Hunk refs for this concern:
 - src/shell/shell.c

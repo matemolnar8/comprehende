@@ -33,20 +33,13 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 10 of 14: Host Control demo Deck App (`demo`)
+Review concern 24 of 26: Host Control demo app (`demo`)
 
-Part: Host Control
-
-The why:
-
-[The body](source:s-pr) uses this Deck App for its manual passes: every linked computer with live CPU, and capabilities, gauges and an Echo round trip for the selected one.
+Part: Demo and docs
 
 The what:
 
-`App.tsx` reads `linkedHosts`, polls `systemStats` for each host and shows `HostDetails` for the selected one, with the other files making it a buildable example.
-
-Depends on:
-- 01 Wire contract, plugin types and SDK client (`sdk-contract`)
+A demo Deck App lists linked computers with polled CPU, and shows the selected one's gauges and details.
 
 Hunk refs for this concern:
 - js/examples/host-control/README.md

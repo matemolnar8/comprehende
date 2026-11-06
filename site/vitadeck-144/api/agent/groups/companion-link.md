@@ -33,26 +33,17 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 06 of 14: Companion `link` and relink on start (`companion-link`)
+Review concern 14 of 26: Companion link to a Vita (`companion-link`)
 
 Part: Host Control
 
-The why:
-
-[The body](source:s-pr) wants a new computer IP or port to reach the Vita without running `link` again. [A later commit](source:k-relink-queue) runs attempts one at a time because each one rewrites the config.
-
 The what:
 
-`start` in `cli.ts` passes every saved Vita to `relink`, which calls `linkVita` from `link.ts` through one queue and retries every 30 s while a Vita does not answer.
-
-Questions:
-- Why does the relink loop target port 8787 when `lan_listener_start` can fall forward as far as 8796?
+`linkVita` parses the Vita's address and posts the companion's link to its `/link` route.
 
 Depends on:
-- 02 Companion command server, peer check and built-ins (`companion-server`)
-- 05 One always-on LAN Listener replaces the upload server (`lan-listener`)
+- 11 Companion HTTP server (`companion-server`)
 
 Hunk refs for this concern:
 - js/packages/host-companion/src/link.ts
-- js/packages/host-companion/src/cli.ts
 - js/packages/host-companion/test/link.test.ts

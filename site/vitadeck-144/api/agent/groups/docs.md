@@ -33,17 +33,13 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 11 of 14: ADR, glossary and author docs (`docs`)
+Review concern 25 of 26: ADR and project docs (`docs`)
 
-Part: Host Control
-
-The why:
-
-[The body](source:s-pr) rewrites ADR 0004, `CONTEXT.md`, `AGENTS.md` and the READMEs in place, with new terms such as **Host Control Plugin** and **LAN Listener**.
+Part: Demo and docs
 
 The what:
 
-These files carry the design decisions and author-facing commands of the groups above; ADR 0004 is the one that records the always-on listener and the deferred credentials.
+The ADR, `CONTEXT.md`, `AGENTS.md` and the READMEs describe the rewritten design, per [PR #144](source:s1).
 
 Hunk refs for this concern:
 - docs/adr/0004-host-control-sliced-delivery.md
@@ -51,5 +47,4 @@ Hunk refs for this concern:
 - AGENTS.md
 - README.md
 - js/examples/demo/README.md
-- js/packages/host-companion/README.md
 - js/packages/sdk/README.md
