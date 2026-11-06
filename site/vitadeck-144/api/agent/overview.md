@@ -68,193 +68,269 @@ Commits:
 - 8d3b93f2 feat(sdk): Host Control wire contract, plugins, and client
 
 Sources:
-- pr PR #144 Adds Host Control end to end, then plugins, standalone plugins, events, an always-on LAN Listener and relink. Lists its deviations from the issues.
+- pr PR #144
   https://github.com/matemolnar8/vitadeck/pull/144
-- ticket #109 JSON wire contract, typed registry, a client that never rejects, shared fixtures.
+- ticket #109
   https://github.com/matemolnar8/vitadeck/issues/109
-- ticket #110 `start` and `link`, a port that never falls forward, a peer check once linked, no computer-acting commands.
+- ticket #110
   https://github.com/matemolnar8/vitadeck/issues/110
-- ticket #111 A link listener that runs only on the Host Control screen, a persisted link store, shared HTTP parsing, a no-confirm forget.
+- ticket #111
   https://github.com/matemolnar8/vitadeck/issues/111
-- pr PR #145 Built-in plugins first, a `.vdplugin` package for a Deck App's own plugin, and two CLIs, one per machine role. Merged into this branch.
+- pr PR #145
   https://github.com/matemolnar8/vitadeck/pull/145
 - pr-comment chatgpt-codex-connector on PR #144
   https://github.com/matemolnar8/vitadeck/pull/144#discussion_r4406953125
 - pr-comment matemolnar8 on PR #144
   https://github.com/matemolnar8/vitadeck/pull/144#discussion_r4406956973
-- pr-comment cursor on PR #144
-  https://github.com/matemolnar8/vitadeck/pull/144#pullrequestreview-5721580682
-- pr-comment cursor on PR #144 (Bugbot)
-  https://github.com/matemolnar8/vitadeck/pull/144#issuecomment-6539910273
-- commit fix(shell): an empty Shell focuses Host Control so Cross keeps listening
-- commit fix(shell): an install keeps Home focus on the entry row it was on
-- commit fix(host-companion): relink attempts run one at a time and re-read the config
-- commit fix(host-control): a broken plugin build keeps the last good package
-- commit fix(sdk): standalone plugins take the SDK as a peer dependency
-- commit fix(host-companion): start plugin lifecycles after binding the port
 
 The title:
 
-Let Deck Apps call linked computers through built-in and custom plugins
+feat(host-control): let Deck Apps call linked computers through built-in and custom plugins
 
 The why:
 
-[A Deck App had no way to reach the computer next to it.](source:s-pr)
+A Deck App had no way to reach the computer next to it, as [PR #144](source:s1) puts it.
 
 The what (very large):
 
-Adds Host Control: a typed SDK client and plugin contract, the `vitadeck-host-companion` CLI, and a native LAN Listener that replaces the upload server and stores links. Two more stories ship with it: long-polling host events with fetch cancel, and new agent skill text.
+Host Control lets a Deck App call typed commands on a linked computer through built-in and custom plugins, with events, a demo and docs.
 
 Things to check:
-- [#111](source:s-111) asks for a separate link listener on port 8798 that runs only while the Host Control screen is open. Head has one always-on listener on 8787 for uploads and links. [The body](source:s-pr) gives the reason: setup felt clunky after testing.
-- [#111](source:s-111) asks for `nativeGetHostControlUrl(): string` and one stored link. Head exposes `nativeGetHostControlLinks` and keeps several links in `host-control-links.json`. [The body](source:s-pr) lists this as a deviation.
-- [#109](source:s-109) keeps `defineHostCommands` internal because the companion is VitaDeck-owned, and it sends no `plugin` field. Head lets authors define plugins with `defineHostPlugin`, and the wire request gains `plugin`. [The body](source:s-pr) and [#145](source:s-145) give the reason.
-- [#110](source:s-110) has the companion run from source through tsx and store one `vita`. Head bundles it with a `vitadeck-host-companion` bin and stores a `vitas` list. [#145](source:s-145) says the pnpm-only CLI was clunky for users, and [the body](source:s-pr) lists several links as a deviation.
-- [The body](source:s-pr) says credentials are deferred, "so only read-only built-ins exist". The same body lists `core.notify`, which sends a notice to every watching Deck App, and `server.ts` runs it for any allowed peer. It writes to the companion's event log and does not act on the computer.
-- [The body](source:s-pr) says `watchHostEvents` means no events "fall between two waits". It also says the companion keeps only 100 events per plugin, and its ledger declines exact restart detection. A gap past 100 events, or a missed restart, cannot be replayed.
-- [The body](source:s-pr) opens its review section with "Three review loops ran, one per request". Its table lists six: Host Control, Plugin UX, Standalone plugins, Events, LAN Listener and Relink.
-- [The body's Cursor summary](source:s-pr) says "Reviewed by Cursor Bugbot for commit ae5083ca". All 17 of Cursor's conversation comments [say Bugbot could not run](source:c-bugbot) because of a usage limit. The summary is not evidence of a Bugbot review.
-- [Cursor's approval agent](source:c-cursor) says human review is needed and no reviewers were assigned. All 19 GitHub reviews have the state COMMENTED: 17 from Cursor, one from Codex and one author reply. The PR records no GitHub approval, and the review table in the body lists only AI reviewers.
+- [#109](source:s2) asks for `createHostClient({ url, transport, timeoutMs })`. At head it takes the plugin first, then options with `hostId`, `url`, `transport` and `timeoutMs`. [PR #144](source:s1) says `createHostClient(plugin, { hostId })` supports several machines.
+- [#109](source:s2) asks for flat commands behind `defineHostCommands`, and `HostCapabilities.commands` as a `string[]`. At head commands sit in plugins that `defineHostPlugin` builds, the wire request carries `plugin`, and capabilities list plugins. [PR #144](source:s1) lists this as a deviation.
+- [#111](source:s4) asks for `src/host_control/listener.c` on port 8798, falling forward through 10 ports. At head `src/net/lan_listener.c` binds 8787 and falls forward through 8796, as [PR #144](source:s1) says.
+- [#111](source:s4) says the listener's only route is `POST /link`. At head the same listener also routes `POST /upload` and serves the upload page at `GET /`, since [PR #144](source:s1) shares it with Runtime Upload.
+- [#111](source:s4) starts the listener when the Host Control screen opens and stops it on a successful link, with Runtime Upload untouched. [PR #144](source:s1) says it starts at boot with a Shell toggle and is shared with Runtime Upload.
+- [#111](source:s4) handles connections inline with a 2 s receive timeout. At head `accept_thread` starts a handler thread per connection, with a 15 s receive timeout.
+- [#111](source:s4) keeps one current link in `host-control-link.json` and deletes that file on forget. At head `host-control-links.json` holds a newest-first list, and the file goes only when the last link is forgotten. [PR #144](source:s1) says VitaDeck keeps several links.
+- [#109](source:s2) and [#111](source:s4) name `nativeGetHostControlUrl()`, which `host` reads on every call. At head the getter is `nativeGetHostControlLinks()`, a JSON array, and `host` calls use its first entry.
+- [#109](source:s2) puts the SDK tests in `src/host-control/*.test.ts`. At head one file, `js/packages/sdk/test/host-control.test.ts`, holds them.
 
 ## Review concerns
 
-### 01 Wire contract, plugin types and SDK client (`sdk-contract`)
+### 01 SDK plugin contract (`contract`)
 
-`protocol.ts` and `plugin.ts` define what `client.ts` sends, and the fixtures in `tests/fixtures/host-control/` pin those bytes for the SDK, companion and C tests.
+The SDK's wire types and plugin registry, which Deck Apps import and the companion implements.
 
-Attention (contract):
-`createHostClient(plugin)` without `hostId` calls `linkedHosts()[0]`, read at each call. Link computer A, then B, and every default client moves to B on its next call, with no signal to the Deck App. A relink edits in place (`link.c:199`) and does not reorder, so decide whether "most recently linked" is a promise authors can rely on.
+[groups/contract.md](groups/contract.md)
 
-[groups/sdk-contract.md](groups/sdk-contract.md)
+### 02 Shared contract fixtures (`fixtures`)
 
-### 02 Companion command server, peer check and built-ins (`companion-server`)
-
-`server.ts` answers an unlinked peer with [a 403 and discards its body unbuffered](source:c-mate), then checks the request and the plugin's payload guard before it runs a command from `core.ts` or `system-stats.ts`.
-
-Attention (risk):
-`isAllowed` returns true for every peer when `vitas` is empty. A companion that was never linked answers the whole LAN on `0.0.0.0`, and so does one whose last Vita was forgotten, because relink empties `vitas`. Installed plugins are then callable too, so decide whether an empty list should mean open or loopback-only.
+Ten request and reply pairs that the SDK, the companion and the C link harness replay, per [#109](source:s2).
 
 Depends on:
-- 01 Wire contract, plugin types and SDK client (`sdk-contract`)
+- 01 SDK plugin contract (`contract`)
 
-[groups/companion-server.md](groups/companion-server.md)
+[groups/fixtures.md](groups/fixtures.md)
 
-### 03 Shared JSON and file-replace helpers (`native-foundation`)
+### 03 SDK host client (`client`)
 
-`deck_app_storage.c` and `package_manifest.c` give up about 70 lines as `json.c` and `util.c` gain about 120, so the existing callers and `link.c` share one set of helpers.
-
-[groups/native-foundation.md](groups/native-foundation.md)
-
-### 04 Native link store and getter (`link-store`)
-
-`link.c` parses and persists links in `host-control-links.json`, and `nativeGetHostControlLinks` in `src/jslib/host_control.c` hands the same list to JS as a JSON array.
+`createHostClient` posts each command to a linked computer with a 5 s timeout, never rejects, and defaults to the first linked host.
 
 Questions:
-- Why does `host_control_links_save` silently evict the oldest link instead of refusing a new link when the store is full?
+- Why does `createHostClient` take the plugin as its first argument, not options alone?
 
 Depends on:
-- 03 Shared JSON and file-replace helpers (`native-foundation`)
+- 01 SDK plugin contract (`contract`)
+
+[groups/client.md](groups/client.md)
+
+### 04 JSON and file helpers (`helpers`)
+
+Adds the JSON parser and file-replace helpers that the link store calls, and trims 74 lines from two storage files.
+
+[groups/helpers.md](groups/helpers.md)
+
+### 05 Link store (`link-store`)
+
+Parses `POST /link` bodies and keeps a newest-first list of links on disk. A relink for an unknown computer answers 404 `unknown_link`.
+
+Questions:
+- Why keep a list of links, not the one current link #111 asked for?
+
+Depends on:
+- 04 JSON and file helpers (`helpers`)
 
 [groups/link-store.md](groups/link-store.md)
 
-### 05 One always-on LAN Listener replaces the upload server (`lan-listener`)
+### 06 HTTP parser moves to net (`http`)
 
-`lan_listener.c` takes over the upload routes from the deleted `http_server.c` and adds `POST /link`, using request parsing moved to `net/http.c` and an address from `src/platform/lan_address_*`.
+Runtime Upload's request parsing and reply helpers move from `src/upload/` into `src/net/http.c`, which the LAN Listener now calls.
+
+[groups/http.md](groups/http.md)
+
+### 07 LAN Listener (`listener`)
+
+One listener on 8787 to 8796 serves Runtime Upload, the link route and the upload page. The `/link` route saves a link with no credential check.
 
 Attention (risk):
-[The body](source:s-pr) accepts that anyone on the LAN can upload a Deck App or add a link whenever VitaDeck runs. `POST /link` with any valid `id` and `url` puts that link first, so a default `createHostClient` then sends its commands there. Turning the listener off lasts only until the next launch, so decide whether always-on without credentials is the right default on a shared network.
+The listener takes `POST /link` from any LAN peer with no credential check, and the newest link becomes the default host, so Deck App commands, payloads included, go to the URL that peer named. [PR #144](source:s1) names this until credentials exist.
 
 Depends on:
-- 04 Native link store and getter (`link-store`)
+- 06 HTTP parser moves to net (`http`)
+- 05 Link store (`link-store`)
 
-[groups/lan-listener.md](groups/lan-listener.md)
+[groups/listener.md](groups/listener.md)
 
-### 06 Companion `link` and relink on start (`companion-link`)
+### 08 LAN address per platform (`platform`)
 
-`start` in `cli.ts` passes every saved Vita to `relink`, which calls `linkVita` from `link.ts` through one queue and retries every 30 s while a Vita does not answer.
-
-Questions:
-- Why does the relink loop target port 8787 when `lan_listener_start` can fall forward as far as 8796?
+Each platform detects the address the Shell shows for the listener, and the build lists the new sources.
 
 Depends on:
-- 02 Companion command server, peer check and built-ins (`companion-server`)
-- 05 One always-on LAN Listener replaces the upload server (`lan-listener`)
+- 07 LAN Listener (`listener`)
 
-[groups/companion-link.md](groups/companion-link.md)
+[groups/platform.md](groups/platform.md)
 
-### 07 Shell toggle and Host Control screen (`shell`)
+### 09 Linked hosts for JS (`js-getter`)
 
-Home gains **Upload and link** and **Host Control** rows after the packages, and `home_first_row` and `keep_entry_focus` [hold focus on the right row](source:k-keep-focus) as packages arrive.
-
-Questions:
-- Why does `toggle_listener` keep Off only in memory, so the next launch starts listening again?
+The JS runtime gets `nativeGetHostControlLinks()`, which returns the stored links as a JSON array.
 
 Depends on:
-- 05 One always-on LAN Listener replaces the upload server (`lan-listener`)
-- 04 Native link store and getter (`link-store`)
+- 05 Link store (`link-store`)
+
+[groups/js-getter.md](groups/js-getter.md)
+
+### 10 Shell link row and screen (`shell`)
+
+[PR #144](source:s1) adds an Upload and link row and a Host Control screen to the Shell. Commit subjects also name Home focus fixes here; those hunks were not fetched.
+
+Depends on:
+- 07 LAN Listener (`listener`)
+- 09 Linked hosts for JS (`js-getter`)
 
 [groups/shell.md](groups/shell.md)
 
-### 08 Companion loads, installs and hot-reloads `.vdplugin` packages (`plugin-loading`)
+### 11 Companion HTTP server (`companion-server`)
 
-`install` in `cli.ts` stages a package with `extractHostPluginArchive`, proves it with `loadHostPluginPackage` and renames it into place, and `start` reloads it through `setPlugins` when files change.
+Serves `/command` with a peer check, a 64 KiB body cap, and one log line per request.
 
 Attention (risk):
-A package runs with the user's permissions, and nothing limits what its commands do. [#145](source:s-145) holds back computer-acting built-ins for the credentials decision, yet an installed custom plugin can act on the computer for any allowed peer today. Decide whether the warning in the `install` usage text is enough until credentials exist.
-
-Questions:
-- Why does `install` import the package's entry to learn its plugin id, when the manifest could carry that id?
+With no linked Vita, every peer passes the check. Once one is linked, only its IP, loopback and this computer's own addresses do. [#110](source:s3) says IPs can be spoofed, so this is no credential.
 
 Depends on:
-- 02 Companion command server, peer check and built-ins (`companion-server`)
+- 01 SDK plugin contract (`contract`)
 
-[groups/plugin-loading.md](groups/plugin-loading.md)
+[groups/companion-server.md](groups/companion-server.md)
 
-### 09 SDK CLI builds and scaffolds host plugins (`sdk-plugin-build`)
+### 12 Companion plugin loader (`companion-plugins`)
 
-`resolveHostPlugin` and `buildHostPlugin` in `cli.ts` turn `hostPlugin` in `vitadeck.config.json` into the `.vdplugin` package and zip the companion loads, and the templates scaffold that config.
-
-Depends on:
-- 01 Wire contract, plugin types and SDK client (`sdk-contract`)
-- 08 Companion loads, installs and hot-reloads `.vdplugin` packages (`plugin-loading`)
-
-[groups/sdk-plugin-build.md](groups/sdk-plugin-build.md)
-
-### 10 Host Control demo Deck App (`demo`)
-
-`App.tsx` reads `linkedHosts`, polls `systemStats` for each host and shows `HostDetails` for the selected one, with the other files making it a buildable example.
+Loads installed and `--plugin` packages into the companion, and its tests build a sample package to load.
 
 Depends on:
-- 01 Wire contract, plugin types and SDK client (`sdk-contract`)
+- 01 SDK plugin contract (`contract`)
 
-[groups/demo.md](groups/demo.md)
+[groups/companion-plugins.md](groups/companion-plugins.md)
 
-### 11 ADR, glossary and author docs (`docs`)
+### 13 Companion built-in plugins (`companion-builtins`)
 
-These files carry the design decisions and author-facing commands of the groups above; ADR 0004 is the one that records the always-on listener and the deferred credentials.
-
-[groups/docs.md](groups/docs.md)
-
-### 12 Host events by long-polling (`events`)
-
-A plugin's `start(emit)` lifecycle feeds `events.ts`, `core.events` holds a request on that log for up to 25 s, and `watchHostEvents` keeps one such request open.
-
-[groups/events.md](groups/events.md)
-
-### 13 Native fetch cancels when a Deck App stops (`fetch-cancel`)
-
-`fetch_shutdown` marks every pending request cancelled, and the new curl progress callback in `fetch.c` aborts each transfer, which `js_limits_harness` proves with a server that never answers.
-
-Attention (contract):
-This applies to every fetch of every Deck App, not only event waits. A Deck App that sends a `POST` and then stops used to wait in `fetch_shutdown` until the transfer finished. Now that transfer aborts at curl's next progress call and the request may not complete, so decide whether a reload may drop in-flight writes.
+The `core` plugin answers capabilities, echo, events and notify, and `systemStats` samples CPU and memory.
 
 Depends on:
-- 12 Host events by long-polling (`events`)
+- 01 SDK plugin contract (`contract`)
+
+[groups/companion-builtins.md](groups/companion-builtins.md)
+
+### 14 Companion link to a Vita (`companion-link`)
+
+`linkVita` parses the Vita's address and posts the companion's link to its `/link` route.
+
+Depends on:
+- 11 Companion HTTP server (`companion-server`)
+
+[groups/companion-link.md](groups/companion-link.md)
+
+### 15 Companion CLI (`companion-cli`)
+
+Runs `start`, `link`, `install`, `remove` and `notify`. On start it relinks each linked Vita, one attempt at a time.
+
+Attention (risk):
+`install` loads a package's code into the running companion, so its commands run with your permissions. Before the rename, `install` adds only the load and the built-in id check.
+
+Depends on:
+- 11 Companion HTTP server (`companion-server`)
+- 14 Companion link to a Vita (`companion-link`)
+- 12 Companion plugin loader (`companion-plugins`)
+- 13 Companion built-in plugins (`companion-builtins`)
+
+[groups/companion-cli.md](groups/companion-cli.md)
+
+### 16 Companion config and package (`companion-config`)
+
+A private, dependency-free bundle with its config file and README, per [PR #144](source:s1).
+
+Depends on:
+- 15 Companion CLI (`companion-cli`)
+
+[groups/companion-config.md](groups/companion-config.md)
+
+### 17 Plugin package build (`sdk-package`)
+
+The SDK's build writes a `.vdplugin` folder and zip from `hostPlugin`, and `create` takes both host-plugin flags.
+
+Depends on:
+- 01 SDK plugin contract (`contract`)
+
+[groups/sdk-package.md](groups/sdk-package.md)
+
+### 18 Deck App host scaffold (`app-scaffold`)
+
+`create --host-plugin` adds a `host/` folder with a plugin, its companion implementation and a Deck App screen.
+
+Depends on:
+- 17 Plugin package build (`sdk-package`)
+
+[groups/app-scaffold.md](groups/app-scaffold.md)
+
+### 19 Standalone plugin scaffold (`standalone-scaffold`)
+
+`create --host-plugin-only` makes a project with no Deck App entry, whose registry any Deck App can import.
+
+Depends on:
+- 17 Plugin package build (`sdk-package`)
+
+[groups/standalone-scaffold.md](groups/standalone-scaffold.md)
+
+### 20 Checks and scripts (`checks`)
+
+Adds the Host Control tests to the root scripts and `scripts/agent-check.sh`, per [#109](source:s2).
+
+[groups/checks.md](groups/checks.md)
+
+### 21 Companion event log (`events-log`)
+
+Keeps each plugin's recent events, and `core.events` answers from the log or holds the request until the next event.
+
+[groups/events-log.md](groups/events-log.md)
+
+### 22 SDK event watch (`events-watch`)
+
+`watchHostEvents` keeps one `events` wait open and retries after 5 s, or 30 s after a timeout. A throw from the callback stops the watch and fails the Deck App.
+
+Depends on:
+- 21 Companion event log (`events-log`)
+
+[groups/events-watch.md](groups/events-watch.md)
+
+### 23 Native fetch cancels on stop (`fetch-cancel`)
+
+Native `fetch` cancels pending requests when a Deck App stops, so a held event wait never stalls a reload, per [PR #144](source:s1).
 
 [groups/fetch-cancel.md](groups/fetch-cancel.md)
 
-### 14 Agent skills for Host Control (`agent-skills`)
+### 24 Host Control demo app (`demo`)
 
-The new skill covers the companion, linking, plugin authoring and error codes, and the other skills gain short pointers to it and to the new build outputs.
+A demo Deck App lists linked computers with polled CPU, and shows the selected one's gauges and details.
 
-[groups/agent-skills.md](groups/agent-skills.md)
+[groups/demo.md](groups/demo.md)
+
+### 25 ADR and project docs (`docs`)
+
+The ADR, `CONTEXT.md`, `AGENTS.md` and the READMEs describe the rewritten design, per [PR #144](source:s1).
+
+[groups/docs.md](groups/docs.md)
+
+### 26 Agent skills (`skills`)
+
+A new `vitadeck-host-control` skill, with Host Control notes in the other skills, per [PR #144](source:s1).
+
+[groups/skills.md](groups/skills.md)
