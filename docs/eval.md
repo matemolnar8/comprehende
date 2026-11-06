@@ -10,6 +10,12 @@ Only `validate` and the `case.json` expects (why, parts, groups, size, source ki
 
 The grader does not judge grouping or prose quality. Grouping is checked by `together` and `apart`. Prose is linted: em dashes, sentences over 25 words, summaries with more sentences than the skill allows, and summaries that read as a path list. Lints print on the case line and in the report and do not fail the case.
 
+The case line and the run total print `words`: the prose a review writes for the reader. Titles, summaries, whys, `lookFor`, attentions, questions, captions, notes, file notes, and source gists count. A copied PR comment body does not. Each run also prints `words a->b` per case under `--baseline`.
+
+## Comparing two skills
+
+One run of a skill does not measure it. The same skill scored `must` 30 and 39 in two trials, and CI runs scored higher than local runs of the same skill. Run both skills side by side from the same machine, with `--repeat 3` and `--skill <dir>` for the old one, and compare totals across the trials. A fact a review loses to a tight length costs `must`, so read the lost items before you tighten the skill's usual lengths.
+
 `--rescore <dir>` reruns the checks and the grader on the reviews saved in `eval/runs/<stamp>`. Use it to try a rubric or a grader prompt without paying for new producer runs. Add `--no-graders` to rerun only the checks, with no API key.
 
 ## Run times
@@ -43,7 +49,7 @@ The eval workflow uploads `eval/runs` as the artifact `eval-run`. `gh run downlo
 
 ## Known flaky expects
 
-`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
+`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. `cigster-99` `apart` and `comprehende-59` `together` also fail now and then, and about 2 to 3 percent of case runs fail some expect. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
 
 ## Muse setup
 

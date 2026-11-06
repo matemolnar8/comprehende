@@ -3,6 +3,7 @@ import { describe, it } from "vite-plus/test";
 import {
   emptyRubricOutput,
   claimBullets,
+  parseJsonReply,
   parseRubricReply,
   rubricCounts,
   rubricPrompt,
@@ -167,6 +168,7 @@ describe("eval result line", () => {
       checks: {
         failures: [],
         lints: [],
+        words: 0,
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -294,6 +296,7 @@ describe("eval result line", () => {
       checks: {
         failures: [],
         lints: [],
+        words: 0,
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -320,6 +323,7 @@ describe("eval result line", () => {
       checks: {
         failures: [],
         lints: ["summary has a 32-word sentence"],
+        words: 0,
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -344,6 +348,7 @@ describe("eval result line", () => {
       checks: {
         failures: [{ check: "why", message: "expected why absent, got present" }],
         lints: [],
+        words: 0,
         dirtyWorktree: false,
         why: "present",
         parts: 2,
@@ -368,6 +373,7 @@ describe("eval result line", () => {
       checks: {
         failures: [],
         lints: [],
+        words: 0,
         dirtyWorktree: false,
         why: "present",
         parts: 1,
@@ -381,5 +387,11 @@ describe("eval result line", () => {
     };
     assert.equal(caseFailed(result), false);
     assert.match(formatCaseLine(result), /artifact FAIL/);
+  });
+});
+
+describe("parseJsonReply", () => {
+  it("takes the last object when the model repeats its answer", () => {
+    assert.deepEqual(parseJsonReply('{"a":"}{"}{"a":2}'), { a: 2 });
   });
 });

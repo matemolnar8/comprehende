@@ -125,7 +125,7 @@ export function parseRubricReply(
 }
 
 export function parseJsonReply(text: string): unknown {
-  const candidates = [text.trim(), fencedJson(text), braceSlice(text)].filter(
+  const candidates = [text.trim(), fencedJson(text), braceSlice(text), lastObject(text)].filter(
     (item) => item !== "",
   );
   const errors: string[] = [];
@@ -246,6 +246,37 @@ export async function runRubricGrader(opts: {
 function fencedJson(text: string): string {
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/u);
   return match?.[1]?.trim() ?? "";
+}
+
+/** The model sometimes repeats its answer, as `{...}{...}`. The last object is its final word. */
+function lastObject(text: string): string {
+  let depth = 0;
+  let inString = false;
+  let start = -1;
+  let last = "";
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === "\\") {
+        i += 1;
+      } else if (ch === '"') {
+        inString = false;
+      }
+    } else if (ch === '"') {
+      inString = true;
+    } else if (ch === "{") {
+      if (depth === 0) {
+        start = i;
+      }
+      depth += 1;
+    } else if (ch === "}" && depth > 0) {
+      depth -= 1;
+      if (depth === 0) {
+        last = text.slice(start, i + 1);
+      }
+    }
+  }
+  return last;
 }
 
 function braceSlice(text: string): string {

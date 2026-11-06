@@ -80,7 +80,7 @@ const sourceShape = z.strictObject(
     url: nonemptyString("Omit for transcripts.").optional(),
     title: nonemptyString().optional(),
     gist: nonemptyString(
-      "One or two sentences, written by the skill, saying why this source matters.",
+      "A short phrase, written by the skill, saying why this source matters. Omit when title says it.",
     ).optional(),
     part: nonemptyString(
       "Short name of the independent story this source belongs to. Same name as the groups in that story.",
@@ -204,9 +204,9 @@ const groupSchema = z.strictObject(
     id: nonemptyString(),
     title: nonemptyString(),
     why: nonemptyString(
-      "Generated why this group exists. From a source when one applies, or that it enables later groups in the same story.",
-    ),
-    summary: anyString("One sentence: what this group is."),
+      "Why this group exists, when a source states a reason the document why and this summary do not.",
+    ).optional(),
+    summary: anyString("One easy sentence: what this group does and how its hunks relate."),
     attention: attentionSchema.optional().meta({
       description: "The one judgment call a reviewer makes in this group. Most groups have none.",
     }),
@@ -227,7 +227,7 @@ const groupSchema = z.strictObject(
       .optional()
       .meta({
         description:
-          "One line per file, keyed by the git path of a file this group covers: what changed in that file. Not a repeat of summary.",
+          "Keyed by the git path of a file this group covers: what changed in that file, past what the summary says. One per file in a group of two or more.",
       }),
     dependsOn: stringList("Ids of earlier groups this one depends on. Same story only."),
     part: nonemptyString(

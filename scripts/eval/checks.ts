@@ -20,6 +20,8 @@ export type CheckFailure = {
 export type DeterministicReport = {
   failures: CheckFailure[];
   lints: string[];
+  /** Words the review wrote for the reader. Copied PR comment bodies do not count. */
+  words: number;
   dirtyWorktree: boolean;
   why: "present" | "absent";
   parts: number;
@@ -139,6 +141,7 @@ export async function runDeterministicChecks(opts: {
   return {
     failures,
     lints: proseLints(opts.document),
+    words: reviewWords(opts.document),
     dirtyWorktree,
     why,
     parts,
@@ -288,6 +291,10 @@ async function commitSourceFailures(
   return failures;
 }
 
+export function reviewWords(document: ReviewDocument): number {
+  return documentFields(document).reduce((total, field) => total + wordCount(field.text), 0);
+}
+
 export function proseLints(document: ReviewDocument): string[] {
   const lints: string[] = [];
   for (const field of documentFields(document)) {
@@ -314,7 +321,7 @@ export function proseLints(document: ReviewDocument): string[] {
   return lints;
 }
 
-/** The skill asks for one sentence per group summary and one or two for the document. */
+/** The skill asks for at most two sentences per group summary and two for the document. */
 function summaryFields(
   document: ReviewDocument,
 ): { where: string; text: string; maxSentences: number }[] {
@@ -323,7 +330,7 @@ function summaryFields(
     ...document.groups.map((group) => ({
       where: `group ${group.id} summary`,
       text: group.summary,
-      maxSentences: 1,
+      maxSentences: 2,
     })),
   ];
 }
@@ -339,12 +346,19 @@ function documentFields(document: ReviewDocument): { where: string; text: string
   for (const bullet of document.lookFor ?? []) {
     fields.push({ where: "document lookFor", text: bullet });
   }
+  for (const source of document.sources ?? []) {
+    if (source.gist !== undefined) {
+      fields.push({ where: `source ${source.id} gist`, text: source.gist });
+    }
+  }
   for (const part of document.parts ?? []) {
     fields.push({ where: `part ${part.name} summary`, text: part.summary });
   }
   for (const group of document.groups) {
     fields.push({ where: `group ${group.id} title`, text: group.title });
-    fields.push({ where: `group ${group.id} why`, text: group.why });
+    if (group.why !== undefined) {
+      fields.push({ where: `group ${group.id} why`, text: group.why });
+    }
     fields.push({ where: `group ${group.id} summary`, text: group.summary });
     if (group.attention !== undefined) {
       fields.push({ where: `group ${group.id} attention`, text: group.attention.note });

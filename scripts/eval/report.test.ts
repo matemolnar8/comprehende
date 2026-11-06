@@ -6,6 +6,7 @@ import { formatTrialTotals, type CaseResult, type RunSummary } from "./result.ts
 const checksOk = {
   failures: [] as { check: string; message: string }[],
   lints: [] as string[],
+  words: 0,
   dirtyWorktree: false,
   why: "present" as const,
   parts: 1,

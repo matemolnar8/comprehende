@@ -31,8 +31,8 @@ PR #57. No ticket, no comments. A refactor: one Zod 4 schema replaces the hand-w
 - `isReviewSize` and `isSourceKind` in `types.ts` lose their last callers with the old parser and stay as unused exports.
 - The `parseHunkRef` export goes away with the old parser, and no other module imported it.
 - A note on line 251 of the new `src/schema/review.ts` points at the `sourceCitationErrors` call in `documentRules`.
-- Each `review.schema.json` copy has a short file note that says it is a generated copy of `src/schema/review.schema.json`.
-- In a group with two or more files, each file note says what changed in that file, such as `types.ts` re-exporting the inferred types or `pack-smoke.ts` asserting the `zod` dependency.
+- Each `review.schema.json` copy is a generated copy of `src/schema/review.schema.json`.
+- `types.ts` re-exports the inferred types, and `pack-smoke.ts` asserts the `zod` dependency.
 
 ## Must not
 
