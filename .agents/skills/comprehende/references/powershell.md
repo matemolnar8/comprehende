@@ -8,7 +8,7 @@ These blocks replace the POSIX blocks of Workflow steps 2 and 4 and of Refresh. 
 
 ## Workflow step 2
 
-The `if ($LASTEXITCODE -eq 0)` checks stop the block before `pregroup` when a ref does not resolve.
+The `if ($LASTEXITCODE -eq 0)` checks stop the block before `pregroup` when a ref does not resolve. The block prints the size of each source file. A file past 10000 characters prints cut: read the rest with `[IO.File]::ReadAllText("<file>").Substring(10000)`, and keep reading when that output is cut too.
 
 ```powershell
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -22,7 +22,11 @@ if ($LASTEXITCODE -eq 0) {
   <cli> digest --base <base> --head <head>
   Get-Content -Raw -Encoding UTF8 "$REVIEW_DIR/review.json"
   git log --format=%s --end-of-options <base>..<head>
-  foreach ($text in @((<fetch the request body> | Out-String), (<fetch the review comments> | Out-String))) {
+  [IO.File]::WriteAllText("$REVIEW_DIR/body.txt", (<fetch the request body> | Out-String))
+  [IO.File]::WriteAllText("$REVIEW_DIR/comments.txt", (<fetch the review comments> | Out-String))
+  foreach ($file in "$REVIEW_DIR/body.txt", "$REVIEW_DIR/comments.txt") {
+    $text = [IO.File]::ReadAllText($file)
+    "$file $($text.Length)"
     $text.Substring(0, [Math]::Min(10000, $text.Length))
   }
 }

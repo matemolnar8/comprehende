@@ -63,11 +63,11 @@ export function caseIdFor(repo: string, pr: number): string {
 
 export function linkedIssueNumbers(text: string): number[] {
   const found = new Set<number>();
-  const close = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)\b/giu;
+  const close =
+    /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#\d+(?:(?:\s*,\s*(?:and\s+)?|\s+and\s+)#\d+)*/giu;
   for (const match of text.matchAll(close)) {
-    const raw = match[1];
-    if (raw !== undefined) {
-      found.add(Number(raw));
+    for (const number of match[0].matchAll(/\d+/gu)) {
+      found.add(Number(number[0]));
     }
   }
   const full = /https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/giu;

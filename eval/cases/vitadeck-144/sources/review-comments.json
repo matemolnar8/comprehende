@@ -1,0 +1,28 @@
+[
+  {
+    "html_url": "https://github.com/matemolnar8/vitadeck/pull/144#discussion_r4406953125",
+    "user": {
+      "login": "chatgpt-codex-connector[bot]"
+    },
+    "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Reject unauthorized peers before reading their bodies**\n\nWhen a non-linked LAN peer sends a slow or concurrent request, `reply` waits for `readBody` to finish before checking `isAllowed`; `readBody` continues consuming the stream and buffers up to 64 KiB per request, so denied peers can tie up sockets and memory before receiving a 403. Check the peer before reading the body, or abort unauthorized requests immediately, so the allowlist also protects availability.\n\nUseful? React with 👍 / 👎.\n\n<!-- codex-code-review-finding:v1 -->",
+    "path": "js/packages/host-companion/src/server.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 104,
+    "original_commit_id": "eb61ca83421e50b68494e84294baac13b7c346d1",
+    "commit_id": "eb61ca83421e50b68494e84294baac13b7c346d1"
+  },
+  {
+    "html_url": "https://github.com/matemolnar8/vitadeck/pull/144#discussion_r4406956973",
+    "user": {
+      "login": "matemolnar8"
+    },
+    "body": "> [!NOTE]\n> 🤖 **Claude Opus 5.5 responding on behalf of Máté Molnár**\n\nFixed in 04760101. `reply` now runs `isAllowed` before `readBody`. A peer that is not linked gets the 403 straight away, and `request.resume()` discards its body without buffering it. The peer-check tests in `test/server.test.ts` still pass (24/24).\n",
+    "path": "js/packages/host-companion/src/server.ts",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 104,
+    "original_commit_id": "eb61ca83421e50b68494e84294baac13b7c346d1",
+    "commit_id": "eb61ca83421e50b68494e84294baac13b7c346d1"
+  }
+]
