@@ -33,20 +33,30 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 02 of 18: SDK client (`sdk-client`)
-
-Part: Link and call
+Review concern 08 of 13: Native link store and getter (`native-link`)
 
 The what:
 
-`createHostClient` and `linkedHosts` read VitaDeck's links on each call, and every failure resolves to a `HostResult`.
+`link.c` parses `POST /link` bodies and keeps up to 4 links in `host-control-links.json`, newest first, and `jslib/host_control.c` exposes them as `nativeGetHostControlLinks`. `bootstrap.c` loads the store at boot and fails startup if it cannot.
 
-Attention (contract):
-`createHostClient(plugin)` without `hostId` calls `hosts[0]`, read on every call. With laptop A linked, a `link` from desktop B sends the next call to B, so a Deck App's later command reaches another machine with no error. Decide whether the default should follow the newest link or stay on one host.
+Attention (product):
+`host_control_links_save` puts a new companion id first and drops the oldest past `VD_HOST_CONTROL_MAX_LINKS` (4) without telling anyone. Linking a fifth computer silently forgets the least recently linked one. That companion's next `start` relink then gets `unknown_link` and removes this Vita from its config.
+
+Questions:
+- Why does `VD_HOST_CONTROL_MAX_LINKS` cap VitaDeck at 4 linked computers?
 
 Depends on:
-- 01 Wire contract and plugin registries (`contract`)
+- 07 Shared JSON and file-replace helpers (`json-file-helpers`)
+- 01 Wire contract and plugin registry (`contract`)
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/client.ts
-- js/packages/sdk/test/host-control.test.ts
+- src/host_control/link.c
+- src/host_control/link.h
+- src/jslib/host_control.c
+- src/jslib/jslib.c
+- src/jslib/jslib_internal.h
+- src/core/bootstrap.c
+- CMakeLists.txt@151+151
+- CMakeLists.txt@177+179
+- CMakeLists.txt@284+287
+- tests/host_control_link_harness.c

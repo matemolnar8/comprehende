@@ -33,19 +33,21 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 16 of 18: Fetch cancels on Deck App stop (`fetch-cancel`)
+Review concern 11 of 13: Cancel fetches when a Deck App stops (`fetch-cancel`)
 
-Part: Events
+The why:
+
+[PR #144](source:s1) needs a held event wait not to stall a reload.
 
 The what:
 
-`fetch_shutdown` marks every pending fetch cancelled and `fetch_progress_cb` aborts it, so a held wait no longer delays a stop.
+`fetch_shutdown` marks every pending request cancelled, and the new curl progress callback aborts it. `js_limits_harness` stops a Deck App whose fetch waits on a server that never answers.
 
-Attention (contract):
-`fetch_shutdown` cancels every pending fetch, not only event waits. A Deck App that posts a save and then stops used to block the stop until the request ended; at head the transfer aborts at curl's next progress call, about a second later, and the save may not arrive. Decide whether all fetches should share this.
+Attention (tradeoff):
+curl aborts a cancelled transfer only at its next progress callback, about once a second. Stopping a Deck App can still wait about a second for held event waits, instead of up to 30 s. The progress callback, with its mutex lock, now runs on every Deck App fetch.
 
 Depends on:
-- 15 Events by long-polling (`events`)
+- 02 Deck App client and event watching (`client`)
 
 Hunk refs for this concern:
 - src/jslib/fetch.c

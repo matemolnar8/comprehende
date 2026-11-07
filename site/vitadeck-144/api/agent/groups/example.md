@@ -33,19 +33,20 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 18 of 18: Agent skills (`skills`)
-
-Part: Docs and skills
+Review concern 12 of 13: Host Control demo Deck App (`example`)
 
 The what:
 
-A new `vitadeck-host-control` skill and edits to five others teach agents the companion, plugins and the always-on listener.
+`js/examples/host-control` lists linked computers with live CPU, and for the selected one shows capabilities, gauges, an Echo round trip and `core` notices. It polls `systemStats` one request at a time per computer, backing off to 30 s after a `timeout`.
+
+Depends on:
+- 02 Deck App client and event watching (`client`)
 
 Hunk refs for this concern:
-- .agents/skills/vitadeck-host-control/SKILL.md
-- .agents/skills/vitadeck-deck-app-init/SKILL.md
-- .agents/skills/vitadeck-manual-testing/SKILL.md
-- .agents/skills/vitadeck-vdapp-upload/SKILL.md
-- .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh
-- .agents/skills/vitadeck-build/SKILL.md
-- .agents/skills/vitadeck-emulator/SKILL.md
+- js/examples/host-control/src/App.tsx
+- js/examples/host-control/README.md
+- js/examples/host-control/package.json
+- js/examples/host-control/vitadeck.config.json
+- js/examples/host-control/tsconfig.json
+- js/examples/host-control/src/vitadeck-env.d.ts
+- README.md

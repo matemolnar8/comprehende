@@ -33,9 +33,7 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 12 of 18: Plugin package build (`plugin-build`)
-
-Part: Host Plugin Packages
+Review concern 06 of 13: vitadeck build and create plugins (`sdk-cli`)
 
 The why:
 
@@ -43,10 +41,10 @@ The why:
 
 The what:
 
-`build` writes a Deck App, a `.vdplugin` package and their zips, or only the plugin when `entry` is absent. A plugin-only `dev` rejects a URL and uploads nothing.
+`vitadeck build` writes `<slug>.vdplugin` and its zip from `hostPlugin`, `entry` becomes optional, and `create` gains `--host-plugin` and `--host-plugin-only` templates. `dev` takes no URL for a plugin-only project and rejects one, and requires it otherwise.
 
-Attention (tradeoff):
-`build` runs the Deck App and plugin builds in one call, and `buildDeckApp` deletes the old `.vdapp.zip` first. When the plugin fails, `build` throws before any archive is written, so `dev` uploads nothing that cycle and `dist` has no `.vdapp.zip`, while the last good `.vdplugin` survives. Decide whether one failure should block both.
+Depends on:
+- 05 Companion plugin packages (`companion-plugins`)
 
 Hunk refs for this concern:
 - js/packages/sdk/cli/cli.ts@1+1
@@ -57,12 +55,22 @@ Hunk refs for this concern:
 - js/packages/sdk/cli/cli.ts@232+252
 - js/packages/sdk/cli/cli.ts@366+387
 - js/packages/sdk/cli/cli.ts@450+573
-- js/packages/sdk/cli/cli.ts@514+663
 - js/packages/sdk/cli/cli.ts@551+703
 - js/packages/sdk/cli/cli.ts@565+725
 - js/packages/sdk/cli/cli.ts@613+775
+- js/packages/sdk/cli/cli.ts@628+790
 - js/packages/sdk/cli/cli.ts@636+801
+- js/packages/sdk/cli/cli.ts@657+833
 - js/packages/sdk/cli/cli.ts@692+868
+- js/packages/sdk/cli/copy-templates.ts
+- js/packages/sdk/cli/test-project.ts
+- js/packages/sdk/cli/templates/host-plugin-only/.gitignore
+- js/packages/sdk/cli/templates/host-plugin-only/package.json
+- js/packages/sdk/cli/templates/host-plugin-only/vitadeck.config.json
+- js/packages/sdk/cli/templates/host-plugin/host/companion.ts
+- js/packages/sdk/cli/templates/host-plugin/host/plugin.ts
+- js/packages/sdk/cli/templates/host-plugin/host/tsconfig.json
+- js/packages/sdk/cli/templates/host-plugin/package.json
+- js/packages/sdk/cli/templates/host-plugin/src/App.tsx
+- js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json
 - js/packages/sdk/cli/cli.test.ts
-- js/packages/sdk/cli/package-format.test.ts
-- js/packages/sdk/cli/dev.test.ts

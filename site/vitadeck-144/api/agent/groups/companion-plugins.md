@@ -33,26 +33,27 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 04 of 18: Link store and getter (`link-store`)
+Review concern 05 of 13: Companion plugin packages (`companion-plugins`)
 
-Part: Link and call
+The why:
+
+[PR #145](source:s5) says a globally installed companion could not load a plugin installed somewhere else.
 
 The what:
 
-`link.c` parses links and saves them in `host-control-links.json`, and `nativeGetHostControlLinks` hands them to JS as JSON.
+`plugin.ts` loads a `.vdplugin` folder by its manifest and unpacks a `.vdplugin.zip` safely, and `cli.ts` installs, removes, watches and reloads packages, keeping the previous set when a load fails. `cli.ts` also holds the relink code from the linking group.
 
-Attention (product):
-`host_control_links_save` keeps four links and drops the oldest with no message. A fifth computer's `link` succeeds, and the dropped computer's next `start` gets 404 `unknown_link`, so [its companion drops that Vita](source:s1). Decide whether a full list should evict or refuse.
+Attention (tradeoff):
+Each reload imports the package entry under a new `?v=<sha256>` query, so a rebuild is not served from the module cache. Node never unloads ESM modules, so a long `pnpm host` session keeps every rebuilt copy, with anything it allocated at module load, in memory. Lifecycle `stop` functions end timers, but module-level state stays.
 
 Depends on:
-- 01 Wire contract and plugin registries (`contract`)
-- 03 Shared native helpers (`native-helpers`)
+- 03 Companion server and events (`companion-server`)
 
 Hunk refs for this concern:
-- src/host_control/link.c
-- src/host_control/link.h
-- src/jslib/host_control.c
-- src/jslib/jslib.c
-- src/jslib/jslib_internal.h
-- js/packages/runtime/src/runtime-native.d.ts
-- src/core/bootstrap.c
+- js/packages/host-companion/src/plugin.ts
+- js/packages/host-companion/src/cli.ts
+- js/packages/host-companion/test/cli.test.ts
+- js/packages/host-companion/test/fixtures/greeter-plugin.ts
+- js/packages/host-companion/test/fixtures/greeting.cjs
+- js/packages/host-companion/test/fixtures/greeting.d.cts
+- js/packages/host-companion/test/fixtures/plugin-package.ts

@@ -33,19 +33,22 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 17 of 18: ADR, glossary and READMEs (`docs`)
-
-Part: Docs and skills
+Review concern 13 of 13: ADR, glossary, READMEs and skills (`docs`)
 
 The what:
 
-ADR 0004, `CONTEXT.md`, `AGENTS.md` and the READMEs are rewritten in place for plugins, the LAN Listener and relink, with no code here.
+ADR 0004, `CONTEXT.md`, `AGENTS.md`, the SDK and companion READMEs and the agent skills describe Host Control, and say Runtime Upload now listens from startup. A new `vitadeck-host-control` skill covers linking, plugin authoring and error codes.
 
 Hunk refs for this concern:
 - docs/adr/0004-host-control-sliced-delivery.md
 - CONTEXT.md
 - AGENTS.md
-- README.md
-- js/examples/demo/README.md
-- js/packages/host-companion/README.md
 - js/packages/sdk/README.md
+- js/packages/host-companion/README.md
+- js/examples/demo/README.md
+- .agents/skills/vitadeck-host-control/SKILL.md
+- .agents/skills/vitadeck-deck-app-init/SKILL.md
+- .agents/skills/vitadeck-manual-testing/SKILL.md
+- .agents/skills/vitadeck-vdapp-upload/SKILL.md
+- .agents/skills/vitadeck-build/SKILL.md
+- .agents/skills/vitadeck-emulator/SKILL.md

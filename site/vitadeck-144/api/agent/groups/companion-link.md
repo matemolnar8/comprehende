@@ -33,22 +33,24 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 09 of 18: Companion link and relink (`companion-link`)
+Review concern 04 of 13: Companion linking and relink (`companion-link`)
 
-Part: Link and call
+The why:
+
+[PR #144](source:s1) wants a new computer IP or port to reach linked Vitas without running `link` again.
 
 The what:
 
-`linkVita` posts this companion's URL to a Vita, and every `start` relinks saved `vitas` one at a time, retrying every 30 s.
+`linkVita` checks that `start` answers on loopback, picks the interface routed to the Vita, and posts the link; `relink` in `cli.ts` replays it for each saved Vita on every `start`. A Vita that answers `unknown_link` is removed from `vitas`.
 
-Questions:
-- Why does `relink` omit the `--advertise` value that `link` passes to `linkVita`?
+Attention (tradeoff):
+The config stores Vita IPs without ports, and `relink` calls `linkVita(vita, …)`, which defaults to port 8787. A Vita whose LAN Listener fell forward to 8788 refuses the connection, which `linkVita` marks `retry: true`, so the companion retries it every 30 s for as long as it runs. The companion README says such a Vita needs `link` again.
 
 Depends on:
-- 08 Companion server and built-ins (`companion-server`)
+- 03 Companion server and events (`companion-server`)
 
 Hunk refs for this concern:
-- js/packages/host-companion/src/cli.ts
 - js/packages/host-companion/src/link.ts
 - js/packages/host-companion/src/config.ts
 - js/packages/host-companion/test/link.test.ts
+- js/packages/host-companion/src/cli.ts

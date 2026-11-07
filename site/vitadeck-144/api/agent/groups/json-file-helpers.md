@@ -33,17 +33,17 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 10 of 18: Companion package setup (`companion-package`)
-
-Part: Link and call
+Review concern 07 of 13: Shared JSON and file-replace helpers (`json-file-helpers`)
 
 The what:
 
-The companion becomes a private workspace package bundled by rolldown, and `js/package.json` wires it into the root scripts.
+`json.c` takes `json_skip_value` from `package_manifest.c` and the JSON escaper from the upload code, and `util.c` takes the Vita-safe replace from `deck_app_storage.c`, so the link store can reuse both. The moved code is unchanged apart from names.
 
 Hunk refs for this concern:
-- js/packages/host-companion/package.json
-- js/packages/host-companion/rolldown.config.mjs
-- js/packages/host-companion/tsconfig.json
-- js/package.json
-- .gitignore
+- src/core/json.c
+- src/core/json.h
+- src/core/util.c
+- src/core/util.h
+- src/core/deck_app_storage.c
+- src/core/package_manifest.c
+- CMakeLists.txt@160+161
