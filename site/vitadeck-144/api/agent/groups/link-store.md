@@ -33,21 +33,26 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 05 of 26: Link store (`link-store`)
+Review concern 04 of 18: Link store and getter (`link-store`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-Parses `POST /link` bodies and keeps a newest-first list of links on disk. A relink for an unknown computer answers 404 `unknown_link`.
+`link.c` parses links and saves them in `host-control-links.json`, and `nativeGetHostControlLinks` hands them to JS as JSON.
 
-Questions:
-- Why keep a list of links, not the one current link #111 asked for?
+Attention (product):
+`host_control_links_save` keeps four links and drops the oldest with no message. A fifth computer's `link` succeeds, and the dropped computer's next `start` gets 404 `unknown_link`, so [its companion drops that Vita](source:s1). Decide whether a full list should evict or refuse.
 
 Depends on:
-- 04 JSON and file helpers (`helpers`)
+- 01 Wire contract and plugin registries (`contract`)
+- 03 Shared native helpers (`native-helpers`)
 
 Hunk refs for this concern:
 - src/host_control/link.c
 - src/host_control/link.h
-- tests/host_control_link_harness.c
+- src/jslib/host_control.c
+- src/jslib/jslib.c
+- src/jslib/jslib_internal.h
+- js/packages/runtime/src/runtime-native.d.ts
+- src/core/bootstrap.c

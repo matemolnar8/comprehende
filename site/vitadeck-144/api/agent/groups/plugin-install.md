@@ -33,19 +33,28 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 12 of 26: Companion plugin loader (`companion-plugins`)
+Review concern 14 of 18: Plugin install and reload (`plugin-install`)
 
-Part: Host Control
+Part: Host Plugin Packages
+
+The why:
+
+[PR #145](source:s5) says a globally installed companion could not load a plugin installed somewhere else.
 
 The what:
 
-Loads installed and `--plugin` packages into the companion, and its tests build a sample package to load.
+`install` stages and loads a package before renaming it into the plugins folder, and `start` reloads plugins when watched folders change.
+
+Attention (risk):
+`install` calls `loadHostPluginPackage` on the staged package, so its code runs with the user's permissions before any command and before the built-in id check. Once loaded, `server.ts` lets any Deck App on a linked Vita call any plugin, because the peer check knows only the IP. Decide whether that is enough before credentials exist.
 
 Depends on:
-- 01 SDK plugin contract (`contract`)
+- 12 Plugin package build (`plugin-build`)
 
 Hunk refs for this concern:
 - js/packages/host-companion/src/plugin.ts
+- js/packages/host-companion/src/cli.ts
+- js/packages/host-companion/test/cli.test.ts
 - js/packages/host-companion/test/fixtures/greeter-plugin.ts
 - js/packages/host-companion/test/fixtures/greeting.cjs
 - js/packages/host-companion/test/fixtures/greeting.d.cts

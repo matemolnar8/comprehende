@@ -33,16 +33,19 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 20 of 26: Checks and scripts (`checks`)
+Review concern 07 of 18: Native link harness (`native-harness`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-Adds the Host Control tests to the root scripts and `scripts/agent-check.sh`, per [#109](source:s2).
+`host_control_link_harness` replays the link fixtures in C, and CMake and `agent-check.sh` run it with the JS checks.
+
+Depends on:
+- 04 Link store and getter (`link-store`)
+- 05 LAN Listener replaces upload server (`lan-listener`)
 
 Hunk refs for this concern:
+- tests/host_control_link_harness.c
+- CMakeLists.txt
 - scripts/agent-check.sh
-- js/package.json
-- .gitignore
-- js/packages/sdk/tsconfig.json

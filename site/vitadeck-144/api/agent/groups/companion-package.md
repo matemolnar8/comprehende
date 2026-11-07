@@ -33,14 +33,17 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 21 of 26: Companion event log (`events-log`)
+Review concern 10 of 18: Companion package setup (`companion-package`)
 
-Part: Host Control events
+Part: Link and call
 
 The what:
 
-Keeps each plugin's recent events, and `core.events` answers from the log or holds the request until the next event.
+The companion becomes a private workspace package bundled by rolldown, and `js/package.json` wires it into the root scripts.
 
 Hunk refs for this concern:
-- js/packages/host-companion/src/events.ts
-- js/packages/host-companion/src/core.ts
+- js/packages/host-companion/package.json
+- js/packages/host-companion/rolldown.config.mjs
+- js/packages/host-companion/tsconfig.json
+- js/package.json
+- .gitignore

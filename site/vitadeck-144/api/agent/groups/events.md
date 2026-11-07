@@ -33,17 +33,23 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 13 of 26: Companion built-in plugins (`companion-builtins`)
+Review concern 15 of 18: Events by long-polling (`events`)
 
-Part: Host Control
+Part: Events
 
 The what:
 
-The `core` plugin answers capabilities, echo, events and notify, and `systemStats` samples CPU and memory.
+`core.events` holds a request until the plugin's next event, and `watchHostEvents` keeps one wait open, passing `next` as `after`.
 
-Depends on:
-- 01 SDK plugin contract (`contract`)
+Attention (tradeoff):
+`watchHostEvents` keeps one native fetch open per watch, and `fetch.c` runs each fetch on its own thread. A computer that stops answering costs 29 s to time out and 30 s more to retry. [PR #144](source:s1) rejects WebSocket and SSE in ADR 0004. Decide whether a held thread per watch suits the Vita.
+
+Questions:
+- Why does `watchHostEvents` keep its `after` cursor when the resolved host changes?
 
 Hunk refs for this concern:
+- js/packages/host-companion/src/events.ts
 - js/packages/host-companion/src/core.ts
-- js/packages/host-companion/src/system-stats.ts
+- js/packages/sdk/src/host-control/client.ts
+- js/packages/host-companion/test/server.test.ts
+- js/packages/sdk/test/host-control.test.ts

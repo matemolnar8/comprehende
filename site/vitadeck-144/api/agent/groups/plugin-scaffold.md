@@ -33,18 +33,32 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 19 of 26: Standalone plugin scaffold (`standalone-scaffold`)
+Review concern 13 of 18: Plugin scaffolds (`plugin-scaffold`)
 
-Part: Host Control
+Part: Host Plugin Packages
 
 The what:
 
-`create --host-plugin-only` makes a project with no Deck App entry, whose registry any Deck App can import.
+`create --host-plugin` overlays `host/` on the Deck App scaffold, and `--host-plugin-only` makes a project with no `entry` that exports its registry.
 
 Depends on:
-- 17 Plugin package build (`sdk-package`)
+- 12 Plugin package build (`plugin-build`)
 
 Hunk refs for this concern:
+- js/packages/sdk/cli/cli.ts@366+387
+- js/packages/sdk/cli/cli.ts@628+790
+- js/packages/sdk/cli/cli.ts@636+801
+- js/packages/sdk/cli/cli.ts@657+833
+- js/packages/sdk/cli/cli.ts@692+868
+- js/packages/sdk/cli/cli.test.ts
+- js/packages/sdk/cli/copy-templates.ts
+- js/packages/sdk/cli/test-project.ts
 - js/packages/sdk/cli/templates/host-plugin-only/.gitignore
 - js/packages/sdk/cli/templates/host-plugin-only/package.json
 - js/packages/sdk/cli/templates/host-plugin-only/vitadeck.config.json
+- js/packages/sdk/cli/templates/host-plugin/host/companion.ts
+- js/packages/sdk/cli/templates/host-plugin/host/plugin.ts
+- js/packages/sdk/cli/templates/host-plugin/host/tsconfig.json
+- js/packages/sdk/cli/templates/host-plugin/package.json
+- js/packages/sdk/cli/templates/host-plugin/src/App.tsx
+- js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json

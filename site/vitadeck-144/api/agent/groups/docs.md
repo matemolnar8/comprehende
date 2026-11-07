@@ -33,13 +33,13 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 25 of 26: ADR and project docs (`docs`)
+Review concern 17 of 18: ADR, glossary and READMEs (`docs`)
 
-Part: Demo and docs
+Part: Docs and skills
 
 The what:
 
-The ADR, `CONTEXT.md`, `AGENTS.md` and the READMEs describe the rewritten design, per [PR #144](source:s1).
+ADR 0004, `CONTEXT.md`, `AGENTS.md` and the READMEs are rewritten in place for plugins, the LAN Listener and relink, with no code here.
 
 Hunk refs for this concern:
 - docs/adr/0004-host-control-sliced-delivery.md
@@ -47,4 +47,5 @@ Hunk refs for this concern:
 - AGENTS.md
 - README.md
 - js/examples/demo/README.md
+- js/packages/host-companion/README.md
 - js/packages/sdk/README.md
