@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify 032d366a4596ab294a809d77bca9e8a85401b510` in this repository.
+   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  f344a7c5055f503935fbff52c8574fe1233bd93a
 
-head               032d366a4596ab294a809d77bca9e8a85401b510
+head               e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a 032d366a4596ab294a809d77bca9e8a85401b510
+git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92
 
 Commits:
+- e6ae47d8 Skill: keep forge details out; refs from the forge; finish cut fetches
 - 032d366a Test: pin the Refresh pointer, not a sentence the skill no longer has
 - 85349f21 Skill: check claims outside the diff with git grep; trim and move Refresh
 - aee15740 Skill: read every changed file; close the gaps that let unread code pass
@@ -51,7 +52,7 @@ Review agents complained about a limit of eight files, and [the requester thinks
 
 The what (medium):
 
-Reviews now read every changed file, and a new eval case scores the facts unread files hide. Skill cleanup moves Refresh and cuts about 1,100 words.
+Reviews now read every changed file, and a new eval case scores the facts unread files hide. Cleanup moves Refresh, trims the skill, and removes every forge name.
 
 Things to check:
 - [The request](source:s1) asks for an eval case that catches misses from unread files. `Must` and `Must not` scores do not change the exit code, so `vitadeck-144` shows a miss on its case line and cannot fail CI.
@@ -96,9 +97,18 @@ Attention (tradeoff):
 
 ### 06 Trim the skill and move Refresh (`skill-cleanup`)
 
-Refresh moves behind a pointer, step 4 points at field sections, and `serve` runs in the background. `SKILL.md` goes from 6,684 to 5,595 words.
+Refresh moves behind a pointer, step 4 points at field sections, and `serve` runs in the background. `SKILL.md` goes from 6,562 to 5,746 words.
 
 Attention (contract):
-The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. This review went through the moved steps once, by hand.
+The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. This review went through the moved steps twice, by hand.
 
 [groups/skill-cleanup.md](groups/skill-cleanup.md)
+
+### 07 Name no forge (`no-forge-details`)
+
+The PR comments rule and the schema description name no forge now, and each agent maps its own forge's fields.
+
+Attention (contract):
+The skill no longer says which field holds the current line or thread state. An agent that picks the wrong one writes a wrong pin, or none, and `validate` catches only a line that does not match. A live Opus run found the fields itself. Decide whether that is enough.
+
+[groups/no-forge-details.md](groups/no-forge-details.md)

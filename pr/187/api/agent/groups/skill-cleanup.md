@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify 032d366a4596ab294a809d77bca9e8a85401b510` in this repository.
+   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a 032d366a4596ab294a809d77bca9e8a85401b510 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,30 +25,30 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  f344a7c5055f503935fbff52c8574fe1233bd93a
 
-head               032d366a4596ab294a809d77bca9e8a85401b510
+head               e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a 032d366a4596ab294a809d77bca9e8a85401b510
+git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a e6ae47d8c450a8c8fa3b0a50ed2d90413e236e92
 
-Review concern 06 of 06: Trim the skill and move Refresh (`skill-cleanup`)
+Review concern 06 of 07: Trim the skill and move Refresh (`skill-cleanup`)
 
 Part: Skill cleanup
 
 The what:
 
-Refresh moves behind a pointer, step 4 points at field sections, and `serve` runs in the background. `SKILL.md` goes from 6,684 to 5,595 words.
+Refresh moves behind a pointer, step 4 points at field sections, and `serve` runs in the background. `SKILL.md` goes from 6,562 to 5,746 words.
 
 Attention (contract):
-The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. This review went through the moved steps once, by hand.
+The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. This review went through the moved steps twice, by hand.
 
 Hunk refs for this concern:
 - skills-next/comprehende/SKILL.md@9+9
 - skills-next/comprehende/SKILL.md@88+93
 - skills-next/comprehende/SKILL.md@105+110
-- skills-next/comprehende/SKILL.md@155+131
+- skills-next/comprehende/SKILL.md@154+130
 - skills-next/comprehende/SKILL.md@175+151
 - skills-next/comprehende/SKILL.md@223+198
 - skills-next/comprehende/references/refresh.md
