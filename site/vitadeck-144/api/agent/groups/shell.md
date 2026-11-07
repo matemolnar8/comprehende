@@ -33,17 +33,20 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 10 of 26: Shell link row and screen (`shell`)
+Review concern 06 of 18: Shell rows and Host Control screen (`shell`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-[PR #144](source:s1) adds an Upload and link row and a Host Control screen to the Shell. Commit subjects also name Home focus fixes here; those hunks were not fetched.
+The Shell gains **Upload and link** and **Host Control** rows, plus a screen that lists links and forgets them with no confirm step.
+
+Attention (product):
+`toggle_listener` stops the listener and stores nothing, and `shell_start_listener` starts it unconditionally. A user who turns **Upload and link** off on a shared network gets it back on at the next launch. Decide whether off should persist, since this listener takes unauthenticated uploads.
 
 Depends on:
-- 07 LAN Listener (`listener`)
-- 09 Linked hosts for JS (`js-getter`)
+- 04 Link store and getter (`link-store`)
+- 05 LAN Listener replaces upload server (`lan-listener`)
 
 Hunk refs for this concern:
 - src/shell/shell.c

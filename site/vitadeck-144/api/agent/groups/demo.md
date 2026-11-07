@@ -33,18 +33,22 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 24 of 26: Host Control demo app (`demo`)
+Review concern 11 of 18: Host Control demo app (`demo`)
 
-Part: Demo and docs
+Part: Link and call
 
 The what:
 
-A demo Deck App lists linked computers with polled CPU, and shows the selected one's gauges and details.
+`js/examples/host-control` lists every linked computer with live CPU, and shows the selected one's capabilities, gauges and an Echo round trip.
+
+Depends on:
+- 02 SDK client (`sdk-client`)
+- 08 Companion server and built-ins (`companion-server`)
 
 Hunk refs for this concern:
+- js/examples/host-control/src/App.tsx
 - js/examples/host-control/README.md
 - js/examples/host-control/package.json
-- js/examples/host-control/src/App.tsx
 - js/examples/host-control/src/vitadeck-env.d.ts
 - js/examples/host-control/tsconfig.json
 - js/examples/host-control/vitadeck.config.json

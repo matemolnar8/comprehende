@@ -33,19 +33,19 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 26 of 26: Agent skills (`skills`)
+Review concern 18 of 18: Agent skills (`skills`)
 
-Part: Demo and docs
+Part: Docs and skills
 
 The what:
 
-A new `vitadeck-host-control` skill, with Host Control notes in the other skills, per [PR #144](source:s1).
+A new `vitadeck-host-control` skill and edits to five others teach agents the companion, plugins and the always-on listener.
 
 Hunk refs for this concern:
-- .agents/skills/vitadeck-build/SKILL.md
-- .agents/skills/vitadeck-deck-app-init/SKILL.md
-- .agents/skills/vitadeck-emulator/SKILL.md
 - .agents/skills/vitadeck-host-control/SKILL.md
+- .agents/skills/vitadeck-deck-app-init/SKILL.md
 - .agents/skills/vitadeck-manual-testing/SKILL.md
 - .agents/skills/vitadeck-vdapp-upload/SKILL.md
 - .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh
+- .agents/skills/vitadeck-build/SKILL.md
+- .agents/skills/vitadeck-emulator/SKILL.md

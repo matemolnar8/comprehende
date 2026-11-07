@@ -33,17 +33,22 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 14 of 26: Companion link to a Vita (`companion-link`)
+Review concern 09 of 18: Companion link and relink (`companion-link`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-`linkVita` parses the Vita's address and posts the companion's link to its `/link` route.
+`linkVita` posts this companion's URL to a Vita, and every `start` relinks saved `vitas` one at a time, retrying every 30 s.
+
+Questions:
+- Why does `relink` omit the `--advertise` value that `link` passes to `linkVita`?
 
 Depends on:
-- 11 Companion HTTP server (`companion-server`)
+- 08 Companion server and built-ins (`companion-server`)
 
 Hunk refs for this concern:
+- js/packages/host-companion/src/cli.ts
 - js/packages/host-companion/src/link.ts
+- js/packages/host-companion/src/config.ts
 - js/packages/host-companion/test/link.test.ts

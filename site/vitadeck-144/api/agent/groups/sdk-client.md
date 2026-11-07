@@ -33,21 +33,20 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 18 of 26: Deck App host scaffold (`app-scaffold`)
+Review concern 02 of 18: SDK client (`sdk-client`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-`create --host-plugin` adds a `host/` folder with a plugin, its companion implementation and a Deck App screen.
+`createHostClient` and `linkedHosts` read VitaDeck's links on each call, and every failure resolves to a `HostResult`.
+
+Attention (contract):
+`createHostClient(plugin)` without `hostId` calls `hosts[0]`, read on every call. With laptop A linked, a `link` from desktop B sends the next call to B, so a Deck App's later command reaches another machine with no error. Decide whether the default should follow the newest link or stay on one host.
 
 Depends on:
-- 17 Plugin package build (`sdk-package`)
+- 01 Wire contract and plugin registries (`contract`)
 
 Hunk refs for this concern:
-- js/packages/sdk/cli/templates/host-plugin/host/companion.ts
-- js/packages/sdk/cli/templates/host-plugin/host/plugin.ts
-- js/packages/sdk/cli/templates/host-plugin/host/tsconfig.json
-- js/packages/sdk/cli/templates/host-plugin/package.json
-- js/packages/sdk/cli/templates/host-plugin/src/App.tsx
-- js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json
+- js/packages/sdk/src/host-control/client.ts
+- js/packages/sdk/test/host-control.test.ts

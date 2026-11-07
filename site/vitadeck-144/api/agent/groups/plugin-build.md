@@ -33,21 +33,36 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 17 of 26: Plugin package build (`sdk-package`)
+Review concern 12 of 18: Plugin package build (`plugin-build`)
 
-Part: Host Control
+Part: Host Plugin Packages
+
+The why:
+
+[PR #145](source:s5) says a custom plugin used to mean an npm package of its own.
 
 The what:
 
-The SDK's build writes a `.vdplugin` folder and zip from `hostPlugin`, and `create` takes both host-plugin flags.
+`build` writes a Deck App, a `.vdplugin` package and their zips, or only the plugin when `entry` is absent. A plugin-only `dev` rejects a URL and uploads nothing.
 
-Depends on:
-- 01 SDK plugin contract (`contract`)
+Attention (tradeoff):
+`build` runs the Deck App and plugin builds in one call, and `buildDeckApp` deletes the old `.vdapp.zip` first. When the plugin fails, `build` throws before any archive is written, so `dev` uploads nothing that cycle and `dist` has no `.vdapp.zip`, while the last good `.vdplugin` survives. Decide whether one failure should block both.
 
 Hunk refs for this concern:
-- js/packages/sdk/cli/cli.ts
-- js/packages/sdk/cli/copy-templates.ts
-- js/packages/sdk/cli/test-project.ts
+- js/packages/sdk/cli/cli.ts@1+1
+- js/packages/sdk/cli/cli.ts@7+7
+- js/packages/sdk/cli/cli.ts@34+38
+- js/packages/sdk/cli/cli.ts@102+107
+- js/packages/sdk/cli/cli.ts@186+201
+- js/packages/sdk/cli/cli.ts@232+252
+- js/packages/sdk/cli/cli.ts@366+387
+- js/packages/sdk/cli/cli.ts@450+573
+- js/packages/sdk/cli/cli.ts@514+663
+- js/packages/sdk/cli/cli.ts@551+703
+- js/packages/sdk/cli/cli.ts@565+725
+- js/packages/sdk/cli/cli.ts@613+775
+- js/packages/sdk/cli/cli.ts@636+801
+- js/packages/sdk/cli/cli.ts@692+868
 - js/packages/sdk/cli/cli.test.ts
 - js/packages/sdk/cli/package-format.test.ts
 - js/packages/sdk/cli/dev.test.ts

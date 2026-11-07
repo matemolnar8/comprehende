@@ -33,16 +33,37 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 22 of 26: SDK event watch (`events-watch`)
+Review concern 05 of 18: LAN Listener replaces upload server (`lan-listener`)
 
-Part: Host Control events
+Part: Link and call
+
+The why:
+
+[PR #144](source:s1) says setup felt clunky when links listened only on the Host Control screen.
 
 The what:
 
-`watchHostEvents` keeps one `events` wait open and retries after 5 s, or 30 s after a timeout. A throw from the callback stops the watch and fails the Deck App.
+`lan_listener.c` replaces the upload server with one listener for `/upload` and `/link`, and `net/http.c` takes the request parsing.
+
+Attention (risk):
+`handler_thread` routes `POST /upload` and `POST /link` with no peer or credential check, from boot. A LAN peer can publish a Deck App, or post a link with an `id` it chooses; `host_control_links_save` puts that link first, and four such posts push out every real link. [PR #144](source:s1) accepts this until credentials exist. Decide whether on-by-default is right.
 
 Depends on:
-- 21 Companion event log (`events-log`)
+- 03 Shared native helpers (`native-helpers`)
+- 04 Link store and getter (`link-store`)
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/client.ts
+- src/net/lan_listener.c
+- src/net/lan_listener.h
+- src/net/http.c
+- src/net/http.h
+- src/platform/lan_address.h
+- src/platform/lan_address_posix.c
+- src/platform/lan_address_vita.c
+- src/main.c
+- src/upload/http_parse.c
+- src/upload/http_parse.h
+- src/upload/http_server.c
+- src/upload/http_server.h
+- tests/upload_parsing_harness.c
+- tests/upload_single_flight_harness.c

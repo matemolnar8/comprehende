@@ -33,20 +33,22 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 11 of 26: Companion HTTP server (`companion-server`)
+Review concern 08 of 18: Companion server and built-ins (`companion-server`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-Serves `/command` with a peer check, a 64 KiB body cap, and one log line per request.
+`startHostCompanion` checks the peer, then the route and payload, then runs the command, as [Codex asked](source:s6). `core.ts` and `system-stats.ts` implement the built-ins.
 
 Attention (risk):
-With no linked Vita, every peer passes the check. Once one is linked, only its IP, loopback and this computer's own addresses do. [#110](source:s3) says IPs can be spoofed, so this is no credential.
+`isAllowed` answers every peer while `vitas()` is empty. Forgetting the only link in the Shell [empties `vitas` on the next `start`](source:s1), so a companion on `0.0.0.0` then serves any LAN peer, installed plugins included. [#110](source:s3) asks for the peer check only once linked. Decide whether an emptied list should reopen the companion.
 
 Depends on:
-- 01 SDK plugin contract (`contract`)
+- 01 Wire contract and plugin registries (`contract`)
 
 Hunk refs for this concern:
 - js/packages/host-companion/src/server.ts
+- js/packages/host-companion/src/core.ts
+- js/packages/host-companion/src/system-stats.ts
 - js/packages/host-companion/test/server.test.ts

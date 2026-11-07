@@ -33,20 +33,18 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 06 of 26: HTTP parser moves to net (`http`)
+Review concern 03 of 18: Shared native helpers (`native-helpers`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-Runtime Upload's request parsing and reply helpers move from `src/upload/` into `src/net/http.c`, which the LAN Listener now calls.
+`core/json` and `core/util` gain helpers the link store and listener include, while `deck_app_storage.c` and `package_manifest.c` shrink.
 
 Hunk refs for this concern:
-- src/net/http.c
-- src/net/http.h
-- src/upload/http_parse.c
-- src/upload/http_parse.h
-- src/upload/http_server.c
-- src/upload/http_server.h
-- tests/upload_parsing_harness.c
-- tests/upload_single_flight_harness.c
+- src/core/json.c
+- src/core/json.h
+- src/core/util.c
+- src/core/util.h
+- src/core/deck_app_storage.c
+- src/core/package_manifest.c

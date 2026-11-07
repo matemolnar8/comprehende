@@ -33,13 +33,13 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 01 of 26: SDK plugin contract (`contract`)
+Review concern 01 of 18: Wire contract and plugin registries (`contract`)
 
-Part: Host Control
+Part: Link and call
 
 The what:
 
-The SDK's wire types and plugin registry, which Deck Apps import and the companion implements.
+`protocol.ts` and `plugin.ts` define what the client, the companion and the C harness share, and the fixtures pin it.
 
 Hunk refs for this concern:
 - js/packages/sdk/src/host-control/protocol.ts
@@ -47,3 +47,15 @@ Hunk refs for this concern:
 - js/packages/sdk/src/host-control/index.ts
 - js/packages/sdk/src/host-control/system-stats.ts
 - js/packages/sdk/package.json
+- js/packages/sdk/tsconfig.json
+- js/packages/sdk/src/deck-app-globals.d.ts
+- tests/fixtures/host-control/capabilities.json
+- tests/fixtures/host-control/command-version-mismatch.json
+- tests/fixtures/host-control/echo.json
+- tests/fixtures/host-control/invalid-payload.json
+- tests/fixtures/host-control/link-invalid-url.json
+- tests/fixtures/host-control/link-ok.json
+- tests/fixtures/host-control/link-relink-unknown.json
+- tests/fixtures/host-control/link-version-mismatch.json
+- tests/fixtures/host-control/unknown-command.json
+- tests/fixtures/host-control/unknown-plugin.json
