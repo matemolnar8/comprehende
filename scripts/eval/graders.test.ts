@@ -52,9 +52,9 @@ const rubricOutput: RubricOutput = {
 };
 
 describe("rubric grader", () => {
-  it("zips a fenced reply onto the rubric and bullets by position", () => {
+  it("zips a fenced reply onto the rubric by position and the bullets by number", () => {
     const output = parseRubricReply(
-      `Here you go\n\`\`\`json\n{"must":[{"yes":true,"quote":"copies trimmedArgs"}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":false,"note":"no"}]}\n\`\`\``,
+      `Here you go\n\`\`\`json\n{"must":[{"yes":true,"quote":"copies trimmedArgs"}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"n":2,"holds":false,"note":"no"},{"n":1,"holds":true},{"n":3,"holds":true}]}\n\`\`\``,
       rubric,
       bullets,
     );
@@ -72,11 +72,20 @@ describe("rubric grader", () => {
     assert.throws(
       () =>
         parseRubricReply(
-          '{"must":[],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":true}]}',
+          '{"must":[],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"n":1,"holds":true},{"n":2,"holds":true}]}',
           rubric,
           bullets,
         ),
       /must has 0 verdicts for 1 items/,
+    );
+    assert.throws(
+      () =>
+        parseRubricReply(
+          '{"must":[{"yes":true}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"n":1,"holds":true}]}',
+          rubric,
+          bullets,
+        ),
+      /no verdict for bullet 2/,
     );
   });
 
@@ -132,7 +141,8 @@ describe("rubric grader", () => {
     assert.match(prompt, /PACKET_UNIQUE_7f3a/);
     assert.match(prompt, /Start from this packet/);
     assert.match(prompt, /git work tree/);
-    assert.match(prompt, /must has exactly 1 entries, good 1, mustNot 1, bullets 2/);
+    assert.match(prompt, /must has exactly 1 entries, good 1, mustNot 1/);
+    assert.match(prompt, /one entry for each of the 2 numbered bullets/);
     const empty = rubricPrompt({
       rubric: { must: [], good: [], mustNot: [] },
       bullets: [],

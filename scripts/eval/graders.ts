@@ -11,6 +11,7 @@ const itemVerdictSchema = z.object({
 });
 
 const bulletVerdictSchema = z.object({
+  n: z.number().int(),
   holds: z.boolean(),
   note: z.string().optional(),
 });
@@ -23,7 +24,10 @@ const rubricReplySchema = z.object({
 });
 
 export type ItemVerdict = z.infer<typeof itemVerdictSchema> & { item: string };
-export type BulletVerdict = z.infer<typeof bulletVerdictSchema> & { where: string; bullet: string };
+export type BulletVerdict = Omit<z.infer<typeof bulletVerdictSchema>, "n"> & {
+  where: string;
+  bullet: string;
+};
 
 export type RubricOutput = {
   must: ItemVerdict[];
@@ -96,7 +100,10 @@ export function rubricCounts(output: RubricOutput): RubricCounts {
   };
 }
 
-/** The model answers by position. Zip its arrays back onto the rubric text. */
+/**
+ * The model answers rubric items by position and bullets by number. A review can hold over 100
+ * bullets, and models miscount a list that long, so a number keeps each verdict on its bullet.
+ */
 export function parseRubricReply(
   text: string,
   rubric: Rubric,
@@ -113,14 +120,18 @@ export function parseRubricReply(
     }
     return items.map((item, i) => ({ item, ...verdicts[i]! }));
   };
-  if (reply.bullets.length !== bullets.length) {
-    throw new Error(`bullets has ${reply.bullets.length} verdicts for ${bullets.length} bullets`);
-  }
+  const verdictByNumber = new Map(reply.bullets.map(({ n, ...verdict }) => [n, verdict]));
   return {
     must: zip("must", rubric.must, reply.must),
     good: zip("good", rubric.good, reply.good),
     mustNot: zip("mustNot", rubric.mustNot, reply.mustNot),
-    bullets: bullets.map((bullet, i) => ({ ...bullet, ...reply.bullets[i]! })),
+    bullets: bullets.map((bullet, i) => {
+      const verdict = verdictByNumber.get(i + 1);
+      if (verdict === undefined) {
+        throw new Error(`bullets has no verdict for bullet ${i + 1}`);
+      }
+      return { ...bullet, ...verdict };
+    }),
   };
 }
 
@@ -184,8 +195,8 @@ export function rubricPrompt(opts: {
     "## Reply",
     "",
     "Reply with a JSON object only, no markdown fence:",
-    '{"must":[{"yes":true,"quote":"..."}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"holds":true},{"holds":false,"note":"..."}]}',
-    `must has exactly ${n.must} entries, good ${n.good}, mustNot ${n.mustNot}, bullets ${n.bullets}, each in the order listed above. An empty list stays an empty array.`,
+    '{"must":[{"yes":true,"quote":"..."}],"good":[{"yes":false}],"mustNot":[{"yes":false}],"bullets":[{"n":1,"holds":true},{"n":2,"holds":false,"note":"..."}]}',
+    `must has exactly ${n.must} entries, good ${n.good}, mustNot ${n.mustNot}, each in the order listed above. bullets has one entry for each of the ${n.bullets} numbered bullets, and n is that bullet's number. An empty list stays an empty array.`,
   ].join("\n");
 }
 
