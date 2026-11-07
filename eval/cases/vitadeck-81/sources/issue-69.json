@@ -1,0 +1,10 @@
+{
+  "html_url": "https://github.com/matemolnar8/vitadeck/issues/69",
+  "number": 69,
+  "title": "[Claude] Unhandled promise rejections in Deck Apps fail silently",
+  "body": "## Problem\nPR #66 (#44) routes render errors, handler errors, timer errors and module-eval errors to the Deck App Failure Screen, but an unhandled promise rejection (e.g. a `fetch` chain without a `catch`) is still swallowed. QuickJS only reports these through `JS_SetHostPromiseRejectionTracker`, which `src/core/js_runtime.c` never installs.\n\n## Fix\nInstall a rejection tracker at runtime start that logs the reason and reports it through the same path as `nativeReportDeckAppError` (or just logs it, if we prefer not to fail the app on a rejection; decide and document in `CONTEXT.md`). Cover with a scenario in the harness that loads a Deck App whose effect rejects a promise.\n\nPosted by Claude Code [claude-fable-5-1]",
+  "state": "closed",
+  "user": {
+    "login": "matemolnar8"
+  }
+}

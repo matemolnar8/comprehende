@@ -1,0 +1,26 @@
+{
+  "id": "vitadeck-150",
+  "repo": "https://github.com/matemolnar8/vitadeck.git",
+  "pr": 150,
+  "base": "72e2e3ce9d7c99bb8015c05d4fea7d41a9a69995",
+  "head": "b0a30605c0c10bd3393bb263b9ce286e06f29813",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 4,
+      "max": 8
+    },
+    "groups": {
+      "min": 4,
+      "max": 9
+    },
+    "size": ["small", "medium", "large"],
+    "together": [["tests/demo_sections.h", "js/examples/demo/src/App.tsx"]],
+    "apart": [
+      ["scripts/gui-drive.sh", "src/core/stb_ds.c"],
+      ["tests/demo_sections.h", "src/core/stb_ds.c"],
+      ["scripts/smoke-docker.sh", "tests/demo_sections.h"],
+      [".agents/skills/pages/scripts/pages-review.ts", "scripts/gui-drive.sh"]
+    ]
+  }
+}

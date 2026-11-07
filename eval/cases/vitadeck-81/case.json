@@ -1,0 +1,22 @@
+{
+  "id": "vitadeck-81",
+  "repo": "https://github.com/matemolnar8/vitadeck.git",
+  "pr": 81,
+  "base": "ebfc6a154657deaedc72f2c1c4501b5addd99823",
+  "head": "ad548e1b0ea1602e4dd8ba2ce1203b20e39ef1fe",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 2,
+      "max": 3
+    },
+    "groups": {
+      "min": 2,
+      "max": 4
+    },
+    "size": ["small", "medium"],
+    "sourceKinds": ["ticket"],
+    "together": [["src/core/js_runtime.c", "tests/js_limits_harness.c"]],
+    "apart": [["src/core/js_runtime.c", "vendor/stb_ds.h"]]
+  }
+}

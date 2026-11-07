@@ -1,0 +1,15 @@
+[
+  {
+    "html_url": "https://github.com/matemolnar8/vitadeck/pull/150#discussion_r4477302260",
+    "user": {
+      "login": "chatgpt-codex-connector[bot]"
+    },
+    "body": "**<sub><sub>![P2 Badge](https://img.shields.io/badge/P2-yellow?style=flat)</sub></sub>  Use a repo-relative path for the GUI driver**\n\nWhen this checklist is followed from `out/` as the previous step requires, `scripts/gui-drive.sh` resolves to `out/scripts/gui-drive.sh`, not the script at the repository root; the later `rect` example repeats this path. Use `../scripts/gui-drive.sh` or an absolute path. The app itself must remain launched from `out/` to find its data.\n\nAGENTS.md reference: [AGENTS.md:L53-L53](https://github.com/matemolnar8/vitadeck/blob/f0d05d344a698b00618fe76f06d9e72e66b01637/AGENTS.md#L53-L53)\n\nUseful? React with 👍 / 👎.\n\n<!-- codex-code-review-finding:v1 -->",
+    "path": ".agents/skills/vitadeck-manual-testing/SKILL.md",
+    "side": "RIGHT",
+    "line": null,
+    "original_line": 18,
+    "original_commit_id": "f0d05d344a698b00618fe76f06d9e72e66b01637",
+    "commit_id": "60f178d17f0d3b729ffe3abb4e105153f641eab4"
+  }
+]

@@ -1,0 +1,28 @@
+{
+  "id": "comprehende-143",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 143,
+  "base": "b6874adce51508c7d7d48118445146e7b93d5d1a",
+  "head": "dab1e44dc86529cf9d3f90ebc62ec1c59e4a92dd",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 2,
+      "max": 3
+    },
+    "groups": {
+      "min": 2,
+      "max": 6
+    },
+    "size": ["small", "medium"],
+    "together": [
+      [
+        "src/ui/lib/mono-font.ts",
+        "src/ui/lib/mono-font.test.ts",
+        "src/ui/lib/MonoFontProvider.tsx"
+      ],
+      ["src/ui/lib/narrow.ts", "src/ui/lib/narrow.test.ts"]
+    ],
+    "apart": [["src/ui/lib/narrow.ts", "src/ui/lib/mono-font.ts"]]
+  }
+}
