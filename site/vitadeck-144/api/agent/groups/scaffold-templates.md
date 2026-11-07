@@ -27,43 +27,29 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 06 of 13: vitadeck build and create plugins (`sdk-cli`)
+Review concern 11 of 18: Scaffolds for host plugins (`scaffold-templates`)
 
-The why:
-
-[PR #145](source:s5) says a custom plugin used to mean an npm package of its own.
+Part: Host Control
 
 The what:
 
-`vitadeck build` writes `<slug>.vdplugin` and its zip from `hostPlugin`, `entry` becomes optional, and `create` gains `--host-plugin` and `--host-plugin-only` templates. `dev` takes no URL for a plugin-only project and rejects one, and requires it otherwise.
+`create --host-plugin` overlays the plugin template onto a Deck App, and `create --host-plugin-only` makes a plugin project whose `package.json` exports its registry.
+
+Attention (product):
+`copy-templates` maps `workspace:*` dependencies to published versions, so a new project gets `@vitadeck/host-companion` at `^0.1.0`. The companion is `private` and unpublished, so the project's `npm install` cannot resolve it until a release publishes it.
 
 Depends on:
-- 05 Companion plugin packages (`companion-plugins`)
+- 10 Build a custom plugin package (`plugin-build`)
 
 Hunk refs for this concern:
-- js/packages/sdk/cli/cli.ts@1+1
-- js/packages/sdk/cli/cli.ts@7+7
-- js/packages/sdk/cli/cli.ts@34+38
-- js/packages/sdk/cli/cli.ts@102+107
-- js/packages/sdk/cli/cli.ts@186+201
-- js/packages/sdk/cli/cli.ts@232+252
-- js/packages/sdk/cli/cli.ts@366+387
-- js/packages/sdk/cli/cli.ts@450+573
-- js/packages/sdk/cli/cli.ts@551+703
-- js/packages/sdk/cli/cli.ts@565+725
-- js/packages/sdk/cli/cli.ts@613+775
-- js/packages/sdk/cli/cli.ts@628+790
-- js/packages/sdk/cli/cli.ts@636+801
-- js/packages/sdk/cli/cli.ts@657+833
-- js/packages/sdk/cli/cli.ts@692+868
+- js/packages/sdk/cli/cli.ts
 - js/packages/sdk/cli/copy-templates.ts
-- js/packages/sdk/cli/test-project.ts
 - js/packages/sdk/cli/templates/host-plugin-only/.gitignore
 - js/packages/sdk/cli/templates/host-plugin-only/package.json
 - js/packages/sdk/cli/templates/host-plugin-only/vitadeck.config.json
@@ -73,4 +59,3 @@ Hunk refs for this concern:
 - js/packages/sdk/cli/templates/host-plugin/package.json
 - js/packages/sdk/cli/templates/host-plugin/src/App.tsx
 - js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json
-- js/packages/sdk/cli/cli.test.ts

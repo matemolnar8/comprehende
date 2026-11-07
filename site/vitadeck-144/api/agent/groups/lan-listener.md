@@ -27,29 +27,35 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 09 of 13: LAN Listener on from boot (`lan-listener`)
+Review concern 04 of 18: LAN Listener serves uploads, links (`lan-listener`)
+
+Part: Host Control
+
+The why:
+
+After testing, the separate link listener felt clunky, [PR #144](source:s1) says, so links share the always-on LAN Listener.
 
 The what:
 
-The upload server becomes `lan_listener.c` with a `POST /link` route, its HTTP helpers move to `src/net/http.c`, and `main.c` starts it at boot. [PR #144](source:s1) says the Vita VPK builds, but nothing was tested on hardware.
+The upload server becomes the LAN Listener, which also answers `POST /link` and starts at boot. Its request parsing and JSON replies move into `net/http.c`.
 
 Attention (risk):
-`shell_start_listener` in `main.c` binds the LAN Listener on all interfaces at boot, and nothing checks who calls `POST /upload` or `POST /link`. While VitaDeck runs, anyone on the LAN can install or replace a Deck App, the active one included, or add a link that points Deck Apps at their own server. Turning **Upload and link** off lasts only until VitaDeck restarts.
+The listener runs from boot, and `POST /link` and `POST /upload` answer any LAN peer. `handler_thread` picks the route from the request line, and nothing checks the peer or a credential first. A peer can add a link or install a Deck App whenever VitaDeck runs, which ADR 0004 accepts until credentials exist.
 
 Depends on:
-- 08 Native link store and getter (`native-link`)
+- 03 Link store and getter (`link-store`)
 
 Hunk refs for this concern:
-- src/net/lan_listener.c
-- src/net/lan_listener.h
 - src/net/http.c
 - src/net/http.h
+- src/net/lan_listener.c
+- src/net/lan_listener.h
 - src/platform/lan_address.h
 - src/platform/lan_address_posix.c
 - src/platform/lan_address_vita.c
@@ -57,11 +63,5 @@ Hunk refs for this concern:
 - src/upload/http_parse.h
 - src/upload/http_server.c
 - src/upload/http_server.h
-- src/main.c
-- CMakeLists.txt@137+137
-- CMakeLists.txt@177+179
-- js/packages/sdk/cli/cli.ts@514+663
-- js/packages/sdk/cli/dev.test.ts
-- .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh
 - tests/upload_parsing_harness.c
 - tests/upload_single_flight_harness.c

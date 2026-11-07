@@ -27,23 +27,26 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 07 of 13: Shared JSON and file-replace helpers (`json-file-helpers`)
+Review concern 10 of 18: Build a custom plugin package (`plugin-build`)
+
+Part: Host Control
 
 The what:
 
-`json.c` takes `json_skip_value` from `package_manifest.c` and the JSON escaper from the upload code, and `util.c` takes the Vita-safe replace from `deck_app_storage.c`, so the link store can reuse both. The moved code is unchanged apart from names.
+`vitadeck build` writes `<slug>.vdplugin` from `hostPlugin`, bundling the implementation and copying `files/`, and swaps it in only after the build succeeds. A plugin-only project rebuilds in `dev` without an upload URL.
+
+Depends on:
+- 01 Wire contract and plugin registry (`contract`)
 
 Hunk refs for this concern:
-- src/core/json.c
-- src/core/json.h
-- src/core/util.c
-- src/core/util.h
-- src/core/deck_app_storage.c
-- src/core/package_manifest.c
-- CMakeLists.txt@160+161
+- js/packages/sdk/cli/cli.ts
+- js/packages/sdk/cli/cli.test.ts
+- js/packages/sdk/cli/dev.test.ts
+- js/packages/sdk/cli/package-format.test.ts
+- js/packages/sdk/cli/test-project.ts

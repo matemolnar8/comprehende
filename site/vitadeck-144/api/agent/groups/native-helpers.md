@@ -27,28 +27,24 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 02 of 13: Deck App client and event watching (`client`)
+Review concern 02 of 18: Shared JSON and file replacement (`native-helpers`)
+
+Part: Host Control
 
 The what:
 
-`client.ts` turns a plugin into typed methods that resolve to `HostResult` and never reject, reading the links from `nativeGetHostControlLinks` on every call. `watchHostEvents` keeps one `core.events` wait open, passing `next` back as `after`.
-
-Attention (tradeoff):
-The Vita `fetch` has no `AbortSignal`, so `send` races the request against a 5 s timer and never retries. After a `timeout` the native request keeps running up to curl's 30 s cap, and the command may still run on the computer. `watchHostEvents` therefore waits 30 s before retrying a timed-out wait, and gives each wait 29 s against the companion's 25 s hold.
-
-Depends on:
-- 01 Wire contract and plugin registry (`contract`)
+Moves the JSON helpers into `core/json` and the write-then-rename routine into `vd_replace_file`, which Deck App Storage and the link store share.
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/client.ts
-- js/packages/sdk/test/host-control.test.ts
-- js/packages/runtime/src/runtime-native.d.ts
-- js/packages/sdk/src/deck-app-globals.d.ts
-- js/packages/sdk/package.json@62+67
-- js/packages/sdk/tsconfig.json
+- src/core/deck_app_storage.c
+- src/core/json.c
+- src/core/json.h
+- src/core/package_manifest.c
+- src/core/util.c
+- src/core/util.h

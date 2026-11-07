@@ -27,26 +27,20 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 12 of 13: Host Control demo Deck App (`example`)
+Review concern 16 of 18: Stop cancels pending fetches (`native-fetch-cancel`)
+
+Part: Host events
 
 The what:
 
-`js/examples/host-control` lists linked computers with live CPU, and for the selected one shows capabilities, gauges, an Echo round trip and `core` notices. It polls `systemStats` one request at a time per computer, backing off to 30 s after a `timeout`.
-
-Depends on:
-- 02 Deck App client and event watching (`client`)
+Stopping a Deck App cancels its pending fetches at curl's next progress call, so a held event wait does not hold up the stop.
 
 Hunk refs for this concern:
-- js/examples/host-control/src/App.tsx
-- js/examples/host-control/README.md
-- js/examples/host-control/package.json
-- js/examples/host-control/vitadeck.config.json
-- js/examples/host-control/tsconfig.json
-- js/examples/host-control/src/vitadeck-env.d.ts
-- README.md
+- src/jslib/fetch.c
+- tests/js_limits_harness.c

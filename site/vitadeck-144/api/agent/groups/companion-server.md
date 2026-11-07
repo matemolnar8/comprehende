@@ -27,33 +27,31 @@ base (merge-base)  a447e3b960dc1c5434b9fbc2f45c112b1c630b1f
 
 head               ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Named refs at pin: a447e3b9 ... ae5083ca
+Named refs at pin: a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ... ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
 Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 03 of 13: Companion server and events (`companion-server`)
+Review concern 08 of 18: Companion answers linked peers (`companion-server`)
+
+Part: Host Control
 
 The what:
 
-`startHostCompanion` serves `POST /command`, checking route, method, content type, size, version, plugin, command and payload guard in order, and `events.ts` holds `core.events` waits until the plugin emits. As [chatgpt-codex-connector asked](source:s6), `reply` checks the peer before reading the body.
+`startHostCompanion` serves `POST /command`, checks the peer before reading the body, as [a Codex review](source:s2) asked, and routes to a loaded plugin.
 
 Attention (risk):
-`isAllowed` answers every peer while the config's `vitas` list is empty, so a companion that was started but never linked serves any LAN host. Once linked, it answers those Vita IPs, loopback and this computer's own addresses, all spoofable. The built-ins only read, so today the exposure is `echo`, `notify`, system stats, and any installed custom plugin.
+Until a Vita links, `isAllowed` returns true for every peer, and `start` listens on `0.0.0.0`. Any LAN peer can then call every loaded command, including installed plugins, which run with the user's permissions. Once a link exists, only that Vita's address, loopback and this computer's own addresses get answers.
+
+Questions:
+- Why does `isAllowed` admit every peer until a Vita links, instead of refusing?
 
 Depends on:
 - 01 Wire contract and plugin registry (`contract`)
 
 Hunk refs for this concern:
-- js/packages/host-companion/src/server.ts
 - js/packages/host-companion/src/core.ts
-- js/packages/host-companion/src/events.ts
+- js/packages/host-companion/src/server.ts
 - js/packages/host-companion/src/system-stats.ts
 - js/packages/host-companion/test/server.test.ts
-- js/packages/host-companion/package.json
-- js/packages/host-companion/rolldown.config.mjs
-- js/packages/host-companion/tsconfig.json
-- js/package.json
-- scripts/agent-check.sh
-- .gitignore
