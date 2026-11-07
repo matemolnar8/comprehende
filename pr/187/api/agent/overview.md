@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify 85349f212f7388fa7e330e5f1bf229db21233f2d` in this repository.
+   Run `git rev-parse --verify f344a7c5055f503935fbff52c8574fe1233bd93a` and `git rev-parse --verify 032d366a4596ab294a809d77bca9e8a85401b510` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  f344a7c5055f503935fbff52c8574fe1233bd93a
 
-head               85349f212f7388fa7e330e5f1bf229db21233f2d
+head               032d366a4596ab294a809d77bca9e8a85401b510
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a 85349f212f7388fa7e330e5f1bf229db21233f2d
+git diff --find-renames f344a7c5055f503935fbff52c8574fe1233bd93a 032d366a4596ab294a809d77bca9e8a85401b510
 
 Commits:
+- 032d366a Test: pin the Refresh pointer, not a sentence the skill no longer has
 - 85349f21 Skill: check claims outside the diff with git grep; trim and move Refresh
 - aee15740 Skill: read every changed file; close the gaps that let unread code pass
 - 917cfbde Eval: add vitadeck-144, a case for misses from unread files
@@ -98,6 +99,6 @@ Attention (tradeoff):
 Refresh moves behind a pointer, step 4 points at field sections, and `serve` runs in the background. `SKILL.md` goes from 6,684 to 5,595 words.
 
 Attention (contract):
-The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. Refresh has not run since the move.
+The Refresh pointer used to fire when a review document already existed. It now fires when the user names one, or when this session wrote one. A review from an earlier session that the user does not name starts a fresh review. This review went through the moved steps once, by hand.
 
 [groups/skill-cleanup.md](groups/skill-cleanup.md)
