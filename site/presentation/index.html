@@ -159,9 +159,18 @@
   .stage { position: relative; flex: 1; min-height: 0; margin-top: 1.5vh; overflow: hidden; }
   .frame { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform-origin: 0 0; }
   .frame img { width: 100%; height: 100%; }
+  .models { border-collapse: collapse; width: 100%; font-size: 1.05em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+  .models th, .models td { padding: 0.32em 0.6em; text-align: right; white-space: nowrap; }
+  .models thead th { color: var(--muted-foreground); font-family: var(--font-sans); font-weight: 400; font-size: 0.8em; padding: 0.4em 0.75em; border-bottom: 2px solid var(--border); }
+  .models tbody + tbody tr:first-child > * { border-top: 2px solid var(--border); }
+  .models tbody .name { font-family: var(--font-display); font-weight: 400; vertical-align: top; }
+  .models .name { text-align: left; padding-left: 0; }
+  .models tr > :last-child { padding-right: 0; }
+  .models .effort { text-align: left; color: var(--muted-foreground); }
+  .models-note { font-size: 0.8em; margin: -0.6em 0 0.8em; max-width: none; }
   .more { font-size: 0.9em; line-height: 1.3; }
   .more li { margin-bottom: 0.55em; max-width: none; }
-  @media (max-width: 800px) { .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
+  @media (max-width: 800px) { .models { font-size: 0.72em; } .models th, .models td, .models thead th { padding-left: 0.3em; padding-right: 0.3em; } .models .name { padding-left: 0; } .models tr > :last-child { padding-right: 0; } .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
 </style>
 </head>
 <body>
@@ -336,6 +345,32 @@
     <h1 class="demo">Live demo</h1>
     <a class="demo-link" href="https://d2qhqm67j3pqdu.cloudfront.net/mate.molnar/eager-jasper-sm3tn2q5e5761cv0/" target="_blank" rel="noopener">HCJ PR #338, Angular 15 to 22, 19 groups</a>
     <a class="demo-link" href="https://matemolnar8.github.io/comprehende/site/vitadeck-144/" target="_blank" rel="noopener">VitaDeck PR #144, 26 groups</a>
+  </section>
+
+  <section class="slide">
+    <h2>Same PR, eight reviews</h2>
+    <p class="muted models-note">VitaDeck PR #144, 110 files. One run each, same skill. Tokens include cache reads.</p>
+    <table class="models">
+      <thead>
+        <tr><th class="name" scope="col">Model</th><th class="effort" scope="col">Effort</th><th scope="col">Groups</th><th scope="col">Parts</th><th scope="col">Attentions</th><th scope="col">Time</th><th scope="col">Tokens</th></tr>
+      </thead>
+      <tbody>
+        <tr><th class="name" rowspan="2" scope="rowgroup">Haiku 5.5</th><td class="effort">Medium</td><td>18</td><td>6</td><td>5</td><td>7m 13s</td><td>1.75M</td></tr>
+        <tr><td class="effort">High</td><td>19</td><td>2</td><td>7</td><td>9m 19s</td><td>2.31M</td></tr>
+      </tbody>
+      <tbody>
+        <tr><th class="name" rowspan="2" scope="rowgroup">Sonnet 5.5</th><td class="effort">Low</td><td>8</td><td>0</td><td>3</td><td>1m 18s</td><td>0.62M</td></tr>
+        <tr><td class="effort">High</td><td>13</td><td>0</td><td>2</td><td>4m 13s</td><td>1.69M</td></tr>
+      </tbody>
+      <tbody>
+        <tr><th class="name" rowspan="2" scope="rowgroup">Opus 5.5</th><td class="effort">Low</td><td>11</td><td>0</td><td>7</td><td>4m 41s</td><td>0.99M</td></tr>
+        <tr><td class="effort">High</td><td>18</td><td>4</td><td>9</td><td>10m 37s</td><td>1.47M</td></tr>
+      </tbody>
+      <tbody>
+        <tr><th class="name" rowspan="2" scope="rowgroup">Grok 4.7</th><td class="effort">Low</td><td>7</td><td>0</td><td>2</td><td>4m 10s</td><td>0.61M</td></tr>
+        <tr><td class="effort">High</td><td>13</td><td>0</td><td>3</td><td>18m 15s</td><td>0.94M</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <section class="slide">
