@@ -166,6 +166,7 @@
   .models tbody .name { font-family: var(--font-display); font-weight: 400; vertical-align: top; }
   .models .name { text-align: left; padding-left: 0; }
   .models tr > :last-child { padding-right: 0; }
+  .models .provider { width: 1em; height: 1em; margin-right: 0.45em; vertical-align: -0.15em; fill: currentColor; }
   .models .effort { text-align: left; color: var(--muted-foreground); }
   .models-note { font-size: 0.8em; margin: -0.6em 0 0.8em; max-width: none; }
   .more { font-size: 0.9em; line-height: 1.3; }
@@ -348,6 +349,10 @@
   </section>
 
   <section class="slide">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <symbol id="logo-anthropic" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z"/></symbol>
+      <symbol id="logo-xai" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6.469 8.776L16.512 23h-4.464L2.005 8.776H6.47zm-.004 7.9l2.233 3.164L6.467 23H2l4.465-6.324zM22 2.582V23h-3.659V7.764L22 2.582zM22 1l-9.952 14.095-2.233-3.163L17.533 1H22z"/></symbol>
+    </svg>
     <h2>Same PR, eight reviews</h2>
     <p class="muted models-note">VitaDeck PR #144, 110 files. One run each, same skill. Tokens include cache reads.</p>
     <table class="models">
@@ -355,19 +360,19 @@
         <tr><th class="name" scope="col">Model</th><th class="effort" scope="col">Effort</th><th scope="col">Groups</th><th scope="col">Parts</th><th scope="col">Attentions</th><th scope="col">Time</th><th scope="col">Tokens</th></tr>
       </thead>
       <tbody>
-        <tr><th class="name" rowspan="2" scope="rowgroup">Haiku 5.5</th><td class="effort">Medium</td><td>18</td><td>6</td><td>5</td><td>7m 13s</td><td>1.75M</td></tr>
+        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="Anthropic"><use href="#logo-anthropic"/></svg>Haiku 5.5</th><td class="effort">Medium</td><td>18</td><td>6</td><td>5</td><td>7m 13s</td><td>1.75M</td></tr>
         <tr><td class="effort">High</td><td>19</td><td>2</td><td>7</td><td>9m 19s</td><td>2.31M</td></tr>
       </tbody>
       <tbody>
-        <tr><th class="name" rowspan="2" scope="rowgroup">Sonnet 5.5</th><td class="effort">Low</td><td>8</td><td>0</td><td>3</td><td>1m 18s</td><td>0.62M</td></tr>
+        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="Anthropic"><use href="#logo-anthropic"/></svg>Sonnet 5.5</th><td class="effort">Low</td><td>8</td><td>0</td><td>3</td><td>1m 18s</td><td>0.62M</td></tr>
         <tr><td class="effort">High</td><td>13</td><td>0</td><td>2</td><td>4m 13s</td><td>1.69M</td></tr>
       </tbody>
       <tbody>
-        <tr><th class="name" rowspan="2" scope="rowgroup">Opus 5.5</th><td class="effort">Low</td><td>11</td><td>0</td><td>7</td><td>4m 41s</td><td>0.99M</td></tr>
+        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="Anthropic"><use href="#logo-anthropic"/></svg>Opus 5.5</th><td class="effort">Low</td><td>11</td><td>0</td><td>7</td><td>4m 41s</td><td>0.99M</td></tr>
         <tr><td class="effort">High</td><td>18</td><td>4</td><td>9</td><td>10m 37s</td><td>1.47M</td></tr>
       </tbody>
       <tbody>
-        <tr><th class="name" rowspan="2" scope="rowgroup">Grok 4.7</th><td class="effort">Low</td><td>7</td><td>0</td><td>2</td><td>4m 10s</td><td>0.61M</td></tr>
+        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="xAI"><use href="#logo-xai"/></svg>Grok 4.7</th><td class="effort">Low</td><td>7</td><td>0</td><td>2</td><td>4m 10s</td><td>0.61M</td></tr>
         <tr><td class="effort">High</td><td>13</td><td>0</td><td>3</td><td>18m 15s</td><td>0.94M</td></tr>
       </tbody>
     </table>
