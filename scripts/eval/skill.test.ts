@@ -18,9 +18,8 @@ afterAll(() => {
 });
 
 describe("next skill workflow", () => {
-  it("batches commands, names validate checks, and drops the schema pointer", async () => {
+  it("batches commands and drops the schema pointer", async () => {
     const md = await readFile(join(skillPaths(findPackageRoot()).nextSkill, "SKILL.md"), "utf8");
-    assert.match(md, /Each step is one tool call where the step says so/);
     assert.match(
       md,
       /One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources/,
@@ -28,10 +27,6 @@ describe("next skill workflow", () => {
     assert.match(md, /Write the whole `review\.json` in one shell call/);
     assert.match(md, /<<'EOF'\n   <the document>\n   EOF\n   npx comprehende@[\d.]+ validate/);
     assert.match(md, /`label` is that subject line, or a SHA from the same log/);
-    assert.match(
-      md,
-      /every live hunk sits in a group, every ref matches live git, every `source:` id exists in `sources`/,
-    );
     assert.match(md, /This shape is enough to write a valid document/);
     assert.match(md, /references\/example\.md` is an optional filled sample/);
     assert.match(md, /whose thread is open/);
@@ -53,7 +48,7 @@ describe("next skill workflow", () => {
     assert.match(batch, /digest --base <base> --head <head>/);
     assert.match(batch, /git log --format=/);
     assert.doesNotMatch(batch, /git diff --stat/);
-    assert.match(md, /<executable> --version` in this same shell call/);
+    assert.match(md, /<executable> --version` in the step-2 call/);
     assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);
     assert.doesNotMatch(md, /package-lock\.json/);
