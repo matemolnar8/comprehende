@@ -30,9 +30,8 @@ describe("next skill workflow", () => {
     assert.match(md, /This shape is enough to write a valid document/);
     assert.match(md, /references\/example\.md` is an optional filled sample/);
     assert.match(md, /whose thread is open/);
-    assert.match(md, /an open thread has `isResolved` false/);
-    assert.match(md, /an outdated comment has `isOutdated` true/);
-    assert.match(md, /original_line/);
+    assert.match(md, /a comment with no current line is outdated/);
+    assert.doesNotMatch(md, /github|gitlab|bitbucket/i);
     assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     const shells = [...md.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1] ?? "");

@@ -381,7 +381,7 @@
             "old",
             "new"
           ],
-          "description": "pr-comment only. Git-shaped, not GitHub-shaped."
+          "description": "pr-comment only. Uses the old and new sides of the diff, not the names a forge gives them."
         },
         "line": {
           "type": "integer",
