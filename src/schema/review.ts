@@ -92,7 +92,10 @@ const sourceShape = z.strictObject(
     ).optional(),
     side: z
       .enum(["old", "new"], { error: "must be old or new" })
-      .meta({ description: "pr-comment only. Git-shaped, not GitHub-shaped." })
+      .meta({
+        description:
+          "pr-comment only. Uses the old and new sides of the diff, not the names a forge gives them.",
+      })
       .optional(),
     line: z
       .int({ error: "must be a positive integer" })

@@ -25,6 +25,11 @@ describe("eval github helpers", () => {
       ),
       [12, 46],
     );
+    assert.deepEqual(
+      linkedIssueNumbers("Closes #109, #110, and #111; includes #145"),
+      [109, 110, 111],
+    );
+    assert.deepEqual(linkedIssueNumbers("Fixes #1 and #2, and see #3"), [1, 2]);
   });
 
   it("collects html_url values and expands pull to issues", () => {
