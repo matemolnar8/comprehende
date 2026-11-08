@@ -33,20 +33,22 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 17 of 18: Host Control demo Deck App (`demo`)
+Review concern 08 of 14: Host Control demo Deck App (`demo`)
 
-Part: Demo and docs
+Part: Host Control
 
 The what:
 
-A Deck App lists linked computers with live CPU, then shows the selected one's capabilities, gauges, an Echo round trip and notices.
+`js/examples/host-control` polls `systemStats` on every linked computer and shows one computer's details. It polls an unanswering computer every 30 s, since a timed-out native fetch runs on that long.
+
+Depends on:
+- 02 Wire contract and SDK client (`contract`)
 
 Hunk refs for this concern:
-- js/examples/demo/README.md
+- js/examples/host-control/src/App.tsx
 - js/examples/host-control/README.md
 - js/examples/host-control/package.json
-- js/examples/host-control/src/App.tsx
 - js/examples/host-control/src/vitadeck-env.d.ts
 - js/examples/host-control/tsconfig.json
 - js/examples/host-control/vitadeck.config.json
-- js/packages/sdk/src/deck-app-globals.d.ts
+- README.md

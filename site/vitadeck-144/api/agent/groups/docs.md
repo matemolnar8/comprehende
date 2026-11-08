@@ -33,25 +33,17 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 18 of 18: ADR, READMEs and agent skills (`docs`)
+Review concern 01 of 14: ADR, glossary and READMEs (`docs`)
 
-Part: Demo and docs
+Part: Host Control
 
 The what:
 
-ADR 0004, `CONTEXT.md`, the READMEs and the agent skills describe the link-once design, plugin packages and the LAN Listener.
+ADR 0004, `CONTEXT.md`, `AGENTS.md` and the READMEs describe the shipped design, rewritten in place.
 
 Hunk refs for this concern:
-- .agents/skills/vitadeck-build/SKILL.md
-- .agents/skills/vitadeck-deck-app-init/SKILL.md
-- .agents/skills/vitadeck-emulator/SKILL.md
-- .agents/skills/vitadeck-host-control/SKILL.md
-- .agents/skills/vitadeck-manual-testing/SKILL.md
-- .agents/skills/vitadeck-vdapp-upload/SKILL.md
-- .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh
-- AGENTS.md
-- CONTEXT.md
-- README.md
 - docs/adr/0004-host-control-sliced-delivery.md
-- js/packages/host-companion/README.md
+- CONTEXT.md
+- AGENTS.md
 - js/packages/sdk/README.md
+- js/examples/demo/README.md

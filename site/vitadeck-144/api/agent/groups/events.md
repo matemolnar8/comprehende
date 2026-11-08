@@ -33,25 +33,23 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 08 of 18: Companion answers linked peers (`companion-server`)
+Review concern 09 of 14: Events by long-polling (`events`)
 
-Part: Host Control
+Part: Host Control Events
+
+The why:
+
+No ticket asks for events; [PR #144](source:s1) adds them so plugins can push to Deck Apps.
 
 The what:
 
-`startHostCompanion` serves `POST /command`, checks the peer before reading the body, as [a Codex review](source:s2) asked, and routes to a loaded plugin.
+Plugins emit events from a `start` lifecycle into the companion's event log, and `core.events` holds each request until the plugin's next event or 25 s. `watchHostEvents` in the SDK keeps one such request open per watcher.
 
-Attention (risk):
-Until a Vita links, `isAllowed` returns true for every peer, and `start` listens on `0.0.0.0`. Any LAN peer can then call every loaded command, including installed plugins, which run with the user's permissions. Once a link exists, only that Vita's address, loopback and this computer's own addresses get answers.
-
-Questions:
-- Why does `isAllowed` admit every peer until a Vita links, instead of refusing?
-
-Depends on:
-- 01 Wire contract and plugin registry (`contract`)
+Attention (tradeoff):
+`wait` reads an `after` above the current `seq` as a restart and starts over from now. If a restarted companion emits 3 events before a wait with `after: 57`, the reply is `{ events: [], next: 3 }` and those 3 are lost. After 60 events it returns only 58 to 60. The ADR calls events best effort.
 
 Hunk refs for this concern:
+- js/packages/host-companion/src/events.ts
 - js/packages/host-companion/src/core.ts
-- js/packages/host-companion/src/server.ts
-- js/packages/host-companion/src/system-stats.ts
-- js/packages/host-companion/test/server.test.ts
+- js/packages/sdk/src/host-control/client.ts
+- js/packages/sdk/test/host-control.test.ts

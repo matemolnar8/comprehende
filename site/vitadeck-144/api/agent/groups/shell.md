@@ -33,19 +33,23 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 05 of 18: Shell listener and computer list (`shell`)
+Review concern 07 of 14: Shell toggle and Host Control screen (`shell`)
 
 Part: Host Control
 
+The why:
+
+[The commit](source:s9) focuses Host Control in an empty Shell, so a first Cross keeps listening.
+
 The what:
 
-The Shell gets an Upload and link toggle and a Host Control screen where Cross forgets a linked computer. Home focus starts on Host Control when no packages are installed, so a first Cross does not stop the listener.
+The Shell's Upload row becomes an on/off **Upload and link** toggle, and a new Host Control screen shows the `link` command and forgets a computer on Cross.
 
 Depends on:
-- 04 LAN Listener serves uploads, links (`lan-listener`)
+- 06 One LAN Listener from boot (`lan-listener`)
+- 05 Native link store and getter (`link-store`)
 
 Hunk refs for this concern:
 - src/shell/shell.c
 - src/shell/shell.h
-- src/main.c
 - tests/shell_input_harness.c

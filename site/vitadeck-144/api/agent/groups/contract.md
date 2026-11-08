@@ -33,22 +33,24 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 01 of 18: Wire contract and plugin registry (`contract`)
+Review concern 02 of 14: Wire contract and SDK client (`contract`)
 
 Part: Host Control
 
 The what:
 
-The SDK defines the Host Control envelope, wire error codes and plugin registries that Deck Apps and the companion share. The fixtures pin one reply per case for the SDK, companion and native tests.
+`@vitadeck/sdk/host-control` defines plugins, the wire error codes and a client that reads VitaDeck's links on every call. The SDK, companion and C harness tests replay the same fixture files.
+
+Attention (contract):
+`send` races the transport against a `setTimeout`, because the Vita `fetch` has no `AbortSignal`. A command that takes 6 s resolves `timeout` at 5 s, but the native request keeps running and the companion still runs it. Callers must read `timeout` as "may have run"; the client never retries.
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/index.ts
-- js/packages/sdk/src/host-control/plugin.ts
 - js/packages/sdk/src/host-control/protocol.ts
+- js/packages/sdk/src/host-control/plugin.ts
+- js/packages/sdk/src/host-control/client.ts
+- js/packages/sdk/src/host-control/index.ts
 - js/packages/sdk/src/host-control/system-stats.ts
-- js/packages/sdk/package.json
-- js/packages/sdk/tsconfig.json
-- js/packages/runtime/src/runtime-native.d.ts
+- js/packages/sdk/test/host-control.test.ts
 - tests/fixtures/host-control/capabilities.json
 - tests/fixtures/host-control/command-version-mismatch.json
 - tests/fixtures/host-control/echo.json
@@ -59,3 +61,9 @@ Hunk refs for this concern:
 - tests/fixtures/host-control/link-version-mismatch.json
 - tests/fixtures/host-control/unknown-command.json
 - tests/fixtures/host-control/unknown-plugin.json
+- js/packages/sdk/package.json
+- js/packages/sdk/tsconfig.json
+- js/packages/sdk/src/deck-app-globals.d.ts
+- js/packages/runtime/src/runtime-native.d.ts
+- js/packages/sdk/cli/package-format.test.ts
+- js/packages/sdk/cli/test-project.ts@43+45

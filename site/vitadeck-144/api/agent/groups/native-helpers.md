@@ -33,18 +33,19 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 02 of 18: Shared JSON and file replacement (`native-helpers`)
+Review concern 04 of 14: Shared replace-file and JSON helpers (`native-helpers`)
 
 Part: Host Control
 
 The what:
 
-Moves the JSON helpers into `core/json` and the write-then-rename routine into `vd_replace_file`, which Deck App Storage and the link store share.
+The Vita-safe file replace moves from Deck App Storage into `util.c`, and the JSON helpers move into `json.c`, so the link store and listener share them.
 
 Hunk refs for this concern:
+- src/core/util.c
+- src/core/util.h
 - src/core/deck_app_storage.c
 - src/core/json.c
 - src/core/json.h
 - src/core/package_manifest.c
-- src/core/util.c
-- src/core/util.h
+- CMakeLists.txt@160+161

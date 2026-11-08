@@ -33,29 +33,30 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 04 of 18: LAN Listener serves uploads, links (`lan-listener`)
+Review concern 06 of 14: One LAN Listener from boot (`lan-listener`)
 
 Part: Host Control
 
 The why:
 
-After testing, the separate link listener felt clunky, [PR #144](source:s1) says, so links share the always-on LAN Listener.
+[PR #144](source:s1) says a separate link listener felt clunky in testing, so links share this one.
 
 The what:
 
-The upload server becomes the LAN Listener, which also answers `POST /link` and starts at boot. Its request parsing and JSON replies move into `net/http.c`.
+The upload server becomes the LAN Listener with a `POST /link` route, and `main.c` starts it at boot. `vitadeck dev` and `vitadeck-host-companion link` now take the same address.
 
 Attention (risk):
-The listener runs from boot, and `POST /link` and `POST /upload` answer any LAN peer. `handler_thread` picks the route from the request line, and nothing checks the peer or a credential first. A peer can add a link or install a Deck App whenever VitaDeck runs, which ADR 0004 accepts until credentials exist.
+`main.c` calls `shell_start_listener` on every boot, also in Benchmark Mode, and `/upload` and `/link` check no peer. Anyone on the LAN can install a Deck App or add a link while VitaDeck runs, until **Upload and link** is turned off. The PR accepts this until credentials exist.
 
 Depends on:
-- 03 Link store and getter (`link-store`)
+- 04 Shared replace-file and JSON helpers (`native-helpers`)
+- 05 Native link store and getter (`link-store`)
 
 Hunk refs for this concern:
-- src/net/http.c
-- src/net/http.h
 - src/net/lan_listener.c
 - src/net/lan_listener.h
+- src/net/http.c
+- src/net/http.h
 - src/platform/lan_address.h
 - src/platform/lan_address_posix.c
 - src/platform/lan_address_vita.c
@@ -63,5 +64,10 @@ Hunk refs for this concern:
 - src/upload/http_parse.h
 - src/upload/http_server.c
 - src/upload/http_server.h
+- src/main.c
 - tests/upload_parsing_harness.c
 - tests/upload_single_flight_harness.c
+- CMakeLists.txt@137+137
+- CMakeLists.txt@177+179
+- js/packages/sdk/cli/cli.ts@514+663
+- js/packages/sdk/cli/dev.test.ts

@@ -33,20 +33,23 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 09 of 18: Companion CLI and link (`companion-cli`)
+Review concern 14 of 14: Agent skills for Host Control (`agent-skills`)
 
-Part: Host Control
+Part: Agent skills
+
+The why:
+
+No ticket asks for agent skills; [PR #144](source:s1) lists them with the docs.
 
 The what:
 
-`link` posts this companion's id and URL to a Vita's `/link`, and `start` relinks each linked Vita, retrying an offline one every 30 s.
-
-Depends on:
-- 08 Companion answers linked peers (`companion-server`)
+A new `vitadeck-host-control` skill covers the companion and plugins, and the other skills drop the "open Upload first" step.
 
 Hunk refs for this concern:
-- js/packages/host-companion/src/cli.ts
-- js/packages/host-companion/src/config.ts
-- js/packages/host-companion/src/link.ts
-- js/packages/host-companion/test/cli.test.ts
-- js/packages/host-companion/test/link.test.ts
+- .agents/skills/vitadeck-host-control/SKILL.md
+- .agents/skills/vitadeck-build/SKILL.md
+- .agents/skills/vitadeck-deck-app-init/SKILL.md
+- .agents/skills/vitadeck-emulator/SKILL.md
+- .agents/skills/vitadeck-manual-testing/SKILL.md
+- .agents/skills/vitadeck-vdapp-upload/SKILL.md
+- .agents/skills/vitadeck-vdapp-upload/scripts/upload-vdapp.sh

@@ -33,20 +33,46 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 10 of 18: Build a custom plugin package (`plugin-build`)
+Review concern 11 of 14: SDK CLI builds plugin packages (`plugin-build`)
 
-Part: Host Control
+Part: Host Plugin Packages
+
+The why:
+
+[PR #145](source:s5) says a custom plugin used to need an npm package of its own.
 
 The what:
 
-`vitadeck build` writes `<slug>.vdplugin` from `hostPlugin`, bundling the implementation and copying `files/`, and swaps it in only after the build succeeds. A plugin-only project rebuilds in `dev` without an upload URL.
+`vitadeck build` writes `<slug>.vdplugin` and its zip from `hostPlugin`, and `create --host-plugin` lays a plugin over the Deck App scaffold.
 
-Depends on:
-- 01 Wire contract and plugin registry (`contract`)
+Attention (tradeoff):
+`buildHostPlugin` bundles every import except Node built-ins into one `companion.mjs`. A dependency with a native addon cannot ship this way. The SDK README says pure JavaScript only, and sends other files to `hostPlugin.files`, which `cp` copies with links dereferenced.
 
 Hunk refs for this concern:
-- js/packages/sdk/cli/cli.ts
-- js/packages/sdk/cli/cli.test.ts
-- js/packages/sdk/cli/dev.test.ts
-- js/packages/sdk/cli/package-format.test.ts
-- js/packages/sdk/cli/test-project.ts
+- js/packages/sdk/cli/cli.ts@1+1
+- js/packages/sdk/cli/cli.ts@7+7
+- js/packages/sdk/cli/cli.ts@34+38
+- js/packages/sdk/cli/cli.ts@102+107
+- js/packages/sdk/cli/cli.ts@186+201
+- js/packages/sdk/cli/cli.ts@232+252
+- js/packages/sdk/cli/cli.ts@366+387
+- js/packages/sdk/cli/cli.ts@450+573
+- js/packages/sdk/cli/cli.ts@551+703
+- js/packages/sdk/cli/cli.ts@565+725
+- js/packages/sdk/cli/cli.ts@613+775
+- js/packages/sdk/cli/cli.ts@628+790
+- js/packages/sdk/cli/cli.ts@636+801
+- js/packages/sdk/cli/cli.ts@657+833
+- js/packages/sdk/cli/cli.ts@692+868
+- js/packages/sdk/cli/cli.test.ts@1+1
+- js/packages/sdk/cli/cli.test.ts@61+71
+- js/packages/sdk/cli/copy-templates.ts
+- js/packages/sdk/cli/test-project.ts@15+15
+- js/packages/sdk/cli/test-project.ts@43+45
+- js/packages/sdk/cli/templates/host-plugin/host/companion.ts
+- js/packages/sdk/cli/templates/host-plugin/host/plugin.ts
+- js/packages/sdk/cli/templates/host-plugin/host/tsconfig.json
+- js/packages/sdk/cli/templates/host-plugin/package.json
+- js/packages/sdk/cli/templates/host-plugin/src/App.tsx
+- js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json
+- js/package.json@22+24

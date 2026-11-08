@@ -33,14 +33,36 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 16 of 18: Stop cancels pending fetches (`native-fetch-cancel`)
+Review concern 03 of 14: Host Companion server and link (`companion`)
 
-Part: Host events
+Part: Host Control
 
 The what:
 
-Stopping a Deck App cancels its pending fetches at curl's next progress call, so a held event wait does not hold up the stop.
+`vitadeck-host-companion` serves typed commands on port 8797, links itself to Vitas, and relinks them on every `start`. `reply` checks the peer before it reads the body, as [the Codex comment](source:s6) asked.
+
+Attention (risk):
+While `vitas` is empty, `isAllowed` answers every peer. After a link, only those IPs, loopback and the computer's own addresses get answers; any other peer gets 403 `forbidden`. IPs can be spoofed; the README accepts that because the built-in plugins only read.
+
+Questions:
+- Why does `config.vitas` keep only the Vita IP, not the port given to `link`?
+
+Depends on:
+- 02 Wire contract and SDK client (`contract`)
 
 Hunk refs for this concern:
-- src/jslib/fetch.c
-- tests/js_limits_harness.c
+- js/packages/host-companion/src/server.ts
+- js/packages/host-companion/src/core.ts
+- js/packages/host-companion/src/link.ts
+- js/packages/host-companion/src/config.ts
+- js/packages/host-companion/src/system-stats.ts
+- js/packages/host-companion/src/cli.ts
+- js/packages/host-companion/rolldown.config.mjs
+- js/packages/host-companion/package.json
+- js/packages/host-companion/tsconfig.json
+- js/packages/host-companion/test/link.test.ts
+- js/packages/host-companion/test/server.test.ts
+- js/packages/host-companion/README.md
+- js/package.json@5+5
+- .gitignore
+- scripts/agent-check.sh

@@ -33,20 +33,29 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 15 of 18: Deck App watches events (`event-watch`)
+Review concern 12 of 14: Companion installs and reloads packages (`plugin-loader`)
 
-Part: Host events
+Part: Host Plugin Packages
+
+The why:
+
+[PR #145](source:s5) says a globally installed companion could not load a plugin installed elsewhere.
 
 The what:
 
-`watchHostEvents` keeps one `core.events` wait open and passes each batch's `next` as `after`.
+The companion loads `.vdplugin` packages from its `plugins/` folder and each `--plugin` path, and reloads them when their files change.
 
-Attention (contract):
-A throw from `onEvent` rejects the `wait` that `void wait()` starts, and nothing catches that rejection, so the Deck App fails. The doc comment on `watchHostEvents` says a throw fails the Deck App.
+Attention (risk):
+`install` calls `loadHostPluginPackage` on the staged folder, which imports `companion.mjs`. The plugin's top-level code runs with the user's permissions during `install`, before any `start`. The help text and README say to install only trusted plugins.
 
 Depends on:
-- 14 Event log and held wait (`event-log`)
+- 11 SDK CLI builds plugin packages (`plugin-build`)
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/client.ts
-- js/packages/sdk/test/host-control.test.ts
+- js/packages/host-companion/src/plugin.ts
+- js/packages/host-companion/src/cli.ts
+- js/packages/host-companion/test/cli.test.ts
+- js/packages/host-companion/test/fixtures/greeter-plugin.ts
+- js/packages/host-companion/test/fixtures/greeting.cjs
+- js/packages/host-companion/test/fixtures/greeting.d.cts
+- js/packages/host-companion/test/fixtures/plugin-package.ts

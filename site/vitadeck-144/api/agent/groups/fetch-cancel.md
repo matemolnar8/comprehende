@@ -33,20 +33,20 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 07 of 18: SDK client calls computers (`sdk-client`)
+Review concern 10 of 14: Fetch cancels on Deck App stop (`fetch-cancel`)
 
-Part: Host Control
+Part: Host Control Events
 
 The what:
 
-`createHostClient` posts each command to a computer's `/command` and resolves every failure as a coded `HostResult`. `linkedHosts` reads the Shell's links on each call.
+`fetch_shutdown` marks every pending fetch cancelled and curl's progress callback aborts it, so a held event wait no longer stalls a Deck App stop.
 
 Attention (tradeoff):
-A command still running at 5 s resolves `timeout`, but the Vita's `fetch` has no abort, so the computer may still run it. The client never retries, so a caller cannot tell whether the command ran.
+Stopping a Deck App now aborts every pending fetch, not only event waits. A Deck App's POST still in flight at a reload is cut off within about a second. Before, the stop waited for it, up to curl's 30 s cap.
 
 Depends on:
-- 01 Wire contract and plugin registry (`contract`)
+- 09 Events by long-polling (`events`)
 
 Hunk refs for this concern:
-- js/packages/sdk/src/host-control/client.ts
-- js/packages/sdk/test/host-control.test.ts
+- src/jslib/fetch.c
+- tests/js_limits_harness.c

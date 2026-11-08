@@ -33,29 +33,30 @@ Read the diff:
 
 git diff --find-renames a447e3b960dc1c5434b9fbc2f45c112b1c630b1f ae5083caa9370b5f5985de1de0aa147a1afecc2e
 
-Review concern 11 of 18: Scaffolds for host plugins (`scaffold-templates`)
+Review concern 13 of 14: Standalone plugin projects (`standalone-plugin`)
 
-Part: Host Control
+Part: Standalone Host Plugins
+
+The why:
+
+No ticket asks for standalone plugins; [PR #144](source:s1) adds them so any Deck App can depend on one.
 
 The what:
 
-`create --host-plugin` overlays the plugin template onto a Deck App, and `create --host-plugin-only` makes a plugin project whose `package.json` exports its registry.
+`create --host-plugin-only` scaffolds a project with only `host/`, and its `package.json` exports the commands for Deck Apps to depend on.
 
-Attention (product):
-`copy-templates` maps `workspace:*` dependencies to published versions, so a new project gets `@vitadeck/host-companion` at `^0.1.0`. The companion is `private` and unpublished, so the project's `npm install` cannot resolve it until a release publishes it.
-
-Depends on:
-- 10 Build a custom plugin package (`plugin-build`)
+Attention (contract):
+`readConfig` no longer requires `entry`; a config needs `entry`, `hostPlugin`, or both. `vitadeck dev 192.168.1.50` on a plugin-only project fails with "no Deck App to upload", and `vitadeck dev` with no URL on a Deck App prints the usage.
 
 Hunk refs for this concern:
-- js/packages/sdk/cli/cli.ts
-- js/packages/sdk/cli/copy-templates.ts
 - js/packages/sdk/cli/templates/host-plugin-only/.gitignore
 - js/packages/sdk/cli/templates/host-plugin-only/package.json
 - js/packages/sdk/cli/templates/host-plugin-only/vitadeck.config.json
-- js/packages/sdk/cli/templates/host-plugin/host/companion.ts
-- js/packages/sdk/cli/templates/host-plugin/host/plugin.ts
-- js/packages/sdk/cli/templates/host-plugin/host/tsconfig.json
-- js/packages/sdk/cli/templates/host-plugin/package.json
-- js/packages/sdk/cli/templates/host-plugin/src/App.tsx
-- js/packages/sdk/cli/templates/host-plugin/vitadeck.config.json
+- js/packages/sdk/cli/cli.ts@102+107
+- js/packages/sdk/cli/cli.ts@551+703
+- js/packages/sdk/cli/cli.ts@565+725
+- js/packages/sdk/cli/cli.ts@613+775
+- js/packages/sdk/cli/cli.ts@628+790
+- js/packages/sdk/cli/cli.ts@636+801
+- js/packages/sdk/cli/cli.ts@692+868
+- js/packages/sdk/cli/cli.test.ts@61+71
