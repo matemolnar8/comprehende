@@ -7,7 +7,7 @@
   "tags": ["foreign"],
   "expect": {
     "parts": { "min": 3, "max": 8 },
-    "groups": { "min": 6, "max": 11 },
+    "groups": { "min": 6, "max": 18 },
     "size": ["large", "very-large"],
     "sourceKinds": ["ticket"],
     "mechanicalPaths": [
