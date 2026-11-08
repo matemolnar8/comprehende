@@ -170,9 +170,6 @@
   .models .effort { text-align: left; color: var(--muted-foreground); }
   .models-note { font-size: 0.8em; margin: -0.6em 0 0.8em; max-width: none; }
   .models-context { font-size: 0.8em; margin: 0.9em 0 0; max-width: none; }
-  .models .uncertain { color: var(--muted-foreground); }
-  .models sup, .models-context sup { font-size: 0.6em; line-height: 0; }
-  .models td sup { position: absolute; margin-left: 0.1em; }
   .more { font-size: 0.9em; line-height: 1.3; }
   .more li { margin-bottom: 0.55em; max-width: none; }
   @media (max-width: 800px) { .models { font-size: 0.56em; } .models th, .models td, .models thead th { padding-left: 0.2em; padding-right: 0.2em; } .models .name { padding-left: 0; } .models tr > :last-child { padding-right: 0; } .cols, .shot-layout { grid-template-columns: 1fr; } .shot { width: 100%; } .phone { width: 60%; margin: 0 auto; } .slide:has(.shot-layout) { padding: 5vh 6vw 10vh; } .slide { padding: 5vh 6vw 10vh; justify-content: safe center; overflow-y: auto; } pre { white-space: pre-wrap; } .hud { background: var(--background); } .title-logo { font-size: 3em; } }
@@ -358,7 +355,7 @@
       <symbol id="logo-cursor" viewBox="0 0 24 24"><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></symbol>
     </svg>
     <h2>Same PR, eight reviews</h2>
-    <p class="muted models-note">VitaDeck PR #144, 110 files. One run each, skill 0.13.4. List prices, Grok&rsquo;s estimated.</p>
+    <p class="muted models-note">VitaDeck PR #144, 110 files. One run each, skill 0.13.4. List prices.</p>
     <table class="models">
       <thead>
         <tr><th class="name" scope="col">Model</th><th class="effort" scope="col">Effort</th><th scope="col">Groups</th><th scope="col">Parts</th><th scope="col">Attentions</th><th scope="col">Time</th><th scope="col">Input</th><th scope="col">Cached</th><th scope="col">Output</th><th scope="col">Price</th></tr>
@@ -376,11 +373,11 @@
         <tr><td class="effort">High</td><td>14</td><td>5</td><td>9</td><td>12m 9s</td><td>370K</td><td>5.40M</td><td>65K</td><td>$5.34</td></tr>
       </tbody>
       <tbody>
-        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="Cursor"><use href="#logo-cursor"/></svg>Grok 4.7</th><td class="effort">Low</td><td>8</td><td>0</td><td>2</td><td>7m 10s</td><td class="uncertain">12K</td><td class="uncertain">0.73M</td><td class="uncertain">10K</td><td class="uncertain">~$0.45<sup>†</sup></td></tr>
-        <tr><td class="effort">High</td><td>10</td><td>2</td><td>2</td><td>24m 22s</td><td>507K</td><td>7.50M</td><td>82K</td><td>~$5.26</td></tr>
+        <tr><th class="name" rowspan="2" scope="rowgroup"><svg class="provider" role="img" aria-label="Cursor"><use href="#logo-cursor"/></svg>Grok 4.7</th><td class="effort">Low</td><td>8</td><td>0</td><td>2</td><td>7m 10s</td><td>122K</td><td>1.86M</td><td>25K</td><td>$1.32</td></tr>
+        <tr><td class="effort">High</td><td>10</td><td>2</td><td>2</td><td>24m 22s</td><td>584K</td><td>7.90M</td><td>106K</td><td>$5.94</td></tr>
       </tbody>
     </table>
-    <p class="muted models-context"><sup>†</sup> Cursor likely undercounted Grok Low&rsquo;s tokens, so its tokens and price are uncertain.<br />Fresh subagents here. Usually it runs in the coding thread and reads that thread as a source.</p>
+    <p class="muted models-context">Fresh subagents here. Usually it runs in the coding thread and reads that thread as a source.</p>
   </section>
 
   <section class="slide">
