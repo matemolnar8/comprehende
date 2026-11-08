@@ -1,0 +1,22 @@
+{
+  "id": "vitadeck-99",
+  "repo": "https://github.com/matemolnar8/vitadeck.git",
+  "pr": 99,
+  "base": "03ea0f3c1addc31b944115632b5e3c4f47601018",
+  "head": "d1eab1fd4fcce3dafda1cee8e6ff7f7b24aec32d",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 2,
+      "max": 2
+    },
+    "groups": {
+      "min": 2,
+      "max": 4
+    },
+    "size": ["small", "medium"],
+    "sourceKinds": ["ticket"],
+    "together": [["vendor/PATCHES.md", "vendor/jimp/README.md"]],
+    "apart": [["vendor/PATCHES.md", "CMakeLists.txt"]]
+  }
+}

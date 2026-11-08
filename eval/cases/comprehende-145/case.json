@@ -1,0 +1,21 @@
+{
+  "id": "comprehende-145",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 145,
+  "base": "50129928c7b33f461cd5fea07ee77b6ed7237fed",
+  "head": "79d7f0b2167dcf8fa0eacf9191c454f9d3cb17f5",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 2,
+      "max": 2
+    },
+    "groups": {
+      "min": 2,
+      "max": 3
+    },
+    "size": ["trivial", "small"],
+    "together": [["scripts/install-git-hooks.js", "src/git/hooks.test.ts"]],
+    "apart": [[".github/workflows/eval.yml", "scripts/install-git-hooks.js"]]
+  }
+}

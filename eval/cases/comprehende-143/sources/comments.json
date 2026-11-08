@@ -1,0 +1,9 @@
+[
+  {
+    "html_url": "https://github.com/matemolnar8/comprehende/pull/143#issuecomment-6240115839",
+    "user": {
+      "login": "cursor[bot]"
+    },
+    "body": "<h3>Bugbot couldn't run - usage limit reached</h3>\n\nBugbot is counted against Cursor usage for this user or team, and this run hit a usage or spend limit.\n\nA user or team admin can review and increase usage limits in the [Cursor dashboard](https://www.cursor.com/dashboard/spending).\n\n(requestId: 5ee91eb9-da0c-48e8-a078-9ec2ee83cdc1)\n\n"
+  }
+]

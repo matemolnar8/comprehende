@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/matemolnar8/vitadeck/pull/99",
+  "number": 99,
+  "title": "chore: record vendored patches; upload_vita syncs emoji assets",
+  "body": "Vendored code had untracked local patches (#87), and `upload_vita` never sent `assets/emoji`, so a Vita without a full VPK install showed no emoji after a code-only upload (#93).\n\n## Vendor patches (#87)\n`vendor/PATCHES.md` now lists every local change to vendored code, with the upstream commit, a summary of the diff and why it exists, and how to replay it on upgrade. An audit against upstream found three:\n- `stb_ds.h`: the seed race fix from #81\n- `jimp/jimp.h`: two fixes for Vita GCC warnings (ADR 0003)\n- `quickjs` submodule: the fork's single \"Vita\" commit on top of bellard/quickjs `e5fd391`, which adds `__vita__` platform guards\n\n`arena.h`, `raylib.h` and `stb_truetype.h` match upstream byte for byte. `jimp/README.md` and ADR 0003 now point to `PATCHES.md` so the patches are described in one place.\n\n**The stb_ds patch stays.** No `STBDS_*` option turns off the per-table seed update. Seeding once at startup doesn't help either, because every later table creation writes the seed again. Removing the patch would also require all hash maps to be created on one thread, but the JS thread builds a new instance registry on every swap while the main thread creates the scroll and glyph maps lazily. I checked this under TSan with `snapshot_swap_harness` in the Linux smoke image (`-DVITADECK_SANITIZE=thread`). With the upstream header, TSan reports the race in `stbds_make_hash_index` between `deep_copy_instance` and `scroll.c`'s `ensure_map`. With the patched header it runs clean. The patch is still marked `VitaDeck:`, and I restored upstream's trailing newline so the diff contains only the marked change.\n\n## upload_vita syncs emoji (#93)\nAt configure time CMake writes `upload_emoji.curl`, a curl config that lists every PNG. `upload_vita` runs it in one curl process over one FTP connection and shows an `n/4009` progress counter. A stamp per build directory and Vita IP means the step runs again only when the images change, so normal iterations stay fast. Delete the stamp to force a re-upload. The `vitadeck-build` skill documents this. If no emoji were downloaded (offline configure), the step is skipped.\n\n## Verification\n- `scripts/agent-check.sh fast` passed (pnpm 10.28.2).\n- Vita Docker build passed and produced `vitadeck.vpk`.\n- `upload_vita` ran against a local FTP stub (pyftpdlib on 1337) on the same Docker network, with `PSVITAIP` pointing at the stub. All 4009 PNGs arrived byte-identical, and a second run skipped the emoji step. The emoji step took about 25 s against the stub; expect longer over Vita Wi-Fi. Not tested on hardware.\n- No `src/` C changes, so I skipped the `host` tier.\n\nFixes #87\nFixes #93\n\nReview: https://matemolnar8.github.io/vitadeck/pr/99/\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nPosted by Claude Code [claude-opus-5-5]\n",
+  "user": {
+    "login": "matemolnar8"
+  },
+  "merged_at": "2026-10-26T00:08:31Z",
+  "merge_commit_sha": "e8f42a8e8117edf39ed40bcb14474eb1cc655439",
+  "base": {
+    "ref": "main",
+    "sha": "03ea0f3c1addc31b944115632b5e3c4f47601018"
+  },
+  "head": {
+    "ref": "chore/vendor-patches-and-upload-assets",
+    "sha": "d1eab1fd4fcce3dafda1cee8e6ff7f7b24aec32d"
+  }
+}

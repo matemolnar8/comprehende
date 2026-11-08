@@ -1,0 +1,28 @@
+{
+  "id": "comprehende-182",
+  "repo": "https://github.com/matemolnar8/comprehende.git",
+  "pr": 182,
+  "base": "4ead77f938f8995fbae6e81f80833d04bac338ed",
+  "head": "74b258d28d18ca9c8e65e96a4a0b58e060777b36",
+  "tags": ["parts"],
+  "expect": {
+    "parts": {
+      "min": 3,
+      "max": 5
+    },
+    "groups": {
+      "min": 3,
+      "max": 6
+    },
+    "size": ["small", "medium"],
+    "together": [
+      ["scripts/pages-review.ts", "scripts/pages-review.test.ts"],
+      ["scripts/setup-worktree.ts", "scripts/setup-worktree.test.ts"]
+    ],
+    "apart": [
+      ["scripts/pages-review.ts", "scripts/setup-worktree.ts"],
+      ["scripts/pages-review.ts", "scripts/check-changed.ts"],
+      ["scripts/check-changed.ts", "scripts/setup-worktree.ts"]
+    ]
+  }
+}

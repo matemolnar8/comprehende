@@ -1,0 +1,19 @@
+{
+  "html_url": "https://github.com/matemolnar8/vitadeck/pull/127",
+  "number": 127,
+  "title": "fix(text): classify emoji above U+1F000 by Emoji_Presentation; gate tests/ with clang-format",
+  "body": "Closes #119.\n\n## Problem\n\n`scripts/clang-format.sh` only checked `src/`, so `tests/*.c` drifted from the style. `vd_emoji_cluster` treated every codepoint at or above U+1F000 as emoji, including Mahjong tiles and text-default symbols like U+1F170.\n\n## Fix\n\n- **Format gate** (`a46f4ed`, kept separate so the reformat doesn't hide the real change): `check` and `format` now cover `tests/`. The nine harnesses are reformatted once (whitespace only). `AGENTS.md` and the `vitadeck-build` skill say so.\n- **Emoji classification** (`c2bb5bd`, `e7d27d0`): the Emoji_Presentation table now covers all of Unicode 17 (matching the pinned Twemoji 17.0.3). It is generated from `emoji-data.txt`, and the existing rows below U+1F000 already matched it exactly. The `>= 0x1f000` shortcut is gone, and the sorted table lets the scan stop early, so ASCII exits after one comparison.\n- A following skin tone also starts a cluster now. Emoji modifier sequences are fully qualified without U+FE0F (U+1F575 U+1F3FB 🕵🏻), so without this, dropping the shortcut would have broken them. It also fixes U+261D U+1F3FD ☝🏽 below U+1F000, which was already broken but hidden because the harness inserted U+FE0F before the skin tone.\n\nKnown edge cases, accepted to stay in scope:\n- A non-emoji followed by a skin tone (`a🏻`) now draws only `a`. Fixing that needs an Emoji_Modifier_Base table.\n- Minimally-qualified ZWJ sequences with a text-default first codepoint (U+1F3F3 U+200D U+1F308 without U+FE0F) draw as separate images, the same as below U+1F000 today.\n\n## Proof\n\nNew `expect_cluster` cases: U+1F000 is not an emoji, U+1F004 is. U+1F170 is not an emoji, but U+1F170 U+FE0F is. A skin tone qualifies a text-default base both above and below U+1F000. The Twemoji round-trip no longer inserts U+FE0F before a skin tone.\n\nThe old classifier against the new tests, with all 4011 Twemoji images present:\n\n```\nglyph_cache_harness: a Mahjong tile is not an emoji\nglyph_cache_harness: a text-style symbol above U+1F000 is not an emoji\nglyph_cache_harness: a skin tone makes a text-style symbol below U+1F000 an emoji\nglyph_cache_harness: fully qualified text draws its Twemoji image   (x36, e.g. 261d-1f3fb.png)\n```\n\nNew classifier: `glyph_cache_harness: ok`.\n\n```\n$ ./scripts/clang-format.sh check   # now includes tests/\n$ echo $?\n0\n```\n\nChecks: `scripts/agent-check.sh fast` and `host` pass (15/15 CTest). The Vita Docker build (`vitadeck.vpk`) passes. No rendering of existing content changes, so I skipped the smoke tier. CI has no C format step (only `agent-check.sh` runs it); adding one is left out of scope.\n\nReview (comprehende): https://matemolnar8.github.io/vitadeck/pr/127/\n\nReview by Claude Opus 5.5 (subagent): APPROVE\nReview by Muse Wonder 1.0 (subagent): APPROVE (round 2, after fixing a stale `vd_emoji_cluster` contract comment)\n\nPR handled by: Claude Opus 5.5 in Claude Code (T3 Code)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nPosted by Claude Code [claude-opus-5-5]\n",
+  "user": {
+    "login": "matemolnar8"
+  },
+  "merged_at": "2026-10-26T18:13:13Z",
+  "merge_commit_sha": "3616d7cdbc3d10cb1a6e56fc68ebd4a1cbddb98e",
+  "base": {
+    "ref": "main",
+    "sha": "3f9ba8c6b32fb89565efa153fadd4a1a876396ee"
+  },
+  "head": {
+    "ref": "t3/tech-debt-119",
+    "sha": "e7d27d003d9cf91aaf9645382cb60facbc614bf0"
+  }
+}
