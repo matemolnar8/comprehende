@@ -272,7 +272,8 @@ function isPureRename(file: DigestFile): boolean {
   return file.kind === "rename" && file.added === 0 && file.removed === 0;
 }
 
-function parentDirs(path: string): string[] {
+/** Every directory above a path, `a/` then `a/b/`. The root is not one. */
+export function parentDirs(path: string): string[] {
   const parts = path.split("/").slice(0, -1);
   return parts.map((_, i) => `${parts.slice(0, i + 1).join("/")}/`);
 }
@@ -350,10 +351,15 @@ export function digestDirOf(digest: ChangeDigest, path: string): DigestDir | und
   return digest.dirs.find((item) => path.startsWith(item.dir));
 }
 
-export function formatDigest(digest: ChangeDigest, range: string): string {
+/** `preface` lines print right under the header. */
+export function formatDigest(
+  digest: ChangeDigest,
+  range: string,
+  preface: readonly string[] = [],
+): string {
   const files = digest.files.length;
   const header = `# Digest ${range} — ${files} file${files === 1 ? "" : "s"}, ${digest.totalHunks} hunk${digest.totalHunks === 1 ? "" : "s"}`;
-  const lines = [header];
+  const lines = [header, ...preface];
   const printed = new Set<DigestDir>();
   for (const file of digest.files) {
     const dir = digestDirOf(digest, file.path);

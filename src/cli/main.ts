@@ -99,6 +99,7 @@ export async function run(argv: string[]): Promise<number> {
           await cmdShow(request.cwd, request.base, request.head, {
             hunk: request.hunk,
             file: request.file,
+            batch: request.batch,
           }),
         );
         return 0;

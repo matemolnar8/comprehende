@@ -1,3 +1,6 @@
+import { BATCH_CHARS } from "../review/batch.ts";
+import { MAX_CLUSTER_FILES } from "../review/clusters.ts";
+
 export type CommandName =
   | "review"
   | "validate"
@@ -22,6 +25,7 @@ export type CliRequest =
       out?: string;
       hunk?: string;
       file?: string;
+      batch?: number;
       port: number;
       open: boolean;
     };
@@ -56,16 +60,21 @@ Commands:
             invent a review. Fill title, groups, and summaries, then validate.
 
   digest    [--base <ref>] [--head <ref>]
-            Print one line per changed file (kind, hunks, symbols), and one
-            line per directory of renames. No patch text. Group from this;
-            fetch patch with show.
+            Print how many batches to read, a size guess, one line per changed
+            file (kind, hunks, symbols), and one line per directory of renames.
+            No patch text. Group from this; fetch patch with show.
 
-  show      [--base <ref>] [--head <ref>] --hunk <ref> | --file <path>
+  show      [--base <ref>] [--head <ref>] --batch <n> | --hunk <ref> | --file <path>
             Print the patch for one hunk (path@oldStart+newStart) or one file.
+            --batch prints batch n of the files to read, about ${BATCH_CHARS.toLocaleString("en-US")}
+            characters each. It skips renames and copies with no edits, moves,
+            generated files, lockfiles, binaries, and repeats of the same change.
+            Batch 1 lists the skipped files.
 
   pregroup  [--base <ref>] [--head <ref>] --data <review.json>
-            Write a draft review: repeated changes, mechanical files, and one
-            change group for the rest. Accept, split, and write the prose.
+            Write a draft review: repeated changes, mechanical files, and the
+            rest in one group, or one group per directory past ${MAX_CLUSTER_FILES} files. The
+            size is a guess. Accept, split, merge, and write the prose.
 
   refresh   [--base <ref>] [--head <ref>] --data <review.json>
             Carry a review over to the commits its refs resolve to now. Refs
@@ -87,6 +96,7 @@ Options:
   --head <ref>     Head ref (default: HEAD)
   --data <path>    Review document path
   --out <dir>      Output directory for export
+  --batch <n>      Batch number for show (1-based)
   --port <n>       Listen port (default: ${DEFAULT_PORT}, 0 for ephemeral)
   --open           Open the UI in a browser
   -h, --help       Show this help
@@ -119,6 +129,11 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
     if (!Number.isInteger(port) || port < 0) {
       throw new ArgError("--port must be a non-negative integer");
     }
+    const batchFlag = flag(rest, "--batch");
+    const batch = batchFlag === undefined ? undefined : Number(batchFlag);
+    if (batch !== undefined && (!Number.isInteger(batch) || batch < 1)) {
+      throw new ArgError("--batch must be a positive integer");
+    }
     return {
       kind: "command",
       command,
@@ -129,6 +144,7 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
       out: flag(rest, "--out"),
       hunk: flag(rest, "--hunk"),
       file: flag(rest, "--file"),
+      batch,
       port,
       open: rest.includes("--open"),
     };
