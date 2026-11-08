@@ -30,6 +30,8 @@ One group that holds all four files is equally good. Each test stays with the co
 - The `//` prefix makes `urlsplit` read `SERVER_NAME` as a netloc; without it, `urlsplit("localhost:8080")` reads `localhost` as the scheme and returns no hostname or port.
 - The removed `t.cast(str, host)` has no runtime effect; mypy reported it as redundant because `host` is already narrowed to `str`.
 - `urlsplit(...).hostname` lowercases the host, so a mixed-case `SERVER_NAME` such as `MyHost:5000` now passes `myhost` to `run_simple`; no source mentions this.
+- The `or "localhost"` fallback applies only when `hostname` is `None`, which happens for an empty host, and the author took it from the Werkzeug change the maintainer named.
+- The "Development Versions" CI failure is not caused by this change; the maintainer says dev tests fail until the next Werkzeug release.
 
 ## Must not
 
@@ -40,9 +42,10 @@ One group that holds all four files is equally good. Each test stays with the co
 - Do not say the `"localhost"` fallback is what makes IPv6 session cookies work; `hostname` strips the brackets and the port, and that is the fix.
 - Do not say the old `Flask.run` started a server on a wrong host for `[::1]:8080`; the old code raised `ValueError` from `int(":1]:8080")` before `run_simple`.
 - Do not split the change into two parts; one issue names both fixes as one story.
+- Do not present the "Development Versions" CI failure as a defect of this change.
 - Do not write a focus range; every hunk in this change is 20 lines or fewer, so each reads whole.
-- Do not write a group attention that asks for more IPv6 tests, or a refactor that shares one host parser between `app.py` and `testing.py`; a missing test and a refactor idea are not attentions.
-- Do not write a group question that asks why the fix uses `urlsplit` instead of `partition`; issue #6093 gives that reason.
+- Do not write a group attention that asks for more IPv6 tests, a note on the removed `t.cast`, or a refactor that shares one host parser between `app.py` and `testing.py`; a missing test and a refactor idea are not attentions.
+- Do not write a group question that asks why the fix uses `urlsplit` instead of `partition`, or where the `or "localhost"` fallback comes from; issue #6093 and the PR comments give those reasons.
 
 ## Notes
 
