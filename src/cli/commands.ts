@@ -5,15 +5,7 @@ import { defaultBaseRef } from "../git/repo.ts";
 import { anchorErrors, fileNoteErrors } from "../review/anchors.ts";
 import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
 import { formatBatch, formatReadLine, formatSizeLine, readingPlan } from "../review/batch.ts";
-import {
-  clusterId,
-  clusterTitle,
-  clusterWhy,
-  dirClusters,
-  MAX_CLUSTER_FILES,
-  packageDirSet,
-} from "../review/clusters.ts";
-import { digestDirOf, formatDigest, isMechanicalFile, parentDirs } from "../review/digest.ts";
+import { digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
 import { numberedPatch } from "../review/show.ts";
@@ -21,7 +13,6 @@ import { formatRefresh, legacyLookForLine, refreshDocument } from "../review/ref
 import { skeletonDocument } from "../review/skeleton.ts";
 import { writeDocument } from "../review/write.ts";
 import { listNewSubjects } from "../git/log.ts";
-import { listDirEntries } from "../git/tree.ts";
 import { parseHunkRefString } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import { legacyLookForErrors } from "../schema/review.ts";
@@ -152,9 +143,8 @@ export async function cmdShow(
 
 /**
  * Draft review.json from deterministic rules: clusters of files with the same change,
- * mechanical files (rename, copy, move, generated), and the rest: one change group, or one
- * group per directory when there are more than MAX_CLUSTER_FILES. The size is a guess from the
- * lines a reviewer reads. The skill accepts, splits, merges, and writes the prose.
+ * mechanical files (rename, copy, move, generated), and one change group for the rest. The size
+ * is a guess from the lines a reviewer reads. The skill accepts, splits, and writes the prose.
  */
 export async function cmdPregroup(
   cwd: string,
@@ -204,29 +194,7 @@ export async function cmdPregroup(
     suggestedOrder: number;
     hunkRefs: string[];
   }[] = [];
-  const clusters =
-    change.length > MAX_CLUSTER_FILES
-      ? dirClusters(change, await packageDirs(cwd, headSha, change))
-      : [];
-  if (clusters.length > 1) {
-    const ids = new Set<string>();
-    for (const cluster of clusters) {
-      const base = clusterId(cluster);
-      let id = base;
-      for (let n = 2; ids.has(id); n += 1) {
-        id = `${base}-${n}`;
-      }
-      ids.add(id);
-      groups.push({
-        id,
-        title: clusterTitle(cluster),
-        why: clusterWhy(cluster),
-        summary: "Fill this group.",
-        suggestedOrder: groups.length,
-        hunkRefs: cluster.paths,
-      });
-    }
-  } else if (change.length > 0 || (mirrors.size === 0 && mechanical.length === 0)) {
+  if (change.length > 0 || (mirrors.size === 0 && mechanical.length === 0)) {
     groups.push({
       id: "change",
       title: "Change",
@@ -261,18 +229,6 @@ export async function cmdPregroup(
   await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
   const loaded = await loadDocument(dataPath);
   return { document: loaded, index };
-}
-
-/** Directories above `paths` that are one package at `ref` (see packageDirSet). */
-async function packageDirs(
-  cwd: string,
-  ref: string,
-  paths: readonly string[],
-): Promise<(dir: string) => boolean> {
-  const found = packageDirSet(
-    await listDirEntries(cwd, ref, [...new Set(paths.flatMap(parentDirs))]),
-  );
-  return (dir) => found.has(dir);
 }
 
 /**

@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { access, chmod, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { delimiter, dirname, join } from "node:path";
+import { delimiter, join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
 import { cmdDigest, cmdIndex, cmdPregroup, cmdReview, cmdShow, cmdValidate } from "./commands.ts";
 import { skeletonPaths } from "../review/skeleton.ts";
@@ -11,8 +11,6 @@ import { formatStoredHunkRef } from "../schema/identity.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import { createExampleRepo, SECRET_ADD } from "../test/example-repo.ts";
 import { createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
-import { initEmptyRepo } from "../test/init-repo.ts";
-import { git } from "../git/exec.ts";
 
 // The git log shim is a bash script on PATH. Windows spawns only git.exe, so those tests run on POSIX.
 const itWithGitLog = it.skipIf(process.platform === "win32");
@@ -209,52 +207,6 @@ describe("cmdReview git work", { concurrent: false }, () => {
     assert.ok(document.groups.some((group) => group.id === "change"));
     assert.ok(document.groups.some((group) => group.id === "mechanical"));
     await cmdValidate(repo.root, dataPath);
-  });
-
-  it("drafts one group per directory past 8 files and keeps a package together", async () => {
-    const root = await mkdtemp(join(tmpdir(), "comprehende-pregroup-dirs-"));
-    roots.push(root);
-    const repoRoot = join(root, "repo");
-    await initEmptyRepo(repoRoot);
-    const paths = [
-      "README.md",
-      "packages/web/package.json",
-      ...Array.from({ length: 5 }, (_, i) => `packages/web/src/m${i}.ts`),
-      ...Array.from({ length: 4 }, (_, i) => `packages/web/test/m${i}.test.ts`),
-      "tools/one.ts",
-      "tools/two.ts",
-      "docs/api.md",
-      ...Array.from({ length: 8 }, (_, i) => `docs/guide/p${i}.md`),
-    ];
-    const write = async (version: string): Promise<void> => {
-      for (const [i, path] of paths.entries()) {
-        await mkdir(dirname(join(repoRoot, path)), { recursive: true });
-        await writeFile(
-          join(repoRoot, path),
-          path.endsWith(".json") ? `{"v":"${version}"}\n` : `line ${i} ${version}\n`,
-        );
-      }
-      await git(repoRoot, ["add", "."]);
-      await git(repoRoot, ["commit", "-m", version]);
-    };
-    await write("base");
-    const base = (await git(repoRoot, ["rev-parse", "HEAD"])).trim();
-    await write("head");
-    const dataPath = join(root, "review.json");
-    const { document } = await cmdPregroup(repoRoot, dataPath, base, "HEAD");
-    assert.equal(document.size, "small");
-    assert.deepEqual(
-      document.groups.map((group) => [group.id, group.title, group.hunkRefs.length]),
-      [
-        ["dir-root", "Root files", 1],
-        ["dir-docs", "docs", 1],
-        ["dir-docs-guide", "docs/guide", 8],
-        ["dir-packages-web", "packages/web", 10],
-        ["dir-tools", "tools", 2],
-      ],
-    );
-    assert.match(document.groups[1]?.why ?? "", /^Draft: changed files directly in docs\./);
-    await cmdValidate(repoRoot, dataPath);
   });
 
   it("leaves lockfiles out of the draft", async () => {

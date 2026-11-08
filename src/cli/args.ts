@@ -1,5 +1,4 @@
 import { BATCH_CHARS } from "../review/batch.ts";
-import { MAX_CLUSTER_FILES } from "../review/clusters.ts";
 
 export type CommandName =
   | "review"
@@ -73,8 +72,8 @@ Commands:
 
   pregroup  [--base <ref>] [--head <ref>] --data <review.json>
             Write a draft review: repeated changes, mechanical files, and the
-            rest in one group, or one group per directory past ${MAX_CLUSTER_FILES} files. The
-            size is a guess. Accept, split, merge, and write the prose.
+            rest in one group. The size is a guess from changed lines. Accept,
+            split, and write the prose.
 
   refresh   [--base <ref>] [--head <ref>] --data <review.json>
             Carry a review over to the commits its refs resolve to now. Refs
