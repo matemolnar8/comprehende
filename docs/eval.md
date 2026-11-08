@@ -21,7 +21,7 @@ One run of a skill does not measure it. The same skill scored `must` 30 and 39 i
 ## Run times
 
 - Smoke (`--tag smoke --no-graders`) takes about 4 minutes.
-- A graded case takes 3 to 6 minutes, and `vitadeck-144` about 15. The full graded suite took about 40 minutes before that case was added.
+- A graded case takes 3 to 10 minutes, and `vitadeck-144` about 13. The full graded suite takes about 85 minutes with one job. CI runs it with `--jobs 2` to stay under an hour. Before you add a case, drop one that checks the same thing, or the suite outgrows that hour.
 
 ## Long runs
 
