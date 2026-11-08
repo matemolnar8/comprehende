@@ -64,7 +64,7 @@ jobs:
             exit 0
           fi
           unset GITHUB_TOKEN GH_TOKEN
-          pnpm eval -- --json
+          pnpm eval -- --json --jobs 2
       - name: Upload eval run
         if: always()
         uses: actions/upload-artifact@v4

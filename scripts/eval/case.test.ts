@@ -72,12 +72,12 @@ describe("eval case schema", () => {
     const listed = await listEvalCases(join(root, "eval/cases"));
     const ids = listed.map((item) => item.spec.id);
     assert.ok(ids.includes("comprehende-50"));
-    assert.ok(ids.includes("vitadeck-24"));
+    assert.ok(ids.includes("caddy-8015"));
     const smoke = selectEvalCases(listed, { tag: "smoke" }).map((item) => item.spec.id);
     assert.deepEqual(smoke, ["comprehende-50", "comprehende-57"]);
     const full = selectEvalCases(listed, {}).map((item) => item.spec.id);
     assert.deepEqual(full, ids);
-    assert.equal(full.includes("vitadeck-24"), true);
+    assert.equal(full.includes("caddy-8015"), true);
   });
 
   it("reads the rubric lists from expected.md bullets", () => {
