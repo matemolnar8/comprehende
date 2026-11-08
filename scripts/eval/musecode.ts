@@ -17,9 +17,13 @@ export type AgentRunResult = {
   inputTokens?: number;
   outputTokens?: number;
   cacheReadTokens?: number;
+  /** The part of outputTokens spent on hidden reasoning. */
+  reasoningTokens?: number;
   steps: number;
   toolCalls: ToolCallRecord[];
   sessionId?: string;
+  /** List-price cost the agent reports. Claude Code only. */
+  costUsd?: number;
   error?: string;
 };
 
@@ -329,6 +333,7 @@ export async function runMuseCodeAgent(opts: {
       inputTokens,
       outputTokens,
       cacheReadTokens: usage.cachedTokens,
+      reasoningTokens: usage.reasoningTokens,
       steps: parsed.steps,
       toolCalls: parsed.toolCalls,
       sessionId: parsed.sessionId,

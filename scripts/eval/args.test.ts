@@ -12,7 +12,7 @@ describe("eval argv", () => {
       tag: "smoke",
       baseline: undefined,
       json: true,
-      producerModel: DEFAULT_PRODUCER_MODEL,
+      producer: { agent: "muse", model: DEFAULT_PRODUCER_MODEL },
       graderModel: DEFAULT_GRADER_MODEL,
       cliLogin: false,
       graders: true,
@@ -43,7 +43,7 @@ describe("eval argv", () => {
     const req = parseEvalArgv([]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
-      assert.equal(req.producerModel, "muse-spark-1.3-contributor");
+      assert.deepEqual(req.producer, { agent: "muse", model: "muse-spark-1.3-contributor" });
       assert.equal(req.graderModel, "muse-spark-1.3-contributor");
       assert.equal(req.graders, true);
     }
@@ -58,9 +58,31 @@ describe("eval argv", () => {
     ]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
-      assert.equal(req.producerModel, "muse-spark-9.9");
+      assert.deepEqual(req.producer, { agent: "muse", model: "muse-spark-9.9" });
       assert.equal(req.graderModel, "muse-spark-9.8");
     }
+  });
+
+  it("runs a claude-* producer in Claude Code, with an optional effort", () => {
+    const req = parseEvalArgv([
+      "--producer-model",
+      "claude-sonnet-5-5",
+      "--producer-effort",
+      "high",
+    ]);
+    assert.equal(req.kind, "run");
+    if (req.kind === "run") {
+      assert.deepEqual(req.producer, {
+        agent: "claude",
+        model: "claude-sonnet-5-5",
+        effort: "high",
+      });
+    }
+    assert.equal(
+      parseEvalArgv(["--producer-model", "claude-haiku-5-5", "--producer-effort", "huge"]).kind,
+      "error",
+    );
+    assert.equal(parseEvalArgv(["--producer-effort", "high"]).kind, "error");
   });
 
   it("rejects removed cursor flags", () => {

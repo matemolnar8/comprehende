@@ -31,6 +31,7 @@ export type RunSummary = {
   /** The --skill folder, when the run did not use skills-next/comprehende. */
   skill?: string;
   producerModel: string;
+  producerEffort?: string;
   graderModel: string;
   graders: boolean;
   cases: CaseResult[];
@@ -96,6 +97,12 @@ export function formatCaseLine(result: CaseResult): string {
   bits.push(formatDuration(result.durationMs));
   bits.push(formatTokens(result.tokens));
   if (result.producer !== undefined) {
+    if (result.producer.costUsd !== undefined) {
+      bits.push(`producer $${result.producer.costUsd.toFixed(2)}`);
+    }
+    if (result.producer.reasoningTokens !== undefined) {
+      bits.push(`reasoning ${formatTokens(result.producer.reasoningTokens)}`);
+    }
     bits.push(
       `producer ${formatTokens(result.producer.tokens)}`,
       ...efficiencyBits(
@@ -225,11 +232,13 @@ export function formatRunTotals(summary: RunSummary): string {
   const producerCacheRead = sum(summary.cases, (item) => item.producer?.cacheReadTokens ?? 0);
   const producerOutput = sum(summary.cases, (item) => item.producer?.outputTokens ?? 0);
   const graderTools = sum(summary.cases, (item) => item.rubric?.run.toolCalls.length ?? 0);
+  const producerCost = sum(summary.cases, (item) => item.producer?.costUsd ?? 0);
   const bits = [
     "total",
     `words ${sum(summary.cases, (item) => item.checks?.words ?? 0)}`,
     formatTokens(producerTokens + graderTokens),
     `producer ${formatTokens(producerTokens)}`,
+    ...(producerCost > 0 ? [`producer $${producerCost.toFixed(2)}`] : []),
     ...efficiencyBits(producerTools, producerInput, producerCacheRead, producerOutput),
     `graders ${formatTokens(graderTokens)}`,
     `cli-hunt ${producerHunt}/${producerTools} producer tools`,
