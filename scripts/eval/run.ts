@@ -28,7 +28,7 @@ import {
 import { claimBullets, runRubricGrader } from "./graders.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
-import { producerPrompt, runProducer, type Producer } from "./producer.ts";
+import { producerModelId, producerPrompt, runProducer, type Producer } from "./producer.ts";
 import {
   caseFailed,
   caseKey,
@@ -134,7 +134,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     stamp,
     skillTree,
     skill: request.skill,
-    producerModel: request.producer.model,
+    producerModel: producerModelId(request.producer),
     producerEffort: request.producer.agent === "claude" ? request.producer.effort : undefined,
     graderModel: request.graderModel,
     graders: gradersOn,

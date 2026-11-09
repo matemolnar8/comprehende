@@ -5,7 +5,7 @@ export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
 Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each claim the review wrote against head. Grader verdicts do not change the exit code.
 
-Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}. A claude-* producer model runs the producer in Claude Code instead, with the claude CLI login only.
+Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}. A claude-* producer model runs the producer in Claude Code instead, and a cursor/<model> producer model in the Cursor CLI, each with its CLI login only.
 
 Options:
   --case <id>             Run this case (repeatable)
@@ -17,7 +17,8 @@ Options:
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
   --rescore <dir>         Re-check and regrade eval/runs/<stamp> reviews. No producer
   --json                  Also print summary.json to stdout
-  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. claude-* runs in Claude Code
+  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. claude-* runs in Claude Code,
+                          cursor/<model> in cursor-agent (e.g. cursor/gpt-5.5)
   --producer-effort <lvl> Claude Code effort: low, medium, high, xhigh, or max
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
   --cli-login             Use the muse CLI login even when MUSE_CODE_API_KEY is set

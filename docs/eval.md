@@ -6,6 +6,8 @@ Producer and grader run in Muse Code (`muse exec`). Both default to `muse-spark-
 
 A `claude-*` producer model (for example `--producer-model claude-sonnet-5-5 --producer-effort high`) runs the producer in Claude Code (`claude -p`) with the `claude` CLI login only; API key variables are removed from its environment. Use it to compare Claude models. The grader stays in Muse. With `--keep`, resume a Claude producer with `claude --resume <sessionId>` from its clone.
 
+A `cursor/<model>` producer model (for example `--producer-model cursor/gpt-5.5`) runs the producer in the Cursor CLI (`cursor-agent -p`) with the `cursor-agent login` only; `CURSOR_API_KEY` and `CURSOR_AUTH_TOKEN` are removed from its environment. The part after `cursor/` goes to `--model` as written, so model params go there too (`cursor/claude-opus-4-8[effort=high]`), and `--producer-effort` is an error. Cursor reports tokens but no cost or reasoning tokens. Cursor keeps every chat, so resume a producer with `cursor-agent --resume <sessionId>` from its clone.
+
 ## What decides pass or fail
 
 Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet, group `attention` note, focus caption, line note, and file note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.

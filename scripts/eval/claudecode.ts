@@ -1,6 +1,6 @@
-import { spawn } from "node:child_process";
 import * as z from "zod";
 import { TASK_TIMEOUT_MS } from "./constants.ts";
+import { lastLine, runHeadless, toolDetail } from "./headless.ts";
 import type { AgentRunResult, ToolCallRecord } from "./musecode.ts";
 
 export const CLAUDE_EFFORTS = ["low", "medium", "high", "xhigh", "max"] as const;
@@ -72,22 +72,12 @@ export function parseClaudeStreamJson(stdout: string): ClaudeStreamResult {
     for (const block of event.data.message.content) {
       if (block.type === "tool_use" && block.name !== undefined) {
         const name = block.name.toLowerCase();
-        const detail = detailOf(block.input);
+        const detail = toolDetail(block.input, ["command", "file_path", "pattern"]);
         toolCalls.push(detail === undefined ? { name } : { name, detail });
       }
     }
   }
   return { steps: messageIds.size, toolCalls, result };
-}
-
-function detailOf(input: Record<string, unknown> | undefined): string | undefined {
-  const value = [input?.command, input?.file_path, input?.pattern].find(
-    (item): item is string => typeof item === "string" && item !== "",
-  );
-  if (value === undefined) {
-    return undefined;
-  }
-  return value.length > 200 ? `${value.slice(0, 197)}...` : value;
 }
 
 /**
@@ -122,33 +112,11 @@ export async function runClaudeCodeAgent(opts: {
     ...opts.addDirs.flatMap((dir) => ["--add-dir", dir]),
   ];
   const { ANTHROPIC_API_KEY: _key, ANTHROPIC_AUTH_TOKEN: _token, ...env } = process.env;
-  const { code, stdout, stderr } = await new Promise<{
-    code: number | "timeout";
-    stdout: string;
-    stderr: string;
-  }>((resolve) => {
-    const child = spawn("claude", args, { cwd: opts.cwd, env, stdio: ["pipe", "pipe", "pipe"] });
-    let out = "";
-    let err = "";
-    child.stdout.on("data", (chunk: Buffer) => {
-      out += chunk.toString();
-    });
-    child.stderr.on("data", (chunk: Buffer) => {
-      err += chunk.toString();
-    });
-    const timer = setTimeout(() => {
-      child.kill("SIGKILL");
-      resolve({ code: "timeout", stdout: out, stderr: err });
-    }, timeoutMs);
-    child.on("error", (error) => {
-      clearTimeout(timer);
-      resolve({ code: 127, stdout: out, stderr: `${err}\n${error.message}` });
-    });
-    child.on("close", (exit) => {
-      clearTimeout(timer);
-      resolve({ code: exit ?? 1, stdout: out, stderr: err });
-    });
-    child.stdin.end(opts.prompt);
+  const { code, stdout, stderr } = await runHeadless("claude", args, {
+    cwd: opts.cwd,
+    env,
+    stdin: opts.prompt,
+    timeoutMs,
   });
   if (code === "timeout") {
     throw new Error(`agent timed out after ${timeoutMs}ms`);
@@ -163,14 +131,13 @@ export async function runClaudeCodeAgent(opts: {
     costUsd: result?.total_cost_usd,
   };
   if (result === undefined || result.is_error || result.subtype !== "success") {
-    const lastErr = stderr.trim().split("\n").at(-1)?.slice(-500);
     return {
       ...base,
       status: "error",
       tokens: 0,
       error:
         result === undefined
-          ? lastErr || `claude exited ${String(code)} with no result event`
+          ? lastLine(stderr) || `claude exited ${String(code)} with no result event`
           : // A usage limit ends as subtype success with is_error; its message is the result text.
             `claude run ended ${result.subtype}: ${(result.result ?? "").slice(0, 300)}`,
     };
