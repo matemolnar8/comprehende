@@ -171,7 +171,8 @@ export async function runClaudeCodeAgent(opts: {
       error:
         result === undefined
           ? lastErr || `claude exited ${String(code)} with no result event`
-          : `claude run ended ${result.subtype}`,
+          : // A usage limit ends as subtype success with is_error; its message is the result text.
+            `claude run ended ${result.subtype}: ${(result.result ?? "").slice(0, 300)}`,
     };
   }
   const usage = result.usage;
