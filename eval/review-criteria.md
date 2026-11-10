@@ -1,6 +1,6 @@
 # Review criteria for eval cases
 
-Each case has an `expected.md` next to its `case.json`. It says what a good review of that pull request looks like. The harness reads the `Must`, `Good`, and `Must not` lists straight from `expected.md`, so edit the list and the grader follows. `case.json` holds the shape checks the harness can run without a model: why, parts, groups, size, source kinds, mechanical paths, and the `together` and `apart` pairs taken from the `Groups` section.
+Each case has an `expected.md` next to its `case.json`. It says what a good review of that pull request looks like. The harness reads the `Must`, `Good`, and `Must not` lists straight from `expected.md`, so edit the list and the grader follows. `case.json` holds the shape checks the harness can run without a model: why, parts, groups, size, source kinds, mechanical paths, the `together` and `apart` pairs taken from the `Groups` section, and the `partsTogether` and `partsApart` pairs for part decisions that `expected.md` states with no alternative.
 
 ## Criteria
 

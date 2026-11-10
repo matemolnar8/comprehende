@@ -74,6 +74,12 @@ export function formatCaseLine(result: CaseResult): string {
     bits.push(failed(checks, "size") ? `size ${checks.size} FAIL` : `size ${checks.size}`);
     bits.push(`together ${checks.togetherOk}/${checks.togetherTotal}`);
     bits.push(`apart ${checks.apartOk}/${checks.apartTotal}`);
+    if (checks.partsTogetherTotal > 0) {
+      bits.push(`partsTogether ${checks.partsTogetherOk}/${checks.partsTogetherTotal}`);
+    }
+    if (checks.partsApartTotal > 0) {
+      bits.push(`partsApart ${checks.partsApartOk}/${checks.partsApartTotal}`);
+    }
     if (failed(checks, "dependsOn")) {
       bits.push("dependsOn FAIL");
     }

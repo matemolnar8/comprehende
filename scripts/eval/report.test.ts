@@ -16,6 +16,10 @@ const checksOk = {
   togetherTotal: 0,
   apartOk: 0,
   apartTotal: 0,
+  partsTogetherOk: 0,
+  partsTogetherTotal: 0,
+  partsApartOk: 0,
+  partsApartTotal: 0,
 };
 
 function caseResult(over: Partial<CaseResult> & Pick<CaseResult, "id">): CaseResult {

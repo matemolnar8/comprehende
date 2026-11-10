@@ -159,6 +159,82 @@ describe("eval deterministic checks", () => {
     assert.equal(proseLints(document).length, 0);
   });
 
+  it("checks which paths share a part, with a path split across parts", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-parts-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    const group = (id: string, part: string, paths: string[]) => ({
+      id,
+      title: id,
+      summary: `${id} changes.`,
+      part,
+      suggestedOrder: 0,
+      hunkRefs: paths.map(hunk),
+    });
+    const document = doc({
+      groups: [
+        group("spec", "story", ["e2e/spec.ts", "package.json"]),
+        group("pages", "story", ["e2e/pages.ts"]),
+        group("deps", "deps", ["package.json", ".nvmrc"]),
+        group("audit", "audit", ["docs/audit.html"]),
+      ],
+    });
+    const report = await runDeterministicChecks({
+      cwd: root,
+      document,
+      expect: {
+        partsTogether: [
+          ["e2e/spec.ts", "e2e/pages.ts"],
+          [".nvmrc", "package.json"],
+          ["e2e/spec.ts", "docs/audit.html"],
+        ],
+        partsApart: [
+          ["e2e/spec.ts", ".nvmrc"],
+          ["e2e/spec.ts", "docs/audit.html"],
+          ["e2e/spec.ts", "package.json"],
+          ["e2e/spec.ts", "pnpm-lock.yaml"],
+        ],
+      },
+      frozen: [],
+    });
+    assert.deepEqual(report.failures, [
+      {
+        check: "partsTogether",
+        message: "no part holds e2e/spec.ts, docs/audit.html together",
+      },
+      {
+        check: "partsApart",
+        message: 'part "story" holds both e2e/spec.ts and package.json',
+      },
+      { check: "partsApart", message: "no group holds pnpm-lock.yaml" },
+    ]);
+    assert.equal(report.partsTogetherOk, 2);
+    assert.equal(report.partsTogetherTotal, 3);
+    assert.equal(report.partsApartOk, 2);
+    assert.equal(report.partsApartTotal, 4);
+  });
+
+  it("puts every group with no part in one unnamed story", async () => {
+    const root = await mkdtemp(join(tmpdir(), "eval-checks-one-story-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    const document = doc({
+      groups: [
+        { id: "a", title: "A", summary: "A changes.", suggestedOrder: 0, hunkRefs: [hunk("a.ts")] },
+        { id: "b", title: "B", summary: "B changes.", suggestedOrder: 1, hunkRefs: [hunk("b.ts")] },
+      ],
+    });
+    const report = await runDeterministicChecks({
+      cwd: root,
+      document,
+      expect: { partsTogether: [["a.ts", "b.ts"]], partsApart: [["a.ts", "b.ts"]] },
+      frozen: [],
+    });
+    assert.deepEqual(report.failures, [
+      { check: "partsApart", message: "the unnamed story holds both a.ts and b.ts" },
+    ]);
+  });
+
   it("keeps long-sentence prose lint off the fatal failures list", async () => {
     const root = await mkdtemp(join(tmpdir(), "eval-checks-lint-"));
     roots.push(root);

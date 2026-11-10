@@ -31,6 +31,10 @@ export type DeterministicReport = {
   togetherTotal: number;
   apartOk: number;
   apartTotal: number;
+  partsTogetherOk: number;
+  partsTogetherTotal: number;
+  partsApartOk: number;
+  partsApartTotal: number;
 };
 
 const EM_DASH = /[\u2013\u2014]/u;
@@ -128,6 +132,28 @@ export async function runDeterministicChecks(opts: {
     }
   }
 
+  const partsTogether = expect.partsTogether ?? [];
+  let partsTogetherOk = 0;
+  for (const paths of partsTogether) {
+    const failure = partsTogetherFailure(opts.document.groups, paths);
+    if (failure === undefined) {
+      partsTogetherOk += 1;
+    } else {
+      failures.push({ check: "partsTogether", message: failure });
+    }
+  }
+
+  const partsApart = expect.partsApart ?? [];
+  let partsApartOk = 0;
+  for (const pair of partsApart) {
+    const failure = partsApartFailure(opts.document.groups, pair);
+    if (failure === undefined) {
+      partsApartOk += 1;
+    } else {
+      failures.push({ check: "partsApart", message: failure });
+    }
+  }
+
   if (
     expect.mechanicalPaths !== undefined &&
     !someGroupCovers(opts.document.groups, expect.mechanicalPaths)
@@ -151,6 +177,10 @@ export async function runDeterministicChecks(opts: {
     togetherTotal: together.length,
     apartOk,
     apartTotal: apart.length,
+    partsTogetherOk,
+    partsTogetherTotal: partsTogether.length,
+    partsApartOk,
+    partsApartTotal: partsApart.length,
   };
 }
 
@@ -192,6 +222,51 @@ function someGroupCovers(groups: ReviewGroup[], paths: readonly string[]): boole
   return groups.some((group) =>
     paths.every((path) => groupsHoldingPath(groups, path).includes(group)),
   );
+}
+
+type PartKey = ReviewGroup["part"];
+
+/**
+ * Groups with no `part` share one unnamed story, as in the schema's `dependsOn` rule,
+ * so a one-story review holds every path in one part.
+ */
+function partsHoldingPath(groups: ReviewGroup[], path: string): Set<PartKey> {
+  return new Set(groupsHoldingPath(groups, path).map((group) => group.part));
+}
+
+function partLabel(part: PartKey): string {
+  return part === undefined ? "the unnamed story" : `part "${part}"`;
+}
+
+/** Unlike group-level `apart`, a path no group holds fails: a lockfile probe would pass for free. */
+function unheldPaths(groups: ReviewGroup[], paths: readonly string[]): string | undefined {
+  const unheld = paths.filter((path) => groupsHoldingPath(groups, path).length === 0);
+  return unheld.length === 0 ? undefined : `no group holds ${unheld.join(", ")}`;
+}
+
+function partsTogetherFailure(groups: ReviewGroup[], paths: readonly string[]): string | undefined {
+  const unheld = unheldPaths(groups, paths);
+  if (unheld !== undefined) {
+    return unheld;
+  }
+  const [first = new Set<PartKey>(), ...rest] = paths.map((path) => partsHoldingPath(groups, path));
+  const shared = [...first].some((part) => rest.every((parts) => parts.has(part)));
+  return shared ? undefined : `no part holds ${paths.join(", ")} together`;
+}
+
+function partsApartFailure(
+  groups: ReviewGroup[],
+  [left, right]: readonly [string, string],
+): string | undefined {
+  const unheld = unheldPaths(groups, [left, right]);
+  if (unheld !== undefined) {
+    return unheld;
+  }
+  const rightParts = partsHoldingPath(groups, right);
+  const shared = [...partsHoldingPath(groups, left)].filter((part) => rightParts.has(part));
+  return shared.length === 0
+    ? undefined
+    : `${shared.map(partLabel).join(" and ")} holds both ${left} and ${right}`;
 }
 
 function sourceFailures(source: Source, allowed: Set<string>): CheckFailure[] {
