@@ -109,12 +109,12 @@ describe("contributor model", () => {
     assert.equal(contributorModel("muse-wonder-1.0"), "muse-wonder-1.0");
   });
 
-  it("turns contributor mode on only for contributor variants", () => {
+  it("turns contributor mode on for contributor variants and Wonder, off for Ember", () => {
     assert.equal(contributorMode("muse-spark-1.3"), "on");
     assert.equal(contributorMode("muse-spark-1.3-contributor"), "on");
     assert.equal(contributorMode("muse-ember-1.0"), "off");
     assert.equal(contributorMode("contributor-preview-1.0"), "off");
-    assert.equal(contributorMode("muse-wonder-1.0"), "off");
+    assert.equal(contributorMode("muse-wonder-1.0"), "on");
   });
 });
 

@@ -258,13 +258,16 @@ export function contributorModel(model: string): string {
 }
 
 /**
- * Contributor mode exists only on the muse-spark contributor variants.
- * Other models reject it: `muse-ember-1.0` with contributor mode on fails
- * with "does not exist or you lack access", on the subscription too, because
- * subscriptions default to contributor mode. Pass off explicitly for them.
+ * Contributor mode runs on the muse-spark contributor variants and on
+ * Muse Wonder, which Muse Code offers in either mode. Muse Ember has no
+ * contributor variant and rejects it: `muse-ember-1.0` with contributor
+ * mode on fails with "does not exist or you lack access", on the
+ * subscription too, because subscriptions default to contributor mode.
+ * Pass off explicitly for models that reject it.
  */
 export function contributorMode(model: string): "on" | "off" {
-  return contributorModel(model).endsWith("-contributor") ? "on" : "off";
+  const resolved = contributorModel(model);
+  return resolved.endsWith("-contributor") || resolved.startsWith("muse-wonder") ? "on" : "off";
 }
 
 /** Headless `muse exec`. Prompt travels in a file, the API key in stdin. */
