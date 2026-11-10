@@ -18,11 +18,12 @@ Options:
   --json                  Also print summary.json to stdout
   --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
-  --cli-login             Use the muse CLI login even when MUSE_CODE_API_KEY is set
+  --cli-login             Use the muse CLI login (subscription). This is the default
+  --use-api-key           Spend MUSE_CODE_API_KEY (pay as you go) instead of the subscription
   --no-graders            Skip the rubric grader
   -h, --help
 
-Uses MUSE_CODE_API_KEY from the environment or .env (a worktree also reads the main checkout's .env) when set, else the muse CLI login. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
+Runs use the muse CLI login (subscription) by default. --use-api-key spends MUSE_CODE_API_KEY from the environment or .env (a worktree also reads the main checkout's .env) instead; CI passes it. Writes eval/runs/<stamp>/index.html. Exit 1 when validate fails or a deterministic expect misses. Prose lint is advisory.
 `;
 
 export const ADD_CASE_USAGE = `Usage: pnpm eval:add -- --pr <github pr url>
@@ -48,6 +49,7 @@ export type EvalRunRequest =
       producerModel: string;
       graderModel: string;
       cliLogin: boolean;
+      useApiKey: boolean;
       graders: boolean;
       rescore?: string;
       repeat: number;
@@ -73,6 +75,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let producerModel = DEFAULT_PRODUCER_MODEL;
     let graderModel = DEFAULT_GRADER_MODEL;
     let cliLogin = false;
+    let useApiKey = false;
     let json = false;
     let graders = true;
     let rescore: string | undefined;
@@ -95,6 +98,10 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       }
       if (arg === "--cli-login") {
         cliLogin = true;
+        continue;
+      }
+      if (arg === "--use-api-key") {
+        useApiKey = true;
         continue;
       }
       if (arg === "--keep") {
@@ -149,6 +156,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       producerModel,
       graderModel,
       cliLogin,
+      useApiKey,
       graders,
       rescore,
       repeat,
