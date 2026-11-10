@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 742c7c46b48dec27a765681256e41cd7cab1017f` and `git rev-parse --verify 687e4effbdcb936fa03fb6308c0536623ac1a601` in this repository.
+   Run `git rev-parse --verify 742c7c46b48dec27a765681256e41cd7cab1017f` and `git rev-parse --verify bd4dffc00d5e2489eec48e49eefda626f8f7fe7d` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  742c7c46b48dec27a765681256e41cd7cab1017f
 
-head               687e4effbdcb936fa03fb6308c0536623ac1a601
+head               bd4dffc00d5e2489eec48e49eefda626f8f7fe7d
 
-Named refs at pin: 742c7c46b48dec27a765681256e41cd7cab1017f ... 687e4effbdcb936fa03fb6308c0536623ac1a601
+Named refs at pin: 742c7c46b48dec27a765681256e41cd7cab1017f ... bd4dffc0
 
 Read the diff:
 
-git diff --find-renames 742c7c46b48dec27a765681256e41cd7cab1017f 687e4effbdcb936fa03fb6308c0536623ac1a601
+git diff --find-renames 742c7c46b48dec27a765681256e41cd7cab1017f bd4dffc00d5e2489eec48e49eefda626f8f7fe7d
 
 Commits:
+- bd4dffc0 Eval: give a producer 45 minutes, so Grok 4.7 High finishes large cases
 - 687e4eff Eval: keep an early-exiting producer CLI from crashing the run with EPIPE
 - e340494d Digest: pair each digest with its own file when marking mirrors
 - a089d5b6 Skill: tie-break grouping and parts choices for consistent reviews
@@ -54,6 +55,7 @@ Commits:
 Sources:
 - pr PR #194 CLI read batches, skill tie-breaks, Claude and Cursor eval producers.
   https://github.com/matemolnar8/comprehende/pull/194
+- commit Eval: give a producer 45 minutes, so Grok 4.7 High finishes large cases
 
 The title:
 
@@ -66,9 +68,6 @@ The why:
 The what (large):
 
 The CLI packs the files to read into `show --batch` batches, and the skill is rewritten around them with grouping tie-breaks. The eval also gains Claude Code and Cursor producers.
-
-Things to check:
-- [PR #194](source:s1) says `show --batch` packs files into about 23 KB batches. At head `BATCH_CHARS` is 25,000 characters, and `packBatches` prints a hunk bigger than that whole and alone: batch 2 of this PR is 40,547 characters, past the 30,000-character Bash cut that the `BATCH_CHARS` comment names.
 
 ## Review concerns
 

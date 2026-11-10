@@ -1,0 +1,1 @@
+{"path":"scripts/eval/constants.ts","ref":"742c7c46b48dec27a765681256e41cd7cab1017f","side":"old","content":"export const DEFAULT_PRODUCER_MODEL = \"muse-spark-1.3-contributor\";\nexport const DEFAULT_GRADER_MODEL = \"muse-ember-1.0\";\nexport const TASK_TIMEOUT_MS = 20 * 60 * 1000;\nexport const GRADER_TIMEOUT_MS = 10 * 60 * 1000;\n","language":"typescript"}
