@@ -258,6 +258,16 @@ export function contributorModel(model: string): string {
   return /^muse-spark-[\d.]+$/.test(model) ? `${model}-contributor` : model;
 }
 
+/**
+ * Contributor mode exists only on the muse-spark contributor variants.
+ * Other models reject it: `muse-ember-1.0` with contributor mode on fails
+ * with "does not exist or you lack access", on the subscription too, because
+ * subscriptions default to contributor mode. Pass off explicitly for them.
+ */
+export function contributorMode(model: string): "on" | "off" {
+  return contributorModel(model).includes("contributor") ? "on" : "off";
+}
+
 /** Headless `muse exec`. Prompt travels in a file, the API key in stdin. */
 export async function runMuseCodeAgent(opts: {
   cwd: string;
@@ -283,7 +293,7 @@ export async function runMuseCodeAgent(opts: {
       "--model",
       contributorModel(opts.model),
       "--contributor-mode",
-      "on",
+      contributorMode(opts.model),
       ...(opts.readOnly
         ? ["--disable-approval", "--disable-shell", "--disable-write"]
         : ["--yolo"]),
