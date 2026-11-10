@@ -26,8 +26,7 @@
     ],
     "partsApart": [
       ["e2e/live/living-room.spec.ts", "docs/audits/e2e-pageobject-audit.html"],
-      ["e2e/live/living-room.spec.ts", "src/lib/shared/useQRCodeSVG.ts"],
-      ["e2e/live/living-room.spec.ts", ".nvmrc"]
+      ["e2e/live/living-room.spec.ts", "src/lib/shared/useQRCodeSVG.ts"]
     ]
   }
 }
