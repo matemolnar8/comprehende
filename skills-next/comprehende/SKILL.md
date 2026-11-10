@@ -57,9 +57,9 @@ When the user names a previous review (a `review.json` path or a hosted export U
 
 3. **Read the change.** Run `npx comprehende@0.13.4 show --base <base> --head <head> --batch <n>` for each batch the digest's `read:` line names, one batch per call, until a batch ends with `# Last batch`. The CLI leaves out the files you can skip, and batch 1 lists them; read a skipped generated file with `show --file "<path>"` when its digest symbols show hand-written code. When your harness cuts a batch, read the rest from the file it saved, or fetch the cut hunks with one `show --hunk "<ref>"` per hunk, several per call; `show` reads only its first `--hunk`. Done when you have read every batch to its end.
 
-4. **Group.** Start from the draft and apply Grouping. Keep a draft group that holds one concern. Merge draft groups that serve one concern, and split a group where a reader would stop and review the first piece alone. Then name the stories (see Parts). Done when your reply names each story with its groups, or, for one story, says for each group why it could not have been its own PR.
+4. **Group.** Start from the draft and apply Grouping. Keep a draft group that holds one concern. Merge draft groups that serve one concern, and split a group where a reader would stop and review the first piece alone. When a split or a merge is a close call, keep one group. Then name the stories (see Parts). Done when your reply names each story with its groups, or, for one story, says for each group why it could not have been its own PR.
 
-5. **List the facts, then write.** In your reply, list every fact the hunks and sources show. The list has no length limit and stays out of `review.json`. List each changed result with its cause and mechanism, each new test with its input and what fails without it, each move or helper with what differs from the old code, each file that breaks a repeated pattern, each fact the hunks alone do not show (a caller in another file, a value a source sets, a removed line with no effect, a new export nothing uses), each thing a source says about scope or a failing CI job, each judgment call, and each source item with its verdict (see lookFor). Check a claim about code outside the diff with one `git grep` batch at `<head>`. Then write the document from the list, one field at a time, by its section under Fields. Each fact has one home: a source divergence in `lookFor`, a judgment call in `attention`, a fact about one file in its file note, a result that spans files or a source's word on scope in the group `summary`, and a fact about one line in a note. Drop a fact only when it repeats another, or when it is a bug, nit, missing test, or refactor idea. Copy every ref from the draft into the group that holds it, verbatim; keep `version` and `source` from the draft. Write the whole file in one shell call, then validate:
+5. **List the facts, then write.** Before the write call, list in your reply every fact the hunks and sources show. The list has no length limit and stays out of `review.json`. List each changed result with its cause and mechanism, each new test with its input and what fails without it, each move or helper with its old place, its callers, and what differs from the old code (a message, error, or result the old code gave that the new call does not), each file that breaks a repeated pattern, each fact the hunks alone do not show (a caller in another file, a value a source sets, a removed line with no effect, a new export nothing uses), each thing a source says about scope or a failing CI job, each judgment call, and each source item with its verdict (see lookFor). Check a claim about code outside the diff with one `git grep` batch at `<head>`. Then write the document from the list, one field at a time, by its section under Fields. Each fact has one home: a source divergence in `lookFor`, a judgment call in `attention`, a fact about one file in its file note, a result that spans files or a source's word on scope in the group `summary`, and a fact about one line in a note. Drop a fact only when it repeats another, or when it is your own bug report, nit, missing test, or refactor idea. Copy every ref from the draft into the group that holds it, verbatim; keep `version` and `source` from the draft. Write the whole file in one shell call, then validate:
 
    ```sh
    cat > "$REVIEW_DIR/review.json" <<'EOF'
@@ -88,22 +88,23 @@ npx comprehende@0.13.4 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DI
 
 A group is one review concern: hunks a reviewer reads together and names in a phrase. A directory is a concern only when the directory itself is the point.
 
-- **One user, one home.** Code sits with what only it serves: a unit test with the code it checks (the `pairs with` hint names the module), a one-line call site, declaration, or re-export with the code it serves, a seed, helper, or short fixture with the one spec that uses it, also when its folder holds shared helpers. A new feature's code, seeds, helpers, and spec are one group. New code sits with the branch that selects it.
-- **Many users, one foundation.** A contract or helper that several groups use sits in a foundation group with the files that define it, and the groups that use it `dependsOn` it.
+- **One user, one home.** Code sits with what only it serves: a unit test with the code it checks (the `pairs with` hint names the module), a one-line call site, declaration, or re-export with the code it serves, an option, flag, or setting with the code that reads it, a seed, helper, or short fixture with the one spec that uses it, also when its folder holds shared helpers. A new feature's code, seeds, helpers, and spec are one group. New code sits with the branch that selects it.
+- **Many users, one foundation.** A contract that several later groups build on sits in a foundation group with the files that define it, and the groups that use it `dependsOn` it. A helper or shared code that is not such a contract stays in the group of its first user; split it out only where a reader would stop and review it alone.
+- **One pattern, one group.** The same kind of edit across many files, such as a migration or the adoption of a new helper, is one group, apart from the foundation it adopts. Do not split it by area.
 - **Harnesses.** A new integration harness and the build or CI files that run it are one group, apart from the production code it exercises.
-- **Long fixtures.** A batch of long fixtures or golden files that outweighs its code is a trailing group of its own.
+- **Fixtures.** Fixtures or golden files that pin cases of one change stay in one group, also when a case exercises its own branch: the group of the code they pin, or, when their changed lines in the digest outnumber that code's, one trailing group of its own. A case's own branch in the code stays with the rest of that code.
 - **Mechanical work.** Renames, identifier-only edits, formatting, pure moves, and generated output form their own group. Check each file in the draft `mechanical` group: a file with a real behavior change moves to its story by its path. Output a generator or build step in the diff writes from code (a checked-in schema or client) is mechanical too, in its own group; its summary says whether the hunks match that code at head, and output that does not match is not safe to skip.
-- **Mirrors.** A `mirrors-<n>` group merges into a larger group when other files serve the same concern with a different edit, such as calls to the same new helper; that group's `summary` names the file the others repeat.
+- **Mirrors.** A `mirrors-<n>` group merges into a larger group when other files serve the same concern with a different edit, such as the change that makes the repeated edit needed, or calls to the same new helper; that group's `summary` names the file the others repeat. Draft `mirrors-<n>` groups that repeat one kind of edit merge into one group.
 - **Shared hunks.** A hunk may sit in several groups when it matters to more than one story. A group that holds a hunk with two concerns names both.
 
 ### Parts
 
 A story is work that could have been its own PR, approved alone. Each story is a `part`: a short name on every group of that story, with one document `parts[]` entry (`name`, and a one-sentence `summary`). One story means no `part` and no `parts`.
 
-- A story holds what it needs to be approved: its foundation, tests, enabling renames, and docs. A foundation carries the `part` of the story that first uses it.
+- A story holds what it needs to be approved: its foundation, tests, enabling renames, and docs. The layers a feature needs to work (a contract, its client, its server, its UI) are one story, even when they could ship as stacked PRs. Work that builds on the feature and that the rest of the change does not need, such as authoring tools, templates, or a demo app, is a story of its own. A foundation carries the `part` of the story that first uses it.
 - A shared motive (one ticket that lists unrelated items, a cleanup sweep, a retro) gives the document one `why`; the work under it can still be several stories. One cause fixed in several places is one story.
 - Unasked work is a story of its own: a dependency policy change (exact versions to ranges, or back), a standalone document, a refactor the asked work does not need, production code in a PR about tests. Unasked work that only enables the asked story (path renames, fixture layout, local startup) stays in that story.
-- Small edits of one kind for one reader, such as several notes in agent docs, are one story.
+- Docs and agent notes about a story's own feature stay in that story. Small edits of one kind for one reader on other topics, such as several notes in agent docs, are one story.
 - A mechanical group that exists only because of a story is that story's last group, with nothing depending on it. One that could have been its own PR is its own part.
 
 ### Order, size, and refs
@@ -192,7 +193,7 @@ A `note` pins one sentence to one line inside a hunk of its group: what the code
 
 Each file of a group with two or more files gets a `fileNotes` line, keyed by its path (the new path for a rename, never a directory). A one-file group has none. The line says what changed in that file, not what the file does, and states a fact the group `summary` does not:
 
-- A changed result: the new result and the call that gives it. "Parses with `urlsplit`, so `[::1]` gives host `::1`."
+- A changed result: the old and the new result, and the call that gives it. A changed message, error, or scope counts, also inside a refactor or a move. "Parses with `urlsplit`, so `[::1]` gives host `::1`, not an error."
 - A test or fixture: the input and what fails without the change. "Runs a request against `[::1]:8080`; raised `ValueError` before."
 - A helper or a move: the old place and what differs. "Moved from `App.tsx`; adds `compact` padding."
 - A generated, mechanical, or repeated file: a short label. "Same rename as `server.ts`."
@@ -219,6 +220,6 @@ All prose is for a tired engineer on the first read, with the diff one click awa
 | file note          | 10 words                                                    |
 
 - Whole sentences, with their articles and verbs, one thought each, in the present tense. Name who does what.
-- Write `only`, `always`, `never`, `all`, `unchanged`, or `same as before` only when a hunk you read proves it.
+- Write `only`, `always`, `never`, `all`, `unchanged`, or `same` only when a hunk you read proves it.
 - Use the real symbol, path, flag, or command.
 - Cut every word that does no work: no changelog voice, no puffery.
