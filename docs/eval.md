@@ -4,6 +4,8 @@
 
 Producer and grader run in Muse Code (`muse exec`). Both default to `muse-spark-1.3-contributor`. Override with `--producer-model` or `--grader-model`.
 
+Muse Ember (`muse-ember-1.0`) is not a drop-in cheaper default. It has no contributor variant. On the Model API, Ember costs $0.10 input and $0.50 output per 1M tokens (up to 200K input); Spark contributor costs $0.10 input and $0.20 output. The Muse Code subscription login does not offer Ember at all: `muse exec --model muse-ember-1.0` fails with "does not exist or you lack access", with or without `--contributor-mode on`. The flag is harmless via `--use-api-key`, where Ember runs. Grader quality was near parity in a rescore check: Ember agreed with Spark on 49 of 52 verdicts across `comprehende-50` and `comprehende-57`, and Spark agreed with itself on 50 of 52. Keep the Spark contributor defaults.
+
 ## What decides pass or fail
 
 Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet, group `attention` note, focus caption, line note, and file note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.
