@@ -38,14 +38,14 @@ describe("eval argv", () => {
     assert.equal(parseEvalArgv(["--jobs", "1.5"]).kind, "error");
   });
 
-  it("defaults producer and grader to Muse", () => {
+  it("defaults producer to Spark contributor and grader to Ember", () => {
     assert.equal(DEFAULT_PRODUCER_MODEL, "muse-spark-1.3-contributor");
-    assert.equal(DEFAULT_GRADER_MODEL, "muse-spark-1.3-contributor");
+    assert.equal(DEFAULT_GRADER_MODEL, "muse-ember-1.0");
     const req = parseEvalArgv([]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
       assert.deepEqual(req.producer, { agent: "muse", model: "muse-spark-1.3-contributor" });
-      assert.equal(req.graderModel, "muse-spark-1.3-contributor");
+      assert.equal(req.graderModel, "muse-ember-1.0");
       assert.equal(req.graders, true);
     }
   });
@@ -178,6 +178,8 @@ describe("eval argv", () => {
     assert.match(EVAL_USAGE, /--grader-model/);
     assert.match(EVAL_USAGE, /--cli-login/);
     assert.match(EVAL_USAGE, /--use-api-key/);
+    assert.match(EVAL_USAGE, /Producer defaults to muse-spark-1\.3-contributor/);
+    assert.match(EVAL_USAGE, /grader defaults to muse-ember-1\.0/);
     assert.match(EVAL_USAGE, /MUSE_CODE_API_KEY/);
     assert.doesNotMatch(EVAL_USAGE, /CURSOR_API_KEY/);
     assert.doesNotMatch(EVAL_USAGE, /--cursor-fallback/);

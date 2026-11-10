@@ -254,12 +254,24 @@ async function readMuseUsage(sessionId: string, cwd: string): Promise<MuseUsage>
 
 /**
  * The contributor tier of a muse-spark model. A bare `muse-spark-1.3` becomes
- * `muse-spark-1.3-contributor`; other ids pass through unchanged. Every run
- * also passes `--contributor-mode on`, so the tier stays on even when the
- * global setting is off.
+ * `muse-spark-1.3-contributor`; other ids pass through unchanged. Whether a
+ * run also passes `--contributor-mode on` is contributorMode's call.
  */
 export function contributorModel(model: string): string {
   return /^muse-spark-[\d.]+$/.test(model) ? `${model}-contributor` : model;
+}
+
+/**
+ * Contributor mode runs on the muse-spark contributor variants and on
+ * Muse Wonder, which Muse Code offers in either mode. Muse Ember has no
+ * contributor variant and rejects it: `muse-ember-1.0` with contributor
+ * mode on fails with "does not exist or you lack access", on the
+ * subscription too, because subscriptions default to contributor mode.
+ * Pass off explicitly for models that reject it.
+ */
+export function contributorMode(model: string): "on" | "off" {
+  const resolved = contributorModel(model);
+  return resolved.endsWith("-contributor") || resolved.startsWith("muse-wonder") ? "on" : "off";
 }
 
 /** Headless `muse exec`. Prompt travels in a file, the API key in stdin. */
@@ -287,7 +299,7 @@ export async function runMuseCodeAgent(opts: {
       "--model",
       contributorModel(opts.model),
       "--contributor-mode",
-      "on",
+      contributorMode(opts.model),
       ...(opts.readOnly
         ? ["--disable-approval", "--disable-shell", "--disable-write"]
         : ["--yolo"]),
