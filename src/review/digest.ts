@@ -57,10 +57,11 @@ const MIN_DIR_RENAMES = 5;
 
 /** One line per file. No patch text, so this stays small on large diffs. */
 export function buildDigest(files: DiffFile[]): ChangeDigest {
-  const digests = files
+  const listed = files
     .filter((file) => !file.binary || file.image)
-    .map((file) => digestFile(file));
-  markMirrors(digests, files);
+    .map((file) => ({ file, digest: digestFile(file) }));
+  markMirrors(listed);
+  const digests = listed.map(({ digest }) => digest);
   markReplaces(digests);
   return {
     files: digests,
@@ -186,12 +187,10 @@ function pairTarget(path: string, kind: DigestKind): string | undefined {
  * Files with identical added+removed line multisets are sync copies.
  * The first path wins; the rest point at it so the reader skips them.
  */
-function markMirrors(digests: DigestFile[], files: DiffFile[]): void {
+function markMirrors(listed: readonly { file: DiffFile; digest: DigestFile }[]): void {
   const byKey = new Map<string, DigestFile[]>();
-  for (let i = 0; i < digests.length; i += 1) {
-    const digest = digests[i];
-    const file = files[i];
-    if (digest === undefined || file === undefined || digest.kind === "move") {
+  for (const { file, digest } of listed) {
+    if (digest.kind === "move") {
       continue;
     }
     const lines: string[] = [];
