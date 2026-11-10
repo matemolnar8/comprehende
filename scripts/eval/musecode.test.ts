@@ -113,6 +113,7 @@ describe("contributor model", () => {
     assert.equal(contributorMode("muse-spark-1.3"), "on");
     assert.equal(contributorMode("muse-spark-1.3-contributor"), "on");
     assert.equal(contributorMode("muse-ember-1.0"), "off");
+    assert.equal(contributorMode("contributor-preview-1.0"), "off");
     assert.equal(contributorMode("muse-wonder-1.0"), "off");
   });
 });
