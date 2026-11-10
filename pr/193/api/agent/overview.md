@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify ac0648d5ecd6488892ecab9f720b2be8c620ad93` in this repository.
+   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 934c329497eba00bddb7b4e8b7e94092e385743b` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  b89c99e380695f042bc07f421e645c651d729635
 
-head               ac0648d5ecd6488892ecab9f720b2be8c620ad93
+head               934c329497eba00bddb7b4e8b7e94092e385743b
 
-Named refs at pin: origin/main ... ac0648d5
+Named refs at pin: origin/main ... 934c3294
 
 Read the diff:
 
-git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 ac0648d5ecd6488892ecab9f720b2be8c620ad93
+git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 934c329497eba00bddb7b4e8b7e94092e385743b
 
 Commits:
+- 934c3294 Eval docs: give both Ember price tiers
 - ac0648d5 Eval: record why Ember does not replace Spark contributor
 
 Sources:
