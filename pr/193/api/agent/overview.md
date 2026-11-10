@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 51f71303b483856828926f1b4f4d226a20a7591a` in this repository.
+   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 9e1e2db362adb7b58120bee612233ed6ac2a7d9f` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  b89c99e380695f042bc07f421e645c651d729635
 
-head               51f71303b483856828926f1b4f4d226a20a7591a
+head               9e1e2db362adb7b58120bee612233ed6ac2a7d9f
 
-Named refs at pin: origin/main ... 51f71303
+Named refs at pin: origin/main ... 9e1e2db3
 
 Read the diff:
 
-git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 51f71303b483856828926f1b4f4d226a20a7591a
+git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 9e1e2db362adb7b58120bee612233ed6ac2a7d9f
 
 Commits:
+- 9e1e2db3 Eval: use contributor mode for Muse Wonder too
 - 51f71303 Eval docs: name which spark ids get the contributor tier
 - 438555c9 Eval: fix help defaults text and contributor suffix check
 - 04b122a9 Eval: grade with Ember by default, keep Spark producer
@@ -61,7 +62,7 @@ Ember grades eval reviews by default; the producer stays on Spark contributor, a
 
 ### 01 Contributor mode per model (`contributor-mode`)
 
-A new contributorMode helper passes contributor mode on only for muse-spark contributor variants and off for other models, so Ember and Wonder run on the subscription instead of failing.
+A new contributorMode helper passes contributor mode on for muse-spark contributor variants and Muse Wonder, and off for other models, so Ember runs on the subscription instead of failing.
 
 [groups/contributor-mode.md](groups/contributor-mode.md)
 
