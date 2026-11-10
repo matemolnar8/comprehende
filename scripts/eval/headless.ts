@@ -34,6 +34,8 @@ export function runHeadless(
       clearTimeout(timer);
       resolve({ code: exit ?? 1, stdout: out, stderr: err });
     });
+    // A child that exits before reading stdin makes the write fail with EPIPE; its exit code reports the run.
+    child.stdin.on("error", () => {});
     child.stdin.end(opts.stdin ?? "");
   });
 }
