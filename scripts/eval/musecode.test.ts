@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { parseExportUsage, parseMuseExecJsonl } from "./musecode.ts";
+import { contributorModel, parseExportUsage, parseMuseExecJsonl } from "./musecode.ts";
 
 function line(payload: unknown): string {
   return JSON.stringify({
@@ -95,6 +95,15 @@ function exportRecord(usage: unknown): unknown {
     },
   };
 }
+
+describe("contributor model", () => {
+  it("maps a bare muse-spark id to its contributor tier", () => {
+    assert.equal(contributorModel("muse-spark-1.3"), "muse-spark-1.3-contributor");
+    assert.equal(contributorModel("muse-spark-1.3-contributor"), "muse-spark-1.3-contributor");
+    assert.equal(contributorModel("muse-spark-1.3-turbo"), "muse-spark-1.3-turbo");
+    assert.equal(contributorModel("muse-wonder-1.0"), "muse-wonder-1.0");
+  });
+});
 
 describe("muse export usage", () => {
   it("sums model_completed usage across completions", () => {

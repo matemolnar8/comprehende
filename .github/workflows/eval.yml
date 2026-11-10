@@ -1,5 +1,7 @@
 # Full graded eval after skill, schema, review, or harness land on main.
-# Needs repo secret MUSE_CODE_API_KEY. Skips (does not fail) when that secret is unset.
+# Uses the Muse Code subscription login (repo secret MUSE_AUTH_JSON, a CI-only
+# device login). Falls back to MUSE_CODE_API_KEY with a warning when the login
+# is missing or expired. Skips (does not fail) when neither secret is set.
 # Event-driven: path filter on main, plus workflow_dispatch. Not a cron.
 
 name: Eval suite
@@ -39,8 +41,6 @@ jobs:
           install: false
       - run: pnpm install --frozen-lockfile
       - name: Install Muse Code
-        env:
-          MUSE_CODE_API_KEY: ${{ secrets.MUSE_CODE_API_KEY }}
         run: |
           set -euo pipefail
           mkdir -p ~/.local/bin
@@ -54,17 +54,33 @@ jobs:
         run: sudo apt-get install -y ripgrep
       - name: Full graded eval
         env:
+          MUSE_AUTH_JSON: ${{ secrets.MUSE_AUTH_JSON }}
           MUSE_CODE_API_KEY: ${{ secrets.MUSE_CODE_API_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${MUSE_CODE_API_KEY}" ]; then
-            echo "Repo secret MUSE_CODE_API_KEY is not set. Skipping the full graded suite."
-            echo "Add it under Settings → Secrets and variables → Actions."
-            echo "::warning::MUSE_CODE_API_KEY secret missing; full eval skipped"
+          auth_args=""
+          if [ -n "${MUSE_AUTH_JSON}" ]; then
+            mkdir -p ~/.config/muse
+            printf '%s' "${MUSE_AUTH_JSON}" > ~/.config/muse/auth.json
+            chmod 600 ~/.config/muse/auth.json
+            unset MUSE_AUTH_JSON
+            if ~/.local/bin/muse usage >/dev/null 2>&1; then
+              echo "Using the Muse Code subscription login."
+            else
+              echo "::warning::muse usage check failed; keeping the subscription login (a dead login fails the run visibly instead of silently spending API credit). Refresh it per docs/eval.md."
+            fi
+          else
+            echo "::warning::MUSE_AUTH_JSON secret missing; falling back to MUSE_CODE_API_KEY."
+            auth_args="--use-api-key"
+          fi
+          if [ -n "${auth_args}" ] && [ -z "${MUSE_CODE_API_KEY}" ]; then
+            echo "No working login and no MUSE_CODE_API_KEY. Skipping the full graded suite."
+            echo "Add the secrets under Settings → Secrets and variables → Actions."
+            echo "::warning::no Muse credential available; full eval skipped"
             exit 0
           fi
           unset GITHUB_TOKEN GH_TOKEN
-          pnpm eval -- --json --jobs 2
+          pnpm eval -- --json --jobs 2 ${auth_args}
       - name: Upload eval run
         if: always()
         uses: actions/upload-artifact@v4

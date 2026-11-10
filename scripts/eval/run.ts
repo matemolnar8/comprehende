@@ -26,6 +26,7 @@ import {
   thisRepoMirror,
 } from "./clone.ts";
 import { claimBullets, runRubricGrader } from "./graders.ts";
+import { contributorModel } from "./musecode.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
 import { producerModelId, producerPrompt, runProducer, type Producer } from "./producer.ts";
@@ -62,8 +63,17 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
   }
   const rescoreDir = request.rescore === undefined ? undefined : resolve(request.rescore);
   await loadDotEnv(packageRoot);
-  // An empty key makes muse use its CLI login, which spends the subscription instead of API credit.
-  const apiKey = request.cliLogin ? "" : (process.env.MUSE_CODE_API_KEY ?? "");
+  // The muse CLI login spends the subscription and is the default. Only an
+  // explicit --use-api-key spends API credit; CI passes it. An empty key makes
+  // muse use its CLI login.
+  const apiKey =
+    request.useApiKey && !request.cliLogin ? (process.env.MUSE_CODE_API_KEY ?? "") : "";
+  if (request.useApiKey && !request.cliLogin && apiKey === "") {
+    console.error(
+      "--use-api-key set but MUSE_CODE_API_KEY is empty; refusing to spend the subscription instead",
+    );
+    return 1;
+  }
   const gradersOn = request.graders;
   const casesDir = join(packageRoot, "eval/cases");
   const selected = selectEvalCases(await listEvalCases(casesDir), {
@@ -134,9 +144,9 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     stamp,
     skillTree,
     skill: request.skill,
-    producerModel: producerModelId(request.producer),
+    producerModel: contributorModel(producerModelId(request.producer)),
     producerEffort: request.producer.agent === "claude" ? request.producer.effort : undefined,
-    graderModel: request.graderModel,
+    graderModel: contributorModel(request.graderModel),
     graders: gradersOn,
     cases,
   };

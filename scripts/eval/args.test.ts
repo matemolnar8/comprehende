@@ -15,6 +15,7 @@ describe("eval argv", () => {
       producer: { agent: "muse", model: DEFAULT_PRODUCER_MODEL },
       graderModel: DEFAULT_GRADER_MODEL,
       cliLogin: false,
+      useApiKey: false,
       graders: true,
       rescore: undefined,
       repeat: 1,
@@ -123,6 +124,19 @@ describe("eval argv", () => {
     }
   });
 
+  it("defaults to the subscription and parses --use-api-key as opt-in", () => {
+    const plain = parseEvalArgv([]);
+    assert.equal(plain.kind, "run");
+    if (plain.kind === "run") {
+      assert.equal(plain.useApiKey, false);
+    }
+    const keyed = parseEvalArgv(["--use-api-key"]);
+    assert.equal(keyed.kind, "run");
+    if (keyed.kind === "run") {
+      assert.equal(keyed.useApiKey, true);
+    }
+  });
+
   it("parses --rescore", () => {
     const req = parseEvalArgv(["--rescore", "eval/runs/stamp", "--case", "comprehende-50"]);
     assert.equal(req.kind, "run");
@@ -163,6 +177,7 @@ describe("eval argv", () => {
     assert.match(EVAL_USAGE, /--producer-model/);
     assert.match(EVAL_USAGE, /--grader-model/);
     assert.match(EVAL_USAGE, /--cli-login/);
+    assert.match(EVAL_USAGE, /--use-api-key/);
     assert.match(EVAL_USAGE, /MUSE_CODE_API_KEY/);
     assert.doesNotMatch(EVAL_USAGE, /CURSOR_API_KEY/);
     assert.doesNotMatch(EVAL_USAGE, /--cursor-fallback/);
