@@ -1,6 +1,8 @@
 ---
 name: pages
 description: Host a static site on this repo's GitHub Pages. Use when uploading a folder with index.html, including a comprehende export, or when a pull request needs a hosted review URL.
+metadata:
+  internal: true
 ---
 
 # Pages
