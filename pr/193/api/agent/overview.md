@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 934c329497eba00bddb7b4e8b7e94092e385743b` in this repository.
+   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify ecf9b77fd2f93f2c9a6e5814c3d50c832c0a38bb` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  b89c99e380695f042bc07f421e645c651d729635
 
-head               934c329497eba00bddb7b4e8b7e94092e385743b
+head               ecf9b77fd2f93f2c9a6e5814c3d50c832c0a38bb
 
-Named refs at pin: origin/main ... 934c3294
+Named refs at pin: origin/main ... ecf9b77f
 
 Read the diff:
 
-git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 934c329497eba00bddb7b4e8b7e94092e385743b
+git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 ecf9b77fd2f93f2c9a6e5814c3d50c832c0a38bb
 
 Commits:
+- ecf9b77f Eval docs: say per 1M tokens on both Ember tiers
 - 934c3294 Eval docs: give both Ember price tiers
 - ac0648d5 Eval: record why Ember does not replace Spark contributor
 
