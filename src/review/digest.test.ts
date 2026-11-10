@@ -85,6 +85,17 @@ describe("buildDigest", () => {
     assert.equal(digest.files[2]?.mirrorOf, undefined);
   });
 
+  it("marks mirrors by each file's own lines when a binary is skipped", () => {
+    const digest = buildDigest([
+      file("dot.bin", [], { binary: true }),
+      file("x/SKILL.md", [hunk("x/SKILL.md", 1, 1, [add("same")])]),
+      file("y/SKILL.md", [hunk("y/SKILL.md", 1, 1, [add("same")])]),
+      file("z/other.md", [hunk("z/other.md", 1, 1, [add("unique")])]),
+    ]);
+    assert.equal(digest.files[1]?.mirrorOf, "x/SKILL.md");
+    assert.equal(digest.files[2]?.mirrorOf, undefined);
+  });
+
   it("prefers rename over test and skips binaries", () => {
     const digest = buildDigest([
       file("a.test.ts", [], {

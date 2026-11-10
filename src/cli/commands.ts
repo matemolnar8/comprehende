@@ -4,7 +4,8 @@ import { readDiff, readHunkIndex, readPathDiff, resolveSource } from "../git/dif
 import { defaultBaseRef } from "../git/repo.ts";
 import { anchorErrors, fileNoteErrors } from "../review/anchors.ts";
 import { coverReview, coverageErrors, dirRefErrors } from "../review/coverage.ts";
-import { buildDigest, digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
+import { formatBatch, formatReadLine, formatSizeLine, readingPlan } from "../review/batch.ts";
+import { digestDirOf, formatDigest, isMechanicalFile } from "../review/digest.ts";
 import { loadDocument, resolveCliPath } from "../review/load.ts";
 import { commentPinErrors, staleCommentPins } from "../review/pins.ts";
 import { numberedPatch } from "../review/show.ts";
@@ -85,12 +86,16 @@ export async function cmdDigest(
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
   const files = await readDiff(cwd, baseSha, headSha);
   const range = source.range ?? `${baseRef}...${headRef}`;
-  return `${formatDigest(buildDigest(files), range)}\n`;
+  const plan = readingPlan(files);
+  return `${formatDigest(plan.digest, range, [formatReadLine(plan), formatSizeLine(plan)])}\n`;
 }
 
-export type ShowRequest = { hunk?: string; file?: string };
+export type ShowRequest = { hunk?: string; file?: string; batch?: number };
 
-/** Full patch for one file or one hunk, with old and new line numbers. The detail behind a digest line. */
+/**
+ * Full patch for one file or one hunk, with old and new line numbers. The detail behind a digest
+ * line. `batch` prints one batch of the files a reviewer reads, sized to fit one tool result.
+ */
 export async function cmdShow(
   cwd: string,
   base: string | undefined,
@@ -99,9 +104,13 @@ export async function cmdShow(
 ): Promise<string> {
   const baseRef = base ?? (await defaultBaseRef(cwd));
   const headRef = head ?? "HEAD";
+  if (request.batch !== undefined) {
+    const { baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
+    return formatBatch(readingPlan(await readDiff(cwd, baseSha, headSha)), request.batch);
+  }
   const target = request.hunk ?? request.file;
   if (target === undefined) {
-    throw new Error("show needs --hunk <ref> or --file <path>");
+    throw new Error("show needs --batch <n>, --hunk <ref>, or --file <path>");
   }
   const parsed =
     request.hunk === undefined
@@ -134,8 +143,8 @@ export async function cmdShow(
 
 /**
  * Draft review.json from deterministic rules: clusters of files with the same change,
- * mechanical files (rename, copy, move, generated), and one change group
- * for the rest. The skill accepts, splits, and writes the prose.
+ * mechanical files (rename, copy, move, generated), and one change group for the rest. The size
+ * is a guess from the lines a reviewer reads. The skill accepts, splits, and writes the prose.
  */
 export async function cmdPregroup(
   cwd: string,
@@ -147,7 +156,8 @@ export async function cmdPregroup(
   const headRef = head ?? "HEAD";
   const { source, baseSha, headSha } = await resolveSource(cwd, baseRef, headRef);
   const files = await readDiff(cwd, baseSha, headSha);
-  const changeDigest = buildDigest(files);
+  const plan = readingPlan(files);
+  const changeDigest = plan.digest;
   const digests = changeDigest.files;
   const mirrorRoots = new Set(
     digests
@@ -194,17 +204,15 @@ export async function cmdPregroup(
       hunkRefs: change,
     });
   }
-  let order = 1;
-  for (const [root, paths] of mirrors) {
+  for (const [n, [root, paths]] of [...mirrors].entries()) {
     groups.push({
-      id: `mirrors-${order}`,
+      id: `mirrors-${n + 1}`,
       title: "Same change in several files",
       why: `Draft: the same change as in ${root}. Read one, skip the rest.`,
       summary: "Fill this group.",
-      suggestedOrder: order,
+      suggestedOrder: groups.length,
       hunkRefs: [...new Set(paths)],
     });
-    order += 1;
   }
   if (mechanical.length > 0) {
     groups.push({
@@ -212,11 +220,11 @@ export async function cmdPregroup(
       title: "Mechanical",
       why: "Draft: renames, copies, moves, or generated output. Say what the reader can skip.",
       summary: "Fill this group.",
-      suggestedOrder: order,
+      suggestedOrder: groups.length,
       hunkRefs: [...new Set(mechanical)],
     });
   }
-  const document = { ...skeleton, source, groups };
+  const document = { ...skeleton, size: plan.size.size, source, groups };
   await mkdir(dirname(dataPath), { recursive: true });
   await writeFile(dataPath, `${JSON.stringify(document, null, 2)}\n`);
   const loaded = await loadDocument(dataPath);

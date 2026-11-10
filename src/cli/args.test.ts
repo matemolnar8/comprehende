@@ -17,6 +17,7 @@ describe("parseArgv", () => {
       out: undefined,
       hunk: undefined,
       file: undefined,
+      batch: undefined,
       port: 0,
       open: true,
     });
@@ -34,6 +35,7 @@ describe("parseArgv", () => {
       out: "dist/review",
       hunk: undefined,
       file: undefined,
+      batch: undefined,
       port: DEFAULT_PORT,
       open: false,
     });
@@ -61,6 +63,7 @@ describe("parseArgv", () => {
       out: undefined,
       hunk: undefined,
       file: undefined,
+      batch: undefined,
       port: DEFAULT_PORT,
       open: false,
     });
@@ -77,6 +80,7 @@ describe("parseArgv", () => {
       out: undefined,
       hunk: undefined,
       file: undefined,
+      batch: undefined,
       port: DEFAULT_PORT,
       open: false,
     });
@@ -90,6 +94,7 @@ describe("parseArgv", () => {
       out: undefined,
       hunk: "a.ts@1+2",
       file: undefined,
+      batch: undefined,
       port: DEFAULT_PORT,
       open: false,
     });

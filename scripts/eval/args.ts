@@ -1,10 +1,11 @@
 import { DEFAULT_GRADER_MODEL, DEFAULT_PRODUCER_MODEL } from "./constants.ts";
+import { parseProducer, type Producer } from "./producer.ts";
 
 export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
 Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each claim the review wrote against head. Grader verdicts do not change the exit code.
 
-Producer and grader run in Muse Code. Producer defaults to ${DEFAULT_PRODUCER_MODEL}; grader defaults to ${DEFAULT_GRADER_MODEL}.
+Producer and grader run in Muse Code. Producer defaults to ${DEFAULT_PRODUCER_MODEL}; grader defaults to ${DEFAULT_GRADER_MODEL}. A claude-* producer model runs the producer in Claude Code instead, and a cursor/<model> producer model in the Cursor CLI, each with its CLI login only.
 
 Options:
   --case <id>             Run this case (repeatable)
@@ -16,7 +17,9 @@ Options:
   --baseline <dir>        Print deltas against a previous eval/runs/<stamp>
   --rescore <dir>         Re-check and regrade eval/runs/<stamp> reviews. No producer
   --json                  Also print summary.json to stdout
-  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}
+  --producer-model <id>   Default ${DEFAULT_PRODUCER_MODEL}. claude-* runs in Claude Code,
+                          cursor/<model> in cursor-agent (e.g. cursor/gpt-5.5)
+  --producer-effort <lvl> Claude Code effort: low, medium, high, xhigh, or max
   --grader-model <id>     Default ${DEFAULT_GRADER_MODEL}
   --cli-login             Use the muse CLI login (subscription). This is the default
   --use-api-key           Spend MUSE_CODE_API_KEY (pay as you go) instead of the subscription
@@ -46,7 +49,7 @@ export type EvalRunRequest =
       tag?: string;
       baseline?: string;
       json: boolean;
-      producerModel: string;
+      producer: Producer;
       graderModel: string;
       cliLogin: boolean;
       useApiKey: boolean;
@@ -73,6 +76,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
     let tag: string | undefined;
     let baseline: string | undefined;
     let producerModel = DEFAULT_PRODUCER_MODEL;
+    let producerEffort: string | undefined;
     let graderModel = DEFAULT_GRADER_MODEL;
     let cliLogin = false;
     let useApiKey = false;
@@ -117,6 +121,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
         arg === "--baseline" ||
         arg === "--rescore" ||
         arg === "--producer-model" ||
+        arg === "--producer-effort" ||
         arg === "--grader-model"
       ) {
         const value = args[i + 1];
@@ -140,6 +145,8 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
           skill = value;
         } else if (arg === "--producer-model") {
           producerModel = value;
+        } else if (arg === "--producer-effort") {
+          producerEffort = value;
         } else {
           graderModel = value;
         }
@@ -153,7 +160,7 @@ export function parseEvalArgv(argv: string[]): EvalRunRequest {
       tag,
       baseline,
       json,
-      producerModel,
+      producer: parseProducer(producerModel, producerEffort),
       graderModel,
       cliLogin,
       useApiKey,

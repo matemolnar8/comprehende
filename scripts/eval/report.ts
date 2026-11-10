@@ -97,7 +97,9 @@ li { margin: 0.2rem 0; }
 <body>
 <header>
 <h1>Eval ${escapeHtml(summary.stamp)}</h1>
-<p class="meta">producer ${escapeHtml(summary.producerModel)} · ${
+<p class="meta">producer ${escapeHtml(summary.producerModel)}${
+    summary.producerEffort === undefined ? "" : ` ${escapeHtml(summary.producerEffort)}`
+  } · ${
     summary.graders ? `grader ${escapeHtml(summary.graderModel)}` : "graders off"
   } · skill ${escapeHtml(summary.skillTree.slice(0, 7))}${
     summary.skill === undefined ? "" : ` from ${escapeHtml(summary.skill)}`

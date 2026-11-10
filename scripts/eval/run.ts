@@ -4,7 +4,7 @@ import { realpathSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { exportStaticSite } from "../../src/api/snapshot.ts";
 import { openReview } from "../../src/api/live.ts";
@@ -29,7 +29,7 @@ import { claimBullets, runRubricGrader } from "./graders.ts";
 import { contributorModel } from "./musecode.ts";
 import { parseGithubRepoRemote } from "./github.ts";
 import { writeGradingPacket } from "./packet.ts";
-import { producerPrompt, runProducer } from "./producer.ts";
+import { producerModelId, producerPrompt, runProducer, type Producer } from "./producer.ts";
 import {
   caseFailed,
   caseKey,
@@ -130,7 +130,7 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
       trial,
       rubric: item.rubric,
       caseDir: item.dir,
-      producerModel: request.producerModel,
+      producer: request.producer,
       graderModel: request.graderModel,
       graders: gradersOn,
       apiKey,
@@ -144,7 +144,8 @@ export async function runEval(argv: string[], packageRoot = findPackageRoot()): 
     stamp,
     skillTree,
     skill: request.skill,
-    producerModel: contributorModel(request.producerModel),
+    producerModel: contributorModel(producerModelId(request.producer)),
+    producerEffort: request.producer.agent === "claude" ? request.producer.effort : undefined,
     graderModel: contributorModel(request.graderModel),
     graders: gradersOn,
     cases,
@@ -193,7 +194,7 @@ async function evalOneCase(opts: {
   trial: number | undefined;
   rubric: Rubric;
   caseDir: string;
-  producerModel: string;
+  producer: Producer;
   graderModel: string;
   graders: boolean;
   apiKey: string;
@@ -256,14 +257,20 @@ async function evalOneCase(opts: {
         head: opts.spec.head,
         cliPath: opts.mode.cliPath,
       });
+      const addDirs = [tmp, dirname(opts.mode.skillMd)];
       const runProducerOnce = (): Promise<
         Awaited<ReturnType<typeof runProducer>> | { thrown: string }
       > =>
-        runProducer({ repoCwd, model: opts.producerModel, apiKey: opts.apiKey, prompt }).catch(
-          (error: unknown) => ({
-            thrown: error instanceof Error ? error.message : String(error),
-          }),
-        );
+        runProducer({
+          repoCwd,
+          producer: opts.producer,
+          apiKey: opts.apiKey,
+          prompt,
+          addDirs,
+          keep: opts.keep,
+        }).catch((error: unknown) => ({
+          thrown: error instanceof Error ? error.message : String(error),
+        }));
       let producer = await runProducerOnce();
       // Retry once when the agent run itself failed and wrote no review.
       // Validate and size gates still fail the case without a retry.

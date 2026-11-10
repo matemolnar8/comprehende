@@ -136,6 +136,27 @@ describe("cmdReview git work", { concurrent: false }, () => {
     assert.match(text, /README\.md.*docs/);
     assert.match(text, /src\/helpers\.ts.*rename/);
     assert.equal(text.includes(SECRET_ADD), false);
+    const [, read, size] = text.split("\n");
+    assert.match(
+      read ?? "",
+      /^read: show --batch 1 · \d+ changed lines in \d+ files · \d+ files? skipped$/,
+    );
+    assert.match(size ?? "", /^size guess: (trivial|small) · /);
+  });
+
+  it("shows batch 1 with the skipped files, and names the batch count past the end", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-show-batch-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const text = await cmdShow(repo.root, repo.base, repo.head, { batch: 1 });
+    assert.match(text, /^# Batch 1 of 1 · \d+ files · \d+ changed lines\n# Skipped /);
+    assert.match(text, /^# {3}assets\/dot\.bin · binary$/m);
+    assert.match(text, /^diff --git a\/src\/types\.ts/m);
+    assert.match(text, /# Last batch$/);
+    await assert.rejects(
+      () => cmdShow(repo.root, repo.base, repo.head, { batch: 2 }),
+      /no batch 2: this range has 1 batch \(show --batch 1\)/,
+    );
   });
 
   it("shows one file or hunk patch on demand", async () => {

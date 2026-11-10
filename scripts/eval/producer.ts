@@ -1,4 +1,46 @@
+import { CLAUDE_EFFORTS, runClaudeCodeAgent, type ClaudeEffort } from "./claudecode.ts";
+import { runCursorAgent } from "./cursor.ts";
 import { runMuseCodeAgent, type AgentRunResult } from "./musecode.ts";
+
+const CURSOR_PREFIX = "cursor/";
+
+/**
+ * A `claude-*` model runs in Claude Code and a `cursor/<model>` model in the Cursor CLI, each
+ * with its own login. Any other model runs in Muse Code.
+ */
+export type Producer =
+  | { agent: "muse"; model: string }
+  | { agent: "claude"; model: string; effort: ClaudeEffort | undefined }
+  | { agent: "cursor"; model: string };
+
+export function parseProducer(model: string, effort: string | undefined): Producer {
+  if (model.startsWith(CURSOR_PREFIX)) {
+    const cursorModel = model.slice(CURSOR_PREFIX.length);
+    if (cursorModel === "") {
+      throw new Error("--producer-model cursor/<model> needs a model, for example cursor/gpt-5.5");
+    }
+    if (effort !== undefined) {
+      throw new Error(
+        `--producer-effort is for claude-* models. Put Cursor params in the model, for example cursor/claude-opus-4-8[effort=${effort}]`,
+      );
+    }
+    return { agent: "cursor", model: cursorModel };
+  }
+  if (!model.startsWith("claude-")) {
+    if (effort !== undefined) {
+      throw new Error("--producer-effort needs a claude-* --producer-model");
+    }
+    return { agent: "muse", model };
+  }
+  if (effort === undefined) {
+    return { agent: "claude", model, effort };
+  }
+  const known = CLAUDE_EFFORTS.find((level) => level === effort);
+  if (known === undefined) {
+    throw new Error(`--producer-effort is one of ${CLAUDE_EFFORTS.join(", ")}, got ${effort}`);
+  }
+  return { agent: "claude", model, effort: known };
+}
 
 export function producerPrompt(opts: {
   repoCwd: string;
@@ -20,15 +62,40 @@ export function producerPrompt(opts: {
   ].join(" ");
 }
 
+/** The --producer-model value that selects this producer. */
+export function producerModelId(producer: Producer): string {
+  return producer.agent === "cursor" ? `${CURSOR_PREFIX}${producer.model}` : producer.model;
+}
+
 export async function runProducer(opts: {
   repoCwd: string;
-  model: string;
+  producer: Producer;
   apiKey: string;
   prompt: string;
+  addDirs: readonly string[];
+  keep: boolean;
 }): Promise<AgentRunResult> {
+  if (opts.producer.agent === "claude") {
+    return runClaudeCodeAgent({
+      cwd: opts.repoCwd,
+      model: opts.producer.model,
+      effort: opts.producer.effort,
+      prompt: opts.prompt,
+      addDirs: opts.addDirs,
+      persistSession: opts.keep,
+    });
+  }
+  if (opts.producer.agent === "cursor") {
+    return runCursorAgent({
+      cwd: opts.repoCwd,
+      model: opts.producer.model,
+      prompt: opts.prompt,
+      addDirs: opts.addDirs,
+    });
+  }
   return runMuseCodeAgent({
     cwd: opts.repoCwd,
-    model: opts.model,
+    model: opts.producer.model,
     prompt: opts.prompt,
     apiKey: opts.apiKey,
     readOnly: false,

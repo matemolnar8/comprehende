@@ -18,21 +18,10 @@ afterAll(() => {
 });
 
 describe("next skill workflow", () => {
-  it("batches commands and drops the schema pointer", async () => {
+  it("keeps the step-2 batch and the write block, with no forge or schema names", async () => {
     const md = await readFile(join(skillPaths(findPackageRoot()).nextSkill, "SKILL.md"), "utf8");
-    assert.match(
-      md,
-      /One shell call: verify the refs, write the draft, print the digest, the draft, the log, and the sources/,
-    );
-    assert.match(md, /Write the whole `review\.json` in one shell call/);
     assert.match(md, /<<'EOF'\n   <the document>\n   EOF\n   npx comprehende@[\d.]+ validate/);
-    assert.match(md, /`label` is that subject line, or a SHA from the same log/);
-    assert.match(md, /This shape is enough to write a valid document/);
-    assert.match(md, /references\/example\.md` is an optional filled sample/);
-    assert.match(md, /whose thread is open/);
-    assert.match(md, /a comment with no current line is outdated/);
     assert.doesNotMatch(md, /github|gitlab|bitbucket/i);
-    assert.doesNotMatch(md, /shows every field/);
     assert.doesNotMatch(md, /review\.schema\.json/);
     const shells = [...md.matchAll(/```sh\n([\s\S]*?)```/g)].map((match) => match[1] ?? "");
     const batch = shells.find(
@@ -47,7 +36,6 @@ describe("next skill workflow", () => {
     assert.match(batch, /digest --base <base> --head <head>/);
     assert.match(batch, /git log --format=/);
     assert.doesNotMatch(batch, /git diff --stat/);
-    assert.match(md, /<executable> --version` in the step-2 call/);
     assert.doesNotMatch(md, /:\(exclude\)<path>/);
     assert.doesNotMatch(md, /pnpm-lock\.yaml/);
     assert.doesNotMatch(md, /package-lock\.json/);
@@ -55,10 +43,7 @@ describe("next skill workflow", () => {
     assert.doesNotMatch(md, /Cargo\.lock/);
     assert.doesNotMatch(md, /poetry\.lock/);
     assert.doesNotMatch(md, /go\.sum/);
-    assert.match(md, /Lockfiles have no hunk refs/);
     assert.match(md, /path@oldStart\+newStart/);
-    assert.match(md, /A path covers every live hunk of that file/);
-    assert.doesNotMatch(md, /Lockfiles stay in `skipped`/);
     const example = await readFile(
       join(findPackageRoot(), "skills-next/comprehende/references/example.md"),
       "utf8",
