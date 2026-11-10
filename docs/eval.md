@@ -2,9 +2,9 @@
 
 `pnpm eval -- --help` lists every flag. Cases live in `eval/cases/<id>/` (`case.json`, `expected.md`, frozen `sources/`). `eval/review-criteria.md` says how to read and write `expected.md`.
 
-Producer and grader run in Muse Code (`muse exec`). Both default to `muse-spark-1.3-contributor`. Override with `--producer-model` or `--grader-model`.
+Producer and grader run in Muse Code (`muse exec`). The producer defaults to `muse-spark-1.3-contributor`; the grader defaults to `muse-ember-1.0`. Override with `--producer-model` or `--grader-model`.
 
-Muse Ember (`muse-ember-1.0`) runs in both seats, on the subscription and via `--use-api-key`, but it is not a cheaper default. It has no contributor variant, so the harness passes `--contributor-mode off` for it; with the mode on it fails with "does not exist or you lack access". On the Model API, Ember costs $0.10 input and $0.50 output per 1M tokens at up to 200K input tokens; over 200K, the whole request is billed at $0.30 input and $1.50 output per 1M tokens. Spark contributor costs $0.10 input and $0.20 output at any length, and on the subscription it runs in contributor mode, which gives more usage from the plan. Grader quality was near parity in rescore checks: Ember agreed with Spark on 49 of 52 verdicts via the API and 48 of 52 on the subscription, across `comprehende-50` and `comprehende-57`, and Spark agreed with itself on 50 of 52. Keep the Spark contributor defaults.
+Muse Ember (`muse-ember-1.0`) grades by default because repeated rescore checks put it at parity for less time. It has no contributor variant, so the harness passes `--contributor-mode off` for it; with the mode on it fails with "does not exist or you lack access". Across five runs each on `comprehende-50` and `comprehende-57`, Ember-vs-Spark verdict agreement (median 50 of 52) overlapped Spark-vs-Spark (51 of 52), grader tokens matched at the median, no run failed to parse, and Ember graded about 3.7 times faster. The producer stays on Spark contributor: Ember spot checks wrote thinner reviews, and on the Model API Ember output costs $0.50 per 1M tokens against Spark contributor $0.20 (input $0.10 both; Ember bills the whole request at $0.30 input and $1.50 output over 200K input tokens).
 
 ## What decides pass or fail
 

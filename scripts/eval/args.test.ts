@@ -38,14 +38,14 @@ describe("eval argv", () => {
     assert.equal(parseEvalArgv(["--jobs", "1.5"]).kind, "error");
   });
 
-  it("defaults producer and grader to Muse", () => {
+  it("defaults producer to Spark contributor and grader to Ember", () => {
     assert.equal(DEFAULT_PRODUCER_MODEL, "muse-spark-1.3-contributor");
-    assert.equal(DEFAULT_GRADER_MODEL, "muse-spark-1.3-contributor");
+    assert.equal(DEFAULT_GRADER_MODEL, "muse-ember-1.0");
     const req = parseEvalArgv([]);
     assert.equal(req.kind, "run");
     if (req.kind === "run") {
       assert.equal(req.producerModel, "muse-spark-1.3-contributor");
-      assert.equal(req.graderModel, "muse-spark-1.3-contributor");
+      assert.equal(req.graderModel, "muse-ember-1.0");
       assert.equal(req.graders, true);
     }
   });
