@@ -4,7 +4,7 @@ export const EVAL_USAGE = `Usage: pnpm eval -- [options]
 
 Grade Comprehende reviews. An isolated producer follows the next skill. Deterministic checks score the result. One read-only rubric grader also scores unless --no-graders: it answers yes or no per expected.md item and checks each claim the review wrote against head. Grader verdicts do not change the exit code.
 
-Producer and grader run in Muse Code. Both default to ${DEFAULT_PRODUCER_MODEL}.
+Producer and grader run in Muse Code. Producer defaults to ${DEFAULT_PRODUCER_MODEL}; grader defaults to ${DEFAULT_GRADER_MODEL}.
 
 Options:
   --case <id>             Run this case (repeatable)

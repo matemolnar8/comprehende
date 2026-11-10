@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { contributorModel, parseExportUsage, parseMuseExecJsonl } from "./musecode.ts";
+import {
+  contributorMode,
+  contributorModel,
+  parseExportUsage,
+  parseMuseExecJsonl,
+} from "./musecode.ts";
 
 function line(payload: unknown): string {
   return JSON.stringify({
@@ -102,6 +107,14 @@ describe("contributor model", () => {
     assert.equal(contributorModel("muse-spark-1.3-contributor"), "muse-spark-1.3-contributor");
     assert.equal(contributorModel("muse-spark-1.3-turbo"), "muse-spark-1.3-turbo");
     assert.equal(contributorModel("muse-wonder-1.0"), "muse-wonder-1.0");
+  });
+
+  it("turns contributor mode on for contributor variants and Wonder, off for Ember", () => {
+    assert.equal(contributorMode("muse-spark-1.3"), "on");
+    assert.equal(contributorMode("muse-spark-1.3-contributor"), "on");
+    assert.equal(contributorMode("muse-ember-1.0"), "off");
+    assert.equal(contributorMode("contributor-preview-1.0"), "off");
+    assert.equal(contributorMode("muse-wonder-1.0"), "on");
   });
 });
 
