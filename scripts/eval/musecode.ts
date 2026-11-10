@@ -248,6 +248,16 @@ async function readMuseUsage(sessionId: string, cwd: string): Promise<MuseUsage>
   }
 }
 
+/**
+ * The contributor tier of a muse-spark model. A bare `muse-spark-1.3` becomes
+ * `muse-spark-1.3-contributor`; other ids pass through unchanged. Every run
+ * also passes `--contributor-mode on`, so the tier stays on even when the
+ * global setting is off.
+ */
+export function contributorModel(model: string): string {
+  return /^muse-spark-[\d.]+$/.test(model) ? `${model}-contributor` : model;
+}
+
 /** Headless `muse exec`. Prompt travels in a file, the API key in stdin. */
 export async function runMuseCodeAgent(opts: {
   cwd: string;
@@ -271,7 +281,9 @@ export async function runMuseCodeAgent(opts: {
       "--prompt-file",
       promptPath,
       "--model",
-      opts.model,
+      contributorModel(opts.model),
+      "--contributor-mode",
+      "on",
       ...(opts.readOnly
         ? ["--disable-approval", "--disable-shell", "--disable-write"]
         : ["--yolo"]),
@@ -354,7 +366,13 @@ async function spawnMuse(
     };
     let child;
     try {
-      child = spawn("muse", args, { cwd, stdio: ["pipe", "pipe", "pipe"] });
+      // META_API_KEY beats the account login, so never inherit it (or the eval
+      // key var): the login is the default, and an explicit key travels by stdin.
+      const env = { ...process.env };
+      delete env.META_API_KEY;
+      delete env.MUSE_CODE_API_KEY;
+      delete env.MUSE_AUTH_JSON;
+      child = spawn("muse", args, { cwd, env, stdio: ["pipe", "pipe", "pipe"] });
     } catch (error) {
       done({
         code: 127,
