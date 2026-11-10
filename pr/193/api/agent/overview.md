@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 438555c9acb5628657462b085a322b2a6cc834cd` in this repository.
+   Run `git rev-parse --verify b89c99e380695f042bc07f421e645c651d729635` and `git rev-parse --verify 51f71303b483856828926f1b4f4d226a20a7591a` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  b89c99e380695f042bc07f421e645c651d729635
 
-head               438555c9acb5628657462b085a322b2a6cc834cd
+head               51f71303b483856828926f1b4f4d226a20a7591a
 
-Named refs at pin: origin/main ... 438555c9
+Named refs at pin: origin/main ... 51f71303
 
 Read the diff:
 
-git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 438555c9acb5628657462b085a322b2a6cc834cd
+git diff --find-renames b89c99e380695f042bc07f421e645c651d729635 51f71303b483856828926f1b4f4d226a20a7591a
 
 Commits:
+- 51f71303 Eval docs: name which spark ids get the contributor tier
 - 438555c9 Eval: fix help defaults text and contributor suffix check
 - 04b122a9 Eval: grade with Ember by default, keep Spark producer
 - 7a993392 Eval: pass contributor-mode off for non-contributor models
