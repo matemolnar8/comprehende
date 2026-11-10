@@ -55,7 +55,7 @@ The eval workflow uploads `eval/runs` as the artifact `eval-run`. `gh run downlo
 
 ## Known flaky expects
 
-`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. `cigster-99` `apart` and `comprehende-59` `together` also fail now and then, and about 2 to 3 percent of case runs fail some expect. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
+`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. `cigster-99` `apart` and `partsApart` and `comprehende-59` `together` also fail now and then, and about 2 to 3 percent of case runs fail some expect. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
 
 ## Muse setup
 
