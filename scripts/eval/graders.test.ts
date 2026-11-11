@@ -188,6 +188,10 @@ describe("eval result line", () => {
         togetherTotal: 2,
         apartOk: 1,
         apartTotal: 1,
+        partsTogetherOk: 0,
+        partsTogetherTotal: 0,
+        partsApartOk: 0,
+        partsApartTotal: 0,
       },
       rubric: { run: { ...finishedRun, tokens: 40_000 }, output: rubricOutput },
     };
@@ -203,6 +207,14 @@ describe("eval result line", () => {
       rubric: { run: finishedRun, output: emptyRubricOutput(), parseError: "bad" },
     });
     assert.match(failed, /rubric parse FAIL/);
+    assert.doesNotMatch(line, /partsApart|partsTogether/);
+    assert.ok(result.checks);
+    const withParts = formatCaseLine({
+      ...result,
+      checks: { ...result.checks, partsApartOk: 2, partsApartTotal: 3 },
+    });
+    assert.match(withParts, /apart 1\/1  partsApart 2\/3/);
+    assert.doesNotMatch(withParts, /partsTogether/);
   });
 
   it("prints rubric deltas against a baseline", () => {
@@ -316,6 +328,10 @@ describe("eval result line", () => {
         togetherTotal: 0,
         apartOk: 0,
         apartTotal: 0,
+        partsTogetherOk: 0,
+        partsTogetherTotal: 0,
+        partsApartOk: 0,
+        partsApartTotal: 0,
       },
     });
     assert.match(line, /comprehende-50/);
@@ -343,6 +359,10 @@ describe("eval result line", () => {
         togetherTotal: 0,
         apartOk: 0,
         apartTotal: 0,
+        partsTogetherOk: 0,
+        partsTogetherTotal: 0,
+        partsApartOk: 0,
+        partsApartTotal: 0,
       },
     };
     assert.equal(caseFailed(result), false);
@@ -368,6 +388,10 @@ describe("eval result line", () => {
         togetherTotal: 0,
         apartOk: 0,
         apartTotal: 0,
+        partsTogetherOk: 0,
+        partsTogetherTotal: 0,
+        partsApartOk: 0,
+        partsApartTotal: 0,
       },
     };
     assert.equal(caseFailed(result), true);
@@ -393,6 +417,10 @@ describe("eval result line", () => {
         togetherTotal: 0,
         apartOk: 0,
         apartTotal: 0,
+        partsTogetherOk: 0,
+        partsTogetherTotal: 0,
+        partsApartOk: 0,
+        partsApartTotal: 0,
       },
     };
     assert.equal(caseFailed(result), false);

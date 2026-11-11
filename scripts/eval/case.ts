@@ -7,6 +7,8 @@ const nonemptyString = z.string().min(1);
 
 const pathSet = z.array(nonemptyString).min(1);
 
+const pathPair = z.tuple([nonemptyString, nonemptyString]);
+
 const countRange = z.strictObject({
   min: z.number().int().nonnegative(),
   max: z.number().int().nonnegative(),
@@ -21,7 +23,9 @@ const expectSchema = z
     sourceKinds: z.array(z.enum(SOURCE_KINDS)).min(1).optional(),
     mechanicalPaths: pathSet.optional(),
     together: z.array(pathSet).optional(),
-    apart: z.array(z.tuple([nonemptyString, nonemptyString])).optional(),
+    apart: z.array(pathPair).optional(),
+    partsTogether: z.array(pathSet).optional(),
+    partsApart: z.array(pathPair).optional(),
   })
   .optional();
 

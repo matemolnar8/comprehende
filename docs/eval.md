@@ -12,9 +12,9 @@ A `cursor/<model>` producer model (for example `--producer-model cursor/gpt-5.5`
 
 ## What decides pass or fail
 
-Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet, group `attention` note, focus caption, line note, and file note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.
+Only `validate` and the `case.json` expects (why, parts, groups, size, source kinds, mechanical paths, together, apart, partsTogether, partsApart) change the exit code. The grader is one read-only call per case. It gets the review, the diff of every group, the frozen sources, and the `Must`, `Good`, and `Must not` lists from `expected.md`. It answers yes or no per item with a quote, and marks each document `lookFor` bullet, group `attention` note, focus caption, line note, and file note the review wrote as true or false at head. The case line shows `must 3/4  good 1/2  mustNot 0/3  bullets 2/2 true`. A false bullet is the costly error: the review told the reader something that is not so.
 
-The grader does not judge grouping or prose quality. Grouping is checked by `together` and `apart`. Prose is linted: em dashes, sentences over 25 words, summaries with more sentences than the skill allows, and summaries that read as a path list. Lints print on the case line and in the report and do not fail the case.
+The grader does not judge grouping or prose quality. Grouping is checked by `together` and `apart`, and the split into parts by `partsTogether` and `partsApart`. A group with no `part` sits in one unnamed story, so a one-story review fails every `partsApart` pair. Use them for part decisions with one right answer, not for a count range. Prose is linted: em dashes, sentences over 25 words, summaries with more sentences than the skill allows, and summaries that read as a path list. Lints print on the case line and in the report and do not fail the case.
 
 The case line and the run total print `words`: the prose a review writes for the reader. Titles, summaries, whys, `lookFor`, attentions, questions, captions, notes, file notes, and source gists count. A copied PR comment body does not. Each run also prints `words a->b` per case under `--baseline`.
 
@@ -55,7 +55,7 @@ The eval workflow uploads `eval/runs` as the artifact `eval-run`. `gh run downlo
 
 ## Known flaky expects
 
-`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. `cigster-99` `apart` and `comprehende-59` `together` also fail now and then, and about 2 to 3 percent of case runs fail some expect. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
+`comprehende-57` `size` comes out `small` in about 1 of 9 runs, and `cigster-99` `parts` sometimes falls outside its range. `cigster-99` `apart` and `partsApart` and `comprehende-59` `together` also fail now and then, and about 2 to 3 percent of case runs fail some expect. Check the result against `case.json` before you call it a regression, and use `--repeat` to measure the rate.
 
 ## Muse setup
 
