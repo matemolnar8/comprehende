@@ -61,23 +61,48 @@ export function caseIdFor(repo: string, pr: number): string {
   return `${repo}-${pr}`;
 }
 
-export function linkedIssueNumbers(text: string): number[] {
-  const found = new Set<number>();
+export type LinkedIssue = GithubRepo & { number: number };
+
+/** Issues the text closes in `home`, and issues it links by URL in the repository the URL names. */
+export function linkedIssues(text: string, home: GithubRepo): LinkedIssue[] {
+  const found = new Map<string, LinkedIssue>();
+  const add = (issue: LinkedIssue): void => {
+    found.set(`${issue.owner}/${issue.repo}#${issue.number}`.toLowerCase(), issue);
+  };
   const close =
     /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#\d+(?:(?:\s*,\s*(?:and\s+)?|\s+and\s+)#\d+)*/giu;
   for (const match of text.matchAll(close)) {
     for (const number of match[0].matchAll(/\d+/gu)) {
-      found.add(Number(number[0]));
+      add({ ...home, number: Number(number[0]) });
     }
   }
-  const full = /https:\/\/github\.com\/[^/]+\/[^/]+\/issues\/(\d+)/giu;
+  const full = /https:\/\/github\.com\/([^/\s]+)\/([^/\s]+)\/issues\/(\d+)/giu;
   for (const match of text.matchAll(full)) {
-    const raw = match[1];
-    if (raw !== undefined) {
-      found.add(Number(raw));
+    const [, owner, repo, number] = match;
+    if (owner !== undefined && repo !== undefined && number !== undefined) {
+      add({ owner, repo, number: Number(number) });
     }
   }
-  return [...found].sort((a, b) => a - b);
+  return [...found.values()].sort(
+    (a, b) =>
+      Number(isSameRepo(b, home)) - Number(isSameRepo(a, home)) ||
+      a.owner.localeCompare(b.owner) ||
+      a.repo.localeCompare(b.repo) ||
+      a.number - b.number,
+  );
+}
+
+export function isSameRepo(a: GithubRepo, b: GithubRepo): boolean {
+  return (
+    a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
+  );
+}
+
+/** An issue of another repository keeps that repository in its file name, so two numbers cannot collide. */
+export function issueSourceFileName(issue: LinkedIssue, home: GithubRepo): string {
+  return isSameRepo(issue, home)
+    ? `issue-${issue.number}.json`
+    : `issue-${issue.owner}-${issue.repo}-${issue.number}.json`;
 }
 
 export function normalizeUrl(url: string): string {

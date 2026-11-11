@@ -4,7 +4,8 @@ import {
   caseIdFor,
   collectFrozenUrls,
   expandAllowedUrl,
-  linkedIssueNumbers,
+  issueSourceFileName,
+  linkedIssues,
   parseGithubCommitUrl,
   parseGithubPrUrl,
   parseGithubRepoRemote,
@@ -19,17 +20,31 @@ describe("eval github helpers", () => {
       pr: 47,
     });
     assert.equal(caseIdFor("comprehende", 47), "comprehende-47");
+    const home = { owner: "matemolnar8", repo: "comprehende" };
+    const numbers = (text: string): number[] =>
+      linkedIssues(text, home).map(({ number }) => number);
     assert.deepEqual(
-      linkedIssueNumbers(
-        "Closes #46\nSee PR #49 and https://github.com/matemolnar8/comprehende/issues/12",
-      ),
+      numbers("Closes #46\nSee PR #49 and https://github.com/matemolnar8/comprehende/issues/12"),
       [12, 46],
     );
-    assert.deepEqual(
-      linkedIssueNumbers("Closes #109, #110, and #111; includes #145"),
-      [109, 110, 111],
+    assert.deepEqual(numbers("Closes #109, #110, and #111; includes #145"), [109, 110, 111]);
+    assert.deepEqual(numbers("Fixes #1 and #2, and see #3"), [1, 2]);
+  });
+
+  it("reads a linked issue from the repository its URL names", () => {
+    const home = { owner: "astral-sh", repo: "ruff" };
+    const issues = linkedIssues(
+      "Fixes #7. Addresses https://github.com/astral-sh/ty/issues/4615.",
+      home,
     );
-    assert.deepEqual(linkedIssueNumbers("Fixes #1 and #2, and see #3"), [1, 2]);
+    assert.deepEqual(issues, [
+      { owner: "astral-sh", repo: "ruff", number: 7 },
+      { owner: "astral-sh", repo: "ty", number: 4615 },
+    ]);
+    assert.deepEqual(
+      issues.map((issue) => issueSourceFileName(issue, home)),
+      ["issue-7.json", "issue-astral-sh-ty-4615.json"],
+    );
   });
 
   it("collects html_url values and expands pull to issues", () => {
