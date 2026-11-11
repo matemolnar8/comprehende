@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 1036bd6dbbaae3d2be13ad8c892224795f834ddf` and `git rev-parse --verify cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8` in this repository.
+   Run `git rev-parse --verify 1036bd6dbbaae3d2be13ad8c892224795f834ddf` and `git rev-parse --verify 9bc33a83c67a94f1e38265b3074b57711f616ef8` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf 9bc33a83c67a94f1e38265b3074b57711f616ef8 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,25 +25,26 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  1036bd6dbbaae3d2be13ad8c892224795f834ddf
 
-head               cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8
+head               9bc33a83c67a94f1e38265b3074b57711f616ef8
 
 Named refs at pin: origin/main ... origin/t3/rendered-markdown-diff
 
 Read the diff:
 
-git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8
+git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf 9bc33a83c67a94f1e38265b3074b57711f616ef8
 
-Review concern 02 of 03: The rendered rows (`view`)
+Review concern 03 of 05: The rendered rows (`view`)
 
 The what:
 
-`MarkdownDiff` draws the rows in one column or two, with the tints, notes, comments, and moved marks of the source diff.
+`MarkdownDiff` draws the rows in one column or two. A code block goes through Pierre (`PierreSnippet`, `PierreSnippetDiff`), an image loads from the web or from git, and a link that does not open says why.
 
 Attention (product):
-The rendered view does not run HTML, fetch images, or follow relative links. `rawHtml` shows a tag such as `<kbd>` as its source, `img` shows the alt text, and a relative link is a styled `span`. Only `http`, `https`, and `mailto` links open. Decide if a reviewer needs to see images of the repository here.
+`imageTarget` loads a web image as it is, so a hosted review calls the image's host. A path in the repository loads only when the image is part of the change: the payload has no other images, and those show their alt text with the reason. Decide if the payload must hold every image a changed Markdown file names.
 
 Depends on:
-- 01 Rows from git's lines (`rows`)
+- 01 Rows and word marks (`rows`)
+- 02 Rows are made off the main thread (`worker`)
 
 Hunk refs for this concern:
 - src/ui/components/MarkdownDiff.tsx

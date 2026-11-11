@@ -5,12 +5,12 @@ Answer questions about this review concern.
 When no question follows this paste, explain this review concern.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 1036bd6dbbaae3d2be13ad8c892224795f834ddf` and `git rev-parse --verify cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8` in this repository.
+   Run `git rev-parse --verify 1036bd6dbbaae3d2be13ad8c892224795f834ddf` and `git rev-parse --verify 9bc33a83c67a94f1e38265b3074b57711f616ef8` in this repository.
    Done when both objects exist.
 
 2. Load the hunks.
    A hunk ref is a pointer into the live git diff at the pinned SHAs.
-   For each hunk ref, run `git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8 -- <path>` and keep the hunk whose header matches the @@ range.
+   For each hunk ref, run `git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf 9bc33a83c67a94f1e38265b3074b57711f616ef8 -- <path>` and keep the hunk whose header matches the @@ range.
    Done when every hunk ref has a matching live hunk.
 
 3. Answer from live git.
@@ -25,22 +25,22 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  1036bd6dbbaae3d2be13ad8c892224795f834ddf
 
-head               cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8
+head               9bc33a83c67a94f1e38265b3074b57711f616ef8
 
 Named refs at pin: origin/main ... origin/t3/rendered-markdown-diff
 
 Read the diff:
 
-git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf cbd5aa0b3d044e87e62b55aa6a43c3aaaf706bf8
+git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf 9bc33a83c67a94f1e38265b3074b57711f616ef8
 
-Review concern 01 of 03: Rows from git's lines (`rows`)
+Review concern 01 of 05: Rows and word marks (`rows`)
 
 The what:
 
-`markdownRows` in `markdown-diff.ts` splits both sides of a file into blocks and uses git's hunk lines to pair them into context rows and change rows.
+`markdownRows` in `markdown-diff.ts` splits both sides of a file into blocks and uses git's hunk lines to pair them into context rows, change rows, and code rows. `wordMarks` marks the words that differ.
 
 Attention (tradeoff):
-`wordMarks` marks no words in a block when more than 60% of its words changed (`REWRITE_SHARE`), and stops after 150 ms (`WORD_DIFF_MS`). Such a block shows only its red or green tint. Two unrelated texts of 9,000 words each took 11 s to compare without the limit. Decide if these two numbers fit your skill diffs.
+`joinEdits` replaces the 60% rule and the 150 ms limit. Two changes join when the words kept between them are no longer than either change, and `unitMarks` gives no marks to a block with no word kept. A paragraph that was mostly rewritten now shows marks on most of its text, where before it showed only its tint. Decide if that reads better on your skill diffs.
 
 Hunk refs for this concern:
 - package.json
