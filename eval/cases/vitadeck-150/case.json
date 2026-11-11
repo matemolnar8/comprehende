@@ -20,6 +20,7 @@
       ["scripts/gui-drive.sh", "src/core/stb_ds.c"],
       ["tests/demo_sections.h", "src/core/stb_ds.c"],
       ["scripts/smoke-docker.sh", "tests/demo_sections.h"],
+      ["scripts/smoke-docker.sh", "src/core/stb_ds.c"],
       [".agents/skills/pages/scripts/pages-review.ts", "scripts/gui-drive.sh"]
     ],
     "partsApart": [
@@ -29,7 +30,6 @@
       ["scripts/gui-drive.sh", "src/core/stb_ds.c"],
       ["scripts/smoke-docker.sh", "tests/demo_sections.h"],
       ["scripts/smoke-docker.sh", ".agents/skills/pages/scripts/pages-review.ts"],
-      ["scripts/smoke-docker.sh", "src/core/stb_ds.c"],
       ["tests/demo_sections.h", ".agents/skills/pages/scripts/pages-review.ts"],
       ["tests/demo_sections.h", "src/core/stb_ds.c"],
       [".agents/skills/pages/scripts/pages-review.ts", "src/core/stb_ds.c"]
