@@ -711,7 +711,7 @@ export function PierreFileDiff(props: {
   );
 }
 
-function SplitResizeHandle(props: { ratio: number; onRatio: (ratio: number) => void }) {
+export function SplitResizeHandle(props: { ratio: number; onRatio: (ratio: number) => void }) {
   const drag = useRef<{ startX: number; start: number; width: number } | null>(null);
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
