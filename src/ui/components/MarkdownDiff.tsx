@@ -13,6 +13,7 @@ import {
 } from "react";
 import { Fragment as JsxFragment, jsx, jsxs } from "react/jsx-runtime";
 import { defaultUrlTransform } from "react-markdown";
+import { repositoryPath } from "../../api/markdown.ts";
 import type { FileSide } from "../../api/types.ts";
 import { fetchFile, resourceHref } from "../api.ts";
 import { PierreSnippet, PierreSnippetDiff, SplitResizeHandle } from "../PierreDiff.tsx";
@@ -423,33 +424,15 @@ function Link(props: { href?: string; children?: ReactNode }) {
   );
 }
 
-const REPOSITORY = "https://repository.invalid";
-
 /** A web address for an image, or the path of an image in the repository. */
 function imageTarget(src: string, origin: Origin | null): { url: string; path?: string } | null {
-  try {
-    const from = (origin?.path ?? "").split("/").map(encodeURIComponent).join("/");
-    const url = new URL(src, `${REPOSITORY}/${from}`);
-    if (url.origin !== REPOSITORY) {
-      return /^https?:$/.test(url.protocol) ? { url: url.href } : null;
-    }
-    if (origin === null) {
-      return null;
-    }
-    const path = decoded(url.pathname.slice(1));
-    return { url: resourceHref({ kind: "image", path, side: origin.side }), path };
-  } catch {
-    return null;
+  if (/^(https?:)?\/\//i.test(src)) {
+    return { url: src.startsWith("//") ? `https:${src}` : src };
   }
-}
-
-/** A file name can hold a bare `%`, which is not an escape. It stays a `%`. */
-function decoded(path: string): string {
-  try {
-    return decodeURIComponent(path.replace(/%(?![0-9a-f]{2})/gi, "%25"));
-  } catch {
-    return path;
-  }
+  const path = origin === null ? undefined : repositoryPath(src, origin.path);
+  return path === undefined || origin === null
+    ? null
+    : { url: resourceHref({ kind: "image", path, side: origin.side }), path };
 }
 
 function Picture(props: {
@@ -471,7 +454,7 @@ function Picture(props: {
       <Unopened
         reason={
           target?.path !== undefined
-            ? `The review has no image at ${target.path}. It holds only the images that changed.`
+            ? `The repository has no image at ${target.path} on this side of the change.`
             : `This image did not load: ${props.src ?? "it has no address"}.`
         }
       >
