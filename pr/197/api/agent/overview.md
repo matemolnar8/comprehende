@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 1036bd6dbbaae3d2be13ad8c892224795f834ddf` and `git rev-parse --verify 9bc33a83c67a94f1e38265b3074b57711f616ef8` in this repository.
+   Run `git rev-parse --verify 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818` and `git rev-parse --verify 5e68f4fc47f282a293c39af83e9a3c1cccd6ab02` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -22,17 +22,19 @@ When no question follows this paste, explain this change.
 Repository: comprehende
 Origin: git@github.com:matemolnar8/comprehende.git
 
-base (merge-base)  1036bd6dbbaae3d2be13ad8c892224795f834ddf
+base (merge-base)  5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818
 
-head               9bc33a83c67a94f1e38265b3074b57711f616ef8
+head               5e68f4fc47f282a293c39af83e9a3c1cccd6ab02
 
 Named refs at pin: origin/main ... origin/t3/rendered-markdown-diff
 
 Read the diff:
 
-git diff --find-renames 1036bd6dbbaae3d2be13ad8c892224795f834ddf 9bc33a83c67a94f1e38265b3074b57711f616ef8
+git diff --find-renames 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818 5e68f4fc47f282a293c39af83e9a3c1cccd6ab02
 
 Commits:
+- 5e68f4fc Merge remote-tracking branch 'origin/main' into t3/rendered-markdown-diff
+- 61385491 Markdown diff: a markup-only change keeps the rendered block; a block that renders as nothing shows only where it changed
 - 9bc33a83 Markdown diff: an image path with a bare % keeps its other escapes
 - 14fcefa5 Markdown diff: review fixes
 - 2939efdd Markdown diff: HTML, images, code blocks as line diffs, the full file viewer, and no limits on word marks
@@ -64,7 +66,7 @@ Things to check:
 
 ### 01 Rows and word marks (`rows`)
 
-`markdownRows` in `markdown-diff.ts` splits both sides of a file into blocks and uses git's hunk lines to pair them into context rows, change rows, and code rows. `wordMarks` marks the words that differ.
+`markdownRows` in `markdown-diff.ts` splits both sides of a file into blocks and uses git's hunk lines to pair them into context rows, change rows, and code rows. `wordMarks` marks the words that differ. A row where only markup changed keeps its rendered blocks and adds their source lines.
 
 Attention (tradeoff):
 `joinEdits` replaces the 60% rule and the 150 ms limit. Two changes join when the words kept between them are no longer than either change, and `unitMarks` gives no marks to a block with no word kept. A paragraph that was mostly rewritten now shows marks on most of its text, where before it showed only its tint. Decide if that reads better on your skill diffs.
