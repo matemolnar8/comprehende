@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818` and `git rev-parse --verify 5e68f4fc47f282a293c39af83e9a3c1cccd6ab02` in this repository.
+   Run `git rev-parse --verify 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818` and `git rev-parse --verify 3e9d01a694d3739984ee303dcf0765053d08344e` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,16 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818
 
-head               5e68f4fc47f282a293c39af83e9a3c1cccd6ab02
+head               3e9d01a694d3739984ee303dcf0765053d08344e
 
 Named refs at pin: origin/main ... origin/t3/rendered-markdown-diff
 
 Read the diff:
 
-git diff --find-renames 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818 5e68f4fc47f282a293c39af83e9a3c1cccd6ab02
+git diff --find-renames 5d26d12f70f859a5cd029e6ba8f4d9aa75dd7818 3e9d01a694d3739984ee303dcf0765053d08344e
 
 Commits:
+- 3e9d01a6 Markdown diff: show the repository images a changed Markdown file names
 - 5e68f4fc Merge remote-tracking branch 'origin/main' into t3/rendered-markdown-diff
 - 61385491 Markdown diff: a markup-only change keeps the rendered block; a block that renders as nothing shows only where it changed
 - 9bc33a83 Markdown diff: an image path with a bare % keeps its other escapes
@@ -90,7 +91,7 @@ Depends on:
 `MarkdownDiff` draws the rows in one column or two. A code block goes through Pierre (`PierreSnippet`, `PierreSnippetDiff`), an image loads from the web or from git, and a link that does not open says why.
 
 Attention (product):
-`imageTarget` loads a web image as it is, so a hosted review calls the image's host. A path in the repository loads only when the image is part of the change: the payload has no other images, and those show their alt text with the reason. Decide if the payload must hold every image a changed Markdown file names.
+`imageTarget` loads a web image as it is, so a hosted review calls the image's host. Decide if that is fine for a review you share, or if web images must wait for a click.
 
 Depends on:
 - 01 Rows and word marks (`rows`)
@@ -107,14 +108,14 @@ Depends on:
 
 [groups/toggle.md](groups/toggle.md)
 
-### 05 An export keeps the highlighters of code fences (`fences`)
+### 05 What changed Markdown needs: images and highlighters (`assets`)
 
-An export deletes the highlighter chunks the changed paths do not need. `markdownFences` now also reads the fence names of changed Markdown files, and the manifest maps a second name of a language to its chunk.
+The image endpoint now reads any image path at the two commits of the review, not only the images of the diff. An export holds the images that changed Markdown files show (`markdownAssets`), and keeps the highlighter chunks their code fences name.
 
 Attention (risk):
-The change in `vite-shiki-langs.ts` fixes a bug older than this PR: `zsh`, `yml`, `dockerfile`, and `makefile` had no entry in the manifest, so an export dropped the chunk they load and a `.sh` file had no colors. It now reads `bundledLanguagesInfo` from `shiki`. Check an export of a change with a `.sh` or `.yml` file.
+`imagePayload` in `live.ts` no longer needs the path to be a file of the diff: `serve` gives any image of the repository at base or head, and an export copies each image a changed Markdown file names. The change in `vite-shiki-langs.ts` fixes a bug older than this PR: `zsh`, `yml`, `dockerfile`, and `makefile` had no entry in the manifest, so an export dropped the chunk they load. Check an export of a repository whose README shows images you do not want in a shared review.
 
 Depends on:
 - 03 The rendered rows (`view`)
 
-[groups/fences.md](groups/fences.md)
+[groups/assets.md](groups/assets.md)
