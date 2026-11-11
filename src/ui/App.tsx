@@ -11,6 +11,7 @@ import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
+import { toggleMarkdownView } from "./lib/markdown-view.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition, selectionMotion } from "./lib/motion.ts";
 import {
@@ -279,6 +280,8 @@ export function App() {
       } else if (event.key === "}" && !event.repeat) {
         event.preventDefault();
         shiftPartSelection(meta, selection, selectFromNav, 1);
+      } else if (event.key === "m") {
+        toggleMarkdownView();
       } else if (inspector !== null) {
         return;
       } else if (event.key === "s") {

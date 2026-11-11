@@ -29,6 +29,9 @@ export async function createImageRepo(root: string): Promise<ImageRepo> {
   await writeLfsObject(root, lfsOld);
   await writeFile(join(root, "assets/dot.bin"), Buffer.from([0x00, 0x01, 0xff]));
   await writeFile(join(root, "README.md"), "# shots\n");
+  // An image that no commit changes. The README at head shows it.
+  await mkdir(join(root, "docs"), { recursive: true });
+  await writeFile(join(root, "docs/arch.png"), shotOld);
 
   await git(root, ["add", "."]);
   await git(root, ["commit", "-m", "Base screenshots"]);
@@ -38,7 +41,7 @@ export async function createImageRepo(root: string): Promise<ImageRepo> {
   await writeFile(join(root, "shots/home.png"), lfsPointer(lfsNew));
   await writeLfsObject(root, lfsNew);
   await writeFile(join(root, "assets/dot.bin"), Buffer.from([0x00, 0x01, 0xfe]));
-  await writeFile(join(root, "README.md"), "# shots\n\nHead.\n");
+  await writeFile(join(root, "README.md"), "# shots\n\nHead.\n\n![Arch](docs/arch.png)\n");
 
   await git(root, ["add", "-A"]);
   await git(root, ["commit", "-m", "Update screenshots"]);

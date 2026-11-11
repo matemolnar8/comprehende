@@ -5,6 +5,7 @@ import { findPackageRoot } from "../package-root.ts";
 import {
   isUnavailableSnapshot,
   listResources,
+  markdownAssets,
   openReview,
   renderResource,
   snapshotJson,
@@ -46,8 +47,13 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
   await rm(join(outDir, "api"), { recursive: true, force: true });
   await cp(uiRoot, outDir, { recursive: true });
 
+  const assets = await markdownAssets(ctx);
   const apiFiles: string[] = [];
-  for (const resource of listResources(ctx)) {
+  for (const resource of [...listResources(ctx), ...assets.images]) {
+    // A Markdown file can show an image that is also a changed file.
+    if (apiFiles.includes(apiFsRel(resource))) {
+      continue;
+    }
     let body: Snapshot;
     try {
       body = await renderResource(ctx, resource);
@@ -67,6 +73,6 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     }
     apiFiles.push(rel);
   }
-  await pruneUnusedHighlighterChunks(outDir, highlightPathsFromFiles(ctx.files));
+  await pruneUnusedHighlighterChunks(outDir, highlightPathsFromFiles(ctx.files), assets.fences);
   return { outDir, apiFiles, ctx };
 }

@@ -18,6 +18,7 @@ import { coverReview, coverageErrors, type ReviewCoverage } from "../review/cove
 import { commentPinErrors, staleCommentPins, type StaleCommentPin } from "../review/pins.ts";
 import { matchHunks } from "../review/refresh.ts";
 import { storedDocument } from "../review/write.ts";
+import { isImagePath } from "../schema/image.ts";
 import { isLockfilePath } from "../schema/lockfile.ts";
 import { legacyLookForErrors } from "../schema/review.ts";
 import { sourceCitationErrors } from "../schema/source.ts";
@@ -25,7 +26,8 @@ import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { changesPayload, type CodeChanges } from "./changes.ts";
 import { ApiError } from "./error.ts";
-import type { ApiResource } from "./paths.ts";
+import { fenceInfos, imageTargets, isMarkdownPath, repositoryPath } from "./markdown.ts";
+import { isSafePath, type ApiResource } from "./paths.ts";
 import type {
   ApiBlame,
   ApiChanges,
@@ -286,12 +288,15 @@ export async function imagePayload(
   path: string,
   side: FileSide,
 ): Promise<BytesSnapshot> {
-  const file = findFile(ctx.files, path);
-  if (!file.image) {
-    throw new ApiError(404, "path is not an image in the live diff");
+  if (!isImagePath(path)) {
+    throw new ApiError(404, "path is not an image");
   }
-  const lookup = side === "old" ? (file.oldPath ?? file.path) : file.path;
-  assertSideExists(file, side);
+  // An image outside the diff is read at the same commits: a changed Markdown file can show it.
+  const file = findDiffFile(ctx.files, path);
+  const lookup = side === "old" ? (file?.oldPath ?? path) : (file?.path ?? path);
+  if (file !== undefined) {
+    assertSideExists(file, side);
+  }
   const ref = side === "old" ? ctx.mergeBaseSha : ctx.resolved.headSha;
   try {
     const blob = await readImageBlob(ctx.cwd, ref, lookup);
@@ -362,6 +367,43 @@ export function listResources(ctx: ReviewContext): ApiResource[] {
     }
   }
   return resources;
+}
+
+/**
+ * What the changed Markdown files need beside their text, on both sides: the names on their code
+ * fences, and the images in the repository that they show.
+ */
+export async function markdownAssets(
+  ctx: ReviewContext,
+): Promise<{ fences: string[]; images: ApiResource[] }> {
+  const fences = new Set<string>();
+  const images = new Map<string, ApiResource>();
+  for (const file of ctx.files) {
+    if (file.binary || !isMarkdownPath(file.path)) {
+      continue;
+    }
+    for (const side of sidesFor(file)) {
+      let payload: ApiFile;
+      try {
+        payload = await filePayload(ctx, file.path, side);
+      } catch (error) {
+        if (isUnavailableSnapshot(error)) {
+          continue;
+        }
+        throw error;
+      }
+      for (const info of fenceInfos(payload.content)) {
+        fences.add(info);
+      }
+      for (const target of imageTargets(payload.content)) {
+        const path = repositoryPath(target, payload.path);
+        if (path !== undefined && isImagePath(path) && isSafePath(path)) {
+          images.set(`${side}:${path}`, { kind: "image", path, side });
+        }
+      }
+    }
+  }
+  return { fences: [...fences], images: [...images.values()] };
 }
 
 function sidesFor(file: DiffFile): FileSide[] {

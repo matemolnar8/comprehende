@@ -124,6 +124,34 @@ describe("image diffs", () => {
     assert.equal(existsSync(join(outDir, "api/images/new/shots/home.png")), true);
   });
 
+  it("serves and exports an image outside the diff that a changed Markdown file shows", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-image-shown-"));
+    roots.push(root);
+    const repo = await createImageRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    await writeCoveringDocument(dataPath, await cmdIndex(repo.root, repo.base, repo.head));
+    const uiRoot = join(root, "ui");
+    await mkdir(uiRoot);
+    await writeFile(join(uiRoot, "index.html"), "<!doctype html>\n");
+    const live = await startServer({ cwd: repo.root, dataPath, port: 0, uiRoot });
+    servers.push(live.server);
+    const image = (path: string) =>
+      fetch(new URL(apiHref({ kind: "image", path, side: "new" }), `${live.url}/`));
+
+    const arch = await image("docs/arch.png");
+    assert.equal(arch.status, 200);
+    assert.deepEqual(Buffer.from(await arch.arrayBuffer()), repo.shotOld);
+    // Only an image is read this way, and only one the commit has.
+    assert.equal((await image("README.md")).status, 404);
+    assert.equal((await image("docs/none.png")).status, 404);
+
+    const outDir = join(root, "site");
+    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
+    // The README shows it at head only, so the export holds that side.
+    assert.equal(existsSync(join(outDir, "api/images/new/docs/arch.png")), true);
+    assert.equal(existsSync(join(outDir, "api/images/old/docs/arch.png")), false);
+  });
+
   it("returns 404 when the Git LFS object is not in the clone", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-lfs-missing-"));
     roots.push(root);

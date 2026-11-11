@@ -1,10 +1,12 @@
 import { PierreFileDiff } from "../PierreDiff.tsx";
+import { isMarkdownPath } from "../../api/markdown.ts";
 import { fetchPatch } from "../api.ts";
 import { basename, type FocusRange } from "../../schema/types.ts";
 import { DiffStat } from "./DiffStat.tsx";
 import { FocusBar, HiddenLines, HunkGap } from "./FocusBar.tsx";
 import { ImageDiff, ImageModeControl } from "./ImageDiff.tsx";
 import { InlineMd } from "./InlineMd.tsx";
+import { MarkdownDiff, MarkdownViewControl, useMarkdownRows } from "./MarkdownDiff.tsx";
 import { ViewedToggle } from "./ViewedToggle.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
@@ -14,6 +16,7 @@ import { cn } from "@/lib/utils.ts";
 import { fileFocus, focusBlocks, onFile, toggleHunk, type LetteredNote } from "../lib/focus.ts";
 import { gutterDigits, hunkGaps } from "../lib/hunk-gaps.ts";
 import { IMAGE_STATUS, IMAGE_TONE_CLASS, type GroupFile } from "../lib/group-files.ts";
+import { useMarkdownView } from "../lib/markdown-view.ts";
 import { isPureRelocation, movedMarks, relocationWord } from "../lib/relocation.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
@@ -100,6 +103,11 @@ export function HunkView(props: {
   );
   const gaps = useMemo(() => hunkGaps(blocks ?? [], file.hunks), [blocks, file.hunks]);
   const digits = useMemo(() => gutterDigits(file.hunks), [file.hunks]);
+  const markdown = file.kind === "text" && !pure && isMarkdownPath(file.path);
+  const markdownView = useMarkdownView();
+  // Null when a side cannot be read: the source diff still shows the change.
+  const markdownRows = useMarkdownRows(file, markdown && markdownView === "rendered" && !collapsed);
+  const rendered = markdown && markdownView === "rendered" && markdownRows !== null;
 
   useEffect(() => {
     setCollapsed(viewed || deferred);
@@ -266,10 +274,11 @@ export function HunkView(props: {
               Open file
             </Button>
             <div className="contents min-[800px]:ml-auto min-[800px]:flex min-[800px]:shrink-0 min-[800px]:items-center min-[800px]:gap-4">
+              {markdown ? <MarkdownViewControl size="sm" /> : null}
               {meta !== null ? (
                 <span
                   className={cn(
-                    "text-xs tabular-nums",
+                    "text-xs whitespace-nowrap tabular-nums",
                     IMAGE_TONE_CLASS[imageStatus?.tone ?? "muted"],
                   )}
                 >
@@ -306,6 +315,8 @@ export function HunkView(props: {
             <p className="px-3 py-2 text-sm text-warn">{patchError}</p>
           ) : deferred && patch === "" ? (
             <WaitMark label={waitCopy.lockfile} />
+          ) : rendered && markdownRows === undefined ? (
+            <WaitMark label={waitCopy.file} />
           ) : (
             (blocks ?? [{ kind: "diff", key: "file", patch } as const]).map((block) => {
               const gap = gaps.get(block.key);
@@ -323,6 +334,22 @@ export function HunkView(props: {
                       count={block.count}
                       notes={block.notes}
                       onShow={() => setOpen((current) => new Set([...current, block.key]))}
+                    />
+                  ) : rendered && markdownRows !== undefined ? (
+                    <MarkdownDiff
+                      path={file.path}
+                      oldPath={file.oldPath}
+                      rows={markdownRows}
+                      patch={block.patch}
+                      added={file.status === "added"}
+                      split={split}
+                      wrap={wrap}
+                      splitRatio={splitRatio}
+                      onSplitRatio={onSplitRatio}
+                      comments={fileComments}
+                      moves={moves}
+                      notes={lineNotes}
+                      focusCommentId={focusCommentId}
                     />
                   ) : (
                     <PierreFileDiff

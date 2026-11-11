@@ -1,5 +1,6 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { fenceLanguage } from "./markdown.ts";
 
 export const SHIKI_LANGS_FILE = "shiki-langs.json";
 
@@ -86,15 +87,20 @@ export function chunksToKeep(manifest: ShikiLangsManifest, langs: readonly strin
   return [...keep];
 }
 
+/** Keeps the highlighters of the changed paths and of the code fences in changed Markdown. */
 export async function pruneUnusedHighlighterChunks(
   outDir: string,
   paths: readonly string[],
+  fences: readonly string[] = [],
 ): Promise<string[]> {
   const manifest = await loadManifest(join(outDir, SHIKI_LANGS_FILE));
   if (manifest === undefined) {
     return [];
   }
-  const langs = highlightLangsForPaths(paths, manifest.lookup);
+  const langs = [
+    ...highlightLangsForPaths(paths, manifest.lookup),
+    ...fences.flatMap((info) => fenceLanguage(info, manifest.lookup) ?? []),
+  ];
   const keepSet = new Set(chunksToKeep(manifest, langs));
   const removed: string[] = [];
   for (const file of manifest.chunks) {
