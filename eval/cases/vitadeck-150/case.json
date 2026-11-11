@@ -11,10 +11,10 @@
       "max": 8
     },
     "groups": {
-      "min": 4,
+      "min": 5,
       "max": 9
     },
-    "size": ["small", "medium", "large"],
+    "size": ["small", "medium"],
     "together": [["tests/demo_sections.h", "js/examples/demo/src/App.tsx"]],
     "apart": [
       ["scripts/gui-drive.sh", "src/core/stb_ds.c"],

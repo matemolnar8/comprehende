@@ -20,7 +20,15 @@ Each case has an `expected.md` next to its `case.json`. It says what a good revi
 
 A claim goes in `Must` when the diff and the sources show it on their own, and a reader who misses it misjudges the change. That covers a source that says one thing while head does another, a behavior change that hides in a hunk, production code in a test PR, and a script that deletes or overwrites a file the developer owns.
 
-A claim goes in `Good` when a reviewer has to read past the diff to find it: trace callers that the diff does not touch, run the code in their head across several files, or check a generated fixture line by line against the implementation. A fixture that matches its implementation is `Good`, not `Must`. A mismatch is `Must`, because the diff shows it.
+A source that says one thing while head does another is always `Must` when the diff and the sources show it. That includes a test name or a count in the PR body that head no longer has.
+
+A claim goes in `Good` when a reviewer has to read past the diff to find it: trace callers that the diff does not touch, run the code in their head across several files, or check a generated fixture line by line against the implementation. A fixture that matches its implementation is `Good`, not `Must`. A mismatch is `Must`, because the diff shows it. A defect the reviewer finds this way is also `Good`, written as the fact and not as a bug report.
+
+A fact the diff plainly shows, or a PR claim that is true at head, is `Good` at most. Keep one `Must` for the core change only where no other `Must` covers that part of the diff.
+
+Each item holds one fact. The grader answers yes or no per item, so an item with two facts gets a yes for half of it or a no for one missing clause. Split it, or keep the main fact.
+
+Parts, groups, and `dependsOn` do not go in the lists, because the grader does not judge grouping. Describe them in `Story` and `Groups`. Where one answer is right, check it in `case.json` with `together`, `apart`, `partsTogether`, or `partsApart`. Where two answers are defensible, check nothing.
 
 Each item is one sentence and true at head. Write the fact, not the instruction: "the test sets `os.Args` directly, so it takes the real `os.Args` path", not "check that the test uses `os.Args`". A review states an item when it gives the same fact in its own words. It does not need the same symbols or the same sentence.
 
@@ -32,7 +40,7 @@ Each `expected.md` uses these sections, in this order. The first line is `# <cas
 - **Groups**: a numbered list of the groups a good review has, with the paths in each and one sentence on why they read together. `case.json` `together` and `apart` pairs come from here.
 - **Must**: one bullet per claim the review must state.
 - **Good**: one bullet per claim that improves the review but does not fail it.
-- **Must not**: one bullet per mistake a review can make on this change: a stale PR claim repeated as fact, a false `dependsOn`, a split that criterion 2 forbids.
+- **Must not**: one bullet per false or padded statement a review can make on this change: a stale PR claim repeated as fact, a cause the code does not have, an attention for a call that review already settled. A correct review cannot trip it, and it does not punish what the skill tells the producer to write.
 - **Notes**: optional free text. Why a claim is `Good` and not `Must`, what past runs got wrong, and why a `case.json` range has slack.
 
 The harness parses the bullets under `Must`, `Good`, and `Must not`. Each bullet is one line that starts with `- `. Other sections are for humans.

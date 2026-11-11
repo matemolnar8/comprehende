@@ -14,12 +14,7 @@
     "together": [
       ["src/ui/lib/selection.ts", "src/ui/lib/selection.test.ts"],
       ["src/ui/components/Group.tsx", "src/ui/components/FileNav.tsx"],
-      [
-        "src/ui/components/GroupBrief.tsx",
-        "src/ui/components/Overview.tsx",
-        "src/ui/components/Inspector.tsx",
-        "src/ui/components/CopyPrompt.tsx"
-      ]
+      ["src/ui/components/GroupBrief.tsx", "src/ui/components/Overview.tsx"]
     ],
     "apart": [["src/ui/components/MobileShell.tsx", "src/ui/components/GroupBrief.tsx"]]
   }

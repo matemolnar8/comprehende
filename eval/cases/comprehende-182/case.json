@@ -8,7 +8,7 @@
   "expect": {
     "parts": {
       "min": 3,
-      "max": 5
+      "max": 4
     },
     "groups": {
       "min": 3,
@@ -22,6 +22,11 @@
     "apart": [
       ["scripts/pages-review.ts", "scripts/setup-worktree.ts"],
       ["scripts/pages-review.ts", "scripts/check-changed.ts"],
+      ["scripts/check-changed.ts", "scripts/setup-worktree.ts"]
+    ],
+    "partsApart": [
+      ["scripts/pages-review.ts", "scripts/check-changed.ts"],
+      ["scripts/pages-review.ts", "scripts/setup-worktree.ts"],
       ["scripts/check-changed.ts", "scripts/setup-worktree.ts"]
     ]
   }

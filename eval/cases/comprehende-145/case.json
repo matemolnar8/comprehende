@@ -6,6 +6,7 @@
   "head": "79d7f0b2167dcf8fa0eacf9191c454f9d3cb17f5",
   "tags": ["parts"],
   "expect": {
+    "why": "absent",
     "parts": {
       "min": 2,
       "max": 2
@@ -16,6 +17,8 @@
     },
     "size": ["trivial", "small"],
     "together": [["scripts/install-git-hooks.js", "src/git/hooks.test.ts"]],
-    "apart": [[".github/workflows/eval.yml", "scripts/install-git-hooks.js"]]
+    "apart": [[".github/workflows/eval.yml", "scripts/install-git-hooks.js"]],
+    "partsTogether": [["scripts/install-git-hooks.js", "src/git/hooks.test.ts", "src/git/exec.ts"]],
+    "partsApart": [[".github/workflows/eval.yml", "scripts/install-git-hooks.js"]]
   }
 }

@@ -9,7 +9,13 @@ import { promisify } from "node:util";
 import { git } from "../../src/git/exec.ts";
 import { findPackageRoot } from "../../src/package-root.ts";
 import { ADD_CASE_USAGE, parseAddCaseArgv } from "./args.ts";
-import { caseIdFor, githubRepoUrl, linkedIssueNumbers, parseGithubPrUrl } from "./github.ts";
+import {
+  caseIdFor,
+  githubRepoUrl,
+  issueSourceFileName,
+  linkedIssues,
+  parseGithubPrUrl,
+} from "./github.ts";
 import { evalCacheDir } from "./checkout.ts";
 import { CASE_BUNDLE, ensureBareClone, thisRepoMirror, writeCaseBundle } from "./clone.ts";
 
@@ -52,15 +58,16 @@ export async function runAddCase(argv: string[], packageRoot = findPackageRoot()
   await writeJson(join(sourcesDir, "comments.json"), conversationComments.map(trimIssueComment));
 
   const body = typeof pr.body === "string" ? pr.body : "";
-  for (const issueNumber of linkedIssueNumbers(body)) {
+  for (const linked of linkedIssues(body, parsed)) {
+    const name = `${linked.owner}/${linked.repo}#${linked.number}`;
     try {
       const issue = asRecord(
-        await ghJson(["api", `repos/${parsed.owner}/${parsed.repo}/issues/${issueNumber}`]),
+        await ghJson(["api", `repos/${linked.owner}/${linked.repo}/issues/${linked.number}`]),
       );
-      await writeJson(join(sourcesDir, `issue-${issueNumber}.json`), trimIssue(issue));
+      await writeJson(join(sourcesDir, issueSourceFileName(linked, parsed)), trimIssue(issue));
     } catch (error) {
       console.error(
-        `skip issue #${issueNumber}: ${error instanceof Error ? error.message : String(error)}`,
+        `skip issue ${name}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

@@ -11,6 +11,7 @@
     "groups": { "min": 6, "max": 30 },
     "size": ["large", "very-large"],
     "together": [
+      ["src/net/lan_listener.c", "src/platform/lan_address_posix.c"],
       [
         "src/platform/lan_address.h",
         "src/platform/lan_address_posix.c",
