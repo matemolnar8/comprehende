@@ -6,7 +6,7 @@ PR #29308 in astral-sh/ruff, the top layer of a stack: `main` ← #29306 ← #29
 
 - Title: the PR title, or a short name for cell lookups after cell-magic cells.
 - Why: present, from the PR body. Hover on `x` in a cell after a `%%bash` cell showed the type of `z` from the next cell.
-- Size: small or medium. Eight files, 155 added lines, two of them snapshots.
+- Size: small or medium. Eight files, two of them snapshots, 155 added lines.
 - Parts: one story, so no parts or one part.
 - Groups: 1 to 3.
 
@@ -21,24 +21,22 @@ One group for all eight files, the e2e test inside group 1 or 2, or the `range.r
 ## Must
 
 - `Notebook::cell_range` now converts the cell's index among all notebook cells to its index among valid Python code cells with a binary search on `valid_code_cells`, so a cell after a `%%bash` cell gets its own offsets.
-- `cell_range` and `cell_content_range` now return `None` for a cell that is not in the Python source, such as a Markdown cell or a cell-magic cell.
-- A new `cell_range` helper in `crates/ty_server/src/document/range.rs` replaces the duplicated notebook lookup in `folding_range.rs` and `semantic_tokens.rs`.
-- Folding range and semantic token requests now return no result when `cell_range` is `None`; at base a `None` range gave results for the whole notebook.
 - The review names PR #29307, the lower layer of the stack whose head branch is this request's base, as a `pr` source.
-- The new e2e test `cells_after_cell_magic` checks hover and semantic tokens on the `x = 1` cell after a `%%bash` cell, and empty tokens for the magic cell.
 
 ## Good
 
+- `cell_range` and `cell_content_range` now return `None` for a cell that is not in the Python source, such as a Markdown cell or a cell-magic cell.
+- Folding range and semantic token requests for a cell with no range now return no result; at base a `None` range gave results for the whole notebook.
+- `Notebook::cell_range` is public and its argument now means the index among all cells; outside tests, its only callers at head are `cell_content_range` and the server `cell_range` helper.
+- Position requests such as hover on a cell-magic cell now resolve to nothing, because `cell_content_range` returns `None` for that cell; at base they resolved into the next Python cell.
 - Hover reaches the fix through position conversion in `range.rs`, which at base calls `cell_content_range` (added by PR #29307), which calls `cell_range`; so this layer also corrects #29307's clamp for cells after a magic cell.
 - The new unit test `cell_range_by_raw_cell_index` uses `valid.ipynb`, where the third cell is the second Python cell and the second cell is Markdown.
-- `cell_range` returns the range with the separator newline, and `cell_content_range` returns it without; the PR only adds doc comments to `cell_content_range`.
+- `cell_range` includes the cell's separator newline and `cell_content_range` excludes it, as the unit test's end offsets 168 and 167 show.
 
 ## Must not
 
 - Do not describe the clamp of a position to the end of its cell (`offset.min(cell_range.end())`) as a change of this request; PR #29307 adds it and it is not in this diff.
-- Do not describe the notebook module range fix from PR #29306 as part of this request.
-- Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with `03ea17f`, not with this request's base.
-- Do not put a snapshot in a different group from the `cells_after_cell_magic` test that writes it.
+- Do not credit the CodSpeed benchmark gain to this diff; the comment compares head with another commit (`03ea17f` in its header, `c9e4751` in its footnote), not with this request's base `867edce`.
 - Do not write a group attention that asks for more notebook tests, a cache for `valid_code_cells`, or a new name for `cell_range`; a missing test, a performance idea, and a nit are not attentions.
 - Do not write a group question that asks why `cell_range` now maps the cell index to the index among Python cells; the PR body names the hover bug after a `%%bash` cell that this fixes.
 
@@ -46,6 +44,8 @@ One group for all eight files, the e2e test inside group 1 or 2, or the `range.r
 
 The harness hands the producer the base and head SHAs, so this case cannot check that the skill picks the stacked base on its own. The base is the forge's `base.sha` for #29307's head, not the `merge_commit_sha^1` that `pnpm eval:add` writes. The stack was squash-merged onto `main` one layer at a time, so `merge_commit_sha^1` is the squash of #29307 on `main`, and its three-dot diff with this head holds ten files, with files from #29306 and #29307 too. What the case checks is the other half of the rule: the lower layer is a `pr` source, and the review does not describe its code as this change.
 
-The link from hover to `cell_content_range` is `Good`, not `Must`: the reader has to open `range.rs` at base, outside the diff, to see it.
+The `None` results and the empty folding and token results are `Good`: the PR body states them and the diff shows them plainly. The public `cell_range` contract, the hover path, and the magic-cell hover result are `Good` because the reader has to read code outside the diff to see them.
 
-Homes: the `cell_range` index fix and the `None` results live in the group summaries. The empty folding and token results for a `None` range fit a `contract` attention on the server group, or its summary. The lower layer #29307 is a `pr` source, and a review that says what #29307 owns does so in prose, not as an attention.
+The `case.json` `together` pairs keep the e2e test with its two snapshots and the two request handlers in one group.
+
+Homes: the `cell_range` index fix and the `None` results live in the group summaries. The changed meaning of the public `cell_range` argument fits a `contract` attention on the group that holds `notebook.rs`. The lower layer #29307 is a `pr` source, and a review that says what #29307 owns does so in prose, not as an attention.
