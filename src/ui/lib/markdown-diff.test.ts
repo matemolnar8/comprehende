@@ -190,6 +190,13 @@ describe("markdownRows", () => {
     ]);
   });
 
+  it("shows the source of an image whose path changed", () => {
+    const rows = markdownRows("![chart](a.png)", "![chart](b.png)", [
+      hunk(1, 1, ["-![chart](a.png)", "+![chart](b.png)"]),
+    ]);
+    assert.deepEqual(shape(rows), ["- ![chart]([[a]].png)", "+ ![chart]([[b]].png)"]);
+  });
+
   it("flags a block git found moved, and keeps it out of the word diff", () => {
     const moved = { path: "a.md", line: 1 };
     const rows = markdownRows(

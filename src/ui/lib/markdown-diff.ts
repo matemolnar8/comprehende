@@ -332,31 +332,38 @@ function changeRow(
   const oldMoved = olds.map((unit) => isMoved(unit, moved.old));
   const newMoved = news.map((unit) => isMoved(unit, moved.new));
   // A moved block did not change, so it takes no part in the word diff.
-  const oldTexts = olds.map((unit, i) => (oldMoved[i] === true ? "" : nodesText(unit.nodes)));
-  const newTexts = news.map((unit, i) => (newMoved[i] === true ? "" : nodesText(unit.nodes)));
-  if (sameWords(oldTexts, newTexts)) {
-    // Only markup changed, such as a link target. The rendered blocks would look the same, so
-    // the row shows its source, with the markup that differs marked.
-    const marks = wordMarks(
-      olds.map((unit) => unit.source),
-      news.map((unit) => unit.source),
+  const live = (units: readonly MdUnit[], flags: readonly boolean[]) =>
+    units.filter((_, i) => flags[i] !== true);
+  const liveOld = live(olds, oldMoved);
+  const liveNew = live(news, newMoved);
+  // Only markup changed, such as a link target or an image path. The rendered blocks would look
+  // the same, so the row shows its source, with the markup that differs marked.
+  const raw =
+    liveOld.length > 0 &&
+    liveNew.length > 0 &&
+    sameWords(
+      liveOld.map((unit) => nodesText(unit.nodes)),
+      liveNew.map((unit) => nodesText(unit.nodes)),
     );
-    const raw = (units: readonly MdUnit[], side: Mark[][]): MdCell[] =>
-      units.map((unit, i) => ({
-        unit,
-        nodes: markNodes([codeBlock(unit.source)], side[i] ?? []),
-        moved: false,
-        raw: true,
-      }));
-    return { kind: "change", old: raw(olds, marks.old), new: raw(news, marks.new) };
-  }
-  const marks = wordMarks(oldTexts, newTexts);
+  const text = (unit: MdUnit) => (raw ? unit.source : nodesText(unit.nodes));
+  const marks = wordMarks(
+    olds.map((unit, i) => (oldMoved[i] === true ? "" : text(unit))),
+    news.map((unit, i) => (newMoved[i] === true ? "" : text(unit))),
+  );
   const cells = (units: readonly MdUnit[], flags: readonly boolean[], side: Mark[][]): MdCell[] =>
-    units.map((unit, i) => ({
-      unit,
-      nodes: markNodes(unit.nodes, side[i] ?? []),
-      moved: flags[i] === true,
-    }));
+    units.map((unit, i) => {
+      if (flags[i] === true) {
+        return { unit, nodes: unit.nodes, moved: true };
+      }
+      return raw
+        ? {
+            unit,
+            nodes: markNodes([codeBlock(unit.source)], side[i] ?? []),
+            moved: false,
+            raw: true,
+          }
+        : { unit, nodes: markNodes(unit.nodes, side[i] ?? []), moved: false };
+    });
   return {
     kind: "change",
     old: cells(olds, oldMoved, marks.old),
@@ -385,14 +392,13 @@ function tokens(texts: readonly string[]): Token[] {
   );
 }
 
-/** True when both sides have words and they are the same words in the same order. */
+/** True when both sides read as the same words in the same order. */
 function sameWords(oldTexts: readonly string[], newTexts: readonly string[]): boolean {
   const words = (texts: readonly string[]) =>
     tokens(texts)
       .map((token) => token.text)
       .join("\n");
-  const before = words(oldTexts);
-  return before !== "" && before === words(newTexts);
+  return words(oldTexts) === words(newTexts);
 }
 
 /** Above this share of changed words a block is a rewrite, and marks on every word say nothing. */
