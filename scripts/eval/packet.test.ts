@@ -29,5 +29,8 @@ describe("grading packet", () => {
     assert.match(packet, /Frozen sources/);
     assert.match(packet, /src\/app\.ts/);
     assert.match(packet, /UNIQUE_ADDED_LINE_CONTENT_7f3a/);
+    const [commit] = ctx.commits;
+    assert.ok(commit !== undefined);
+    assert.ok(packet.includes(`- ${commit.shortSha} ${commit.subject}`));
   });
 });

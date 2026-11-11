@@ -41,6 +41,10 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     JSON.stringify(frozen, null, 2),
     "```",
     "",
+    "## Commits in the range",
+    "",
+    commitBlock(ctx.commits),
+    "",
     "## Groups",
     "",
   );
@@ -95,6 +99,20 @@ function lookForBlock(label: string, bullets: string[] | undefined): string {
     return `${label}: (none)`;
   }
   return `${label}:\n${bullets.map((bullet) => `- ${bullet}`).join("\n")}`;
+}
+
+/** The producer reads the commit messages as sources, so the grader needs them to check what a review cites. */
+function commitBlock(commits: ReviewContext["commits"]): string {
+  if (commits.length === 0) {
+    return "(none)";
+  }
+  return commits
+    .map((commit) => {
+      const body = commit.body.trim();
+      const head = `- ${commit.shortSha} ${commit.subject}`;
+      return body === "" ? head : `${head}\n${body.replace(/^/gmu, "  ")}`;
+    })
+    .join("\n");
 }
 
 function sourceBlock(document: ReviewDocument): string {
