@@ -18,12 +18,12 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 
 - Before the fix, `trimmedArgs` is a sub-slice of the caller's args, so `append(finalArgs, "--")` in `getCompletions` can write `"--"` into the backing array of `os.Args` instead of a new array.
 - The PR body still describes a three-index slice (`finalArgs[:len:len]`) on the `append(finalArgs, "--")` line, but head copies `trimmedArgs` with `make` plus `copy` at the top of `getCompletions`.
-- The `make` plus `copy` at the top of `getCompletions` follows alexandear's review suggestion, which replaced the three-index slice.
-- `TestCompletionDoesNotMutateOsArgs` sets `os.Args` itself instead of calling `SetArgs`, so the completion runs through the real `os.Args` path.
 - The PR body test plan names `TestCompletionDoesNotMutateArgs`, but head has `TestCompletionDoesNotMutateOsArgs`.
 
 ## Good
 
+- The `make` plus `copy` at the top of `getCompletions` follows alexandear's review suggestion, which replaced the three-index slice.
+- `TestCompletionDoesNotMutateOsArgs` sets `os.Args` itself instead of calling `SetArgs`, so the completion runs through the real `os.Args` path.
 - Without the fix the test fails because `os.Args[2]` changes from `"x"` to `"--"`.
 - The bug shows with `TraverseChildren` because `Traverse` returns `args[i+1:]`, a sub-slice of `os.Args`, while `Find` removes the `__complete` word through `argsMinusFirstX`, which builds a new slice.
 - In the ticket and the test, `"--"` overwrites the word being completed (`x`), because `trimmedArgs` drops only that last argument and keeps its capacity.
@@ -48,7 +48,7 @@ PR #2356. Fixes ticket #2257. Five review comments and seven issue comments. A f
 ## Notes
 
 - The `TraverseChildren` trace is `Good` because it needs `Traverse`, `Find`, and `argsMinusFirstX` in `command.go`, which the diff does not touch. The PR body says only that the bug is "most visible" with `TraverseChildren`.
-- The three-index slice and the test name are both `Must`: each is a place where the PR body says one thing and head does another. The test rework history is `Good`, because the test at head already does what marckhouzam asked.
+- The three-index slice and the test name are both `Must`: each is a place where the PR body says one thing and head does another. The copy that follows alexandear's suggestion, the direct `os.Args` test, and the test rework history are `Good`, because head already does what the reviewers asked.
 - The `"--"` slot claim is limited to the ticket and the test: on the flag value path, `checkIfFlagCompletion` drops the flag name, so at base `"--"` overwrote the flag name slot instead.
 - The aliasing mechanism `Must` is the one core-change claim. A note on the `trimmedArgs` copy that only restates the code comment does not count as a new fact; the mechanism belongs in the group summary.
 - Past runs missed the direct `os.Args` test in 22 of 23 runs and the aliasing mechanism in 21 of 23. Graders often flagged a group `lookFor` bullet that credited alexandear with "cryptic", and a `why` that cited the ticket for the backing array cause.

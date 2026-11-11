@@ -7,7 +7,7 @@ PR #50. No ticket, no comments. A skill change plus a repo process note in `AGEN
 - Title: the PR title, "Add an Export branch for uploading the report".
 - Why: optional. The PR body and the commits only say what the change does. No source states a problem or a goal. A why that restates "for uploading the report" from the title is acceptable. An invented sharing motive is not.
 - Size: trivial or small.
-- Parts: none or two. `AGENTS.md` can be its own part because it is repo process that could have been its own PR.
+- Parts: none or two; the `parts` range 0 to 2 cannot leave out 1. `AGENTS.md` can be its own part because it is repo process that could have been its own PR.
 - Groups: 2.
 
 ## Groups

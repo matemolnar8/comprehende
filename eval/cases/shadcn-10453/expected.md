@@ -19,7 +19,7 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 - `createProxyDispatcher` returns a SOCKS `Agent` only for an `ALL_PROXY` or `all_proxy` URL with a `socks`, `socks4`, `socks4a`, `socks5`, or `socks5h` scheme.
 - SOCKS wins over `HTTP_PROXY` and `HTTPS_PROXY` when `ALL_PROXY` is a socks URL, so the PR body's "strict superset of the previous behavior" claim is false for users who set both.
 - The SOCKS branch returns before `EnvHttpProxyAgent`, so `NO_PROXY` never bypasses the SOCKS proxy.
-- The PR body's "23 unit tests" for `createProxyDispatcher` and "33" new proxy tests include the 5 existing `fetchWithProxy` redirect tests; head adds 18 dispatcher cases and 28 tests in total.
+- The PR body overstates its test counts by 5: it says 23 unit tests for `createProxyDispatcher` and 33 new proxy tests, where head has 18 and 28.
 
 ## Good
 

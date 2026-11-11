@@ -1,6 +1,7 @@
 import { writeFile } from "node:fs/promises";
 import { hunksPayload, type ReviewContext } from "../../src/api/live.ts";
-import type { ApiGroupFile } from "../../src/api/types.ts";
+import type { ApiCommit, ApiGroupFile } from "../../src/api/types.ts";
+import { listCommits } from "../../src/git/log.ts";
 import { focusAnchor, formatAnchor, noteAnchor, noteLetter } from "../../src/schema/anchor.ts";
 import type { ReviewDocument } from "../../src/schema/types.ts";
 
@@ -9,12 +10,15 @@ export async function writeGradingPacket(
   frozen: unknown[],
   outPath: string,
 ): Promise<string> {
-  const markdown = gradingPacket(ctx, frozen);
+  // `ctx.commits` also lists commits that only the base has. From the merge base the log is
+  // `base..head`, the commits the producer reads.
+  const commits = await listCommits(ctx.cwd, ctx.mergeBaseSha, ctx.resolved.headSha);
+  const markdown = gradingPacket(ctx, frozen, commits);
   await writeFile(outPath, markdown);
   return markdown;
 }
 
-export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
+export function gradingPacket(ctx: ReviewContext, frozen: unknown[], commits: ApiCommit[]): string {
   const document = ctx.document;
   const parts: string[] = [
     `# ${document.title}`,
@@ -43,7 +47,7 @@ export function gradingPacket(ctx: ReviewContext, frozen: unknown[]): string {
     "",
     "## Commits in the range",
     "",
-    commitBlock(ctx.commits),
+    commitBlock(commits),
     "",
     "## Groups",
     "",
@@ -102,7 +106,7 @@ function lookForBlock(label: string, bullets: string[] | undefined): string {
 }
 
 /** The producer reads the commit messages as sources, so the grader needs them to check what a review cites. */
-function commitBlock(commits: ReviewContext["commits"]): string {
+function commitBlock(commits: ApiCommit[]): string {
   if (commits.length === 0) {
     return "(none)";
   }

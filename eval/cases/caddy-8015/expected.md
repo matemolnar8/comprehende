@@ -8,7 +8,7 @@ PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt 
 - Why: present, from issue #7122. The issue asks for a Caddyfile way to automate a certificate without an HTTPS site, for a wildcard with no site block and for names that only a layer 4 app serves.
 - Size: small. The Go change is about 100 lines in two files. The five fixtures are long JSON, but each pins one case.
 - Parts: 0 or 1. One story.
-- Groups: 1 or 2. The fixtures sit with the code, or in one trailing group.
+- Groups: 1 or 2, with 3 as slack. The fixtures sit with the code, or in one trailing group.
 
 ## Groups
 
