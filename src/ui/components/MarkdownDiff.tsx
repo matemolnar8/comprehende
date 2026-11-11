@@ -439,10 +439,10 @@ function imageTarget(src: string, origin: Origin | null): { url: string; path?: 
   }
 }
 
-/** A file name can hold a bare `%`, which is not a valid escape. */
+/** A file name can hold a bare `%`, which is not an escape. It stays a `%`. */
 function decoded(path: string): string {
   try {
-    return decodeURIComponent(path);
+    return decodeURIComponent(path.replace(/%(?![0-9a-f]{2})/gi, "%25"));
   } catch {
     return path;
   }
