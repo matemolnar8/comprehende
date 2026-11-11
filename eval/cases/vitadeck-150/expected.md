@@ -37,4 +37,4 @@ PR #150. No ticket, no comments. One retro motivates the PR, but the fixes are i
 
 ## Notes
 
-- This case checks that independent fixes under one motive become separate parts. `partsApart` holds each pair of the five fix files: `scripts/gui-drive.sh`, `scripts/smoke-docker.sh`, `tests/demo_sections.h`, `pages-review.ts`, and `src/core/stb_ds.c`. The agent docs have no part expect. `tests/deck_app_input_harness.c` and `tests/smoke_harness.c` hold hunks of two stories, so they have no expect.
+- This case checks that independent fixes under one motive become separate parts. `partsApart` holds each pair of the five fix files: `scripts/gui-drive.sh`, `scripts/smoke-docker.sh`, `tests/demo_sections.h`, `pages-review.ts`, and `src/core/stb_ds.c`, except the Docker smoke and stb_ds pair. Both are build fixes, so one build-fixes part is fine if each keeps its own group. With that part and the agent docs folded into another part, the review has 4 parts. The agent docs have no part expect. `tests/deck_app_input_harness.c` and `tests/smoke_harness.c` hold hunks of two stories, so they have no expect.
