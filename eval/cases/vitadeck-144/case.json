@@ -12,6 +12,11 @@
     "size": ["large", "very-large"],
     "together": [
       ["src/net/lan_listener.c", "src/platform/lan_address_posix.c"],
+      [
+        "src/platform/lan_address.h",
+        "src/platform/lan_address_posix.c",
+        "src/platform/lan_address_vita.c"
+      ],
       ["src/host_control/link.c", "src/host_control/link.h"],
       ["src/net/lan_listener.c", "src/net/lan_listener.h"]
     ],

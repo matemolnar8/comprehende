@@ -20,7 +20,7 @@ Each case has an `expected.md` next to its `case.json`. It says what a good revi
 
 A claim goes in `Must` when the diff and the sources show it on their own, and a reader who misses it misjudges the change. That covers a source that says one thing while head does another, a behavior change that hides in a hunk, production code in a test PR, and a script that deletes or overwrites a file the developer owns.
 
-A source that says one thing while head does another is always `Must`. That includes a test name or a count in the PR body that head no longer has.
+A source that says one thing while head does another is always `Must` when the diff and the sources show it. That includes a test name or a count in the PR body that head no longer has.
 
 A claim goes in `Good` when a reviewer has to read past the diff to find it: trace callers that the diff does not touch, run the code in their head across several files, or check a generated fixture line by line against the implementation. A fixture that matches its implementation is `Good`, not `Must`. A mismatch is `Must`, because the diff shows it. A defect the reviewer finds this way is also `Good`, written as the fact and not as a bug report.
 

@@ -92,7 +92,7 @@ export function linkedIssues(text: string, home: GithubRepo): LinkedIssue[] {
   );
 }
 
-export function isSameRepo(a: GithubRepo, b: GithubRepo): boolean {
+function isSameRepo(a: GithubRepo, b: GithubRepo): boolean {
   return (
     a.owner.toLowerCase() === b.owner.toLowerCase() && a.repo.toLowerCase() === b.repo.toLowerCase()
   );

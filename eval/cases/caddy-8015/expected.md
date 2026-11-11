@@ -18,12 +18,12 @@ PR #8015 closes issue #7122. It adds one Caddyfile global option and five adapt 
 ## Must
 
 - Public names with no policy of their own get a new automation policy only when a global automation or ACME option such as `email` is set, because the global issuer is filled in only on policies that exist.
-- A listed name that is already a subject of an automation policy keeps that policy and stays in the `automate` loader, as the review comment asks.
 - The `tls_automate_names` block is not gated on `auto_https off` or `disable_certs`, so a listed name is still managed when `auto_https` is off.
 - The PR body lists three adapt tests, but head has five, because the `existing_policy` and `auto_https_off` fixtures came after review.
 
 ## Good
 
+- A listed name that is already a subject of an automation policy keeps that policy and stays in the `automate` loader, as the review comment asks.
 - Each name in `tls_automate_names` goes into the tls app `automate` loader, so Caddy manages its certificate with no site block and no HTTP route for that name.
 - `tls_automate_names_without_site_block` and `tls_automate_names_auto_https_off` hold only the `automate` loader and no automation policy, because they set no global option.
 - All five fixtures match the code at head.
@@ -54,4 +54,4 @@ The PR body says a name with a site block "stays listed here". That is true at h
 
 `parts` allows 0 or 1, since one story may or may not get a named part. `groups` allows 1 to 3 around the 2 group estimate. `size` allows small or medium, since the fixture JSON can read as more work than it is. `mechanicalPaths` holds the five fixtures, so one group holds all of them. `together` holds the two Go files. No `apart`: with one story, no pair of paths must stay apart.
 
-Homes: the stale test count is a document `lookFor` bullet. The other three Must claims live in the group 1 summary, a file note, or an attention. The `auto_https off` override can be a `product` attention, but the conversation comment already settles it, so a summary fact is enough. No case item asks for an attention.
+Homes: the stale test count is a document `lookFor` bullet. The other two Must claims and the kept-policy fact live in the group 1 summary, a file note, or an attention. The `auto_https off` override can be a `product` attention, but the conversation comment already settles it, so a summary fact is enough. No case item asks for an attention.

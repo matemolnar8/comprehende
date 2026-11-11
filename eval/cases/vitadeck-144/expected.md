@@ -28,6 +28,7 @@ PR #144, closes #109, #110, #111 and includes #145. A 110-file feature in C, Typ
 - `vd_replace_file` and `vd_read_replaced_file` in `src/core/util.c` are the temp and backup file replace moved out of `deck_app_storage.c`.
 - `withPublishedVersions` in `copy-templates.ts` rewrites workspace versions in every template `package.json`, not only the scaffold's.
 - Cross on the Host Control screen forgets the focused computer at once, with no confirm step.
+- The PR body says only read-only built-ins exist, but `core.notify` emits a `notice` event that any Deck App can watch.
 
 ## Good
 
@@ -39,7 +40,6 @@ PR #144, closes #109, #110, #111 and includes #145. A 110-file feature in C, Typ
 - `cpuPercent` keeps one module-level `previous` sample, so two Vitas each read the CPU share since the other's read.
 - A linked Vita that gets a new IP address receives 403, because `isAllowed` compares the peer to the IPs stored in `config.vitas`.
 - `lan_address_detect` on POSIX takes the first IPv4 interface that does not start with `127.`, so a host with a VPN or container network can show the wrong address.
-- The PR body says only read-only built-ins exist, but `core.notify` emits a `notice` event that any Deck App can watch.
 - `createHostClient` reports `timeout` after 5 s while the native fetch runs to 30 s, so a timed-out command may still have run.
 
 ## Must not
@@ -60,6 +60,6 @@ PR #144, closes #109, #110, #111 and includes #145. A 110-file feature in C, Typ
 - Each `Must not` about a file note comes from one of those reviews. Sonnet low swapped `main.c` and `bootstrap.c`. Grok low called the file replace helpers string and parsing helpers. Opus high wrote 21 notes that said "not fetched".
 - Each `Must` sits in a file that no PR text describes and whose digest line gives only symbols or a line count. A review states it only when it read the hunk. The PR body and `#109` to `#111` state the other design facts, which is why those are not here.
 - The `Good` list holds facts that need a second file or a trace across files, per `eval/review-criteria.md`.
-- `Must` and `Must not` scores do not change the exit code. Read the case line, for example `must 1/5  mustNot 2/6`, and compare it with a run of the older skill.
+- `Must` and `Must not` scores do not change the exit code. Read the case line, for example `must 1/6  mustNot 2/6`, and compare it with a run of the older skill.
 - The `127.0.0.1` fallback and the single address read are old code from `detect_lan_ip` in the deleted `http_server.c`. The `Must` is about the new start at boot, which makes a stale address likely.
 - `together` holds file pairs that every past run kept in one group, including `lan_listener.c` with `lan_address_posix.c` across modules. `apart` holds layers that every past run split. There is no `mechanicalPaths` expect, because past runs did not agree on where the lockfile goes.

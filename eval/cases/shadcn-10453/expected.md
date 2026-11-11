@@ -31,14 +31,14 @@ PR #10453. No linked ticket file; the body says the work is part of the gap trac
 - The integration test proxy answers non-CONNECT requests with 502 and a contract test pins that, which resolves pomeh's review comment about the unused `proxy-direct` body.
 - The `fetchOnce` comment says the global `fetch` binding must stay because MSW patches `globalThis.fetch`.
 - The redirect and error code in `proxy.ts` is unchanged; only the dispatcher line and one `fetchOnce` comment change.
-- The SOCKS `connect` callback returns the raw SOCKS socket with no TLS, and the integration tests only fetch an `http://` origin.
+- The SOCKS `connect` callback returns the raw SOCKS socket with no TLS, which the integration tests do not show because they fetch only an `http://` origin.
 - The SOCKS `connect` callback passes `Number(opts.port)` as the destination port, which is 0 for a URL with no explicit port, such as the default `https://ui.shadcn.com/r` registry.
 
 ## Must not
 
 - Say PAC support, `PAC_URL`, or `pac-resolver` is part of this change.
 - Say `ALL_PROXY=http://...` configures an HTTP proxy.
-- Say the redirect logic, `getFailureReason`, or the `EnvHttpProxyAgent` gate on the four HTTP proxy variables changed.
+- Say the redirect logic or `getFailureReason` changed.
 - Say `NO_PROXY` applies to the SOCKS path.
 - Write a group attention that asks for a test of `parseSocksUrl`, a lazy dispatcher, or a rename of `createProxyDispatcher`; a missing test, a refactor idea, and a nit are not attentions.
 - Write a group question that asks why PAC support or the HTTP proxy handling is not in this change; the conversation comments move PAC to a follow-up and the HTTP proxy work to #10905.
