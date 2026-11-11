@@ -1,4 +1,5 @@
 import { EXTENSION_TO_FILE_FORMAT } from "@pierre/diffs";
+import { bundledLanguagesInfo } from "shiki/langs";
 import type { Plugin } from "vite";
 import { SHIKI_LANGS_FILE, shikiLangId, type ShikiLangsManifest } from "./src/api/shiki-langs.ts";
 
@@ -37,6 +38,20 @@ export function shikiLangChunks(): Plugin {
           const lang = shikiLangId(moduleId);
           if (lang !== undefined) {
             langFiles.set(lang, fileName);
+          }
+        }
+      }
+
+      // A second name for a language, such as zsh for shellscript, has no module of its own.
+      // It loads the chunk of the language it names.
+      for (const info of bundledLanguagesInfo) {
+        const fileName = langFiles.get(info.id);
+        if (fileName === undefined) {
+          continue;
+        }
+        for (const alias of info.aliases ?? []) {
+          if (!langFiles.has(alias)) {
+            langFiles.set(alias, fileName);
           }
         }
       }
