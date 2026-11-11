@@ -25,6 +25,7 @@ import type { DiffFile, LiveHunk, ReviewDocument } from "../schema/types.ts";
 import { AGENT_MD_MEDIA_TYPE, agentMd } from "./agent-md.ts";
 import { changesPayload, type CodeChanges } from "./changes.ts";
 import { ApiError } from "./error.ts";
+import { fenceInfos, isMarkdownPath } from "./markdown.ts";
 import type { ApiResource } from "./paths.ts";
 import type {
   ApiBlame,
@@ -362,6 +363,29 @@ export function listResources(ctx: ReviewContext): ApiResource[] {
     }
   }
   return resources;
+}
+
+/** The names on the code fences of the changed Markdown files, on both sides. */
+export async function markdownFences(ctx: ReviewContext): Promise<string[]> {
+  const infos = new Set<string>();
+  for (const file of ctx.files) {
+    if (file.binary || !isMarkdownPath(file.path)) {
+      continue;
+    }
+    for (const side of sidesFor(file)) {
+      try {
+        const { content } = await filePayload(ctx, file.path, side);
+        for (const info of fenceInfos(content)) {
+          infos.add(info);
+        }
+      } catch (error) {
+        if (!isUnavailableSnapshot(error)) {
+          throw error;
+        }
+      }
+    }
+  }
+  return [...infos];
 }
 
 function sidesFor(file: DiffFile): FileSide[] {

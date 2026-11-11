@@ -280,6 +280,8 @@ export function App() {
       } else if (event.key === "}" && !event.repeat) {
         event.preventDefault();
         shiftPartSelection(meta, selection, selectFromNav, 1);
+      } else if (event.key === "m") {
+        toggleMarkdownView();
       } else if (inspector !== null) {
         return;
       } else if (event.key === "s") {
@@ -289,8 +291,6 @@ export function App() {
           }
           return !value;
         });
-      } else if (event.key === "m") {
-        toggleMarkdownView();
       } else if (event.key === "j") {
         const files = filesFromPayload(payloadFiles);
         const current = fileIndexAtHunk(files, activeHunk);

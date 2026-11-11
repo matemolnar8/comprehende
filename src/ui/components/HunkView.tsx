@@ -1,24 +1,22 @@
 import { PierreFileDiff } from "../PierreDiff.tsx";
+import { isMarkdownPath } from "../../api/markdown.ts";
 import { fetchPatch } from "../api.ts";
 import { basename, type FocusRange } from "../../schema/types.ts";
 import { DiffStat } from "./DiffStat.tsx";
 import { FocusBar, HiddenLines, HunkGap } from "./FocusBar.tsx";
 import { ImageDiff, ImageModeControl } from "./ImageDiff.tsx";
 import { InlineMd } from "./InlineMd.tsx";
-import { HintWithKey } from "./Kbd.tsx";
-import { MarkdownDiff, useMarkdownRows } from "./MarkdownDiff.tsx";
+import { MarkdownDiff, MarkdownViewControl, useMarkdownRows } from "./MarkdownDiff.tsx";
 import { ViewedToggle } from "./ViewedToggle.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Segmented, SegmentedItem } from "@/components/ui/segmented.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { cn } from "@/lib/utils.ts";
 import { fileFocus, focusBlocks, onFile, toggleHunk, type LetteredNote } from "../lib/focus.ts";
 import { gutterDigits, hunkGaps } from "../lib/hunk-gaps.ts";
 import { IMAGE_STATUS, IMAGE_TONE_CLASS, type GroupFile } from "../lib/group-files.ts";
-import { isMarkdownPath } from "../lib/markdown-diff.ts";
-import { setMarkdownView, useMarkdownView } from "../lib/markdown-view.ts";
+import { useMarkdownView } from "../lib/markdown-view.ts";
 import { isPureRelocation, movedMarks, relocationWord } from "../lib/relocation.ts";
 import type { FileComment } from "../lib/source-display.ts";
 import { waitCopy } from "../lib/wait.ts";
@@ -276,7 +274,7 @@ export function HunkView(props: {
               Open file
             </Button>
             <div className="contents min-[800px]:ml-auto min-[800px]:flex min-[800px]:shrink-0 min-[800px]:items-center min-[800px]:gap-4">
-              {markdown ? <MarkdownViewControl /> : null}
+              {markdown ? <MarkdownViewControl size="sm" /> : null}
               {meta !== null ? (
                 <span
                   className={cn(
@@ -340,6 +338,7 @@ export function HunkView(props: {
                   ) : rendered && markdownRows !== undefined ? (
                     <MarkdownDiff
                       path={file.path}
+                      oldPath={file.oldPath}
                       rows={markdownRows}
                       patch={block.patch}
                       added={file.status === "added"}
@@ -377,28 +376,5 @@ export function HunkView(props: {
         </div>
       )}
     </article>
-  );
-}
-
-/** One choice for every Markdown file. Each copy shows and sets the same shared view. */
-function MarkdownViewControl() {
-  const view = useMarkdownView();
-  return (
-    <Segmented label="Markdown view" size="sm">
-      <SegmentedItem
-        active={view === "rendered"}
-        onClick={() => setMarkdownView("rendered")}
-        hint={<HintWithKey text="Read the change as rendered Markdown" shortcut="m" />}
-      >
-        Rendered
-      </SegmentedItem>
-      <SegmentedItem
-        active={view === "source"}
-        onClick={() => setMarkdownView("source")}
-        hint={<HintWithKey text="Read the change as source lines" shortcut="m" />}
-      >
-        Source
-      </SegmentedItem>
-    </Segmented>
   );
 }

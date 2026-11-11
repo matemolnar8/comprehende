@@ -65,9 +65,43 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+.prose [data-link] {
+  cursor: help;
+  text-decoration-style: dotted;
+}
 .prose [data-image] {
+  cursor: help;
   color: var(--muted-foreground);
   font-style: italic;
+}
+.prose img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+.prose summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.prose kbd {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+}
+
+/* A code block: Pierre draws the lines on a clear canvas, the block draws the card under them. */
+.code {
+  --diff-canvas: transparent;
+  overflow: hidden;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--diff-fg) 5%, transparent);
+  padding: 0.25rem 0;
+}
+/* Pierre's element paints its own canvas. The variable above does not reach that one rule. */
+.code > * {
+  background-color: transparent;
 }
 
 .prose code {

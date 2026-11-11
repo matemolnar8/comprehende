@@ -40,6 +40,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": uiRoot,
+      // The browser build of this module reads `document`. The Markdown worker has none.
+      "decode-named-character-reference": fileURLToPath(
+        import.meta.resolve("decode-named-character-reference"),
+      ),
     },
   },
   optimizeDeps: {

@@ -1,5 +1,7 @@
 import {
+  EXTENSION_TO_FILE_FORMAT,
   hydratePartialDiff,
+  parseDiffFromFile,
   parsePatchFiles,
   registerCustomTheme,
   resolveTheme,
@@ -21,6 +23,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
+import { fenceLanguage } from "../api/markdown.ts";
 import { fetchFile, shortSha } from "./api.ts";
 import { EXPANSION_LINE_COUNT, GAP_CSS, GAP_SEPARATOR } from "@/lib/gap-style.ts";
 import { canHydrateDiff, loadDiffFilesWith, splitHasTwoSides } from "@/lib/load-diff-files.ts";
@@ -710,6 +713,70 @@ export function PierreFileDiff(props: {
     </div>
   );
 }
+
+export type Snippet = { lang: string | null; value: string };
+
+/** One code block of a Markdown file, as Pierre sees a file. */
+function snippetFile(code: Snippet, contents = code.value) {
+  return {
+    name: "code",
+    contents,
+    lang:
+      (code.lang === null ? undefined : fenceLanguage(code.lang, EXTENSION_TO_FILE_FORMAT)) ??
+      "text",
+    cacheKey: `snippet:${code.lang ?? ""}:${patchKey(contents)}`,
+  };
+}
+
+const SNIPPET_OPTIONS = {
+  theme: DIFF_THEMES,
+  disableFileHeader: true,
+  disableLineNumbers: true,
+  stickyHeader: false,
+  unsafeCSS: PIERRE_UNSAFE_CSS,
+} as const;
+
+/** A code block in rendered Markdown, with the colors of its language and no line numbers. */
+export const PierreSnippet = memo(function PierreSnippet(props: { code: Snippet; wrap: boolean }) {
+  const { resolved } = useTheme();
+  const file = useMemo(() => snippetFile(props.code), [props.code]);
+  const options = useMemo(
+    () => ({
+      ...SNIPPET_OPTIONS,
+      themeType: resolved,
+      overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
+    }),
+    [props.wrap, resolved],
+  );
+  return <File className="block w-full" file={file} options={options} />;
+});
+
+/** Two versions of one code block in rendered Markdown, as a line diff with every line shown. */
+export const PierreSnippetDiff = memo(function PierreSnippetDiff(props: {
+  before: Snippet;
+  after: Snippet;
+  split: boolean;
+  wrap: boolean;
+}) {
+  const { resolved } = useTheme();
+  const fileDiff = useMemo(() => {
+    // A diff marks a side that ends without a line break. A code block has no such end.
+    const file = (code: Snippet) => snippetFile(code, `${code.value}\n`);
+    return parseDiffFromFile(file(props.before), file(props.after));
+  }, [props.after, props.before]);
+  const options = useMemo(
+    () => ({
+      ...SNIPPET_OPTIONS,
+      themeType: resolved,
+      diffStyle: props.split ? ("split" as const) : ("unified" as const),
+      overflow: props.wrap ? ("wrap" as const) : ("scroll" as const),
+      lineDiffType: "none" as const,
+      expandUnchanged: true,
+    }),
+    [props.split, props.wrap, resolved],
+  );
+  return <FileDiff className="block w-full" fileDiff={fileDiff} options={options} />;
+});
 
 export function SplitResizeHandle(props: { ratio: number; onRatio: (ratio: number) => void }) {
   const drag = useRef<{ startX: number; start: number; width: number } | null>(null);

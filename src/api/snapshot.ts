@@ -5,6 +5,7 @@ import { findPackageRoot } from "../package-root.ts";
 import {
   isUnavailableSnapshot,
   listResources,
+  markdownFences,
   openReview,
   renderResource,
   snapshotJson,
@@ -67,6 +68,10 @@ export async function exportStaticSite(opts: ExportOptions): Promise<ExportResul
     }
     apiFiles.push(rel);
   }
-  await pruneUnusedHighlighterChunks(outDir, highlightPathsFromFiles(ctx.files));
+  await pruneUnusedHighlighterChunks(
+    outDir,
+    highlightPathsFromFiles(ctx.files),
+    await markdownFences(ctx),
+  );
   return { outDir, apiFiles, ctx };
 }

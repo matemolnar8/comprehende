@@ -134,6 +134,22 @@ describe("pruneUnusedHighlighterChunks", () => {
     assert.ok(removed.includes("assets/shiki-lang-python-eee.js"));
   });
 
+  it("keeps the highlighters that code fences in Markdown name", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-shiki-fences-"));
+    roots.push(root);
+    await mkdir(join(root, "assets"));
+    await writeFile(join(root, "shiki-langs.json"), `${JSON.stringify(manifest)}\n`);
+    for (const file of manifest.chunks) {
+      await writeFile(join(root, file), `// ${file}\n`);
+    }
+
+    // `js` is a file extension, `python` a language name, and `nope` neither.
+    await pruneUnusedHighlighterChunks(root, ["README.md"], ["js", "python", "nope"]);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-javascript-bbb.js")), true);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-python-eee.js")), true);
+    assert.equal(existsSync(join(root, "assets/shiki-lang-typescript-aaa.js")), false);
+  });
+
   it("still prunes when the diff has a language with no chunk", async () => {
     const root = await mkdtemp(join(tmpdir(), "comprehende-shiki-nochunk-"));
     roots.push(root);

@@ -1,6 +1,8 @@
-import { diffArrays } from "diff";
-import type { Element, ElementContent } from "hast";
-import type { Code, Html, Parents, RootContent } from "mdast";
+import { diff } from "fast-myers-diff";
+import type { Element, ElementContent, Nodes } from "hast";
+import { raw } from "hast-util-raw";
+import { sanitize } from "hast-util-sanitize";
+import type { Code, RootContent } from "mdast";
 import { fromMarkdown } from "mdast-util-from-markdown";
 import { gfmFromMarkdown } from "mdast-util-gfm";
 import { toHast } from "mdast-util-to-hast";
@@ -9,11 +11,6 @@ import type { DiffLine } from "../../schema/types.ts";
 import type { LetteredNote } from "./focus.ts";
 import type { MovedMark } from "./relocation.ts";
 import type { FileComment } from "./source-display.ts";
-
-/** MDX holds JSX, which a Markdown parser reads as text. It stays a source diff. */
-export function isMarkdownPath(path: string): boolean {
-  return /\.(md|markdown|mdc)$/i.test(path);
-}
 
 export type MdContainer =
   | {
@@ -37,7 +34,11 @@ export type MdUnit = {
   /** The lists and quotes around the block, outermost first. */
   containers: MdContainer[];
   nodes: ElementContent[];
+  /** Set on a code block: its text without the fence, and the language the fence names. */
+  code?: MdCode;
 };
+
+export type MdCode = { lang: string | null; value: string };
 
 /** Splits a Markdown file into units. Lists and quotes are split into the blocks they hold. */
 export function markdownUnits(source: string): MdUnit[] {
@@ -54,14 +55,17 @@ export function markdownUnits(source: string): MdUnit[] {
   const push = (node: RootContent, start: number, end: number, containers: MdContainer[]) => {
     const text = lines.slice(start - 1, end).join("\n");
     const rendered = render(node, definitions);
+    // A block that renders as nothing shows its source: a link definition, a comment, a lone
+    // closing tag. A tag in the diff is never lost.
+    const shows = node.type === "html" ? hasContent(rendered) : rendered.length > 0;
     units.push({
       index: units.length,
       start,
       end,
       source: text,
       containers,
-      // A block that renders as nothing, such as a link definition, shows its source.
-      nodes: rendered.length > 0 ? rendered : [codeBlock(text)],
+      nodes: shows ? rendered : [codeBlock(text)],
+      ...(node.type === "code" ? { code: { lang: node.lang ?? null, value: node.value } } : {}),
     });
   };
   if (matterEnd > 0) {
@@ -120,30 +124,36 @@ function frontMatterEnd(lines: readonly string[]): number {
   return end === -1 ? 0 : end + 1;
 }
 
+/**
+ * The block as HTML nodes. HTML in the Markdown is parsed into the same tree, and the whole tree is
+ * then cut down to the tags and attributes GitHub allows: no script, no style, no event handler.
+ */
 function render(node: RootContent, definitions: readonly RootContent[]): ElementContent[] {
   const hast = toHast(
     // Definitions render as nothing, and let a reference in this block find its target.
     { type: "root", children: [node, ...definitions.filter((item) => item !== node)] },
-    { handlers: { html: rawHtml } },
+    { allowDangerousHtml: true },
   );
-  const children = hast.type === "root" ? hast.children : [hast];
+  const safe = sanitize(hasRaw(hast) ? raw(hast) : hast);
+  const children = safe.type === "root" ? safe.children : [safe];
   return children.filter(
     (child): child is ElementContent =>
       child.type === "element" || (child.type === "text" && child.value.trim() !== ""),
   );
 }
 
-/** HTML is not run. Its source shows, so a tag in the diff is never lost. */
-function rawHtml(_state: unknown, node: Html, parent: Parents | undefined): Element {
-  if (parent === undefined || parent.type === "root") {
-    return codeBlock(node.value);
-  }
-  return {
-    type: "element",
-    tagName: "code",
-    properties: {},
-    children: [{ type: "text", value: node.value }],
-  };
+function hasRaw(node: Nodes): boolean {
+  return node.type === "raw" || ("children" in node && node.children.some(hasRaw));
+}
+
+/** True when the nodes show text, a picture, or a rule. An empty `<details>` shows nothing. */
+function hasContent(nodes: readonly ElementContent[]): boolean {
+  return nodes.some((node) =>
+    node.type === "text"
+      ? node.value.trim() !== ""
+      : node.type === "element" &&
+        (node.tagName === "img" || node.tagName === "hr" || hasContent(node.children)),
+  );
 }
 
 function codeBlock(value: string): Element {
@@ -164,7 +174,7 @@ type Span = { from: number; to: number };
 /** One run of changed lines: the old lines it removes and the new lines it adds, end exclusive. */
 type Region = { old: Span; new: Span };
 
-type HunkLines = {
+export type HunkLines = {
   oldStart: number;
   oldLines: number;
   newStart: number;
@@ -239,7 +249,21 @@ export type MdCell = {
 
 export type MdRow =
   | { kind: "context"; old: MdCell; new: MdCell }
+  /** One code block with lines that changed. It reads as a line diff of the two blocks. */
+  | { kind: "code"; old: MdCell; new: MdCell }
   | { kind: "change"; old: MdCell[]; new: MdCell[] };
+
+function cellsOf(row: MdRow, side: Side): readonly MdCell[] {
+  return row.kind === "change" ? row[side] : [row[side]];
+}
+
+/** Every block of one version of a file, top to bottom. Nothing in it is a change. */
+export function markdownFileRows(source: string): MdRow[] {
+  return markdownUnits(source).map((unit) => {
+    const cell = { unit, nodes: unit.nodes, moved: false };
+    return { kind: "context", old: cell, new: cell };
+  });
+}
 
 /**
  * The blocks the hunks touch, top to bottom. Git's lines decide what changed: blocks that share a
@@ -336,16 +360,34 @@ function changeRow(
     units.filter((_, i) => flags[i] !== true);
   const liveOld = live(olds, oldMoved);
   const liveNew = live(news, newMoved);
+  const [before, after] = [olds[0], news[0]];
+  if (
+    olds.length === 1 &&
+    news.length === 1 &&
+    liveOld.length === 1 &&
+    liveNew.length === 1 &&
+    before?.code !== undefined &&
+    after?.code !== undefined &&
+    before.code.value !== after.code.value
+  ) {
+    return {
+      kind: "code",
+      old: { unit: before, nodes: before.nodes, moved: false },
+      new: { unit: after, nodes: after.nodes, moved: false },
+    };
+  }
   // Only markup changed, such as a link target or an image path. The rendered blocks would look
   // the same, so the row shows its source, with the markup that differs marked.
-  const raw =
+  const source =
     liveOld.length > 0 &&
     liveNew.length > 0 &&
     sameWords(
       liveOld.map((unit) => nodesText(unit.nodes)),
       liveNew.map((unit) => nodesText(unit.nodes)),
     );
-  const text = (unit: MdUnit) => (raw ? unit.source : nodesText(unit.nodes));
+  // A code block reads as code, with no word marks: its lines are added or removed whole.
+  const text = (unit: MdUnit) =>
+    source ? unit.source : unit.code === undefined ? nodesText(unit.nodes) : "";
   const marks = wordMarks(
     olds.map((unit, i) => (oldMoved[i] === true ? "" : text(unit))),
     news.map((unit, i) => (newMoved[i] === true ? "" : text(unit))),
@@ -355,7 +397,7 @@ function changeRow(
       if (flags[i] === true) {
         return { unit, nodes: unit.nodes, moved: true };
       }
-      return raw
+      return source
         ? {
             unit,
             nodes: markNodes([codeBlock(unit.source)], side[i] ?? []),
@@ -401,15 +443,7 @@ function sameWords(oldTexts: readonly string[], newTexts: readonly string[]): bo
   return words(oldTexts) === words(newTexts);
 }
 
-/** Above this share of changed words a block is a rewrite, and marks on every word say nothing. */
-const REWRITE_SHARE = 0.6;
-/** Changes this close are one edit: a single kept word between them is not worth a break. */
-const JOIN_GAP = 1;
-/**
- * Two long texts with little in common cost seconds to compare. Past this time the word diff
- * stops, and the block tint alone shows the change.
- */
-const WORD_DIFF_MS = 150;
+type Edit = { sx: number; ex: number; sy: number; ey: number };
 
 /**
  * Word-level marks for the blocks of one change row. The old blocks are compared with the new
@@ -421,29 +455,25 @@ export function wordMarks(
 ): { old: Mark[][]; new: Mark[][] } {
   const oldTokens = tokens(oldTexts);
   const newTokens = tokens(newTexts);
-  const none = { old: oldTexts.map(() => []), new: newTexts.map(() => []) };
-  if (oldTokens.length === 0 || newTokens.length === 0) {
-    return none;
-  }
-  const parts = diffArrays(
-    oldTokens.map((token) => token.text),
-    newTokens.map((token) => token.text),
-    { timeout: WORD_DIFF_MS },
-  );
-  if (parts === undefined) {
-    return none;
-  }
-  const oldChanged: boolean[] = [];
-  const newChanged: boolean[] = [];
-  for (const part of parts) {
-    for (let i = 0; i < part.value.length; i++) {
-      if (!part.added) {
-        oldChanged.push(part.removed);
-      }
-      if (!part.removed) {
-        newChanged.push(part.added);
-      }
+  const ids = new Map<string, number>();
+  const id = (token: Token) => {
+    const known = ids.get(token.text);
+    if (known !== undefined) {
+      return known;
     }
+    ids.set(token.text, ids.size);
+    return ids.size - 1;
+  };
+  const edits = joinEdits(
+    diff(Int32Array.from(oldTokens, id), Int32Array.from(newTokens, id)),
+    textSizes(oldTokens),
+    textSizes(newTokens),
+  );
+  const oldChanged = new Uint8Array(oldTokens.length);
+  const newChanged = new Uint8Array(newTokens.length);
+  for (const edit of edits) {
+    oldChanged.fill(1, edit.sx, edit.ex);
+    newChanged.fill(1, edit.sy, edit.ey);
   }
   return {
     old: unitMarks(oldTokens, oldChanged, oldTexts.length),
@@ -451,13 +481,57 @@ export function wordMarks(
   };
 }
 
-function unitMarks(all: readonly Token[], changed: readonly boolean[], units: number): Mark[][] {
+function isWord(token: Token): boolean {
+  return /^[\p{L}\p{N}_]/u.test(token.text);
+}
+
+/**
+ * The size of a run of tokens: the letters of its words. A comma or a bracket has no size, so a
+ * match of punctuation alone does not count as kept text.
+ */
+function textSizes(all: readonly Token[]): (from: number, to: number) => number {
+  const before = new Uint32Array(all.length + 1);
+  all.forEach((token, i) => {
+    before[i + 1] = (before[i] ?? 0) + (isWord(token) ? token.text.length : 0);
+  });
+  return (from, to) => (before[to] ?? 0) - (before[from] ?? 0);
+}
+
+/**
+ * Joins two changes when the text kept between them is no longer than either change. Text that
+ * short is most often a chance match inside a rewrite, such as "the" or a comma, and marks that
+ * stop for it read as noise. This is the semantic cleanup of diff-match-patch.
+ */
+function joinEdits(
+  edits: Iterable<readonly [number, number, number, number]>,
+  oldSize: (from: number, to: number) => number,
+  newSize: (from: number, to: number) => number,
+): Edit[] {
+  const size = (edit: Edit) => Math.max(oldSize(edit.sx, edit.ex), newSize(edit.sy, edit.ey));
+  const joined: Edit[] = [];
+  for (const [sx, ex, sy, ey] of edits) {
+    let edit: Edit = { sx, ex, sy, ey };
+    for (let last = joined.at(-1); last !== undefined; last = joined.at(-1)) {
+      const kept = oldSize(last.ex, edit.sx);
+      if (kept > size(last) || kept > size(edit)) {
+        break;
+      }
+      edit = { sx: last.sx, ex: edit.ex, sy: last.sy, ey: edit.ey };
+      joined.pop();
+    }
+    joined.push(edit);
+  }
+  return joined;
+}
+
+function unitMarks(all: readonly Token[], changed: Uint8Array, units: number): Mark[][] {
   return Array.from({ length: units }, (_, unit) => {
     const mine = all.flatMap((token, i) =>
-      token.unit === unit ? [{ token, changed: changed[i] === true }] : [],
+      token.unit === unit ? [{ token, changed: changed[i] === 1 }] : [],
     );
-    const share = mine.filter((item) => item.changed).length / Math.max(1, mine.length);
-    if (share > REWRITE_SHARE) {
+    // A block with no word kept is new text. The tint on the block says so, and marks add nothing.
+    const words = mine.filter((item) => isWord(item.token));
+    if ((words.length > 0 ? words : mine).every((item) => item.changed)) {
       return [];
     }
     const marks: (Mark & { last: number })[] = [];
@@ -466,7 +540,7 @@ function unitMarks(all: readonly Token[], changed: readonly boolean[], units: nu
         return;
       }
       const open = marks.at(-1);
-      if (open !== undefined && i - open.last <= JOIN_GAP + 1) {
+      if (open !== undefined && open.last === i - 1) {
         open.to = item.token.to;
         open.last = i;
       } else {
@@ -543,13 +617,11 @@ export function patchSpans(patch: string): Region[] {
 
 /** The rows with a block on a line of one of the spans. */
 export function rowsInSpans(rows: readonly MdRow[], spans: readonly Region[]): MdRow[] {
-  const hit = (cell: MdCell, side: Side) =>
-    spans.some((span) => cell.unit.start < span[side].to && cell.unit.end >= span[side].from);
-  return rows.filter((row) =>
-    row.kind === "context"
-      ? hit(row.old, "old") || hit(row.new, "new")
-      : row.old.some((cell) => hit(cell, "old")) || row.new.some((cell) => hit(cell, "new")),
-  );
+  const hit = (row: MdRow, side: Side) =>
+    cellsOf(row, side).some((cell) =>
+      spans.some((span) => cell.unit.start < span[side].to && cell.unit.end >= span[side].from),
+    );
+  return rows.filter((row) => hit(row, "old") || hit(row, "new"));
 }
 
 export type CellPins = { notes: LetteredNote[]; comments: FileComment[]; moved?: MovedMark };
@@ -569,8 +641,8 @@ export function cellPins(
   },
 ): Map<MdCell, CellPins> {
   const cells = {
-    old: rows.flatMap((row) => (row.kind === "context" ? [row.old] : row.old)),
-    new: rows.flatMap((row) => (row.kind === "context" ? [row.new] : row.new)),
+    old: rows.flatMap((row) => cellsOf(row, "old")),
+    new: rows.flatMap((row) => cellsOf(row, "new")),
   };
   const pins = new Map<MdCell, CellPins>();
   const inSpans = (side: Side, line: number) =>
@@ -617,8 +689,8 @@ export function patchChanges(patch: string): boolean {
 
 /** New-side lines between two rows that are not next to each other in the file. */
 export function rowGap(above: MdRow, below: MdRow): Span | undefined {
-  const last = above.kind === "context" ? above.new : above.new.at(-1);
-  const first = below.kind === "context" ? below.new : below.new[0];
+  const last = cellsOf(above, "new").at(-1);
+  const first = cellsOf(below, "new")[0];
   if (last === undefined || first === undefined || first.unit.index - last.unit.index <= 1) {
     return undefined;
   }

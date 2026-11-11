@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { fetchBlame, fetchFile, resourceHref } from "../api.ts";
+import { isMarkdownPath } from "../../api/markdown.ts";
 import type { ApiBlameLine, FileSide } from "../../api/types.ts";
 import { isImagePath } from "../../schema/image.ts";
 import { groupBlameRuns } from "../../schema/blame-runs.ts";
@@ -10,12 +11,14 @@ import {
   blameGutterCss,
   type FileAnnotation,
 } from "../PierreDiff.tsx";
+import { useMarkdownView } from "../lib/markdown-view.ts";
 import { waitCopy } from "../lib/wait.ts";
 import { Button } from "@/components/ui/button.tsx";
 import { Segmented, SegmentedItem } from "@/components/ui/segmented.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { ArrowLeftIcon } from "lucide-react";
 import { Kbd } from "./Kbd.tsx";
+import { MarkdownFile, MarkdownViewControl, useMarkdownFileRows } from "./MarkdownDiff.tsx";
 import { WaitMark } from "./WaitMark.tsx";
 
 export type InspectorState = {
@@ -39,6 +42,14 @@ export function Inspector(props: {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [gutterWidth, setGutterWidth] = useState(0);
+  const markdown = !image && inspector.mode === "file" && isMarkdownPath(inspector.path);
+  const markdownView = useMarkdownView();
+  const shown = !image && inspector.mode === "file" && error === null && !loading;
+  // Null when the file cannot be read as Markdown: its source still shows.
+  const markdownRows = useMarkdownFileRows(
+    markdown && markdownView === "rendered" && shown ? content : undefined,
+  );
+  const rendered = markdown && markdownView === "rendered" && markdownRows !== null;
   const blameContents = useMemo(
     () => (blame === null ? "" : blame.map((line) => line.text).join("\n")),
     [blame],
@@ -172,6 +183,14 @@ export function Inspector(props: {
               </Control>
             </>
           )}
+          {markdown ? (
+            <>
+              <span aria-hidden className="h-5 w-px bg-border max-[800px]:mb-1.5" />
+              <Control caption="View">
+                <MarkdownViewControl />
+              </Control>
+            </>
+          ) : null}
         </div>
       </div>
       {error !== null ? <p className="px-4 text-warn min-[800px]:px-8">{error}</p> : null}
@@ -189,10 +208,21 @@ export function Inspector(props: {
           />
         </div>
       ) : null}
-      {!image && inspector.mode === "file" && error === null && !loading ? (
+      {shown ? (
         <div className="min-h-0 flex-1 overflow-auto px-4 pb-8 min-[800px]:px-8">
           <div className="overflow-hidden rounded-lg border border-border">
-            <PierreFile path={inspector.path} contents={content} wrap={wrap} />
+            {!rendered ? (
+              <PierreFile path={inspector.path} contents={content} wrap={wrap} />
+            ) : markdownRows === undefined ? (
+              <WaitMark label={waitCopy.file} />
+            ) : (
+              <MarkdownFile
+                path={inspector.path}
+                side={inspector.side}
+                rows={markdownRows}
+                wrap={wrap}
+              />
+            )}
           </div>
         </div>
       ) : null}

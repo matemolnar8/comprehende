@@ -4,8 +4,8 @@ import { describe, it } from "vite-plus/test";
 import type { DiffLine } from "../../schema/types.ts";
 import {
   cellPins,
-  isMarkdownPath,
   markNodes,
+  markdownFileRows,
   markdownRows,
   markdownUnits,
   patchChanges,
@@ -60,19 +60,17 @@ function shape(rows: readonly MdRow[]): string[] {
   return rows.flatMap((row) =>
     row.kind === "context"
       ? [cell(" ")(row.new)]
-      : [...row.old.map(cell("-")), ...row.new.map(cell("+"))],
+      : row.kind === "code"
+        ? [`code ${row.old.unit.code?.value} => ${row.new.unit.code?.value}`]
+        : [...row.old.map(cell("-")), ...row.new.map(cell("+"))],
   );
 }
 
-describe("isMarkdownPath", () => {
-  it("takes Markdown files and leaves MDX as source", () => {
-    assert.equal(isMarkdownPath("skills/x/SKILL.md"), true);
-    assert.equal(isMarkdownPath("docs/NOTES.MARKDOWN"), true);
-    assert.equal(isMarkdownPath(".cursor/rules/a.mdc"), true);
-    assert.equal(isMarkdownPath("page.mdx"), false);
-    assert.equal(isMarkdownPath("md.ts"), false);
-  });
-});
+function tags(nodes: readonly ElementContent[]): string[] {
+  return nodes.flatMap((node) =>
+    node.type === "element" ? [node.tagName, ...tags(node.children)] : [],
+  );
+}
 
 describe("markdownUnits", () => {
   it("splits a list into the blocks of its items", () => {
@@ -109,14 +107,82 @@ describe("markdownUnits", () => {
     );
   });
 
-  it("shows the source of HTML and of a block that renders as nothing", () => {
+  it("renders HTML, in a line of text and as a block", () => {
     const units = markdownUnits(
-      ["Press <kbd>x</kbd>.", "", "[ref]: https://example.com"].join("\n"),
+      ["Press <kbd>x</kbd>.", "", '<p align="center"><img src="a.png" alt="A"></p>'].join("\n"),
+    );
+    assert.deepEqual(
+      units.map((unit) => [text(unit.nodes), tags(unit.nodes).join(" ")]),
+      [
+        ["Press x.", "p kbd"],
+        ["", "p img"],
+      ],
+    );
+  });
+
+  it("drops the parts of HTML that run code or leave the page", () => {
+    const [unit] = markdownUnits(
+      [
+        '<div onclick="steal()" style="position:fixed">',
+        "<script>steal()</script>",
+        '<a href="javascript:steal()">go</a>',
+        '<img src="data:image/svg+xml,x" onerror="steal()">',
+        '<iframe src="https://example.com"></iframe>',
+        "</div>",
+      ].join("\n"),
+    );
+    assert.ok(unit !== undefined);
+    const elements = (nodes: readonly ElementContent[]): ElementContent[] =>
+      nodes.flatMap((node) => (node.type === "element" ? [node, ...elements(node.children)] : []));
+    assert.deepEqual(
+      elements(unit.nodes).map((node) => (node.type === "element" ? node : undefined)?.tagName),
+      ["div", "a", "img"],
+    );
+    assert.deepEqual(
+      elements(unit.nodes).map((node) => (node.type === "element" ? node.properties : {})),
+      [{}, {}, {}],
+    );
+  });
+
+  it("shows the source of a block that renders as nothing", () => {
+    const units = markdownUnits(
+      [
+        "[ref]: https://example.com",
+        "",
+        "<!-- a note -->",
+        "",
+        "<details>",
+        "",
+        "Text.",
+        "",
+        "</details>",
+      ].join("\n"),
     );
     assert.deepEqual(
       units.map((unit) => text(unit.nodes)),
-      ["Press <kbd>x</kbd>.", "[ref]: https://example.com"],
+      ["[ref]: https://example.com", "<!-- a note -->", "<details>", "Text.", "</details>"],
     );
+  });
+
+  it("keeps the text and the language of a code block", () => {
+    const units = markdownUnits(["```ts", "const a = 1;", "```", "", "    plain"].join("\n"));
+    assert.deepEqual(
+      units.map((unit) => unit.code),
+      [
+        { lang: "ts", value: "const a = 1;" },
+        { lang: null, value: "plain" },
+      ],
+    );
+  });
+});
+
+describe("markdownFileRows", () => {
+  it("reads every block of a file as context", () => {
+    assert.deepEqual(shape(markdownFileRows("# Title\n\nText.\n\n- item")), [
+      "  Title",
+      "  Text.",
+      "  item",
+    ]);
   });
 });
 
@@ -180,57 +246,47 @@ describe("markdownRows", () => {
     assert.deepEqual(shape(rows), ["- Alpha beta gamma delta.", "+ Nothing here is the same now."]);
   });
 
-  it("shows the source of a block when only its markup changed", () => {
-    const rows = markdownRows("See the [guide](docs/a.md).", "See the [guide](docs/b.md).", [
-      hunk(1, 1, ["-See the [guide](docs/a.md).", "+See the [guide](docs/b.md)."]),
-    ]);
-    assert.deepEqual(shape(rows), [
-      "- See the [guide](docs/[[a]].md).",
-      "+ See the [guide](docs/[[b]].md).",
-    ]);
-  });
-
-  it("shows the source of an image whose path changed", () => {
-    const rows = markdownRows("![chart](a.png)", "![chart](b.png)", [
-      hunk(1, 1, ["-![chart](a.png)", "+![chart](b.png)"]),
-    ]);
-    assert.deepEqual(shape(rows), ["- ![chart]([[a]].png)", "+ ![chart]([[b]].png)"]);
-  });
-
-  it("flags a block git found moved, and keeps it out of the word diff", () => {
-    const moved = { path: "a.md", line: 1 };
+  it("reads a code block with a changed line as a line diff of the block", () => {
     const rows = markdownRows(
-      ["Moved text.", "", "Stay."].join("\n"),
-      ["Stay.", "", "Moved text."].join("\n"),
+      ["```sh", "pnpm build", "pnpm test", "```"].join("\n"),
+      ["```sh", "pnpm build", "pnpm check", "```"].join("\n"),
+      [hunk(1, 1, [" ```sh", " pnpm build", "-pnpm test", "+pnpm check", " ```"])],
+    );
+    assert.deepEqual(shape(rows), ["code pnpm build\npnpm test => pnpm build\npnpm check"]);
+  });
+
+  it("shows the source of a code block when only its fence changed", () => {
+    const rows = markdownRows(
+      ["```", "run", "```"].join("\n"),
+      ["```sh", "run", "```"].join("\n"),
+      [hunk(1, 1, ["-```", "+```sh", " run", " ```"])],
+    );
+    assert.deepEqual(shape(rows), ["- ```\nrun\n```", "+ ```[[sh]]\nrun\n```"]);
+  });
+
+  it("keeps a code block out of the word marks of the text around it", () => {
+    const rows = markdownRows(
+      ["Run it today.", "```", "a b", "```"].join("\n"),
+      ["Run it now.", "```", "a today", "```"].join("\n"),
       [
-        {
-          ...hunk(1, 1, ["-Moved text.", "-", " Stay.", "+", "+Moved text."]),
-          lines: [
-            { kind: "del", oldNumber: 1, newNumber: null, text: "Moved text.", moved },
-            { kind: "del", oldNumber: 2, newNumber: null, text: "" },
-            { kind: "ctx", oldNumber: 3, newNumber: 1, text: "Stay." },
-            { kind: "add", oldNumber: null, newNumber: 2, text: "" },
-            { kind: "add", oldNumber: null, newNumber: 3, text: "Moved text.", moved },
-          ],
-        },
+        hunk(1, 1, [
+          "-Run it today.",
+          "-```",
+          "-a b",
+          "-```",
+          "+Run it now.",
+          "+```",
+          "+a today",
+          "+```",
+        ]),
       ],
     );
-    assert.deepEqual(shape(rows), ["-~ Moved text.", "  Stay.", "+~ Moved text."]);
-  });
-
-  it("reads only one side of an added file", () => {
-    const rows = markdownRows(undefined, "# New\n\nText.", [hunk(0, 1, ["+# New", "+", "+Text."])]);
-    assert.deepEqual(shape(rows), ["+ New", "+ Text."]);
-  });
-
-  it("keeps a second hunk in step when lines were added above it", () => {
-    const oldLines = ["A", "", "B", "", "x", "", "x", "", "x", "", "C", "", "D"];
-    const newLines = ["A", "", "B2", "", "B3", "", "x", "", "x", "", "x", "", "C", "", "D2"];
-    const rows = markdownRows(oldLines.join("\n"), newLines.join("\n"), [
-      hunk(1, 1, [" A", " ", "-B", "+B2", "+", "+B3", " "]),
-      hunk(11, 13, [" C", " ", "-D", "+D2"]),
+    assert.deepEqual(shape(rows), [
+      "- Run it [[today]].",
+      "- a b",
+      "+ Run it [[now]].",
+      "+ a today",
     ]);
-    assert.deepEqual(shape(rows), ["  A", "- B", "+ B2", "+ B3", "  C", "- D", "+ D2"]);
   });
 });
 
@@ -238,6 +294,30 @@ describe("wordMarks", () => {
   it("joins changes that one kept word separates", () => {
     const marks = wordMarks(["a b c d e f g h"], ["a X c Y e f g h"]);
     assert.deepEqual(marks.new, [[{ from: 2, to: 7 }]]);
+  });
+
+  it("keeps a change apart from the next one when more text is kept between them", () => {
+    const marks = wordMarks(
+      ["Run pnpm eval before you push."],
+      ["Run pnpm eval with the smoke tag before you open a PR."],
+    );
+    assert.deepEqual(marks.new, [
+      [
+        { from: 14, to: 32 },
+        { from: 44, to: 53 },
+      ],
+    ]);
+  });
+
+  it("does not count a match of punctuation as kept text", () => {
+    const marks = wordMarks(["Alpha, beta (gamma)."], ["One, two (three)."]);
+    assert.deepEqual(marks, { old: [[]], new: [[]] });
+  });
+
+  it("marks a long text with nothing in common without a time limit", () => {
+    const words = (prefix: string) =>
+      Array.from({ length: 4000 }, (_, i) => `${prefix}${i % 900}`).join(" ");
+    assert.deepEqual(wordMarks([words("a")], [words("b")]), { old: [[]], new: [[]] });
   });
 
   it("compares the blocks of a row as one text", () => {
