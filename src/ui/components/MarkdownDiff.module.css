@@ -105,7 +105,6 @@
 .prose :is(th, td) {
   border: 1px solid var(--border);
   padding: 0.25rem 0.6rem;
-  text-align: left;
   vertical-align: top;
 }
 .prose th {

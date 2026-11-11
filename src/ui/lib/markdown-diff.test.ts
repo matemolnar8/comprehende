@@ -180,6 +180,16 @@ describe("markdownRows", () => {
     assert.deepEqual(shape(rows), ["- Alpha beta gamma delta.", "+ Nothing here is the same now."]);
   });
 
+  it("shows the source of a block when only its markup changed", () => {
+    const rows = markdownRows("See the [guide](docs/a.md).", "See the [guide](docs/b.md).", [
+      hunk(1, 1, ["-See the [guide](docs/a.md).", "+See the [guide](docs/b.md)."]),
+    ]);
+    assert.deepEqual(shape(rows), [
+      "- See the [guide](docs/[[a]].md).",
+      "+ See the [guide](docs/[[b]].md).",
+    ]);
+  });
+
   it("flags a block git found moved, and keeps it out of the word diff", () => {
     const moved = { path: "a.md", line: 1 };
     const rows = markdownRows(

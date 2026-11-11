@@ -233,6 +233,8 @@ export type MdCell = {
   nodes: ElementContent[];
   /** Git found every line of the block on the other side of a move. */
   moved: boolean;
+  /** The nodes are the block's source lines, which hold its list marks and quote marks. */
+  raw?: true;
 };
 
 export type MdRow =
@@ -330,10 +332,25 @@ function changeRow(
   const oldMoved = olds.map((unit) => isMoved(unit, moved.old));
   const newMoved = news.map((unit) => isMoved(unit, moved.new));
   // A moved block did not change, so it takes no part in the word diff.
-  const marks = wordMarks(
-    olds.map((unit, i) => (oldMoved[i] === true ? "" : nodesText(unit.nodes))),
-    news.map((unit, i) => (newMoved[i] === true ? "" : nodesText(unit.nodes))),
-  );
+  const oldTexts = olds.map((unit, i) => (oldMoved[i] === true ? "" : nodesText(unit.nodes)));
+  const newTexts = news.map((unit, i) => (newMoved[i] === true ? "" : nodesText(unit.nodes)));
+  if (sameWords(oldTexts, newTexts)) {
+    // Only markup changed, such as a link target. The rendered blocks would look the same, so
+    // the row shows its source, with the markup that differs marked.
+    const marks = wordMarks(
+      olds.map((unit) => unit.source),
+      news.map((unit) => unit.source),
+    );
+    const raw = (units: readonly MdUnit[], side: Mark[][]): MdCell[] =>
+      units.map((unit, i) => ({
+        unit,
+        nodes: markNodes([codeBlock(unit.source)], side[i] ?? []),
+        moved: false,
+        raw: true,
+      }));
+    return { kind: "change", old: raw(olds, marks.old), new: raw(news, marks.new) };
+  }
+  const marks = wordMarks(oldTexts, newTexts);
   const cells = (units: readonly MdUnit[], flags: readonly boolean[], side: Mark[][]): MdCell[] =>
     units.map((unit, i) => ({
       unit,
@@ -366,6 +383,16 @@ function tokens(texts: readonly string[]): Token[] {
       to: match.index + match[0].length,
     })),
   );
+}
+
+/** True when both sides have words and they are the same words in the same order. */
+function sameWords(oldTexts: readonly string[], newTexts: readonly string[]): boolean {
+  const words = (texts: readonly string[]) =>
+    tokens(texts)
+      .map((token) => token.text)
+      .join("\n");
+  const before = words(oldTexts);
+  return before !== "" && before === words(newTexts);
 }
 
 /** Above this share of changed words a block is a rewrite, and marks on every word say nothing. */

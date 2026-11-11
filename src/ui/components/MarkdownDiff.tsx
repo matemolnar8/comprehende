@@ -272,7 +272,9 @@ function Prose(props: { cell: MdCell; wrap: boolean }) {
   );
   return (
     <div className={styles.prose} data-wrap={props.wrap ? "" : undefined}>
-      {unit.containers.reduceRight<ReactNode>(inContainer, content)}
+      {props.cell.raw === true
+        ? content
+        : unit.containers.reduceRight<ReactNode>(inContainer, content)}
     </div>
   );
 }
