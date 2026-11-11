@@ -172,7 +172,7 @@ export function MarkdownDiff(props: {
   );
   // Blank lines belong to no block, so a hunk that only changes them has no change row.
   const blankOnly = useMemo(
-    () => patchChanges(patch) && !rows.some((row) => row.kind === "change"),
+    () => patchChanges(patch) && rows.every((row) => row.kind === "context"),
     [patch, rows],
   );
   const twoSided = split && rows.some((row) => row.kind !== "change" || row.old.length > 0);
@@ -419,7 +419,7 @@ function Link(props: { href?: string; children?: ReactNode }) {
   );
 }
 
-const REPOSITORY = "http://repository.invalid";
+const REPOSITORY = "https://repository.invalid";
 
 /** A web address for an image, or the path of an image in the repository. */
 function imageTarget(src: string, origin: Origin | null): { url: string; path?: string } | null {
@@ -432,10 +432,19 @@ function imageTarget(src: string, origin: Origin | null): { url: string; path?: 
     if (origin === null) {
       return null;
     }
-    const path = decodeURIComponent(url.pathname.slice(1));
+    const path = decoded(url.pathname.slice(1));
     return { url: resourceHref({ kind: "image", path, side: origin.side }), path };
   } catch {
     return null;
+  }
+}
+
+/** A file name can hold a bare `%`, which is not a valid escape. */
+function decoded(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
   }
 }
 
@@ -451,8 +460,9 @@ function Picture(props: {
     () => (props.src === undefined ? null : imageTarget(props.src, origin)),
     [origin, props.src],
   );
-  const [failed, setFailed] = useState(false);
-  if (target === null || failed) {
+  // The address that failed, not a flag: another image can take this place in the tree.
+  const [failed, setFailed] = useState<string>();
+  if (target === null || failed === target.url) {
     return (
       <Unopened
         reason={
@@ -475,7 +485,7 @@ function Picture(props: {
       width={props.width}
       height={props.height}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFailed(target.url)}
     />
   );
 }
@@ -483,6 +493,8 @@ function Picture(props: {
 const COMPONENTS: Partial<Components> = {
   a: Link,
   img: Picture,
+  // A `<picture>` shows its `<img>`, which takes the path above. A `srcset` would not.
+  source: () => null,
   // A diff hides nothing: a closed block could hold the change.
   details: (props) => <details {...props} open />,
 };

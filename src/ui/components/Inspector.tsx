@@ -38,6 +38,8 @@ export function Inspector(props: {
   const { inspector, wrap, setInspector, onClose, rangeShas } = props;
   const image = isImagePath(inspector.path);
   const [content, setContent] = useState<string>("");
+  // The path on the side shown. A renamed file has another path at base.
+  const [contentPath, setContentPath] = useState(inspector.path);
   const [blame, setBlame] = useState<ApiBlameLine[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,6 +98,7 @@ export function Inspector(props: {
         .then((payload) => {
           if (!cancelled) {
             setContent(payload.content);
+            setContentPath(payload.path);
             setLoading(false);
           }
         })
@@ -217,7 +220,7 @@ export function Inspector(props: {
               <WaitMark label={waitCopy.file} />
             ) : (
               <MarkdownFile
-                path={inspector.path}
+                path={contentPath}
                 side={inspector.side}
                 rows={markdownRows}
                 wrap={wrap}

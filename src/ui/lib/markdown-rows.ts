@@ -18,22 +18,33 @@ function settleAll(): void {
  * word by word, and the page must not stop for it. Null when the file cannot be read as Markdown.
  */
 export function markdownRowsJob(job: MarkdownJob): Promise<MdRow[] | null> {
-  if (worker === undefined) {
-    worker = new MarkdownWorker();
-    worker.addEventListener("message", (event: MessageEvent<MarkdownReply>) => {
-      waiting.get(event.data.id)?.(event.data.rows);
-      waiting.delete(event.data.id);
-    });
-    // The worker did not load, or it stopped. No answer will come for the jobs it holds.
-    worker.addEventListener("error", (event) => {
-      console.error(event);
-      worker = undefined;
-      settleAll();
-    });
-  }
   const request: MarkdownRequest = { id: nextId++, job };
   return new Promise((resolve) => {
-    waiting.set(request.id, resolve);
-    worker?.postMessage(request);
+    try {
+      worker ??= startWorker();
+      waiting.set(request.id, resolve);
+      worker.postMessage(request);
+    } catch (cause: unknown) {
+      // The browser did not start the worker, or did not take the job.
+      console.error(cause);
+      waiting.delete(request.id);
+      resolve(null);
+    }
   });
+}
+
+function startWorker(): Worker {
+  const started = new MarkdownWorker();
+  started.addEventListener("message", (event: MessageEvent<MarkdownReply>) => {
+    waiting.get(event.data.id)?.(event.data.rows);
+    waiting.delete(event.data.id);
+  });
+  // The worker did not load, or it stopped. No answer will come for the jobs it holds.
+  started.addEventListener("error", (event) => {
+    console.error(event);
+    started.terminate();
+    worker = undefined;
+    settleAll();
+  });
+  return started;
 }
