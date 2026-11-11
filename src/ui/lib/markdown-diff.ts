@@ -36,6 +36,11 @@ export type MdUnit = {
   nodes: ElementContent[];
   /** Set on a code block: its text without the fence, and the language the fence names. */
   code?: MdCode;
+  /**
+   * The block renders as nothing: a comment, a link definition, a tag with no text of its own.
+   * Its nodes are its source. It shows only where it changed, so a tag in the diff is never lost.
+   */
+  silent?: true;
 };
 
 export type MdCode = { lang: string | null; value: string };
@@ -55,8 +60,6 @@ export function markdownUnits(source: string): MdUnit[] {
   const push = (node: RootContent, start: number, end: number, containers: MdContainer[]) => {
     const text = lines.slice(start - 1, end).join("\n");
     const rendered = render(node, definitions);
-    // A block that renders as nothing shows its source: a link definition, a comment, a lone
-    // closing tag. A tag in the diff is never lost.
     const shows = node.type === "html" ? hasContent(rendered) : rendered.length > 0;
     units.push({
       index: units.length,
@@ -64,7 +67,7 @@ export function markdownUnits(source: string): MdUnit[] {
       end,
       source: text,
       containers,
-      nodes: shows ? rendered : [codeBlock(text)],
+      ...(shows ? { nodes: rendered } : { nodes: [codeBlock(text)], silent: true }),
       ...(node.type === "code" ? { code: { lang: node.lang ?? null, value: node.value } } : {}),
     });
   };
@@ -243,8 +246,11 @@ export type MdCell = {
   nodes: ElementContent[];
   /** Git found every line of the block on the other side of a move. */
   moved: boolean;
-  /** The nodes are the block's source lines, which hold its list marks and quote marks. */
-  raw?: true;
+  /**
+   * The block's source lines, set when only its markup changed. They show under the rendered
+   * block, which looks the same on both sides, with the markup that differs marked.
+   */
+  source?: ElementContent[];
 };
 
 export type MdRow =
@@ -377,7 +383,7 @@ function changeRow(
     };
   }
   // Only markup changed, such as a link target or an image path. The rendered blocks would look
-  // the same, so the row shows its source, with the markup that differs marked.
+  // the same, so each also shows its source, with the markup that differs marked.
   const source =
     liveOld.length > 0 &&
     liveNew.length > 0 &&
@@ -397,14 +403,14 @@ function changeRow(
       if (flags[i] === true) {
         return { unit, nodes: unit.nodes, moved: true };
       }
-      return source
-        ? {
-            unit,
-            nodes: markNodes([codeBlock(unit.source)], side[i] ?? []),
-            moved: false,
-            raw: true,
-          }
-        : { unit, nodes: markNodes(unit.nodes, side[i] ?? []), moved: false };
+      if (!source) {
+        return { unit, nodes: markNodes(unit.nodes, side[i] ?? []), moved: false };
+      }
+      const lines = markNodes([codeBlock(unit.source)], side[i] ?? []);
+      // The nodes of a silent block are its source already.
+      return unit.silent === true
+        ? { unit, nodes: lines, moved: false }
+        : { unit, nodes: unit.nodes, source: lines, moved: false };
     });
   return {
     kind: "change",

@@ -1,3 +1,4 @@
+import type { ElementContent } from "hast";
 import { toJsxRuntime, type Components } from "hast-util-to-jsx-runtime";
 import {
   createContext,
@@ -265,6 +266,9 @@ export function MarkdownDiff(props: {
       {rows.map((row, i) => {
         const above = rows[i - 1];
         const gap = above === undefined ? undefined : rowGap(above, row);
+        // A block that renders as nothing and did not change has nothing to show but a pin.
+        const silent =
+          row.kind === "context" && row.new.unit.silent === true && bothPins(row) === undefined;
         return (
           <Fragment key={row.kind === "change" ? `r${i}` : `c${row.new.unit.index}`}>
             {gap !== undefined ? (
@@ -272,7 +276,7 @@ export function MarkdownDiff(props: {
                 <HunkGap lines={gap} />
               </div>
             ) : null}
-            {body(row)}
+            {silent ? null : body(row)}
           </Fragment>
         );
       })}
@@ -297,7 +301,7 @@ export function MarkdownFile(props: {
   return (
     <div className="min-w-0 bg-[var(--diff-canvas)] py-3 text-[var(--diff-fg)]">
       {props.rows.map((row) =>
-        row.kind === "change" ? null : (
+        row.kind === "change" || row.new.unit.silent === true ? null : (
           <Cell
             key={row.new.unit.index}
             cell={row.new}
@@ -328,7 +332,7 @@ function Cell(props: {
   focusCommentId?: string;
 }) {
   const { cell, tone, pins } = props;
-  const code = cell.raw !== true && cell.unit.code !== undefined;
+  const code = cell.unit.code !== undefined;
   return (
     <div
       data-md-tone={tone}
@@ -495,36 +499,32 @@ const COMPONENTS: Partial<Components> = {
   img: Picture,
   // A `<picture>` shows its `<img>`, which takes the path above. A `srcset` would not.
   source: () => null,
-  // A diff hides nothing: a closed block could hold the change.
+  // A diff hides nothing: a closed block could hold the change. The blocks after a `<summary>`
+  // are rows of their own, so a click on it has nothing to close.
   details: (props) => <details {...props} open />,
+  summary: (props) => <summary {...props} onClick={(event) => event.preventDefault()} />,
 };
 
-/** One block in its lists and quotes: rendered Markdown, a code block, or the source of the block. */
+/** One block in its lists and quotes: rendered Markdown or a code block, then its source if set. */
 function Block(props: { cell: MdCell; codeBefore?: MdCell; split: boolean; wrap: boolean }) {
   const { cell, codeBefore, wrap } = props;
-  const { nodes, unit } = cell;
-  const code = cell.raw === true ? undefined : unit.code;
+  const { nodes, source, unit } = cell;
   const content = useMemo(
-    () =>
-      code === undefined
-        ? toJsxRuntime(
-            { type: "root", children: nodes },
-            { Fragment: JsxFragment, jsx, jsxs, components: COMPONENTS },
-          )
-        : null,
-    [code, nodes],
+    () => (unit.code === undefined ? rendered(nodes) : null),
+    [nodes, unit.code],
   );
+  const lines = useMemo(() => (source === undefined ? null : rendered(source)), [source]);
   const inner =
-    code === undefined ? (
+    unit.code === undefined ? (
       content
     ) : (
       <div className={styles.code}>
         {codeBefore?.unit.code === undefined ? (
-          <PierreSnippet code={code} wrap={wrap} />
+          <PierreSnippet code={unit.code} wrap={wrap} />
         ) : (
           <PierreSnippetDiff
             before={codeBefore.unit.code}
-            after={code}
+            after={unit.code}
             split={props.split}
             wrap={wrap}
           />
@@ -533,8 +533,16 @@ function Block(props: { cell: MdCell; codeBefore?: MdCell; split: boolean; wrap:
     );
   return (
     <div className={styles.prose} data-wrap={wrap ? "" : undefined}>
-      {cell.raw === true ? inner : unit.containers.reduceRight<ReactNode>(inContainer, inner)}
+      {unit.containers.reduceRight<ReactNode>(inContainer, inner)}
+      {lines === null ? null : <div data-source>{lines}</div>}
     </div>
+  );
+}
+
+function rendered(nodes: ElementContent[]): ReactNode {
+  return toJsxRuntime(
+    { type: "root", children: nodes },
+    { Fragment: JsxFragment, jsx, jsxs, components: COMPONENTS },
   );
 }
 

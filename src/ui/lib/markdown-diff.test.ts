@@ -56,7 +56,7 @@ function text(nodes: readonly ElementContent[]): string {
 
 function shape(rows: readonly MdRow[]): string[] {
   const cell = (sign: string) => (item: MdCell) =>
-    `${sign}${item.moved ? "~" : ""} ${text(item.nodes).trim()}`;
+    `${sign}${item.moved ? "~" : ""} ${text(item.source ?? item.nodes).trim()}`;
   return rows.flatMap((row) =>
     row.kind === "context"
       ? [cell(" ")(row.new)]
@@ -144,7 +144,7 @@ describe("markdownUnits", () => {
     );
   });
 
-  it("shows the source of a block that renders as nothing", () => {
+  it("holds the source of a block that renders as nothing, and flags the block", () => {
     const units = markdownUnits(
       [
         "[ref]: https://example.com",
@@ -159,8 +159,14 @@ describe("markdownUnits", () => {
       ].join("\n"),
     );
     assert.deepEqual(
-      units.map((unit) => text(unit.nodes)),
-      ["[ref]: https://example.com", "<!-- a note -->", "<details>", "Text.", "</details>"],
+      units.map((unit) => [text(unit.nodes), unit.silent === true]),
+      [
+        ["[ref]: https://example.com", true],
+        ["<!-- a note -->", true],
+        ["<details>", true],
+        ["Text.", false],
+        ["</details>", true],
+      ],
     );
   });
 
@@ -287,6 +293,79 @@ describe("markdownRows", () => {
       "+ Run it [[now]].",
       "+ a today",
     ]);
+  });
+
+  it("shows the source of a block when only its markup changed", () => {
+    const rows = markdownRows("See the [guide](docs/a.md).", "See the [guide](docs/b.md).", [
+      hunk(1, 1, ["-See the [guide](docs/a.md).", "+See the [guide](docs/b.md)."]),
+    ]);
+    assert.deepEqual(shape(rows), [
+      "- See the [guide](docs/[[a]].md).",
+      "+ See the [guide](docs/[[b]].md).",
+    ]);
+  });
+
+  it("shows the source of an image whose path changed", () => {
+    const rows = markdownRows("![chart](a.png)", "![chart](b.png)", [
+      hunk(1, 1, ["-![chart](a.png)", "+![chart](b.png)"]),
+    ]);
+    assert.deepEqual(shape(rows), ["- ![chart]([[a]].png)", "+ ![chart]([[b]].png)"]);
+  });
+
+  it("flags a block git found moved, and keeps it out of the word diff", () => {
+    const moved = { path: "a.md", line: 1 };
+    const rows = markdownRows(
+      ["Moved text.", "", "Stay."].join("\n"),
+      ["Stay.", "", "Moved text."].join("\n"),
+      [
+        {
+          ...hunk(1, 1, ["-Moved text.", "-", " Stay.", "+", "+Moved text."]),
+          lines: [
+            { kind: "del", oldNumber: 1, newNumber: null, text: "Moved text.", moved },
+            { kind: "del", oldNumber: 2, newNumber: null, text: "" },
+            { kind: "ctx", oldNumber: 3, newNumber: 1, text: "Stay." },
+            { kind: "add", oldNumber: null, newNumber: 2, text: "" },
+            { kind: "add", oldNumber: null, newNumber: 3, text: "Moved text.", moved },
+          ],
+        },
+      ],
+    );
+    assert.deepEqual(shape(rows), ["-~ Moved text.", "  Stay.", "+~ Moved text."]);
+  });
+
+  it("reads only one side of an added file", () => {
+    const rows = markdownRows(undefined, "# New\n\nText.", [hunk(0, 1, ["+# New", "+", "+Text."])]);
+    assert.deepEqual(shape(rows), ["+ New", "+ Text."]);
+  });
+
+  it("keeps a second hunk in step when lines were added above it", () => {
+    const oldLines = ["A", "", "B", "", "x", "", "x", "", "x", "", "C", "", "D"];
+    const newLines = ["A", "", "B2", "", "B3", "", "x", "", "x", "", "x", "", "C", "", "D2"];
+    const rows = markdownRows(oldLines.join("\n"), newLines.join("\n"), [
+      hunk(1, 1, [" A", " ", "-B", "+B2", "+", "+B3", " "]),
+      hunk(11, 13, [" C", " ", "-D", "+D2"]),
+    ]);
+    assert.deepEqual(shape(rows), ["  A", "- B", "+ B2", "+ B3", "  C", "- D", "+ D2"]);
+  });
+
+  it("keeps the rendered block beside the source when only markup changed", () => {
+    const rows = markdownRows('<img src="a.png" alt="A">', '<img src="a.png" alt="B">', [
+      hunk(1, 1, ['-<img src="a.png" alt="A">', '+<img src="a.png" alt="B">']),
+    ]);
+    const [row] = rows;
+    assert.ok(row?.kind === "change");
+    assert.deepEqual(tags(row.new[0]?.nodes ?? []), ["img"]);
+    assert.equal(text(row.new[0]?.source ?? []), '<img src="a.png" alt="[[B]]">');
+  });
+
+  it("shows a changed comment as its source, with no second copy", () => {
+    const rows = markdownRows("<!-- old note -->", "<!-- new note -->", [
+      hunk(1, 1, ["-<!-- old note -->", "+<!-- new note -->"]),
+    ]);
+    const [row] = rows;
+    assert.ok(row?.kind === "change");
+    assert.equal(text(row.new[0]?.nodes ?? []), "<!-- [[new]] note -->");
+    assert.equal(row.new[0]?.source, undefined);
   });
 });
 
