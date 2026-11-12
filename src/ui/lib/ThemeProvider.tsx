@@ -20,6 +20,7 @@ import {
 type ThemeContextValue = {
   preference: ThemePreference;
   resolved: ResolvedTheme;
+  system: ResolvedTheme;
   setPreference: (preference: ThemePreference) => void;
 };
 
@@ -29,6 +30,7 @@ export function ThemeProvider(props: { children: ReactNode }) {
   const [preference, setPreferenceState] = useState<ThemePreference>(readStoredPreference);
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const resolved = resolveTheme(preference, prefersDark);
+  const system = resolveTheme("auto", prefersDark);
 
   const setPreference = useCallback((next: ThemePreference) => {
     writeStoredPreference(next);
@@ -47,8 +49,8 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ preference, resolved, setPreference }),
-    [preference, resolved, setPreference],
+    () => ({ preference, resolved, system, setPreference }),
+    [preference, resolved, system, setPreference],
   );
 
   return <ThemeContext.Provider value={value}>{props.children}</ThemeContext.Provider>;

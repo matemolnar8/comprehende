@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { parseThemePreference, resolveTheme } from "./theme.ts";
+import { nextThemePreference, parseThemePreference, resolveTheme } from "./theme.ts";
 
 describe("theme preference", () => {
   it("treats missing or unknown values as auto", () => {
@@ -27,5 +27,20 @@ describe("theme preference", () => {
   it("keeps an explicit preference over the OS", () => {
     assert.equal(resolveTheme("light", true), "light");
     assert.equal(resolveTheme("dark", false), "dark");
+  });
+
+  it("cycles from auto through both themes and back, changing the page on the first two clicks", () => {
+    for (const prefersDark of [true, false]) {
+      const system = resolveTheme("auto", prefersDark);
+      const seen = [resolveTheme("auto", prefersDark)];
+      let preference = nextThemePreference("auto", system);
+      for (let click = 0; click < 2; click++) {
+        seen.push(resolveTheme(preference, prefersDark));
+        preference = nextThemePreference(preference, system);
+      }
+      assert.equal(preference, "auto");
+      assert.notEqual(seen[1], seen[0]);
+      assert.notEqual(seen[2], seen[1]);
+    }
   });
 });
