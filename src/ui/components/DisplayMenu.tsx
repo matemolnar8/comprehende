@@ -123,7 +123,7 @@ export function DisplayMenu(props: {
   );
 }
 
-/** Shows the current theme and steps to the next one: follow system, then light and dark. */
+/** Shows the current theme. A click steps to `nextThemePreference`. */
 export function ThemeButton() {
   const { preference, system, setPreference } = useTheme();
   const next = nextThemePreference(preference, system);
