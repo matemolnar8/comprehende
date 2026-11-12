@@ -348,8 +348,11 @@ function WipeStage(props: {
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
         >
-          <StageImage src={newUrl} alt="Head" stage={stage} />
-          <div className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${wipe}%` }}>
+          {/* Clip both sides: a smaller base leaves empty room the head must not fill. */}
+          <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${wipe}%)` }}>
+            <StageImage src={newUrl} alt="Head" stage={stage} />
+          </div>
+          <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - wipe}% 0 0)` }}>
             <StageImage src={oldUrl} alt="Base" stage={stage} />
           </div>
           <div
