@@ -8,15 +8,13 @@ export function prefersReducedMotion(): boolean {
   return typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function shouldViewTransition(options?: {
-  reducedMotion?: boolean;
-  startViewTransition?: unknown;
-}): boolean {
-  const reduced = options?.reducedMotion ?? prefersReducedMotion();
-  const start =
-    options?.startViewTransition ??
-    (typeof document === "undefined" ? undefined : document.startViewTransition.bind(document));
-  return !reduced && typeof start === "function";
+/** lib.dom types the method as always present; Firefox before 144 and Safari before 18 lack it. */
+function viewTransitionStart(): Document["startViewTransition"] | undefined {
+  if (typeof document === "undefined" || prefersReducedMotion()) {
+    return undefined;
+  }
+  const maybe: Partial<Pick<Document, "startViewTransition">> = document;
+  return maybe.startViewTransition?.bind(document);
 }
 
 /** Narrow screens skip the group motion: iOS Safari can leave the brief unpainted after it (WebKit bug 275698). */
@@ -31,12 +29,8 @@ export function selectionMotion(view: {
 }
 
 export function runViewTransition(update: () => void, kind: MotionKind | null): void {
-  if (kind === null || !shouldViewTransition()) {
-    update();
-    return;
-  }
-  const start = document.startViewTransition.bind(document);
-  if (typeof start !== "function") {
+  const start = viewTransitionStart();
+  if (kind === null || start === undefined) {
     update();
     return;
   }

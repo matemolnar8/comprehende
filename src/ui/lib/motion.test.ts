@@ -1,19 +1,42 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vite-plus/test";
-import { selectionMotion, shouldViewTransition } from "./motion.ts";
+import { runViewTransition, selectionMotion } from "./motion.ts";
 import { selectionStack } from "./selection.ts";
 
-describe("shouldViewTransition", () => {
-  it("needs motion allowed and the View Transition API", () => {
-    const cases: Array<
-      [{ reducedMotion: boolean; startViewTransition: (() => undefined) | undefined }, boolean]
-    > = [
-      [{ reducedMotion: true, startViewTransition: () => undefined }, false],
-      [{ reducedMotion: false, startViewTransition: undefined }, false],
-      [{ reducedMotion: false, startViewTransition: () => undefined }, true],
-    ];
-    for (const [options, expected] of cases) {
-      assert.equal(shouldViewTransition(options), expected);
+describe("runViewTransition", () => {
+  it("runs the update directly where the View Transition API is missing", () => {
+    const fakeDocument = { documentElement: { dataset: {} } };
+    Object.defineProperty(globalThis, "document", { value: fakeDocument, configurable: true });
+    try {
+      let updates = 0;
+      runViewTransition(() => {
+        updates += 1;
+      }, "group");
+      assert.equal(updates, 1);
+    } finally {
+      Reflect.deleteProperty(globalThis, "document");
+    }
+  });
+
+  it("starts a transition and marks the motion kind where the API exists", () => {
+    const dataset: Record<string, string> = {};
+    const fakeDocument = {
+      documentElement: { dataset },
+      startViewTransition: (callback: () => void) => {
+        callback();
+        return { finished: new Promise<void>(() => {}) };
+      },
+    };
+    Object.defineProperty(globalThis, "document", { value: fakeDocument, configurable: true });
+    try {
+      let updates = 0;
+      runViewTransition(() => {
+        updates += 1;
+      }, "scene");
+      assert.equal(updates, 1);
+      assert.equal(dataset.motion, "scene");
+    } finally {
+      Reflect.deleteProperty(globalThis, "document");
     }
   });
 });
