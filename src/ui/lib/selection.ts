@@ -233,6 +233,10 @@ export function selectionNavLabel(meta: SelectionCaptionMeta, selection: Selecti
   return caption.index !== undefined ? `${caption.index} ${caption.title}` : caption.title;
 }
 
+export function pageTitle(meta: SelectionCaptionMeta, selection: Selection | null): string {
+  return `${selectionNavLabel(meta, selection ?? { kind: "overview" })} · ${meta.document.title}`;
+}
+
 export function selectionCaption(
   meta: SelectionCaptionMeta,
   selection: Selection | null,

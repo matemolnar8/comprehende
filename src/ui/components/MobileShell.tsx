@@ -8,6 +8,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet.tsx";
 import type { Part } from "../lib/parts.ts";
 import { reviewReadingPaths } from "../lib/reading-progress.ts";
@@ -36,45 +37,40 @@ export function MobileShell(props: {
     setOpen(false);
   };
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <header className="flex h-14 shrink-0 items-center border-b border-border bg-card px-1">
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          aria-expanded={open}
-          onClick={() => setOpen(true)}
-          className="h-11 text-muted-foreground"
-        >
-          <PanelLeftIcon />
-          Groups
-        </Button>
-        <div className="flex min-w-0 flex-1 flex-col px-1">
-          <GroupPosition meta={props.meta} selection={props.selection} className="truncate" />
-          <span className="truncate font-mono text-xs text-muted-foreground">
-            {shortSha(props.meta.resolved.baseSha)} → {shortSha(props.meta.resolved.headSha)}
-          </span>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <div className="flex h-full min-h-0 flex-col">
+        <header className="flex h-14 shrink-0 items-center border-b border-border bg-card px-1">
+          <SheetTrigger asChild>
+            <Button type="button" size="sm" variant="ghost" className="h-11 text-muted-foreground">
+              <PanelLeftIcon />
+              Groups
+            </Button>
+          </SheetTrigger>
+          <div className="flex min-w-0 flex-1 flex-col px-1">
+            <GroupPosition meta={props.meta} selection={props.selection} className="truncate" />
+            <span className="truncate font-mono text-xs text-muted-foreground">
+              {shortSha(props.meta.resolved.baseSha)} → {shortSha(props.meta.resolved.headSha)}
+            </span>
+          </div>
+          <GroupNav
+            meta={props.meta}
+            selection={props.selection}
+            onSelect={props.onSelect}
+            className="gap-0"
+            buttonClassName="size-10 text-foreground disabled:text-muted-foreground"
+          />
+          <DisplayMenu
+            wrap={props.wrap}
+            onWrap={props.onWrap}
+            onRefresh={props.onRefresh}
+            comments={props.comments}
+            onComments={props.onComments}
+            triggerClassName="h-11"
+          />
+        </header>
+        <div className="min-h-0 flex-1 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
+          {props.children}
         </div>
-        <GroupNav
-          meta={props.meta}
-          selection={props.selection}
-          onSelect={props.onSelect}
-          className="gap-0"
-          buttonClassName="size-10 text-foreground disabled:text-muted-foreground"
-        />
-        <DisplayMenu
-          wrap={props.wrap}
-          onWrap={props.onWrap}
-          onRefresh={props.onRefresh}
-          comments={props.comments}
-          onComments={props.onComments}
-          triggerClassName="h-11"
-        />
-      </header>
-      <div className="min-h-0 flex-1 [[data-motion=scene]_&]:[view-transition-name:review-scene]">
-        {props.children}
-      </div>
-      <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="p-0">
           <SheetHeader className="gap-0.5 border-b border-border pr-12">
             <SheetTitle>Groups</SheetTitle>
@@ -104,7 +100,7 @@ export function MobileShell(props: {
             className="min-h-0 flex-1"
           />
         </SheetContent>
-      </Sheet>
-    </div>
+      </div>
+    </Sheet>
   );
 }
