@@ -348,7 +348,7 @@ function WipeStage(props: {
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
         >
-          {/* Clip both sides: a smaller base leaves empty room the head must not fill. */}
+          {/* Clip both sides, so empty or transparent base area shows the bench, not the head. */}
           <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${wipe}%)` }}>
             <StageImage src={newUrl} alt="Head" stage={stage} />
           </div>
