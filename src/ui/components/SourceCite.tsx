@@ -44,7 +44,7 @@ export function SourceCite(props: {
           className={className}
           onClick={activate}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
+            if (event.key === "Enter" && !event.repeat) {
               activate(event);
             }
           }}

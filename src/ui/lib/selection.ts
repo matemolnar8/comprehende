@@ -228,13 +228,13 @@ export function sameSelection(a: Selection, b: Selection | null): boolean {
   return a.kind === b.kind;
 }
 
-export function selectionNavLabel(meta: SelectionCaptionMeta, selection: Selection): string {
+export function selectionNavLabel(meta: SelectionCaptionMeta, selection: Selection | null): string {
   const caption = selectionCaption(meta, selection);
   return caption.index !== undefined ? `${caption.index} ${caption.title}` : caption.title;
 }
 
 export function pageTitle(meta: SelectionCaptionMeta, selection: Selection | null): string {
-  return `${selectionNavLabel(meta, selection ?? { kind: "overview" })} · ${meta.document.title}`;
+  return `${selectionNavLabel(meta, selection)} · ${meta.document.title}`;
 }
 
 export function selectionCaption(
