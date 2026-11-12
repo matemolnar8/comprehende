@@ -29,6 +29,18 @@ export function resolveTheme(preference: ThemePreference, prefersDark: boolean):
   return preference;
 }
 
+/** Cycles auto, the theme opposite to the OS, then the OS theme, so the first two clicks both change the page. */
+export function nextThemePreference(
+  preference: ThemePreference,
+  system: ResolvedTheme,
+): ThemePreference {
+  const opposite = system === "dark" ? "light" : "dark";
+  if (preference === "auto") {
+    return opposite;
+  }
+  return preference === opposite ? system : "auto";
+}
+
 export function applyResolvedTheme(theme: ResolvedTheme): void {
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.style.colorScheme = theme;

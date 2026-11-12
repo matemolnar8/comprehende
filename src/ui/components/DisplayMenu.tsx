@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { MoonIcon, RotateCwIcon, SlidersHorizontalIcon, SunIcon } from "lucide-react";
+import {
+  MoonIcon,
+  RotateCwIcon,
+  SlidersHorizontalIcon,
+  SunIcon,
+  SunMoonIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import {
   DropdownMenu,
@@ -15,7 +22,7 @@ import {
 import { useMonoFont } from "@/lib/MonoFontProvider.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
 import { cn } from "@/lib/utils.ts";
-import type { ThemePreference } from "../lib/theme.ts";
+import { nextThemePreference, type ThemePreference } from "../lib/theme.ts";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import { Kbd } from "./Kbd.tsx";
 
@@ -26,6 +33,12 @@ const THEME_LABELS = {
 } satisfies Record<ThemePreference, string>;
 
 const THEME_CHOICES: readonly ThemePreference[] = ["auto", "light", "dark"];
+
+const THEME_ICONS = {
+  auto: SunMoonIcon,
+  light: SunIcon,
+  dark: MoonIcon,
+} satisfies Record<ThemePreference, LucideIcon>;
 
 /** Display settings that do not change what the review says: wrap, comments, code font, theme. */
 export function DisplayMenu(props: {
@@ -110,11 +123,12 @@ export function DisplayMenu(props: {
   );
 }
 
-/** Flips between light and dark. The menu keeps the full choice, with "Follow system". */
+/** Shows the current theme. A click steps to `nextThemePreference`. */
 export function ThemeButton() {
-  const { resolved, setPreference } = useTheme();
-  const next = resolved === "dark" ? "light" : "dark";
-  const action = `Use ${next} theme`;
+  const { preference, system, setPreference } = useTheme();
+  const next = nextThemePreference(preference, system);
+  const label = `Theme: ${THEME_LABELS[preference]}. Next: ${THEME_LABELS[next]}`;
+  const Icon = THEME_ICONS[preference];
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -122,14 +136,14 @@ export function ThemeButton() {
           type="button"
           size="icon-sm"
           variant="ghost"
-          aria-label={action}
+          aria-label={label}
           onClick={() => setPreference(next)}
           className="text-muted-foreground hover:text-foreground"
         >
-          {next === "dark" ? <MoonIcon /> : <SunIcon />}
+          <Icon />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{action}</TooltipContent>
+      <TooltipContent>{label}</TooltipContent>
     </Tooltip>
   );
 }
