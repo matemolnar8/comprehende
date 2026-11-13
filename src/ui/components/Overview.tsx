@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import { ArrowRightIcon, InfoIcon } from "lucide-react";
 import { type ReviewMeta } from "../api.ts";
 import { padIndex, sizeLabel } from "../../schema/types.ts";
@@ -16,6 +16,7 @@ import { HashLink, hashLinkText } from "./HashLink.tsx";
 import { InlineMd } from "./InlineMd.tsx";
 import { Kbd } from "./Kbd.tsx";
 import {
+  BriefField,
   briefProse,
   briefRail,
   contentColumn,
@@ -51,6 +52,12 @@ function SkippedFiles(props: { paths: string }) {
   );
 }
 
+/**
+ * Up to this many groups, the Overview is one column with Things to check above Groups, so the
+ * group list cannot push the checks down. More groups, or a review with parts, use the split.
+ */
+const SINGLE_COLUMN_MAX_GROUPS = 4;
+
 export function Overview(props: {
   meta: ReviewMeta;
   parts: Part[];
@@ -69,16 +76,122 @@ export function Overview(props: {
   const skipped = skippedBinaryNote(meta.skipped);
   const firstId = parts[0]?.groupIds[0];
   const first = firstId === undefined ? undefined : byId.get(firstId);
+  const singleColumn = !mixed && groupCount <= SINGLE_COLUMN_MAX_GROUPS;
+
+  const groupList = (
+    <div className="flex flex-col gap-7">
+      {parts.map((part) => (
+        <PartSection
+          key={part.groupIds.join("\0")}
+          part={part}
+          parts={parts}
+          mixed={mixed}
+          listedParts={meta.document.parts}
+          byId={byId}
+          viewedPaths={viewedPaths}
+          onOpenGroup={onOpenGroup}
+        />
+      ))}
+    </div>
+  );
+
+  const brief = (
+    <Brief
+      kicker={
+        <>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-default">
+                {groupCount} {groupCount === 1 ? "group" : "groups"} · {fileCount}{" "}
+                {fileCount === 1 ? "file" : "files"}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{reviewSizeLabel(meta.document.size)}</TooltipContent>
+          </Tooltip>
+          {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
+          {meta.changes !== undefined ? (
+            <>
+              <span aria-hidden>·</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <HashLink
+                      selection={{ kind: "changes" }}
+                      onSelect={onSelect}
+                      className={cn("text-primary", hashLinkText)}
+                    >
+                      {since === undefined
+                        ? "What changed"
+                        : `What changed since ${shortSha(since)}`}
+                    </HashLink>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="flex items-center gap-2">
+                  Open the changes since the last review <Kbd>h</Kbd>
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
+        </>
+      }
+      title={meta.document.title}
+      titleSize="overview"
+      className="min-w-0 flex-1"
+      kickerExtra={<AskAgent prompt={askAgentPrompt("overview")} scope="overview" />}
+    >
+      {first !== undefined ? (
+        <p className="mt-1 mb-6 flex min-w-0">
+          <HashLink
+            selection={{ kind: "group", id: first.id }}
+            onSelect={() => onOpenGroup(first.id)}
+            className={cn(buttonVariants({ size: "sm" }), "max-w-full")}
+          >
+            <span className="min-w-0 truncate">
+              Start with {padIndex(groupOrderIndex(parts, first.id))} {first.title}
+            </span>
+            <ArrowRightIcon aria-hidden />
+          </HashLink>
+        </p>
+      ) : null}
+      <ProseField kicker="Why" kickerId="review-why" text={meta.document.why} />
+      <ProseField kicker="What" kickerId="review-what" text={meta.document.summary} />
+      <LookForList items={meta.document.lookFor ?? []} focusKey={focusClaimKey} />
+      {singleColumn ? (
+        <BriefField kicker="Groups" className="mt-8">
+          {groupList}
+        </BriefField>
+      ) : null}
+      <SourceList
+        ids={sources.map((source) => source.id)}
+        sources={sources}
+        mixed={mixed}
+        parts={parts}
+      />
+    </Brief>
+  );
+
+  const rootClass = cn(
+    splitRoot,
+    "mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]",
+  );
+
+  if (singleColumn) {
+    return (
+      <div className={rootClass}>
+        <div className="mx-auto max-w-[42rem]">{brief}</div>
+      </div>
+    );
+  }
+
+  return <SplitOverview className={rootClass} brief={brief} groupList={groupList} />;
+}
+
+/** The brief in a sticky column beside the group list. */
+function SplitOverview(props: { className: string; brief: ReactNode; groupList: ReactNode }) {
   const asideRef = useRef<HTMLElement>(null);
   useScrollEdges(asideRef);
-
   return (
-    <div
-      className={cn(
-        splitRoot,
-        "mb-5 [[data-motion=group]_&]:[view-transition-name:review-overview]",
-      )}
-    >
+    <div className={props.className}>
       <div className={splitRow}>
         <aside
           ref={asideRef}
@@ -90,73 +203,7 @@ export function Overview(props: {
           )}
         >
           <span aria-hidden className={cn(briefRail, "bg-border")} />
-          <Brief
-            kicker={
-              <>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-default">
-                      {groupCount} {groupCount === 1 ? "group" : "groups"} · {fileCount}{" "}
-                      {fileCount === 1 ? "file" : "files"}
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>{reviewSizeLabel(meta.document.size)}</TooltipContent>
-                </Tooltip>
-                {skipped !== null ? <SkippedFiles paths={skipped} /> : null}
-                {meta.changes !== undefined ? (
-                  <>
-                    <span aria-hidden>·</span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <HashLink
-                            selection={{ kind: "changes" }}
-                            onSelect={onSelect}
-                            className={cn("text-primary", hashLinkText)}
-                          >
-                            {since === undefined
-                              ? "What changed"
-                              : `What changed since ${shortSha(since)}`}
-                          </HashLink>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="flex items-center gap-2">
-                        Open the changes since the last review <Kbd>h</Kbd>
-                      </TooltipContent>
-                    </Tooltip>
-                  </>
-                ) : null}
-              </>
-            }
-            title={meta.document.title}
-            titleSize="overview"
-            className="min-w-0 flex-1"
-            kickerExtra={<AskAgent prompt={askAgentPrompt("overview")} scope="overview" />}
-          >
-            {first !== undefined ? (
-              <p className="mt-1 mb-6 flex min-w-0">
-                <HashLink
-                  selection={{ kind: "group", id: first.id }}
-                  onSelect={() => onOpenGroup(first.id)}
-                  className={cn(buttonVariants({ size: "sm" }), "max-w-full")}
-                >
-                  <span className="min-w-0 truncate">
-                    Start with {padIndex(groupOrderIndex(parts, first.id))} {first.title}
-                  </span>
-                  <ArrowRightIcon aria-hidden />
-                </HashLink>
-              </p>
-            ) : null}
-            <ProseField kicker="Why" kickerId="review-why" text={meta.document.why} />
-            <ProseField kicker="What" kickerId="review-what" text={meta.document.summary} />
-            <LookForList items={meta.document.lookFor ?? []} focusKey={focusClaimKey} />
-            <SourceList
-              ids={sources.map((source) => source.id)}
-              sources={sources}
-              mixed={mixed}
-              parts={parts}
-            />
-          </Brief>
+          {props.brief}
         </aside>
         <div
           className={cn(
@@ -166,20 +213,7 @@ export function Overview(props: {
           )}
         >
           <h2 className={cn("mb-1.5 flex min-h-8 items-center", labelText)}>Groups</h2>
-          <div className="flex flex-col gap-7">
-            {parts.map((part) => (
-              <PartSection
-                key={part.groupIds.join("\0")}
-                part={part}
-                parts={parts}
-                mixed={mixed}
-                listedParts={meta.document.parts}
-                byId={byId}
-                viewedPaths={viewedPaths}
-                onOpenGroup={onOpenGroup}
-              />
-            ))}
-          </div>
+          {props.groupList}
         </div>
       </div>
     </div>
