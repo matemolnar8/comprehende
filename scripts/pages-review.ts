@@ -139,7 +139,7 @@ export function pagesIndexHtml(sites: PublishedMeta[]): string {
   </head>
   <body>
     <h1>Published sites</h1>
-    <p>A workflow removes a pull request folder when that pull request closes. Sites older than ${DEFAULT_TTL_DAYS} days are dropped.</p>
+    <p>A workflow drops sites older than ${DEFAULT_TTL_DAYS} days.</p>
     ${body}  </body>
 </html>
 `;
