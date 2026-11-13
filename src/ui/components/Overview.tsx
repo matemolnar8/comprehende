@@ -54,7 +54,7 @@ function SkippedFiles(props: { paths: string }) {
 
 /**
  * Up to this many groups, the Overview is one column with Things to check above Groups, so the
- * checks stay on the first screen. More groups use the split.
+ * group list cannot push the checks down. More groups use the split.
  */
 const SINGLE_COLUMN_MAX_GROUPS = 4;
 
