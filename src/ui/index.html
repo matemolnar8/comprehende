@@ -9,15 +9,16 @@
     <script>
       // Mirrors THEME_STORAGE_KEY in src/ui/lib/theme.ts. Runs before the bundle loads, so it cannot import it.
       (() => {
+        let stored = null;
         try {
-          const stored = localStorage.getItem("comprehende.theme");
-          const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const dark = stored === "dark" || (stored !== "light" && prefersDark);
-          document.documentElement.classList.toggle("dark", dark);
-          document.documentElement.style.colorScheme = dark ? "dark" : "light";
+          stored = localStorage.getItem("comprehende.theme");
         } catch {
-          // private mode
+          // Storage is blocked: follow the system.
         }
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const dark = stored === "dark" || (stored !== "light" && prefersDark);
+        document.documentElement.classList.toggle("dark", dark);
+        document.documentElement.style.colorScheme = dark ? "dark" : "light";
       })();
     </script>
   </head>

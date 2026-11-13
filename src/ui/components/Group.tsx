@@ -8,6 +8,7 @@ import { Brief, GroupBrief } from "./GroupBrief.tsx";
 import { FileList, FileRail, FileStrip } from "./FileNav.tsx";
 import { HunkView } from "./HunkView.tsx";
 import { letterNotes } from "../lib/focus.ts";
+import { prefersReducedMotion } from "../lib/motion.ts";
 import { WaitMark } from "./WaitMark.tsx";
 import {
   briefProse,
@@ -88,7 +89,10 @@ export function Group(props: {
     const tick = (): void => {
       const el = document.querySelector(`[data-source-id="${CSS.escape(id)}"]`);
       if (el instanceof HTMLElement) {
-        el.scrollIntoView({ block: "center", behavior: "smooth" });
+        el.scrollIntoView({
+          block: "center",
+          behavior: prefersReducedMotion() ? "instant" : "smooth",
+        });
         return;
       }
       frames += 1;

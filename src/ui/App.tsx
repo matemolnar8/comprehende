@@ -16,6 +16,7 @@ import { visibleFileComments } from "./lib/source-display.ts";
 import { runViewTransition, selectionMotion } from "./lib/motion.ts";
 import {
   hashWriteMode,
+  pageTitle,
   sameSelection,
   selectionFromHash,
   serializeHash,
@@ -112,6 +113,12 @@ export function App() {
       return;
     }
     history.pushState(null, "", url);
+  }, [meta, selection]);
+
+  useEffect(() => {
+    if (meta !== null) {
+      document.title = pageTitle(meta, selection);
+    }
   }, [meta, selection]);
 
   const selectedKey =

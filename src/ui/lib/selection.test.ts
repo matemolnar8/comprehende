@@ -4,6 +4,7 @@ import {
   groupWalk,
   hashWriteMode,
   neighborSelection,
+  pageTitle,
   parseHash,
   restoreSelection,
   selectionCaption,
@@ -151,6 +152,21 @@ describe("selection hash", () => {
     });
     assert.deepEqual(selectionCaption(meta, { kind: "unassigned" }), { title: "Unassigned" });
     assert.deepEqual(selectionCaption(meta, { kind: "lockfiles" }), { title: "Lockfiles" });
+  });
+
+  it("titles the page with the view and the review", () => {
+    const meta = {
+      document: { title: "Pin reviews to SHAs" },
+      groups: [
+        { id: "auth", title: "Keep the pin at serve time" },
+        { id: "ui", title: "Show the resolved range" },
+      ],
+    } as const;
+    assert.equal(pageTitle(meta, null), "Overview · Pin reviews to SHAs");
+    assert.equal(
+      pageTitle(meta, { kind: "group", id: "ui" }),
+      "02 Show the resolved range · Pin reviews to SHAs",
+    );
   });
 
   it("names a neighbor for the previous/next control", () => {

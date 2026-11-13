@@ -1,4 +1,4 @@
-import type { MouseEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import type { Source } from "../../schema/types.ts";
 import { ArrowUpRightIcon } from "lucide-react";
 import { cn } from "../lib/utils.ts";
@@ -19,22 +19,36 @@ export function SourceCite(props: {
     stale && "text-warn",
   );
 
-  const onClick = (event: MouseEvent<HTMLSpanElement>) => {
+  const { url } = source;
+  const cite = jump
+    ? onCite === undefined
+      ? undefined
+      : () => onCite(source)
+    : url === undefined
+      ? undefined
+      : () => window.open(url, "_blank", "noopener,noreferrer");
+
+  // Cites sit inside group links: a nested <a> or <button> is invalid, so this stays a span.
+  const activate = (event: MouseEvent | KeyboardEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    if (jump) {
-      onCite?.(source);
-      return;
-    }
-    if (source.url !== undefined) {
-      window.open(source.url, "_blank", "noopener,noreferrer");
-    }
+    cite?.();
   };
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span role="link" tabIndex={0} className={className} onClick={onClick}>
+        <span
+          role={cite === undefined ? undefined : "link"}
+          tabIndex={0}
+          className={className}
+          onClick={activate}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.repeat) {
+              activate(event);
+            }
+          }}
+        >
           <Icon aria-hidden className="mr-0.5 inline-block size-3.5 align-[-0.15em]" />
           {children}
         </span>
