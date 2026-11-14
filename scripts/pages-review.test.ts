@@ -80,7 +80,7 @@ describe("pages-review urls", () => {
 });
 
 describe("pages-review publish and prune", () => {
-  it("publishes to pr/<n>/, keeps sibling reviews, then prunes on close and TTL", async () => {
+  it("publishes to pr/<n>/, keeps sibling reviews, then prunes by pull request and by TTL", async () => {
     const ctx = await setupRemoteRepo();
     const siteA = await writeExport(ctx.root, "site-a", "alpha");
     const siteB = await writeExport(ctx.root, "site-b", "beta");
@@ -136,7 +136,7 @@ describe("pages-review publish and prune", () => {
     assert.match(await readFile(join(pages, "index.html"), "utf8"), /No published sites right now/);
   });
 
-  it("publishes named sites under site/<slug>/ and leaves them when a PR closes", async () => {
+  it("publishes named sites under site/<slug>/ and leaves them when a pull request is pruned", async () => {
     const ctx = await setupRemoteRepo();
     const t0 = new Date("2026-08-01T00:00:00.000Z");
     await publishPagesReview({
