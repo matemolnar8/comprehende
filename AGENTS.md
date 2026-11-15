@@ -35,19 +35,19 @@ The rest of this file gives good defaults, not hard rules. The developer's choic
 
 ## How it works
 
-The CLI indexes `base...head` and writes a covering skeleton `review.json`: one path per changed file, stub prose, hunk refs. The skill fills interpretation only: title, groups, summaries, attention, lookFor, sources. `validate` checks refs and coverage. `serve` and `export` share one UI and one git payload. Live git wins.
+`pregroup` indexes `base...head` and writes a covering draft `review.json`: one group per repeated change, one for mechanical files, and one for the rest, with stub prose and hunk refs. The skill reads the change with `digest` and `show`, regroups the draft, and fills interpretation only. `validate` checks the schema, refs, coverage, and citations. `serve` and `export` share one UI and one git payload. Live git wins.
 
 ## Where code lives
 
 - `skills-next/comprehende/` - skill source. The only skill text you edit.
 - `.agents/skills/` - skills for agents that work in this repo. `.claude/skills` is a symlink to it, because Claude Code does not read `.agents/skills`.
 - `src/schema/` - review document schema. The source of truth. Parse at the boundary, infer inside.
-- `src/review/` - review-document logic behind the commands: `skeleton.ts` (`review`), `digest.ts`, `coverage.ts`, `anchors.ts`, `pins.ts` (`validate`), `refresh.ts`, `show.ts`. `pregroup` lives in `src/cli/commands.ts`.
-- `src/api/` - UI payloads: `types.ts`, `changes.ts` (What changed), `agent-md.ts`, `live.ts`. A new review field passes through here.
+- `src/review/` - review-document logic behind the commands. `pregroup` lives in `src/cli/commands.ts`.
+- `src/api/` - UI payloads. A new review field passes through here.
 - `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export server, live git reads.
 - `src/ui/` - fixed UI. Only the data changes.
 - `eval/cases/`, `scripts/eval/` - eval cases and runner.
-- `scripts/` - `fixture`, `sync-skill`, schema build.
+- `scripts/` - dev, release, and Pages scripts.
 
 A fresh worktree with no `node_modules` or `.env`: run `node scripts/setup-worktree.ts`.
 
@@ -80,7 +80,7 @@ The most common defect here is a change that fixes one layer and misses the rest
 - **Eval.** Do cases under `eval/cases/` still expect the current behavior?
 - **Docs.** Check whether the change makes existing guidance wrong. See Documentation below.
 
-Adding a review-document field: `git grep -l <sibling field> -- src scripts eval skills-next docs` lists every layer, including text-only ones such as CLI help and docs that typecheck misses. Then run `pnpm generate:schema` to rewrite `src/schema/review.schema.json`; the pre-commit hook fails without it.
+Adding a review-document field: `git grep -l <sibling field> -- src scripts eval skills-next docs '*.md'` lists every layer, including text-only ones such as CLI help and docs that typecheck misses. Then run `pnpm generate:schema` to rewrite `src/schema/review.schema.json`; the pre-commit hook fails without it.
 
 ## Verifying
 
@@ -110,9 +110,9 @@ Releases happen manually. Do not change `package.json` version unless the user a
 - Never make a PR unless the developer explicitly asks you to.
 - When opening a pull request, run `pnpm build`, then follow `skills-next/comprehende/SKILL.md` (not a globally installed comprehende skill, which may lag behind it), running `node <repo>/dist/cli/main.js` where it says `npx comprehende@<version>`. Its `pregroup` writes the draft; do not paste hunk refs by hand. Export the review, put any screenshots in the export folder, and host that folder once with the pages skill. Put the printed URL in the PR body.
 
-After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. Needs a logged-in `muse` CLI. The subscription is the default. When its quota runs out (`Subscription quota exhausted`), rerun with `--use-api-key`, which spends `MUSE_CODE_API_KEY`. Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
+After a change under `skills-next/comprehende/`, `src/schema/`, or `src/review/`, run `pnpm eval -- --tag smoke --no-graders` and paste the summary lines in the PR body. It needs a logged-in `muse` CLI; on `Subscription quota exhausted`, see Muse setup in [docs/eval.md](./docs/eval.md). Exit 1 means validate broke or an expect drifted from current product. Smoke does not run graders.
 
-A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite: workflow `.github/workflows/eval.yml`, repo secret `MUSE_AUTH_JSON` (CI subscription login), with `MUSE_CODE_API_KEY` as fallback. A failed job is the regression ping. If both secrets are unset, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
+A merge to `main` that touches those paths (or `scripts/eval/`, `eval/cases/`) runs the full graded suite (`.github/workflows/eval.yml`). A failed job is the regression ping. If neither Muse secret is set, the workflow skips; launch a cloud agent after the merge and run `pnpm eval`. Manual full suite is for skill redesign.
 
 Eval commands, run times, parallel and repeated runs, debriefing a failed case, and CI artifacts: [docs/eval.md](./docs/eval.md). Read it before you run `pnpm eval`.
 
