@@ -137,7 +137,7 @@ The document starts from this shape. The words are placeholders.
 }
 ```
 
-Optional fields, each written only as its section below says. Document: `why`, `lookFor` (array of strings), `parts`, `sources`. Group: `why`, `part`, `sources` (ids), `attention` (`kind`, `note`), `questions` (array of one string), `focus` (array of `path`, `side`, `start`, `end`, `caption`), `notes` (array of `path`, `side`, `line`, `body`), `fileNotes` (object from path to one line), `dependsOn` (group ids). `side` is `new` for a line of the head file and `old` for a line of the base file. Every line number comes from `show` output.
+Optional fields, each written only as its section below says. Document: `why`, `lookFor` (array of strings), `parts`, `sources`. Group: `why`, `part`, `sources` (ids), `attention` (`kind`, `note`), `questions` (array of at most two strings), `focus` (array of `path`, `side`, `start`, `end`, `caption`), `notes` (array of `path`, `side`, `line`, `body`), `fileNotes` (object from path to one line), `dependsOn` (group ids). `side` is `new` for a line of the head file and `old` for a line of the base file. Every line number comes from `show` output.
 
 ### Title and summary
 
@@ -181,7 +181,7 @@ Two calls in one group mean two concerns: split the group, or keep the one that 
 
 ### Questions
 
-Group `questions` holds at most one question about intent, when the code and the sources leave the reason for a choice a hunk shows open. It asks for the author's reason; a bug, a missing test, or a nit stays out. One sentence that names the symbol and the choice: "Why does the helper set `SameSite=Lax` and not `Strict`?". When a source answers it, the answer goes in `why` instead. The UI turns each question into a prompt for the agent that wrote the change. Most groups have none.
+Group `questions` holds at most two questions about intent, when the code and the sources leave the reason for a choice a hunk shows open. Each asks for the author's reason; a bug, a missing test, or a nit stays out. Each is one sentence that names the symbol and the choice: "Why does the helper set `SameSite=Lax` and not `Strict`?". When a source answers it, the answer goes in `why` instead. The UI turns each question into a prompt for the agent that wrote the change. Most groups have none.
 
 ### Focus and notes
 

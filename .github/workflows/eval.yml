@@ -1,7 +1,8 @@
 # Full graded eval after skill, schema, review, or harness land on main.
 # Uses the Muse Code subscription login (repo secret MUSE_AUTH_JSON, a CI-only
-# device login). Falls back to MUSE_CODE_API_KEY with a warning when the login
-# is missing or expired. Skips (does not fail) when neither secret is set.
+# device login). Falls back to MUSE_CODE_API_KEY with a warning when that
+# secret is missing. A login that fails its check stays, so the run fails
+# visibly. Skips (does not fail) when neither secret is set.
 # Event-driven: path filter on main, plus workflow_dispatch. Not a cron.
 
 name: Eval suite

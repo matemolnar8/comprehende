@@ -34,14 +34,14 @@ Bugbot reads this file. Each rule here is a judgement call. A fixed pattern belo
 
 ## Eval harness
 
-- Only `validate` and the expect checks change the exit code. A grader, packet, or export failure goes on `artifactError` (#68, #92).
+- Only a producer failure, `validate`, and the deterministic checks change the exit code. A grader, packet, or export failure goes on `artifactError` (#68, #92).
 - Lints are reported. They do not go in `failures` (#92).
 - A missing expect field silently skips its check. Flag a case that drops one.
 - No conflict markers in a checked-in file. A broken `case.json` fails every eval run (#116).
 
 ## CI and release
 
-- The publish job needs npm 11.5 or newer, taken from `actions/setup-node`. `pnpm/setup` does not put npm on PATH. A version check must reject too-new majors as well as too-old ones (#61, #62).
+- The publish job needs npm 11.5 or newer from the Node that `voidzero-dev/setup-vp` installs. `pnpm/setup` does not put npm on PATH. A version check must reject too-new majors as well as too-old ones (#61, #62).
 - `secrets` is not readable in a step `if`. Copy it to `env` first (#125).
 
 ## Skill text

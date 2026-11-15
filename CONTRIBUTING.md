@@ -36,14 +36,7 @@ This repository publishes exports to GitHub Pages. A pull request review is at `
 
 ## Refresh
 
-`review` and `pregroup` record the commits the refs resolved to in `source.baseSha` and `source.headSha`. `refresh` resolves the refs again and then:
-
-- keeps each hunk whose path and changed lines did not change, and moves its ref when only the start line moved
-- keeps an edited hunk in its group and marks it changed, or reformat when only whitespace moved
-- drops refs whose hunk left the diff
-- puts hunks that no group covers into a draft `update` group
-
-It prints the new commit subjects and one line per changed file, so the skill rewrites only the groups that changed. The old document stays beside the new one as `review.<old head>.json`, and `previous` names it; `serve` and `export` load it for the What changed page. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
+`review` and `pregroup` record the commits the refs resolved to in `source.baseSha` and `source.headSha`. `refresh` resolves the refs again and carries the groups over to them; the glossary's Refresh entry defines when a hunk counts as the same, and `skills-next/comprehende/references/refresh.md` lists what the report prints. The old document stays beside the new one as `review.<old head>.json`, and `previous` names it; `serve` and `export` load it for the What changed page. `serve` and `export` print a note when the refs no longer resolve to the recorded commits.
 
 ## Release
 

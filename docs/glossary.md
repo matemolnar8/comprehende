@@ -10,7 +10,7 @@
 
 **The title.** Short name for the whole change. Always written. Prefer a user-created title (pull request, ticket, transcript) when it names this change. Invent one when that title is missing, vague, or names something else.
 
-**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any existing human or agent generated that's related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on a group only when a source states a reason for that group that the whole-change why and the group's what do not give. Do not invent a motive from the patch.
+**The why.** Why this work exists. The skill writes it from tickets, issues, PR comments, coding-agent transcripts and any other human or agent text related to the change. One for the whole change when those sources name one story. Omit it when they are silent or mixed. One on a group only when a source states a reason for that group that the whole-change why and the group's what do not give. Do not invent a motive from the patch.
 
 **The what.** What this change is. Always written. Document `summary` is the whole change. Group `summary` is that group. Named so a human has a view before they read the diff.
 
@@ -36,17 +36,15 @@
 
 **Review document.** Interpretation only. Title, groups, summaries, optional generated why, optional attentions, questions, focus ranges, notes, and file notes, optional lookFor, sources, hunk pointers. Never patch text. Source refs must resolve in cwd.
 
-**Group.** Schema `groups` item. The UI uses the same word.
-
 **Review concern.** Why these hunks are read together. Not a directory, unless that directory is the concern.
 
 **Part / story.** Independent work. Could have been its own PR. `dependsOn` only inside a story.
 
 **Size.** Review burden. Not file or hunk count.
 
-**Hunk ref.** Pointer into live git. Copy from the `review` skeleton. Never invent.
+**Hunk ref.** Pointer into live git. Path and directory refs come from the `pregroup` draft; the numbers of a single hunk come from the digest or `show`. Never invent.
 
-**Index.** Internal hunk list. No line content. Not stored in the UI. `review` writes those refs into a covering skeleton.
+**Index.** Internal hunk list (`HunkIndex`). No line content. Not sent to the UI. `review` writes one path per file from it; `pregroup` writes path and directory refs that cover the same hunks.
 
 **Live git.** `git` in cwd at serve time. Git wins.
 
@@ -58,6 +56,6 @@
 
 **Refresh.** Carry a review over to new commits. A hunk with the same path and the same added and removed lines is the same hunk; its ref follows it. Focus ranges and notes follow a same hunk and drop with a changed or gone one. A file note stays while every hunk of its file is same. A hunk edited in the same region of the file is changed and keeps its group; its prose is re-checked. Any other hunk is new or gone. `source.baseSha` and `source.headSha` record where the last review stood. The last review stays beside the new one, named in `previous`; the UI's What changed page compares the two.
 
-**Skill.** Grouping instructions. Does not talk to git.
+**Skill.** Grouping instructions. Reads git and the code host (pull requests, issues) to choose refs and sources; the CLI reads the diff.
 
 **CLI.** review, pregroup, digest, show, refresh, validate, serve, export. Cwd is the repo. `review` and `pregroup` write a covering draft only; the skill fills interpretation.

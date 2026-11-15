@@ -91,7 +91,7 @@ Commands:
             for languages in the review. No server after that.
 
 Options:
-  --base <ref>     Base ref (default: origin/HEAD or main/master)
+  --base <ref>     Base ref (default: origin/HEAD, else main, master, or trunk)
   --head <ref>     Head ref (default: HEAD)
   --data <path>    Review document path
   --out <dir>      Output directory for export
