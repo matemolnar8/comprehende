@@ -10,6 +10,7 @@ import type {
   SourceSide,
   StoredReviewDocument,
 } from "../schema/types.ts";
+import type { Theme } from "../schema/theme.ts";
 
 /** Single home for the git side union. SourceSide in schema is the same fact. */
 export type FileSide = SourceSide;
@@ -123,6 +124,8 @@ export type ApiReview = {
   commits: ApiCommit[];
   /** Set when the document names the review it was refreshed from. */
   changes?: ApiChanges;
+  /** From `.comprehende/theme.json` in the repository, else in the home folder. */
+  theme?: Theme;
 };
 
 export type ApiTextChange = { before: string; after: string };

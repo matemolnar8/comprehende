@@ -10,6 +10,7 @@ import { ReviewStage } from "./components/ReviewStage.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
+import { applyCustomTheme } from "./lib/custom-theme.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { toggleMarkdownView } from "./lib/markdown-view.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
@@ -96,6 +97,9 @@ export function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const theme = meta?.theme;
+  useEffect(() => (theme === undefined ? undefined : applyCustomTheme(theme)), [theme]);
 
   useEffect(() => {
     if (meta === null || selection === null) {

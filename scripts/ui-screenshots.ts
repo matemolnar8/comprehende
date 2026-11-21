@@ -2,10 +2,11 @@
 
 import { execFileSync } from "node:child_process";
 import { copyFile, mkdir, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 import { chromium, type Browser, type Page } from "playwright";
+import { THEME_FILE } from "../src/api/theme.ts";
 import { loadDocument } from "../src/review/load.ts";
 import { startServer } from "../src/server/http.ts";
 import { THEME_STORAGE_KEY, type ResolvedTheme } from "../src/ui/lib/theme.ts";
@@ -104,6 +105,7 @@ async function shoot(opts: {
 async function buildRepo(
   packageRoot: string,
   root: string,
+  theme: string | undefined,
 ): Promise<{ cwd: string; dataPath: string }> {
   const caseDir = join(packageRoot, "eval/cases", CASE_ID);
   const spec = await loadEvalCase(caseDir);
@@ -116,6 +118,10 @@ async function buildRepo(
   });
   const cwd = join(root, "repo");
   await addDetachedWorktree(bare, cwd, spec.head);
+  if (theme !== undefined) {
+    await mkdir(join(cwd, ".comprehende"));
+    await copyFile(theme, join(cwd, THEME_FILE));
+  }
   const dataPath = join(root, "review.json");
   await copyFile(join(packageRoot, "scripts", REVIEW_FILE), dataPath);
   // Fail early when the saved review no longer parses under the current schema.
@@ -126,6 +132,8 @@ async function buildRepo(
 export async function runUiScreenshots(opts: {
   packageRoot: string;
   outDir: string;
+  /** A theme file to serve the case with, as its `.comprehende/theme.json`. */
+  theme?: string;
 }): Promise<string[]> {
   execFileSync("pnpm", ["build"], { cwd: opts.packageRoot, stdio: "inherit" });
   const reposRoot = join(opts.packageRoot, "fixtures/screenshot-repos");
@@ -133,7 +141,7 @@ export async function runUiScreenshots(opts: {
   await rm(opts.outDir, { recursive: true, force: true });
   await mkdir(opts.outDir, { recursive: true });
 
-  const built = await buildRepo(opts.packageRoot, reposRoot);
+  const built = await buildRepo(opts.packageRoot, reposRoot, opts.theme);
   const running = await startServer({ cwd: built.cwd, dataPath: built.dataPath, port: 0 });
   const written: string[] = [];
   try {
@@ -158,12 +166,13 @@ const entry = process.argv[1]?.replaceAll("\\", "/");
 if (entry !== undefined && /(?:^|\/)ui-screenshots\.(ts|js)$/.test(entry)) {
   const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
   const { values } = parseArgs({
-    options: { out: { type: "string" } },
+    options: { out: { type: "string" }, theme: { type: "string" } },
   });
   try {
     await runUiScreenshots({
       packageRoot,
       outDir: values.out ?? join(packageRoot, "fixtures/screenshots"),
+      theme: values.theme === undefined ? undefined : resolve(values.theme),
     });
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

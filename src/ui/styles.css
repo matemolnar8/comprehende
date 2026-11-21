@@ -70,11 +70,9 @@
   --add: #1a7f37;
   --del: #cf222e;
   --warn: #8a5a00;
-  --add-bg: color-mix(in srgb, #1a7f37 16%, transparent);
-  --del-bg: color-mix(in srgb, #cf222e 16%, transparent);
   --diff-font-size: 13px;
   --diff-line-height: 20px;
-  --diff-canvas: #ffffff;
+  --diff-canvas: var(--card);
   --diff-fg: #1f2328;
   --diff-add-line: #f3fdf5;
   --diff-add-num: #ccffd8;
@@ -116,9 +114,6 @@
   --add: #3fb950;
   --del: #f85149;
   --warn: #d4a017;
-  --add-bg: color-mix(in srgb, #3fb950 16%, transparent);
-  --del-bg: color-mix(in srgb, #f85149 16%, transparent);
-  --diff-canvas: #1a1e27;
   --diff-fg: #e6edf3;
   --diff-add-line: rgba(46, 160, 67, 0.15);
   --diff-add-num: rgba(46, 160, 67, 0.15);

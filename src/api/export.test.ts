@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -213,6 +213,26 @@ describe("export static site", () => {
       "shiki-lang-markdown-hash.js",
       "shiki-lang-typescript-hash.js",
     ]);
+  });
+
+  it("carries the repository theme into the exported review", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-export-theme-"));
+    roots.push(root);
+    const repo = await createExampleRepo(join(root, "repo"));
+    const dataPath = join(root, "review.json");
+    await writeCoveringDocument(dataPath, await cmdIndex(repo.root, repo.base, repo.head));
+    const theme = { radius: "0.5rem", dark: { primary: "#fbbf24" } };
+    await mkdir(join(repo.root, ".comprehende"));
+    await writeFile(join(repo.root, ".comprehende/theme.json"), JSON.stringify(theme));
+
+    const uiRoot = join(root, "ui");
+    await mkdir(uiRoot);
+    await writeFile(join(uiRoot, "index.html"), "<!doctype html>\n");
+    const outDir = join(root, "site");
+    await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
+
+    const review = JSON.parse(await readFile(join(outDir, "api/review.json"), "utf8")) as ApiReview;
+    assert.deepEqual(review.theme, theme);
   });
 
   it("refuses unresolved source refs", async () => {
