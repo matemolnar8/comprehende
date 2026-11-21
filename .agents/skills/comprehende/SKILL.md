@@ -187,7 +187,7 @@ Group `questions` holds at most two questions about intent, when the code and th
 
 Write a `focus` range for a hunk longer than 25 lines whose concern sits in part of it: at most 25 lines inside one live hunk of its group, on the lines that carry that concern; on removed code its `side` is `old`. In a test, those are the call under test and its assertions; setup stays outside. An added file gets no range. The `caption` is one sentence on what to check there.
 
-A `note` pins one sentence to one line inside a hunk of its group: what the code alone does not say, such as a caller in another file, the source that sets a value, or why a line that looks wrong is right. At most three per group; most have none. Each caption and note adds a fact the `summary` and `attention` do not state.
+A `note` pins one sentence to the line that does what the sentence says, inside a hunk of its group: what the code alone does not say, such as a caller in another file, the source that sets a value, or why a line that looks wrong is right. At most three per group; most have none. Each caption and note adds a fact the `summary` and `attention` do not state.
 
 ### File notes
 

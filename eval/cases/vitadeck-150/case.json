@@ -12,7 +12,7 @@
     },
     "groups": {
       "min": 5,
-      "max": 9
+      "max": 11
     },
     "size": ["small", "medium"],
     "together": [["tests/demo_sections.h", "js/examples/demo/src/App.tsx"]],
