@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
 import { REVIEW_BUCKETS } from "../api/types.ts";
@@ -10,6 +18,7 @@ import { ReviewStage } from "./components/ReviewStage.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
+import { applyCustomTheme } from "./lib/custom-theme.ts";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { toggleMarkdownView } from "./lib/markdown-view.ts";
 import { visibleFileComments } from "./lib/source-display.ts";
@@ -96,6 +105,9 @@ export function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const theme = meta?.theme;
+  useLayoutEffect(() => (theme === undefined ? undefined : applyCustomTheme(theme)), [theme]);
 
   useEffect(() => {
     if (meta === null || selection === null) {

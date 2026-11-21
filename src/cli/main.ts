@@ -2,7 +2,8 @@
 
 import { spawn } from "node:child_process";
 import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgv, USAGE } from "./args.ts";
 import {
@@ -18,7 +19,8 @@ import {
 import { resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
-import { assertWorkTree } from "../git/repo.ts";
+import { loadTheme, THEME_FILE, type LoadedTheme } from "../api/theme.ts";
+import { assertWorkTree, readRepoIdentity } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
 import { startServer } from "../server/http.ts";
 import type { ReviewDocument } from "../schema/types.ts";
@@ -72,6 +74,7 @@ export async function run(argv: string[]): Promise<number> {
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
         console.error(`serving ${dataPath}  cwd=${request.cwd}  localhost only`);
+        noteTheme(ctx.theme);
         if (request.open) {
           openUrl(running.url);
         }
@@ -88,6 +91,7 @@ export async function run(argv: string[]): Promise<number> {
         console.error(
           `exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`,
         );
+        noteTheme(result.ctx.theme);
         return 0;
       }
       case "digest": {
@@ -118,6 +122,16 @@ export async function run(argv: string[]): Promise<number> {
             `wrote ${dataPath}  ${document.groups.length} groups  previous review in ${document.previous}\nCheck the prose of the groups named above against their new hunks. Then:\n  comprehende validate --data ${dataPath}`,
           );
         }
+        return 0;
+      }
+      case "theme": {
+        const { root } = await readRepoIdentity(request.cwd);
+        const loaded = await loadTheme(root);
+        console.log(
+          loaded === undefined
+            ? `no theme  looked for ${join(root, THEME_FILE)} and ${join(homedir(), THEME_FILE)}`
+            : `ok  ${loaded.path}`,
+        );
         return 0;
       }
       case "pregroup": {
@@ -151,6 +165,12 @@ function warnReview(ctx: Parameters<typeof reviewProblems>[0], note: string): vo
   const problems = reviewProblems(ctx);
   if (problems.length > 0) {
     console.error(`coverage issues (${note}):\n${problems.join("\n\n")}`);
+  }
+}
+
+function noteTheme(theme: LoadedTheme | undefined): void {
+  if (theme !== undefined) {
+    console.error(`theme ${theme.path}`);
   }
 }
 
