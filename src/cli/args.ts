@@ -8,7 +8,8 @@ export type CommandName =
   | "digest"
   | "show"
   | "pregroup"
-  | "refresh";
+  | "refresh"
+  | "theme";
 
 export type CliRequest =
   | { kind: "help" }
@@ -38,6 +39,7 @@ const COMMANDS: ReadonlySet<string> = new Set<CommandName>([
   "show",
   "pregroup",
   "refresh",
+  "theme",
 ]);
 
 export const DEFAULT_PORT = 4567;
@@ -89,6 +91,10 @@ Commands:
   export    --data <review.json> --out <dir>
             Write a static site (same UI + frozen git payloads). Highlighters only
             for languages in the review. No server after that.
+
+  theme     Check the UI theme and print the file it comes from:
+            .comprehende/theme.json in the repository, else in the home folder.
+            serve and export apply it.
 
 Options:
   --base <ref>     Base ref (default: origin/HEAD, else main, master, or trunk)

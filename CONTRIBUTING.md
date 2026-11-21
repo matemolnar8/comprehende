@@ -79,4 +79,4 @@ pnpm exec playwright install chromium   # once per machine
 pnpm ui:screenshots
 ```
 
-It builds the UI, serves the `cigster-99` eval case with the review in `scripts/ui-screenshots.review.json`, and writes 6 desktop and mobile shots to `fixtures/screenshots/` (gitignored). Pass `--out <dir>` to write them somewhere else. Use them for UI PR bodies and to compare a UI change before and after.
+It builds the UI, serves the `cigster-99` eval case with the review in `scripts/ui-screenshots.review.json`, and writes 6 desktop and mobile shots to `fixtures/screenshots/` (gitignored). Pass `--out <dir>` to write them somewhere else, and `--theme <file>` to serve the case with that theme file. Use them for UI PR bodies and to compare a UI change before and after.
