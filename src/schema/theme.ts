@@ -44,12 +44,14 @@ export const THEME_TOKENS = [
 
 export type ThemeToken = (typeof THEME_TOKENS)[number];
 
+const HEX = String.raw`#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})`;
+const ARG = String.raw`([-+]?(\d+\.?\d*|\.\d+)(%|deg|rad|grad|turn)?|none)`;
+const FUNCTION = String.raw`(rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(\s*${ARG}([\s,/]+${ARG})*\s*\)`;
+
 /** Literal colours only. An export is a public page, so a value never carries other CSS. */
-const color = z
-  .string()
-  .regex(/^(#[0-9a-f]{3,8}|(rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([0-9a-z.,%/\s+-]*\))$/i, {
-    error: "must be a hex colour or a CSS colour function such as oklch(0.7 0.15 70)",
-  });
+const color = z.string().regex(new RegExp(`^(${HEX}|${FUNCTION})$`, "i"), {
+  error: "must be a hex colour or a CSS colour function such as oklch(0.7 0.15 70)",
+});
 
 const palette = z.partialRecord(z.enum(THEME_TOKENS), color);
 

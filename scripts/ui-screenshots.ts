@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
-import { copyFile, mkdir, rm } from "node:fs/promises";
+import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -118,8 +118,11 @@ async function buildRepo(
   });
   const cwd = join(root, "repo");
   await addDetachedWorktree(bare, cwd, spec.head);
-  if (theme !== undefined) {
-    await mkdir(join(cwd, ".comprehende"));
+  // An empty project theme wins over a home theme, so a default run shows the built-in colours.
+  await mkdir(join(cwd, ".comprehende"));
+  if (theme === undefined) {
+    await writeFile(join(cwd, THEME_FILE), "{}");
+  } else {
     await copyFile(theme, join(cwd, THEME_FILE));
   }
   const dataPath = join(root, "review.json");

@@ -75,6 +75,9 @@ describe("parseThemeJson", () => {
       "var(--color-amber-400)",
       "url(x)",
       "amber",
+      "#12345",
+      "oklch(nope)",
+      "rgb()",
     ]) {
       const parsed = parseThemeJson(JSON.stringify({ dark: { primary: value } }));
       assert.equal(parsed.ok, false, value);

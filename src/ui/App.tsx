@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useDefaultLayout, usePanelRef } from "react-resizable-panels";
 import { fetchHunks, fetchReview, type ApiGroupFile, type ReviewMeta } from "./api.ts";
 import { REVIEW_BUCKETS } from "../api/types.ts";
@@ -99,7 +107,7 @@ export function App() {
   }, [load]);
 
   const theme = meta?.theme;
-  useEffect(() => (theme === undefined ? undefined : applyCustomTheme(theme)), [theme]);
+  useLayoutEffect(() => (theme === undefined ? undefined : applyCustomTheme(theme)), [theme]);
 
   useEffect(() => {
     if (meta === null || selection === null) {
