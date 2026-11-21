@@ -12,10 +12,10 @@ Group a git diff into review concerns and serve a local UI. The point is cogniti
 Run every command inside the repository under review. Use the pinned CLI:
 
 ```sh
-npx comprehende@0.13.4 <command>
+npx comprehende@0.14.0 <command>
 ```
 
-When the user names a local executable, use that command wherever this skill says `npx comprehende@0.13.4`, and run `<executable> --version` in the step-2 call in place of `npm view`.
+When the user names a local executable, use that command wherever this skill says `npx comprehende@0.14.0`, and run `<executable> --version` in the step-2 call in place of `npm view`.
 
 The shell blocks are POSIX sh, for bash and zsh. Write each command out in full: zsh does not split a variable into words, so a command held in `$CMD` fails with `command not found`. In PowerShell, read `references/powershell.md` before step 2: it replaces the blocks of Workflow steps 2 and 5 and of Refresh. Your harness names the shell. When it does not, run `$PSVersionTable`: it prints a table only in PowerShell.
 
@@ -37,8 +37,8 @@ When the user asks to set up a theme (the UI's colours), read `references/theme.
    ```sh
    REVIEW_DIR=$(mktemp -d) && git rev-parse --verify --end-of-options "<base>^{commit}" && git rev-parse --verify --end-of-options "<head>^{commit}" && {
      npm view comprehende version || true
-     npx comprehende@0.13.4 pregroup --base <base> --head <head> --data "$REVIEW_DIR/review.json"
-     npx comprehende@0.13.4 digest --base <base> --head <head>
+     npx comprehende@0.14.0 pregroup --base <base> --head <head> --data "$REVIEW_DIR/review.json"
+     npx comprehende@0.14.0 digest --base <base> --head <head>
      cat "$REVIEW_DIR/review.json"
      git log --format='%s' --end-of-options <base>..<head>
      <fetch the request body> > "$REVIEW_DIR/body.txt"
@@ -51,11 +51,11 @@ When the user asks to set up a theme (the UI's colours), read `references/theme.
 
    You fetch the sources; the user names only the change. The two placeholder lines are your forge fetches; the remote URL names the forge and its CLI. The body is the request or ticket body. The comments are every page of review bodies, review comments, and conversation comments, each with author, body, url, path, side, current line, thread state, and outdated state. When one endpoint lacks a field, use the one that has it. A ticket that the request, the branch name, or a commit subject names is fetched here too, and so is the lower layer's body on a stack. When the harness reaches the forge only through an MCP, those fetches leave the block and run in one parallel block after it. When the change has no request, or a fetch fails, drop those lines and tell the user which source you did not read. A file past 10000 bytes prints cut: read the rest with `tail -c +10001 "<file>"`, until nothing is cut.
 
-   The `npm view` or `--version` line is the CLI version. If that version is newer than this pin (`npx comprehende@0.13.4`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
+   The `npm view` or `--version` line is the CLI version. If that version is newer than this pin (`npx comprehende@0.14.0`), stop and tell the user. Show `npx skills update` as an option they can run. Do not run that command. Wait for them to continue with this pin, or to update and start this skill again. If the versions match or the query fails, continue.
 
    The draft holds `mirrors-<n>` groups (files that received the same change), one `mechanical` group (renames, copies, moves, generated output), and one `change` group for the rest, all with stub prose. Its `size` is the CLI's guess from line counts. Trust the digest hints `same change as`, `pairs with`, and `replaces`; a file that `replaces` a deleted one, and the file it `replaced`, are a new version, not a move, and are read with their story. Done when the digest, the draft, the log, and each source to its end are in context.
 
-3. **Read the change.** Run `npx comprehende@0.13.4 show --base <base> --head <head> --batch <n>` for each batch the digest's `read:` line names, one batch per call, until a batch ends with `# Last batch`. The CLI leaves out the files you can skip, and batch 1 lists them; read a skipped generated file with `show --file "<path>"` when its digest symbols show hand-written code. When your harness cuts a batch, read the rest from the file it saved, or fetch the cut hunks with one `show --hunk "<ref>"` per hunk, several per call; `show` reads only its first `--hunk`. Done when you have read every batch to its end.
+3. **Read the change.** Run `npx comprehende@0.14.0 show --base <base> --head <head> --batch <n>` for each batch the digest's `read:` line names, one batch per call, until a batch ends with `# Last batch`. The CLI leaves out the files you can skip, and batch 1 lists them; read a skipped generated file with `show --file "<path>"` when its digest symbols show hand-written code. When your harness cuts a batch, read the rest from the file it saved, or fetch the cut hunks with one `show --hunk "<ref>"` per hunk, several per call; `show` reads only its first `--hunk`. Done when you have read every batch to its end.
 
 4. **Group.** Start from the draft and apply Grouping. Keep a draft group that holds one concern. Merge draft groups that serve one concern, and split a group where a reader would stop and review the first piece alone. When a split or a merge is a close call, keep one group. Then name the stories (see Parts). Done when your reply names each story with its groups, or, for one story, says for each group why it could not have been its own PR.
 
@@ -65,21 +65,21 @@ When the user asks to set up a theme (the UI's colours), read `references/theme.
    cat > "$REVIEW_DIR/review.json" <<'EOF'
    <the document>
    EOF
-   npx comprehende@0.13.4 validate --data "$REVIEW_DIR/review.json"
+   npx comprehende@0.14.0 validate --data "$REVIEW_DIR/review.json"
    ```
 
    Done when every fact on your list is in one field or dropped by the rule above; every result a hunk changes for a caller, user, script, or CI job is stated once, with its symbol; every source item that is not done as asked is a `lookFor` bullet; each group with a judgment call has it as its one `attention`, and a group with no call has none; every question asks a reason no source gives; every citation rests on a sentence its source says; each group of two or more files has a file note per file; each mechanical or mirrors summary says what the reader can skip; every sentence past a usual length earns its place; every draft ref sits in a group; no stub prose is left; and validate exits 0.
 
-6. **Validate.** When the step before did not run validate, run it. On a failure, fix what the message names and run `npx comprehende@0.13.4 validate --data "$REVIEW_DIR/review.json"` again. The diff is git's; leave it alone. Done when validate exits 0.
+6. **Validate.** When the step before did not run validate, run it. On a failure, fix what the message names and run `npx comprehende@0.14.0 validate --data "$REVIEW_DIR/review.json"` again. The diff is git's; leave it alone. Done when validate exits 0.
 
-7. **Hand over.** When the user asks to upload the report, follow Export. Otherwise run `npx comprehende@0.13.4 serve --data "$REVIEW_DIR/review.json" --open` as a background process; it stays running. Done when the user has the URL it prints (`127.0.0.1` only).
+7. **Hand over.** When the user asks to upload the report, follow Export. Otherwise run `npx comprehende@0.14.0 serve --data "$REVIEW_DIR/review.json" --open` as a background process; it stays running. Done when the user has the URL it prints (`127.0.0.1` only).
 
 `references/example.md` is a filled sample document. Read it only when validate rejects a field's shape.
 
 ## Export
 
 ```sh
-npx comprehende@0.13.4 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
+npx comprehende@0.14.0 export --data "$REVIEW_DIR/review.json" --out "$EXPORT_DIR"
 ```
 
 `$EXPORT_DIR` is a fresh directory outside the work tree, not a git repository. The folder is the UI plus frozen git payloads, with no git in it. Put it where the user asked. If `review.json` is still a draft, finish the Workflow through validate first. Done when the user has the URL or path they named.
