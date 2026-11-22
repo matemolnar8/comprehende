@@ -369,6 +369,8 @@
           savedEl.textContent = "Saved";
         },
         () => {
+          delete answers[key];
+          count();
           savedEl.textContent = "Not saved. Check your connection.";
         },
       );
@@ -409,7 +411,9 @@
     if (it.code) head.append(codeBlock(it.code));
     stage.append(head);
     const vote = (answer, win, lose) => {
+      if (tooSoon()) return;
       save("duel", it.id, {
+        texts: { x: it.x, y: it.y },
         answer,
         winner: win ? win.label : null,
         loser: lose ? lose.label : null,
@@ -498,6 +502,7 @@
     ta.id = "rule-note";
     ta.placeholder = "Optional: when does this not hold?";
     const go = (a) => () => {
+      if (tooSoon()) return;
       save("rules", it.id, { answer: a, rule: it.rule, note: ta.value.trim() });
       idx.rules++;
       render();
@@ -520,7 +525,11 @@
   }
   const MODES = { duel: renderDuel, rules: renderRules };
   const mode = () => (MODES[location.hash.slice(1)] ? location.hash.slice(1) : "duel");
+  // A second tap of a double-tap lands on the next card's button, so a fresh card ignores taps for a moment.
+  let shownAt = 0;
+  const tooSoon = () => Date.now() - shownAt < 350;
   function render() {
+    shownAt = Date.now();
     const m = mode();
     stage.innerHTML = "";
     document

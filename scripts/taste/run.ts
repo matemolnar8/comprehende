@@ -50,19 +50,34 @@ async function loadSide(run: Run, folder: string): Promise<Side | undefined> {
   }
 }
 
+type CaseClone = { repoDir: string; head: string };
+
+/** Undefined when the run holds a case this checkout no longer has. */
+async function caseClone(caseDir: string, cacheDir: string): Promise<CaseClone | undefined> {
+  if (!existsSync(join(caseDir, "case.json"))) {
+    return undefined;
+  }
+  const spec = await loadEvalCase(caseDir);
+  return { repoDir: cachePath(cacheDir, spec.repo), head: spec.head };
+}
+
 /** A line note needs its code. Without the cached clone the card is dropped. */
 async function withCode(
   card: DuelCard,
-  repoDir: string,
-  head: string,
+  clone: CaseClone | undefined,
 ): Promise<LoadedCard | undefined> {
   const { anchor, ...rest } = card;
   if (anchor === undefined) {
     return rest;
   }
-  const file = await git(repoDir, ["show", `${head}:${anchor.path}`], { allowFail: true });
+  if (clone === undefined) {
+    return undefined;
+  }
+  const file = await git(clone.repoDir, ["show", `${clone.head}:${anchor.path}`], {
+    allowFail: true,
+  });
   const all = file.split("\n");
-  if (all.length < anchor.line) {
+  if (file === "" || all.length < anchor.line) {
     return undefined;
   }
   const start = Math.max(1, anchor.line - CODE_LINES_AROUND);
@@ -98,10 +113,9 @@ async function main(argv: string[]): Promise<number> {
     }
     // A repeated run names its folders <case>.t<n>.
     const caseId = folder.replace(/\.t\d+$/, "");
-    const spec = await loadEvalCase(join(packageRoot, "eval/cases", caseId));
-    const repoDir = cachePath(cacheDir, spec.repo);
+    const clone = await caseClone(join(packageRoot, "eval/cases", caseId), cacheDir);
     for (const card of duelCards(folder, left, right)) {
-      const loaded = await withCode(card, repoDir, spec.head);
+      const loaded = await withCode(card, clone);
       if (loaded !== undefined) {
         cards.push(loaded);
       }

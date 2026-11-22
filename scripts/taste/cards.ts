@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { LineNote, ReviewDocument, ReviewGroup } from "../../src/schema/types.ts";
-import { isDirHunkRef } from "../../src/schema/identity.ts";
+import { isDirHunkRef, refCoversPath } from "../../src/schema/identity.ts";
 
 export type Side = { label: string; document: ReviewDocument };
 
@@ -43,6 +43,8 @@ export function duelCards(caseId: string, x: Side, y: Side): DuelCard[] {
     left: Omit<Entry, "label"> | undefined,
     right: Omit<Entry, "label"> | undefined,
     anchor?: DuelCard["anchor"],
+    /** Tells apart two pairs that hold the same words. */
+    place = "",
   ) => {
     if (left === undefined || right === undefined) {
       return;
@@ -52,7 +54,9 @@ export function duelCards(caseId: string, x: Side, y: Side): DuelCard[] {
     }
     const hash = createHash("sha1")
       .update(
-        [x.label, y.label, context, left.title, left.text, right.title, right.text].join("\0"),
+        [x.label, y.label, context, place, left.title, left.text, right.title, right.text].join(
+          "\0",
+        ),
       )
       .digest("hex")
       .slice(0, 10);
@@ -86,20 +90,29 @@ export function duelCards(caseId: string, x: Side, y: Side): DuelCard[] {
     add("fileNote", `${caseId} · ${path}`, text(note), text(rightFileNotes.get(path)));
   }
 
-  const rightNotes = lineNotes(y.document);
+  const freeNotes = new Set(lineNotes(y.document));
   for (const note of lineNotes(x.document)) {
-    const near = rightNotes.find(
-      (other) => other.path === note.path && Math.abs(other.line - note.line) <= NOTE_LINE_REACH,
+    const distance = (other: LineNote) => Math.abs(other.line - note.line);
+    const near = [...freeNotes]
+      .filter((other) => other.path === note.path && distance(other) <= NOTE_LINE_REACH)
+      .toSorted((a, b) => distance(a) - distance(b))[0];
+    if (near === undefined) {
+      continue;
+    }
+    freeNotes.delete(near);
+    add(
+      "lineNote",
+      `${caseId} · ${note.path}`,
+      text(note.body),
+      text(near.body),
+      { path: note.path, line: note.line },
+      `${note.line}:${near.line}`,
     );
-    add("lineNote", `${caseId} · ${note.path}`, text(note.body), text(near?.body), {
-      path: note.path,
-      line: note.line,
-    });
   }
   return capPerKind(cards);
 }
 
-/** Keeps the cards in hash order, so the pick does not favor the first paths in the alphabet. */
+/** Picks the kept cards in hash order, so the pick does not favor the first paths in the alphabet. */
 function capPerKind(cards: DuelCard[]): DuelCard[] {
   const hash = (card: DuelCard) => card.id.slice(card.id.lastIndexOf(".") + 1);
   const kept = new Map<DuelCard["kind"], DuelCard[]>();
@@ -150,12 +163,9 @@ function matchGroups(
   const free = new Set(right);
   const pairs: [ReviewGroup, ReviewGroup][] = [];
   for (const group of left) {
-    const paths = new Set(groupPaths(group));
     let best: { group: ReviewGroup; score: number } | undefined;
     for (const candidate of free) {
-      const other = groupPaths(candidate);
-      const shared = other.filter((path) => paths.has(path)).length;
-      const score = shared / (paths.size + other.length - shared);
+      const score = overlap(group, candidate);
       if (score >= GROUP_MATCH_MIN && score > (best?.score ?? 0)) {
         best = { group: candidate, score };
       }
@@ -168,9 +178,21 @@ function matchGroups(
   return pairs;
 }
 
+/** The share of both groups' paths that the other group covers. A directory ref covers the files under it. */
+function overlap(a: ReviewGroup, b: ReviewGroup): number {
+  const covered = (from: ReviewGroup, by: ReviewGroup) =>
+    groupPaths(from).filter((path) => by.hunkRefs.some((ref) => refCoversPath(ref, path))).length;
+  return (covered(a, b) + covered(b, a)) / (groupPaths(a).length + groupPaths(b).length);
+}
+
 function groupEntry(group: ReviewGroup): Omit<Entry, "label"> {
-  const attention = group.attention === undefined ? [] : [`Attention: ${group.attention.note}`];
-  return { title: group.title, text: [group.summary, ...attention].join("\n") };
+  const lines = [
+    group.why === undefined ? [] : [`Why: ${group.why}`],
+    [group.summary],
+    group.attention === undefined ? [] : [`Attention: ${group.attention.note}`],
+    (group.questions ?? []).map((question) => `Question: ${question}`),
+  ];
+  return { title: group.title, text: lines.flat().join("\n") };
 }
 
 function fileNotes(document: ReviewDocument): Map<string, string> {

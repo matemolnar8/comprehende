@@ -19,7 +19,7 @@ A **pick** is a duel answer. Picks are the ground truth. A yes on a rule card is
 
 1. Choose two `eval/runs/<stamp>` folders that hold reviews of the same cases. To compare models, both runs use one skill tree. To compare skills, both use one model. A new producer run costs money, so ask before you start one; saved runs are free.
 2. Run `pnpm taste:cards -- <run dir> <run dir>`. It prints the cards as JSON and labels each side `<model> @ <skill tree>`.
-3. Write about 20 cards to `duels` in one `batch`, each with an `order` number. Spread them over cases and kinds. Delete the cards he has answered.
+3. Write about 20 cards to `duels` in one `batch`, each with an `order` number. Spread them over cases and kinds.
 4. Tell him how many cards wait, then end the turn.
 
 ## Read picks
@@ -48,3 +48,5 @@ A rule is ready when he answered yes and the picks still fit it. `reverse` makes
 2. Replace the skill sentence the rule overrides. A rule that only adds a line makes the skill longer and weaker.
 3. Prove the edit with a duel: run the same cases with the old and the new skill tree, load those cards, and ask for picks. The edit stays when the new tree wins. Ask before this producer run.
 4. Delete applied and rejected rule cards from `rules`.
+
+An answer holds labels, not texts. Delete an answered duel card only after its pick is read and the rule cards of that round are written.

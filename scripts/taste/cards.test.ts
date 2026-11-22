@@ -101,6 +101,19 @@ describe("duelCards", () => {
     assert.deepEqual(kinds(x, side("y", notes("Right note.", 20, "Left file."))), []);
   });
 
+  it("pairs a group that names a directory with a group that lists its files", () => {
+    const dir: ReviewGroup = {
+      id: "dir",
+      title: "dir",
+      summary: "Left.",
+      suggestedOrder: 0,
+      hunkRefs: [{ dir: "src/ui/" }],
+    };
+    const files = group({ id: "files", summary: "Right." }, ["src/ui/a.ts", "src/ui/b.ts"]);
+    const cards = duelCards("case-1", side("x", { groups: [dir] }), side("y", { groups: [files] }));
+    assert.equal(cards.find((card) => card.kind === "group")?.y.title, "files");
+  });
+
   it("keeps at most three cards of one kind for a case", () => {
     const paths = ["a.ts", "b.ts", "c.ts", "d.ts", "e.ts"];
     const withNotes = (word: string): Partial<ReviewDocument> => ({
