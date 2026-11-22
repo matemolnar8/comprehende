@@ -396,8 +396,10 @@
       };
 
       function answer(value) {
-        // The second tap of a double-tap lands on the next card, so a fresh card waits a moment.
-        if (Date.now() - shownAt < 350) return false;
+        // One answer per card: a second tap waits for the next card, and that card waits a moment
+        // too, because the second tap of a double-tap lands on it.
+        if (leaving || Date.now() - shownAt < 350) return false;
+        leaving = true;
         answers[at] = value;
         try {
           localStorage.setItem(storeKey, JSON.stringify(answers));
@@ -407,6 +409,7 @@
         return true;
       }
 
+      let leaving = false;
       const held = (value) => (answers[at] === value ? " picked" : "");
 
       function progress() {
@@ -568,6 +571,7 @@
           );
         }
 
+        const rate = (row) => (row.played ? row.wins / row.played : 0);
         const rows = new Map();
         ROUND.duels.forEach((duel, i) => {
           for (const side of ["x", "y"]) {
@@ -583,7 +587,7 @@
           card.append(el("div", "eyebrow", "who you picked"));
           const score = el("div", "score");
           [...rows]
-            .sort((a, b) => b[1].wins - a[1].wins)
+            .sort((a, b) => rate(b[1]) - rate(a[1]) || b[1].wins - a[1].wins)
             .forEach(([label, row]) => {
               const line = el(
                 "div",
@@ -614,6 +618,7 @@
 
       function render() {
         shownAt = Date.now();
+        leaving = false;
         keys = {};
         const current = cards[at];
         app.replaceChildren(

@@ -135,7 +135,9 @@ async function pairDuels(x: Run, y: Run, packageRoot: string, cacheDir: string):
     const clone = await caseClone(join(packageRoot, "eval/cases", caseId), cacheDir);
     for (const card of duelCards(folder, left, right)) {
       const duel = await withCode(card, clone);
-      if (duel !== undefined) {
+      if (duel === undefined) {
+        console.error(`skip a line note on ${card.context}: no code at head`);
+      } else {
         duels.push(duel);
       }
     }
@@ -231,7 +233,7 @@ async function read(argv: string[], cacheDir: string): Promise<number> {
     answer,
     ...(answer === "x" ? { picked: duel.x, other: duel.y } : {}),
     ...(answer === "y" ? { picked: duel.y, other: duel.x } : {}),
-    ...(answer === "same" || answer === "both-bad" ? { x: duel.x, y: duel.y } : {}),
+    ...(answer === "x" || answer === "y" ? {} : { x: duel.x, y: duel.y }),
   }));
   console.log(JSON.stringify({ tally: tally(picks), duels, ideas: picks.ideas }, null, 2));
   return 0;
