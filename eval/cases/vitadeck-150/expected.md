@@ -8,7 +8,7 @@ PR #150. No ticket. One Codex review comment asks for `../scripts/gui-drive.sh` 
 - Why: present. The PR body says a retro of 10 agent sessions found the time goes on stale or missing know-how.
 - Size: small or medium. Most of the diff is docs and small script fixes; the new 160-line drive script adds the most. No later group depends on a new contract.
 - Parts: 5 or 6. The drive script and the four fixes are 5 stories. The agent docs are a sixth part, or they fold into the drive part. The retro is one motive, not one story.
-- Groups: about 6.
+- Groups: about 6, one per outline entry below. A part may split into two groups where a reader would review each piece alone, such as the drive script and its skill doc, or the stb_ds build change and the identical harness cleanup.
 
 ## Groups
 
