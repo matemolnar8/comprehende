@@ -241,6 +241,10 @@ async function read(argv: string[], cacheDir: string): Promise<number> {
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv.filter((arg) => arg !== "--");
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(USAGE);
+    return 0;
+  }
   const packageRoot = findPackageRoot();
   const cacheDir = await evalCacheDir(packageRoot);
   if (command === "page") {
@@ -250,7 +254,7 @@ async function main(argv: string[]): Promise<number> {
     return read(rest, cacheDir);
   }
   console.error(USAGE);
-  return command === "--help" || command === "-h" ? 0 : 1;
+  return 1;
 }
 
 try {

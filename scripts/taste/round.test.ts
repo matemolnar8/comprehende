@@ -45,8 +45,8 @@ describe("taste round", () => {
     );
     assert.deepEqual(tally(readCode(round, `taste.${round.id}.yyxsn.`)), [
       { label: "new", wins: 2, losses: 1 },
-      { label: "other", wins: 0, losses: 0 },
       { label: "old", wins: 1, losses: 2 },
+      { label: "other", wins: 0, losses: 0 },
     ]);
   });
 

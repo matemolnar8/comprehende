@@ -93,7 +93,7 @@ export function readCode(round: Round, code: string): Picks {
 
 export type Tally = { label: string; wins: number; losses: number };
 
-/** Wins and losses per side label. "Same", "both bad" and open cards count for no side. */
+/** Wins and losses per side label, best win rate first, as the page shows them. "Same", "both bad" and open cards count for no side. */
 export function tally(picks: Picks): Tally[] {
   const rows = new Map<string, Tally>();
   const row = (label: string) => {
@@ -108,5 +108,7 @@ export function tally(picks: Picks): Tally[] {
       (answer === "x" ? y : x).losses += 1;
     }
   }
-  return [...rows.values()].toSorted((a, b) => b.wins - b.losses - (a.wins - a.losses));
+  const rate = (row: Tally) =>
+    row.wins + row.losses === 0 ? 0 : row.wins / (row.wins + row.losses);
+  return [...rows.values()].toSorted((a, b) => rate(b) - rate(a) || b.wins - a.wins);
 }
