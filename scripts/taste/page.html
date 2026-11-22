@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Taste Lab</title>
+    <style>
+      /* One file, no network. Colors come from the host's theme variables when it has them
+         (T3 Code sets them on an inline page), else from the system colors, so the page
+         follows light and dark with no theme of its own. */
+      :root {
+        color-scheme: light dark;
+        --fg: var(--foreground, CanvasText);
+        --dim: var(--muted-foreground, color-mix(in srgb, CanvasText 58%, Canvas));
+        --surface: var(--card, color-mix(in srgb, CanvasText 4%, Canvas));
+        --line: var(--border, color-mix(in srgb, CanvasText 14%, Canvas));
+        --pick: var(--primary, #5b5bd6);
+        --on-pick: var(--primary-foreground, #fff);
+        --good: var(--success, #2f9e6b);
+        --bad: var(--destructive, #d2504b);
+        --code: var(--code-background, color-mix(in srgb, CanvasText 6%, Canvas));
+        --r: var(--radius, 14px);
+        --sans: var(--font-sans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
+        --mono: var(--font-mono, ui-monospace, "SF Mono", Menlo, monospace);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--fg);
+        font: 16px/1.5 var(--sans);
+        -webkit-text-size-adjust: 100%;
+      }
+      /* Opened on its own, the page needs the gutter a host frame would give it. */
+      .standalone body {
+        padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+          max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      }
+      #app {
+        max-width: 560px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .bar {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+      }
+      .bar i {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        transition: background 0.2s;
+      }
+      .bar i.done {
+        background: color-mix(in srgb, var(--pick) 45%, var(--line));
+      }
+      .bar i.now {
+        background: var(--pick);
+      }
+      .bar span {
+        margin-left: 8px;
+        font-size: 12px;
+        color: var(--dim);
+        font-variant-numeric: tabular-nums;
+      }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--dim);
+        overflow-wrap: anywhere;
+      }
+      .eyebrow b {
+        color: var(--pick);
+        font-weight: 600;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        font-weight: 650;
+        margin: 2px 0 0;
+        text-wrap: balance;
+      }
+      .card {
+        animation: in 0.18s ease-out;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      @keyframes in {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card {
+          animation: none;
+        }
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button:focus-visible {
+        outline: 2px solid var(--pick);
+        outline-offset: 2px;
+      }
+      .option {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        text-align: left;
+        width: 100%;
+        padding: 14px 16px 14px 14px;
+        background: var(--surface);
+        border: 1.5px solid var(--line);
+        border-radius: var(--r);
+        transition:
+          border-color 0.12s,
+          transform 0.12s,
+          background 0.12s;
+      }
+      .option:active {
+        transform: scale(0.985);
+      }
+      @media (hover: hover) {
+        .option:hover {
+          border-color: color-mix(in srgb, var(--pick) 55%, var(--line));
+        }
+      }
+      .option.picked {
+        border-color: var(--pick);
+        background: color-mix(in srgb, var(--pick) 9%, var(--surface));
+      }
+      .letter {
+        grid-row: span 2;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 650;
+        border: 1.5px solid var(--line);
+        color: var(--dim);
+        transition: all 0.12s;
+      }
+      .picked .letter {
+        background: var(--pick);
+        border-color: var(--pick);
+        color: var(--on-pick);
+      }
+      .option h2 {
+        margin: 1px 0 0;
+        font-size: 16px;
+        font-weight: 650;
+        line-height: 1.3;
+      }
+      .option p {
+        margin: 0;
+        grid-column: 2;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+      }
+      /* Words both sides share step back, so the eye lands on what differs. */
+      .shared {
+        color: var(--dim);
+      }
+      code {
+        font: 0.86em var(--mono);
+        background: var(--code);
+        padding: 1px 5px;
+        border-radius: 5px;
+        overflow-wrap: anywhere;
+      }
+      .src {
+        text-decoration: underline dotted;
+        text-underline-offset: 3px;
+      }
+      pre {
+        margin: 0;
+        padding: 8px 0;
+        background: var(--code);
+        border-radius: calc(var(--r) - 4px);
+        overflow-x: auto;
+        font: 12px/1.6 var(--mono);
+      }
+      pre div {
+        padding: 0 12px;
+        white-space: pre;
+      }
+      pre div.on {
+        background: color-mix(in srgb, var(--pick) 16%, transparent);
+        box-shadow: inset 2px 0 var(--pick);
+      }
+      pre i {
+        font-style: normal;
+        color: var(--dim);
+        display: inline-block;
+        width: 3.4em;
+        user-select: none;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .ghost {
+        min-height: 44px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1.5px solid var(--line);
+        background: transparent;
+        font-size: 14px;
+        font-weight: 550;
+      }
+      .ghost.quiet {
+        border-color: transparent;
+        color: var(--dim);
+        padding: 0 8px;
+      }
+      .ghost.bad {
+        color: var(--bad);
+      }
+      .big {
+        flex: 1;
+        min-height: 54px;
+        border-radius: var(--r);
+        border: 1.5px solid var(--line);
+        background: var(--surface);
+        font-weight: 650;
+      }
+      .big.yes {
+        background: var(--pick);
+        border-color: var(--pick);
+        color: var(--on-pick);
+      }
+      .grow {
+        flex: 1;
+      }
+      .pair {
+        display: grid;
+        gap: 8px;
+      }
+      .pair div {
+        padding: 10px 14px;
+        border-radius: calc(var(--r) - 4px);
+        background: var(--surface);
+        border-left: 3px solid var(--line);
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+      }
+      .pair .after {
+        border-left-color: var(--good);
+      }
+      .pair small {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--dim);
+      }
+      .score {
+        display: grid;
+        gap: 10px;
+      }
+      .score div {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 4px 12px;
+        font-size: 14px;
+        overflow-wrap: anywhere;
+      }
+      .score b {
+        font-variant-numeric: tabular-nums;
+      }
+      .score i {
+        grid-column: span 2;
+        height: 6px;
+        border-radius: 3px;
+        background: var(--line);
+        overflow: hidden;
+      }
+      .score i::after {
+        content: "";
+        display: block;
+        height: 100%;
+        width: var(--w);
+        background: var(--pick);
+        border-radius: 3px;
+      }
+      .codebox {
+        display: flex;
+        gap: 8px;
+      }
+      .codebox input {
+        flex: 1;
+        min-width: 0;
+        font: 14px var(--mono);
+        color: inherit;
+        background: var(--code);
+        border: 1.5px solid var(--line);
+        border-radius: calc(var(--r) - 4px);
+        padding: 0 12px;
+        min-height: 48px;
+      }
+      .hint {
+        font-size: 13px;
+        color: var(--dim);
+        margin: 0;
+      }
+      .keys {
+        display: none;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        .keys {
+          display: block;
+        }
+      }
+      kbd {
+        font: 11px var(--mono);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 0 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="app"></main>
+    <script>
+      // The page builder replaces this value with the round: { id, duels, ideas, webhook }.
+      const ROUND = "__ROUND__";
+      if (window.self === window.top) document.documentElement.classList.add("standalone");
+
+      const el = (tag, cls, html) => {
+        const node = document.createElement(tag);
+        if (cls) node.className = cls;
+        if (html != null) node.innerHTML = html;
+        return node;
+      };
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      const md = (s) =>
+        esc(s)
+          .replace(/\[([^\]]+)\]\(source:[^)]+\)/g, '<span class="src">$1</span>')
+          .replace(/`([^`]+)`/g, "<code>$1</code>");
+      const button = (label, cls, act) => {
+        const node = el("button", cls);
+        node.type = "button";
+        node.textContent = label;
+        node.onclick = act;
+        return node;
+      };
+
+      const cards = [
+        ...ROUND.duels.map((duel) => ({ type: "duel", duel })),
+        ...ROUND.ideas.map((idea) => ({ type: "idea", idea })),
+      ];
+      const storeKey = "taste." + ROUND.id;
+      let answers = cards.map(() => "-");
+      try {
+        const saved = JSON.parse(localStorage.getItem(storeKey));
+        if (Array.isArray(saved) && saved.length === cards.length) answers = saved;
+      } catch {}
+      const firstOpen = answers.indexOf("-");
+      let at = firstOpen === -1 ? cards.length : firstOpen;
+      let shownAt = 0;
+      let keys = {};
+      const app = document.getElementById("app");
+
+      // Half the duels show y first. The answer is stored as x or y, never as a side of the screen.
+      const flipped = (duel) => parseInt(duel.id.slice(-1), 16) % 2 === 1;
+      const code = () => {
+        const n = ROUND.duels.length;
+        return ["taste", ROUND.id, answers.slice(0, n).join(""), answers.slice(n).join("")].join(
+          ".",
+        );
+      };
+
+      function answer(value) {
+        // The second tap of a double-tap lands on the next card, so a fresh card waits a moment.
+        if (Date.now() - shownAt < 350) return false;
+        answers[at] = value;
+        try {
+          localStorage.setItem(storeKey, JSON.stringify(answers));
+        } catch {}
+        at += 1;
+        setTimeout(render, 170);
+        return true;
+      }
+
+      function progress() {
+        const bar = el("div", "bar");
+        cards.forEach((_, i) =>
+          bar.append(el("i", i === at ? "now" : answers[i] !== "-" ? "done" : "")),
+        );
+        bar.append(el("span", "", Math.min(at + 1, cards.length) + " / " + cards.length));
+        return bar;
+      }
+
+      function footer(extra) {
+        const row = el("div", "row");
+        if (at > 0) row.append(button("Back", "ghost quiet", () => ((at -= 1), render())));
+        row.append(el("span", "grow"), ...extra);
+        row.append(button("Stop here", "ghost quiet", () => ((at = cards.length), render())));
+        return row;
+      }
+
+      // In two near-equal texts, the words both hold step back. Texts that differ more read whole.
+      function dimShared(a, b) {
+        const words = (node) => new Set(node.textContent.toLowerCase().match(/[\w'-]+/g) || []);
+        const [wa, wb] = [words(a), words(b)];
+        const common = [...wa].filter((w) => wb.has(w));
+        if (common.length < 0.6 * Math.max(wa.size, wb.size)) return;
+        for (const [node, other] of [
+          [a, wb],
+          [b, wa],
+        ]) {
+          const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+          const texts = [];
+          while (walker.nextNode()) texts.push(walker.currentNode);
+          for (const text of texts) {
+            const frag = document.createDocumentFragment();
+            for (const part of text.textContent.split(/([\w'-]+)/)) {
+              if (other.has(part.toLowerCase())) {
+                const span = el("span", "shared");
+                span.textContent = part;
+                frag.append(span);
+              } else frag.append(part);
+            }
+            text.replaceWith(frag);
+          }
+        }
+      }
+
+      function renderDuel(duel) {
+        const sides = flipped(duel) ? ["y", "x"] : ["x", "y"];
+        const card = el("section", "card");
+        card.append(el("div", "eyebrow", "<b>" + esc(duel.kind) + "</b> · " + esc(duel.context)));
+        card.append(el("h1", "", esc(duel.question)));
+        if (duel.code) {
+          const pre = el("pre");
+          for (const [n, line] of duel.code.lines) {
+            pre.append(el("div", n === duel.code.on ? "on" : "", "<i>" + n + "</i>" + esc(line)));
+          }
+          card.append(pre);
+        }
+        const bodies = sides.map((side, i) => {
+          const entry = duel[side];
+          const option = el("button", "option");
+          option.type = "button";
+          option.append(el("span", "letter", "AB"[i]));
+          if (entry.title) option.append(el("h2", "", md(entry.title)));
+          const body = el("p", "", md(entry.text));
+          option.append(body);
+          option.onclick = () => {
+            if (answer(side)) option.classList.add("picked");
+          };
+          card.append(option);
+          keys["ab"[i]] = option.onclick;
+          return body;
+        });
+        dimShared(bodies[0], bodies[1]);
+        keys.s = () => answer("s");
+        keys.x = () => answer("n");
+        card.append(
+          footer([button("Same", "ghost", keys.s), button("Both bad", "ghost bad", keys.x)]),
+        );
+        card.append(
+          el(
+            "p",
+            "hint keys",
+            "<kbd>A</kbd> <kbd>B</kbd> pick · <kbd>S</kbd> same · <kbd>X</kbd> both bad · <kbd>←</kbd> back",
+          ),
+        );
+        return card;
+      }
+
+      function renderIdea(idea) {
+        const card = el("section", "card");
+        card.append(el("div", "eyebrow", "<b>idea</b> · worth a test run?"));
+        card.append(el("h1", "", esc(idea.idea)));
+        const pair = el("div", "pair");
+        pair.append(
+          el("div", "", "<small>Now</small>" + md(idea.before)),
+          el("div", "after", "<small>With the idea</small>" + md(idea.after)),
+        );
+        card.append(pair);
+        keys.n = () => answer("n");
+        keys.y = () => answer("y");
+        const row = el("div", "row");
+        row.append(button("Skip", "big", keys.n), button("Try it", "big yes", keys.y));
+        card.append(row, footer([]));
+        card.append(
+          el("p", "hint keys", "<kbd>Y</kbd> try · <kbd>N</kbd> skip · <kbd>←</kbd> back"),
+        );
+        return card;
+      }
+
+      function renderEnd() {
+        const card = el("section", "card");
+        const open = answers.filter((a) => a === "-").length;
+        card.append(el("div", "eyebrow", open ? open + " left open" : "all answered"));
+        card.append(el("h1", "", "Paste this code in the thread."));
+
+        const box = el("div", "codebox");
+        const input = el("input");
+        input.readOnly = true;
+        input.value = code();
+        input.setAttribute("aria-label", "Answer code");
+        input.onfocus = () => input.select();
+        const copy = button("Copy", "big yes", async () => {
+          try {
+            await navigator.clipboard.writeText(input.value);
+            copy.textContent = "Copied";
+          } catch {
+            input.focus();
+            input.select();
+            copy.textContent = "Press copy";
+          }
+        });
+        copy.style.flex = "none";
+        copy.style.padding = "0 18px";
+        box.append(input, copy);
+        card.append(box);
+
+        // One send per code, so a reload or a second look at this screen sends nothing new.
+        let last = null;
+        try {
+          last = localStorage.getItem(storeKey + ".sent");
+        } catch {}
+        if (ROUND.webhook && last !== code()) {
+          try {
+            localStorage.setItem(storeKey + ".sent", code());
+          } catch {}
+          const sent = el("p", "hint", "Sending it to your agent…");
+          card.append(sent);
+          // A plain text POST needs no preflight, so it also leaves a sandboxed frame.
+          fetch(ROUND.webhook, { method: "POST", mode: "no-cors", body: code() }).then(
+            () => (sent.textContent = "Sent to your agent. The code above is a spare."),
+            () => (sent.textContent = "Could not send it. Paste the code instead."),
+          );
+        }
+
+        const rows = new Map();
+        ROUND.duels.forEach((duel, i) => {
+          for (const side of ["x", "y"]) {
+            const row = rows.get(duel[side].label) || { wins: 0, played: 0 };
+            if (answers[i] === "x" || answers[i] === "y") {
+              row.played += 1;
+              if (answers[i] === side) row.wins += 1;
+            }
+            rows.set(duel[side].label, row);
+          }
+        });
+        if ([...rows.values()].some((row) => row.played)) {
+          card.append(el("div", "eyebrow", "who you picked"));
+          const score = el("div", "score");
+          [...rows]
+            .sort((a, b) => b[1].wins - a[1].wins)
+            .forEach(([label, row]) => {
+              const line = el(
+                "div",
+                "",
+                esc(label) + "<b>" + row.wins + " / " + row.played + "</b>",
+              );
+              const meter = el("i");
+              meter.style.setProperty(
+                "--w",
+                (row.played ? (100 * row.wins) / row.played : 0) + "%",
+              );
+              line.append(meter);
+              score.append(line);
+            });
+          card.append(score);
+        }
+        if (cards.length) {
+          card.append(button("Look again", "ghost quiet", () => ((at = 0), render())));
+        }
+        return card;
+      }
+
+      function render() {
+        shownAt = Date.now();
+        keys = {};
+        const current = cards[at];
+        app.replaceChildren(
+          progress(),
+          !current
+            ? renderEnd()
+            : current.type === "duel"
+              ? renderDuel(current.duel)
+              : renderIdea(current.idea),
+        );
+      }
+
+      addEventListener("keydown", (event) => {
+        if (event.metaKey || event.ctrlKey || event.altKey || event.target.tagName === "INPUT")
+          return;
+        if (event.key === "ArrowLeft" && at > 0) {
+          at -= 1;
+          render();
+        } else if (keys[event.key.toLowerCase()]) keys[event.key.toLowerCase()]();
+      });
+      render();
+    </script>
+  </body>
+</html>

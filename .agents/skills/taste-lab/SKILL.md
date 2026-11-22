@@ -1,52 +1,33 @@
 ---
 name: taste-lab
-description: Tune review quality from Máté's Taste Lab votes. Use when asked for new duels, when he says he voted, or when two models or two skills are compared by his taste.
+description: Fix a weakness of the comprehende skill by Máté's taste. Use when he names something he dislikes in reviews, sends a `taste.` code, or asks for duels between skills or models.
 metadata:
   internal: true
 ---
 
 # Taste Lab
 
-Máté gives taste as taps on his phone, never as written evals. The Taste Lab page is a private claude.ai artifact with that title; find its URL with the Artifact tool's list. Its source is `scripts/taste/taste-lab.html`. Its store has three collections, read and written with `ArtifactData`:
+Máté judges review quality with taps on his phone, never with written evals. A **round** is one HTML page of cards. `pnpm taste:page` builds it, and `pnpm taste:read` turns the code he sends back into picks. `pnpm taste:page -- --help` lists the flags.
 
-- `duels`: one card per pair of review pieces. He picks a side blind.
-- `rules`: one card per proposed rule. He answers yes, no, reverse, or depends.
-- `answers`: his taps, keyed `duel__<card id>` and `rules__<rule id>`.
+- A **duel** shows the same piece of a review from two eval runs, with the sides hidden. His **pick** is the ground truth.
+- An **idea** card shows one skill change with a real before and after. He says yes to most ideas, so "Try it" earns the idea a test run and proves nothing more.
 
-A **pick** is a duel answer. Picks are the ground truth. A yes on a rule card is weaker: he approved rules that his own picks contradict, so a rule stands only on the picks it explains.
+## Fix an issue
 
-## Load duels
+1. **Pin the issue.** Find it in reviews that saved runs wrote: `eval/runs/*/<case>/review.json` in this checkout and its sibling worktrees. Name the kinds of piece it shows in (the `--kind` values) and two or more cases. Done when you hold three real texts that show the issue.
+2. **Write ideas.** Two to four different one-sentence changes to the skill that could fix it. For each, copy `skills-next/comprehende` to a folder outside the worktree, named for the idea, and make that one edit. The folder name is the idea's label in duels.
+3. **Ask with idea cards.** Write `{ idea, before, after }` per idea, with `before` from step 1, and build a round with `--ideas`. Show it and end the turn. A "Try it" approves the paid run of that idea in step 4.
+4. **Run.** For each approved idea, and once for the current skill, run the cases from step 1: `pnpm eval -- --case <id> --skill <idea folder> --no-graders`, all with one producer model. Read `docs/eval.md` first.
+5. **Duel.** `pnpm taste:page -- --run current=<run dir> --run <idea>=<run dir> --kind <kind>`, with one `--run` per idea. Show it and end the turn.
+6. **Read picks.** `pnpm taste:read -- <code>` prints the wins per label and each pick with both texts. An idea wins when it beats `current` and no other idea beats it. Under eight picks between two labels is a hint: add cases and duel again. A piece he marks both bad is one no idea fixed: take those texts back to step 2.
+7. **Apply the winner** to `skills-next/comprehende/SKILL.md` under the project rules in `AGENTS.md`. Replace the sentence it overrides; an added line makes the skill longer and weaker.
 
-1. Choose two `eval/runs/<stamp>` folders that hold reviews of the same cases. To compare models, both runs use one skill tree. To compare skills, both use one model. A new producer run costs money, so ask before you start one; saved runs are free.
-2. Run `pnpm taste:cards -- <run dir> <run dir>`. It prints the cards as JSON and labels each side `<model> @ <skill tree>`.
-3. Write about 20 cards to `duels` in one `batch`, each with an `order` number. Spread them over cases and kinds.
-4. Tell him how many cards wait, then end the turn.
+## Compare models
 
-## Read picks
+Steps 4 to 6 with one skill and one `--producer-model` per run. Label each `--run` with its model.
 
-Run this when he says he voted. Read `answers` and every card they point at.
+## Show a round
 
-1. Tally wins and losses per label, and per kind of piece. With fewer than 20 picks between two labels, report the tally as a hint, not a result.
-2. Read `both-bad` as a failure of the skill on that piece, apart from the ranking.
-3. For each rule card answered since the last read, list the picks that fit it and the picks against it.
+`taste:page` prints the path of one self-contained HTML file. Show it the way your harness can: inline in the thread when the harness renders HTML, else hosted with the `pages` skill, else as a file path. He answers when he has a minute, so end the turn.
 
-## Propose rules
-
-A rule earns a card when it explains two or more picks and has at most one pick against it. Write at most five cards per round, so a round stays under two minutes.
-
-- `rule`: one plain sentence that fits any repository.
-- `before` and `after`: the two real texts from a pick. Write `after` yourself only when no pick shows it.
-- `evidence`: the count, such as "Fits 4 of your picks. Against: the cobra line note."
-
-When picks contradict an approved rule, or he marks a pair both bad, write two cards with opposite guesses. His answers tell which reading is right.
-
-## Apply rules
-
-A rule is ready when he answered yes and the picks still fit it. `reverse` makes the opposite rule ready. `depends` and `no` go back to Propose rules as a narrower guess.
-
-1. Put each ready rule where it acts: wording and grouping rules in `skills-next/comprehende/SKILL.md`, and what a review must or must not say for one case in that case's `expected.md`. Follow the project rules for skill edits in `AGENTS.md`.
-2. Replace the skill sentence the rule overrides. A rule that only adds a line makes the skill longer and weaker.
-3. Prove the edit with a duel: run the same cases with the old and the new skill tree, load those cards, and ask for picks. The edit stays when the new tree wins. Ask before this producer run.
-4. Delete applied and rejected rule cards from `rules`.
-
-An answer holds labels, not texts. Delete an answered duel card only after its pick is read and the rule cards of that round are written.
+The page ends on a code that starts with `taste.`. He pastes it in the thread. When `TASTE_WEBHOOK_URL` is set, the page also posts the code to that URL, which can start an agent run with no paste. Such a page holds the URL, so show it inline and never host it.

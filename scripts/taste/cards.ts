@@ -2,6 +2,16 @@ import { createHash } from "node:crypto";
 import type { LineNote, ReviewDocument, ReviewGroup } from "../../src/schema/types.ts";
 import { isDirHunkRef, refCoversPath } from "../../src/schema/identity.ts";
 
+export const DUEL_KINDS = [
+  "summary",
+  "why",
+  "lookFor",
+  "grouping",
+  "group",
+  "fileNote",
+  "lineNote",
+] as const;
+
 export type Side = { label: string; document: ReviewDocument };
 
 type Entry = { label: string; title?: string; text: string };
@@ -9,7 +19,7 @@ type Entry = { label: string; title?: string; text: string };
 export type DuelCard = {
   id: string;
   case: string;
-  kind: "summary" | "why" | "lookFor" | "grouping" | "group" | "fileNote" | "lineNote";
+  kind: (typeof DUEL_KINDS)[number];
   question: string;
   context: string;
   x: Entry;
