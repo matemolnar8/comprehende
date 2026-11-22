@@ -179,6 +179,11 @@ async function page(argv: string[], packageRoot: string, cacheDir: string): Prom
   }
 
   const runs = await Promise.all(values.run.map(loadRun));
+  const repeated = runs.find((run, index) => runs.findIndex((r) => r.label === run.label) < index);
+  if (repeated !== undefined) {
+    console.error(`two runs share the label "${repeated.label}". Name them: --run <label>=<dir>`);
+    return 1;
+  }
   const all: Duel[] = [];
   for (const [index, x] of runs.entries()) {
     for (const y of runs.slice(index + 1)) {
@@ -246,4 +251,9 @@ async function main(argv: string[]): Promise<number> {
   return command === "--help" || command === "-h" ? 0 : 1;
 }
 
-process.exitCode = await main(process.argv.slice(2));
+try {
+  process.exitCode = await main(process.argv.slice(2));
+} catch (error) {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+}

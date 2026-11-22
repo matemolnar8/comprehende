@@ -29,10 +29,8 @@ export function parseRound(text: string): Round {
 }
 
 export function makeRound(duels: Duel[], ideas: Idea[]): Round {
-  const id = createHash("sha1")
-    .update([...duels.map((duel) => duel.id), ...ideas.map((idea) => idea.idea)].join("\0"))
-    .digest("hex")
-    .slice(0, 6);
+  // Every text is in the id, so a code never reads against a round with other words.
+  const id = createHash("sha1").update(JSON.stringify({ duels, ideas })).digest("hex").slice(0, 8);
   return { id, duels, ideas };
 }
 

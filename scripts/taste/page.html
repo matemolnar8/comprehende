@@ -231,6 +231,12 @@
       .ghost.bad {
         color: var(--bad);
       }
+      /* The answer a card already holds, shown when you step back to it. */
+      .ghost.picked,
+      .big.picked {
+        border-color: var(--pick);
+        box-shadow: inset 0 0 0 1.5px var(--pick);
+      }
       .big {
         flex: 1;
         min-height: 54px;
@@ -401,6 +407,8 @@
         return true;
       }
 
+      const held = (value) => (answers[at] === value ? " picked" : "");
+
       function progress() {
         const bar = el("div", "bar");
         cards.forEach((_, i) =>
@@ -459,7 +467,7 @@
         }
         const bodies = sides.map((side, i) => {
           const entry = duel[side];
-          const option = el("button", "option");
+          const option = el("button", "option" + held(side));
           option.type = "button";
           option.append(el("span", "letter", "AB"[i]));
           if (entry.title) option.append(el("h2", "", md(entry.title)));
@@ -476,7 +484,10 @@
         keys.s = () => answer("s");
         keys.x = () => answer("n");
         card.append(
-          footer([button("Same", "ghost", keys.s), button("Both bad", "ghost bad", keys.x)]),
+          footer([
+            button("Same", "ghost" + held("s"), keys.s),
+            button("Both bad", "ghost bad" + held("n"), keys.x),
+          ]),
         );
         card.append(
           el(
@@ -501,7 +512,10 @@
         keys.n = () => answer("n");
         keys.y = () => answer("y");
         const row = el("div", "row");
-        row.append(button("Skip", "big", keys.n), button("Try it", "big yes", keys.y));
+        row.append(
+          button("Skip", "big" + held("n"), keys.n),
+          button("Try it", "big yes" + held("y"), keys.y),
+        );
         card.append(row, footer([]));
         card.append(
           el("p", "hint keys", "<kbd>Y</kbd> try · <kbd>N</kbd> skip · <kbd>←</kbd> back"),
@@ -587,7 +601,13 @@
           card.append(score);
         }
         if (cards.length) {
-          card.append(button("Look again", "ghost quiet", () => ((at = 0), render())));
+          const row = el("div", "row");
+          row.append(
+            button("Back", "ghost quiet", () => ((at = cards.length - 1), render())),
+            el("span", "grow"),
+            button("From the start", "ghost quiet", () => ((at = 0), render())),
+          );
+          card.append(row);
         }
         return card;
       }
