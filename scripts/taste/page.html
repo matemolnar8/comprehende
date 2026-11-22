@@ -408,11 +408,12 @@
           localStorage.setItem(storeKey, JSON.stringify(answers));
         } catch {}
         at += 1;
-        setTimeout(render, 170);
+        timer = setTimeout(render, 170);
         return true;
       }
 
       let leaving = false;
+      let timer;
       const held = (value) => (answers[at] === value ? " picked" : "");
 
       function progress() {
@@ -620,6 +621,7 @@
       }
 
       function render() {
+        clearTimeout(timer);
         shownAt = Date.now();
         leaving = false;
         keys = {};
