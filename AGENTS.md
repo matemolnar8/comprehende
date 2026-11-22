@@ -47,6 +47,7 @@ The rest of this file gives good defaults, not hard rules. The developer's choic
 - `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export server, live git reads.
 - `src/ui/` - fixed UI. Only the data changes.
 - `eval/cases/`, `scripts/eval/` - eval cases and runner.
+- `scripts/taste/` - Taste Lab: duel cards cut from two eval runs, and the page Máté votes on. The `taste-lab` skill holds the loop.
 - `scripts/` - dev, release, and Pages scripts.
 
 A fresh worktree with no `node_modules` or `.env`: run `node scripts/setup-worktree.ts`.
