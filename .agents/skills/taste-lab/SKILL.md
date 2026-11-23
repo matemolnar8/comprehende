@@ -28,6 +28,6 @@ Steps 4 to 6 with one skill and one `--producer-model` per run. Label each `--ru
 
 ## Show a round
 
-`taste:page` prints the path of one self-contained HTML file. Show it the way your harness can: inline in the thread when the harness renders HTML, else hosted with the `pages` skill, else as a file path. He answers when he has a minute, so end the turn.
+`taste:page` prints the path of one self-contained HTML file. Show it the way your harness can: inline in the thread when the harness renders HTML, else hosted with the `pages` skill, else as a file path. He answers when he has a minute, so end the turn. Inline in T3 Code the page cannot save progress, so a reload there loses the taps of that round.
 
 The page ends on a code that starts with `taste.`. He pastes it in the thread. When `TASTE_WEBHOOK_URL` is set, the page also posts the code to that URL, which can start an agent run with no paste. Such a page holds the URL, so show it inline and never host it.
