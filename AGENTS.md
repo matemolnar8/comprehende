@@ -47,6 +47,7 @@ The rest of this file gives good defaults, not hard rules. The developer's choic
 - `src/cli/`, `src/server/`, `src/git/` - CLI, serve/export server, live git reads.
 - `src/ui/` - fixed UI. Only the data changes.
 - `eval/cases/`, `scripts/eval/` - eval cases and runner.
+- `scripts/taste/` - Taste Lab: a page of blind duels between eval runs, and the code that reads the answers. The `taste-lab` skill holds the loop.
 - `scripts/` - dev, release, and Pages scripts.
 
 A fresh worktree with no `node_modules` or `.env`: run `node scripts/setup-worktree.ts`.
@@ -60,6 +61,8 @@ The skill reviews any git repository. Write its rules so they fit any diff. Keep
 Component look lives on the component. Tailwind first. If a bit of CSS is required, colocate it with that component using a CSS module. A component must not import a global stylesheet. Do not add descendant selectors in `styles.css` to style markup a component already owns. `styles.css` holds globals such as variables and themes. Exception: `src/ui/lib/gap-style.ts` may use descendant selectors to style Pierre markup.
 
 If the UI already shows the state, do not add a sentence that narrates it.
+
+No vendor lock-in. The tool, the skills, and the scripts in this repo work with any coding agent and any model provider. Build on git, files, and plain HTML, and name a harness feature as one way among others, not the only way. T3 Code is the one harness you may assume.
 
 Type safety helps humans and agents alike. Parse at the boundary, where the schema is the source of truth, and infer everywhere inside. If a bug could have been a type error, make it one before fixing it.
 

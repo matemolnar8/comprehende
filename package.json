@@ -45,6 +45,8 @@
     "ui:screenshots": "tsx scripts/ui-screenshots.ts",
     "generate:schema": "tsx scripts/generate-review-schema.ts",
     "sync:skill": "tsx scripts/sync-skill.ts",
+    "taste:page": "tsx scripts/taste/run.ts page",
+    "taste:read": "tsx scripts/taste/run.ts read",
     "dev:skill": "pnpm build && tsx scripts/install-local-skill.ts",
     "release:skill": "tsx scripts/sync-skill.ts --release",
     "check:skill": "tsx scripts/check-skill-sync.ts",
