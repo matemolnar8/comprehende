@@ -19,7 +19,7 @@ import {
 import { resolveDataPath } from "../review/load.ts";
 import { exportStaticSite } from "../api/snapshot.ts";
 import { openReview, pinReviewSource, reviewProblems } from "../api/live.ts";
-import { loadTheme, THEME_FILE, type LoadedTheme } from "../api/theme.ts";
+import { loadThemes, THEME_FILE, type LoadedTheme } from "../api/theme.ts";
 import { assertWorkTree, readRepoIdentity } from "../git/repo.ts";
 import { readPackageVersion } from "../package-root.ts";
 import { startServer } from "../server/http.ts";
@@ -74,7 +74,7 @@ export async function run(argv: string[]): Promise<number> {
         const running = await startServer({ cwd: request.cwd, dataPath, port: request.port, pin });
         console.log(running.url);
         console.error(`serving ${dataPath}  cwd=${request.cwd}  localhost only`);
-        noteTheme(ctx.theme);
+        noteThemes(ctx.themes);
         if (request.open) {
           openUrl(running.url);
         }
@@ -91,7 +91,7 @@ export async function run(argv: string[]): Promise<number> {
         console.error(
           `exported ${dataPath}  ${result.apiFiles.length} api files  no git in the folder`,
         );
-        noteTheme(result.ctx.theme);
+        noteThemes(result.ctx.themes);
         return 0;
       }
       case "digest": {
@@ -126,11 +126,11 @@ export async function run(argv: string[]): Promise<number> {
       }
       case "theme": {
         const { root } = await readRepoIdentity(request.cwd);
-        const loaded = await loadTheme(root);
+        const loaded = await loadThemes(root);
         console.log(
-          loaded === undefined
+          loaded.length === 0
             ? `no theme  looked for ${join(root, THEME_FILE)} and ${join(homedir(), THEME_FILE)}`
-            : `ok  ${loaded.path}`,
+            : loaded.map((theme) => `ok  ${theme.source}  ${theme.path}`).join("\n"),
         );
         return 0;
       }
@@ -168,9 +168,9 @@ function warnReview(ctx: Parameters<typeof reviewProblems>[0], note: string): vo
   }
 }
 
-function noteTheme(theme: LoadedTheme | undefined): void {
-  if (theme !== undefined) {
-    console.error(`theme ${theme.path}`);
+function noteThemes(themes: LoadedTheme[]): void {
+  for (const theme of themes) {
+    console.error(`theme ${theme.source}  ${theme.path}`);
   }
 }
 

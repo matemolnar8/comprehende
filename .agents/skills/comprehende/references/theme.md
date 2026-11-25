@@ -2,7 +2,7 @@
 
 Give the review UI the colours of a project's design language. `<cli>` is the CLI command SKILL.md uses: the pinned `npx` command, or the local executable the user named.
 
-The theme is one file, `.comprehende/theme.json`. The CLI reads it at the root of the repository under review, else in the home folder (`~/.comprehende/theme.json`); the repository file wins whole, and the two never merge. `serve` and `export` apply it, and an export carries it to the hosted page. Write the repository file unless the user asks for a theme for every repository.
+The theme is one file, `.comprehende/theme.json`. The CLI reads it at the root of the repository under review and in the home folder (`~/.comprehende/theme.json`). `serve` and `export` apply the repository file when there is one, else the home file, and an export carries both to the hosted page; the user switches between them in the UI. The two never merge. Write the repository file unless the user asks for a theme for every repository.
 
 ```json
 {
@@ -31,4 +31,4 @@ Every key is optional. A token the file leaves out keeps the default colour. Eac
 
 3. **Write and check.** Write the file with your edit tool, then run `<cli> theme`. On an error, fix the field it names and run `<cli> theme` again. Done when it prints `ok` and the path you wrote.
 
-4. **Hand over.** Tell the user the path, and that the next `serve` or `export` uses it; an open `serve` shows it on reload. Committing the file shares the theme with everyone who reviews this repository.
+4. **Hand over.** Tell the user the path, and that the next `serve` or `export` uses it; an open `serve` shows it on reload, unless they picked other colours under Display › Colours. Committing the file shares the theme with everyone who reviews this repository.

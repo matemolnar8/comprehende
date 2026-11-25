@@ -39,7 +39,7 @@ import type {
   FileSide,
 } from "./types.ts";
 import { REVIEW_BUCKETS } from "./types.ts";
-import { loadTheme, type LoadedTheme } from "./theme.ts";
+import { loadThemes, type LoadedTheme } from "./theme.ts";
 
 export type JsonSnapshot = {
   encoding: "json";
@@ -66,7 +66,7 @@ export type ReviewContext = {
   staleCommentPins: StaleCommentPin[];
   mergeBaseSha: string;
   commits: ApiReview["commits"];
-  theme?: LoadedTheme;
+  themes: LoadedTheme[];
 };
 
 export async function pinReviewSource(
@@ -86,11 +86,11 @@ export async function openReview(
   const document = typeof data === "string" ? await loadDocument(data) : data;
   const range = pin ?? (await pinRange(cwd, document.source.baseRef, document.source.headRef));
   // Independent git reads run together: one git spawn costs about 100 ms on Windows.
-  const [{ files, coverage }, pins, commits, { repo, theme }, previous] = await Promise.all([
+  const [{ files, coverage }, pins, commits, { repo, themes }, previous] = await Promise.all([
     coverReview(cwd, document, range),
     staleCommentPins(cwd, document, range),
     listCommits(cwd, range.baseSha, range.headSha),
-    readRepoIdentity(cwd).then(async (repo) => ({ repo, theme: await loadTheme(repo.root) })),
+    readRepoIdentity(cwd).then(async (repo) => ({ repo, themes: await loadThemes(repo.root) })),
     typeof data === "string" && document.previous !== undefined
       ? loadPrevious(join(dirname(data), document.previous))
       : undefined,
@@ -112,7 +112,7 @@ export async function openReview(
     staleCommentPins: pins,
     mergeBaseSha: range.mergeBaseSha,
     commits,
-    ...(theme === undefined ? {} : { theme }),
+    themes,
   };
 }
 
@@ -159,7 +159,7 @@ async function codeChanges(
 }
 
 export function reviewPayload(ctx: ReviewContext): ApiReview {
-  const { document, repo, resolved, files, coverage, staleCommentPins, commits, theme } = ctx;
+  const { document, repo, resolved, files, coverage, staleCommentPins, commits, themes } = ctx;
   const lockfiles = lockfileFiles(files);
   return {
     document: storedDocument(document),
@@ -223,7 +223,7 @@ export function reviewPayload(ctx: ReviewContext): ApiReview {
       .filter((file) => file.binary && !file.image)
       .map((file) => ({ path: file.path, reason: "binary" })),
     commits,
-    ...(theme === undefined ? {} : { theme: theme.theme }),
+    themes: themes.map(({ source, theme }) => ({ source, theme })),
   };
 }
 

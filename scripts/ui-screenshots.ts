@@ -118,7 +118,7 @@ async function buildRepo(
   });
   const cwd = join(root, "repo");
   await addDetachedWorktree(bare, cwd, spec.head);
-  // An empty project theme wins over a home theme, so a default run shows the built-in colours.
+  // The UI starts on the project theme, so an empty one shows the built-in colours over a home theme.
   await mkdir(join(cwd, ".comprehende"));
   if (theme === undefined) {
     await writeFile(join(cwd, THEME_FILE), "{}");
