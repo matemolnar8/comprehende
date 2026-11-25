@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, it } from "vite-plus/test";
 import { findPackageRoot } from "../package-root.ts";
 import { parseThemeJson, THEME_TOKENS } from "../schema/theme.ts";
-import { loadTheme } from "./theme.ts";
+import { loadThemes } from "./theme.ts";
 
 const roots: string[] = [];
 
@@ -25,8 +25,8 @@ async function folders() {
   return { repo, home };
 }
 
-describe("loadTheme", () => {
-  it("prefers the repository file over the home file, whole", async () => {
+describe("loadThemes", () => {
+  it("loads the repository file, then the home file, each whole", async () => {
     const { repo, home } = await folders();
     await writeFile(
       join(home, ".comprehende/theme.json"),
@@ -34,28 +34,49 @@ describe("loadTheme", () => {
     );
     await writeFile(join(repo, ".comprehende/theme.json"), '{"dark":{"primary":"#fbbf24"}}');
 
-    const loaded = await loadTheme(repo, home);
-
-    assert.equal(loaded?.path, join(repo, ".comprehende/theme.json"));
-    assert.deepEqual(loaded?.theme, { dark: { primary: "#fbbf24" } });
+    assert.deepEqual(await loadThemes(repo, home), [
+      {
+        source: "project",
+        path: join(repo, ".comprehende/theme.json"),
+        theme: { dark: { primary: "#fbbf24" } },
+      },
+      {
+        source: "user",
+        path: join(home, ".comprehende/theme.json"),
+        theme: { radius: "1rem", dark: { ring: "#fff" } },
+      },
+    ]);
   });
 
-  it("falls back to the home file, and to nothing", async () => {
+  it("loads the files that exist", async () => {
     const { repo, home } = await folders();
-    assert.equal(await loadTheme(repo, home), undefined);
+    assert.deepEqual(await loadThemes(repo, home), []);
 
     await writeFile(
       join(home, ".comprehende/theme.json"),
       '{"light":{"primary":"oklch(0.67 0.16 58)"}}',
     );
-    assert.equal((await loadTheme(repo, home))?.path, join(home, ".comprehende/theme.json"));
+    assert.deepEqual(
+      (await loadThemes(repo, home)).map((theme) => theme.source),
+      ["user"],
+    );
   });
 
-  it("names the file and the field when the theme is invalid", async () => {
-    const { repo, home } = await folders();
-    await writeFile(join(repo, ".comprehende/theme.json"), '{"dark":{"primry":"#fff"}}');
+  it("loads a repository at the home folder once", async () => {
+    const { repo } = await folders();
+    await writeFile(join(repo, ".comprehende/theme.json"), "{}");
 
-    await assert.rejects(() => loadTheme(repo, home), /invalid theme .*theme\.json[\s\S]*primry/);
+    assert.deepEqual(
+      (await loadThemes(repo, repo)).map((theme) => theme.source),
+      ["project"],
+    );
+  });
+
+  it("names the file and the field when a theme is invalid", async () => {
+    const { repo, home } = await folders();
+    await writeFile(join(home, ".comprehende/theme.json"), '{"dark":{"primry":"#fff"}}');
+
+    await assert.rejects(() => loadThemes(repo, home), /invalid theme .*theme\.json[\s\S]*primry/);
   });
 });
 

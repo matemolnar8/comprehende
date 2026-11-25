@@ -232,7 +232,10 @@ describe("export static site", () => {
     await exportStaticSite({ cwd: repo.root, dataPath, outDir, uiRoot });
 
     const review = JSON.parse(await readFile(join(outDir, "api/review.json"), "utf8")) as ApiReview;
-    assert.deepEqual(review.theme, theme);
+    assert.deepEqual(
+      review.themes.filter((item) => item.source === "project"),
+      [{ source: "project", theme }],
+    );
   });
 
   it("refuses unresolved source refs", async () => {

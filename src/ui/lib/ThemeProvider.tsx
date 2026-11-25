@@ -16,12 +16,16 @@ import {
   type ResolvedTheme,
   type ThemePreference,
 } from "./theme.ts";
+import { readStoredPalette, writeStoredPalette, type Palette } from "./custom-theme.ts";
 
 type ThemeContextValue = {
   preference: ThemePreference;
   resolved: ResolvedTheme;
   system: ResolvedTheme;
   setPreference: (preference: ThemePreference) => void;
+  /** Unset until the user picks one; `pickPalette` resolves it against the review's themes. */
+  palette: Palette | undefined;
+  setPalette: (palette: Palette) => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -31,10 +35,16 @@ export function ThemeProvider(props: { children: ReactNode }) {
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
   const resolved = resolveTheme(preference, prefersDark);
   const system = resolveTheme("auto", prefersDark);
+  const [palette, setPaletteState] = useState(readStoredPalette);
 
   const setPreference = useCallback((next: ThemePreference) => {
     writeStoredPreference(next);
     setPreferenceState(next);
+  }, []);
+
+  const setPalette = useCallback((next: Palette) => {
+    writeStoredPalette(next);
+    setPaletteState(next);
   }, []);
 
   useEffect(() => {
@@ -49,8 +59,8 @@ export function ThemeProvider(props: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ preference, resolved, system, setPreference }),
-    [preference, resolved, system, setPreference],
+    () => ({ preference, resolved, system, setPreference, palette, setPalette }),
+    [preference, resolved, system, setPreference, palette, setPalette],
   );
 
   return <ThemeContext.Provider value={value}>{props.children}</ThemeContext.Provider>;

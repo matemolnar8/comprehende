@@ -76,6 +76,7 @@ export function Header(props: {
           <DisplayMenu
             wrap={props.wrap}
             onWrap={props.onWrap}
+            themes={props.meta.themes}
             comments={props.comments}
             onComments={props.onComments}
             labelClassName={WIDE_ONLY}

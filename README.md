@@ -18,7 +18,7 @@ Inside the repository you want to review, run `/comprehende` in your coding agen
 
 When the branch gets new commits, run it again. The agent keeps the existing groups and rewrites only the ones that changed.
 
-To give the UI your project's colours, run `/comprehende set up a theme based on this project's design language`. The agent writes `.comprehende/theme.json`. Commit it to share the theme with everyone who reviews the repository. A `~/.comprehende/theme.json` applies to every repository without one.
+To give the UI your project's colours, run `/comprehende set up a theme based on this project's design language`. The agent writes `.comprehende/theme.json`. Commit it to share the theme with everyone who reviews the repository. A `~/.comprehende/theme.json` applies to every repository without one. When there is a theme, the Display menu switches between it and the default colours.
 
 ## Why
 
@@ -49,6 +49,6 @@ The skill runs these commands for you. Run them inside the repository under revi
 | `comprehende serve --data <file>`                                  | Serves the UI on a local URL.                                                                                                                      |
 | `comprehende export --data <file> --out <dir>`                     | Writes a static copy of the UI that any static file server can host.                                                                               |
 | `comprehende refresh --data <file>`                                | Moves a review to new commits. Keeps unchanged hunks in their groups and puts new hunks in a draft group.                                          |
-| `comprehende theme`                                                | Checks the theme file and prints its path. `serve` and `export` apply it.                                                                          |
+| `comprehende theme`                                                | Checks the theme files and prints their paths. `serve` and `export` apply them.                                                                    |
 
 The URL hash holds the UI location, so a shared link opens the same view in `serve` and `export`. After `refresh`, the What changed page (`#changes`, or `h`) compares the review with the old one.

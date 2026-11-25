@@ -62,6 +62,7 @@ export function MobileShell(props: {
           <DisplayMenu
             wrap={props.wrap}
             onWrap={props.onWrap}
+            themes={props.meta.themes}
             onRefresh={props.onRefresh}
             comments={props.comments}
             onComments={props.onComments}

@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { useMonoFont } from "@/lib/MonoFontProvider.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
+import { pickPalette, type Palette } from "@/lib/custom-theme.ts";
+import type { ReviewMeta } from "../api.ts";
 import { cn } from "@/lib/utils.ts";
 import { nextThemePreference, type ThemePreference } from "../lib/theme.ts";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
@@ -34,16 +36,24 @@ const THEME_LABELS = {
 
 const THEME_CHOICES: readonly ThemePreference[] = ["auto", "light", "dark"];
 
+const PALETTE_LABELS = {
+  project: "Project",
+  user: "User",
+  default: "Default",
+} satisfies Record<Palette, string>;
+
 const THEME_ICONS = {
   auto: SunMoonIcon,
   light: SunIcon,
   dark: MoonIcon,
 } satisfies Record<ThemePreference, LucideIcon>;
 
-/** Display settings that do not change what the review says: wrap, comments, code font, theme. */
+/** Display settings that do not change what the review says: wrap, comments, code font, colours, theme. */
 export function DisplayMenu(props: {
   wrap: boolean;
   onWrap: () => void;
+  /** The review's theme files. With none, the menu has no colour choice. */
+  themes: ReviewMeta["themes"];
   /** Where the header has no Refresh button of its own, the menu carries it. */
   onRefresh?: () => void;
   comments?: boolean;
@@ -51,7 +61,8 @@ export function DisplayMenu(props: {
   labelClassName?: string;
   triggerClassName?: string;
 }) {
-  const { preference, setPreference } = useTheme();
+  const { preference, setPreference, palette, setPalette } = useTheme();
+  const palettes: Palette[] = [...props.themes.map((theme) => theme.source), "default"];
   const { font, toggleMonoFont } = useMonoFont();
   return (
     <DropdownMenu>
@@ -90,6 +101,27 @@ export function DisplayMenu(props: {
         <DropdownMenuCheckboxItem checked={font === "iosevka"} onCheckedChange={toggleMonoFont}>
           <ItemText>Iosevka for code</ItemText>
         </DropdownMenuCheckboxItem>
+        {props.themes.length > 0 ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Colours</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={pickPalette(props.themes, palette)}
+              onValueChange={(value) => {
+                const next = palettes.find((choice) => choice === value);
+                if (next !== undefined) {
+                  setPalette(next);
+                }
+              }}
+            >
+              {palettes.map((choice) => (
+                <DropdownMenuRadioItem key={choice} value={choice}>
+                  {PALETTE_LABELS[choice]}
+                </DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
         <DropdownMenuLabel>Theme</DropdownMenuLabel>
         <DropdownMenuRadioGroup

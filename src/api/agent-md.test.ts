@@ -264,5 +264,6 @@ function sampleReview(): ApiReview {
       origin: "git@github.com:matemolnar8/comprehende.git",
       root: null,
     },
+    themes: [],
   };
 }

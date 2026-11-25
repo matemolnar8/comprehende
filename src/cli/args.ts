@@ -92,9 +92,10 @@ Commands:
             Write a static site (same UI + frozen git payloads). Highlighters only
             for languages in the review. No server after that.
 
-  theme     Check the UI theme and print the file it comes from:
-            .comprehende/theme.json in the repository, else in the home folder.
-            serve and export apply it.
+  theme     Check the UI themes and print the files they come from:
+            .comprehende/theme.json in the repository and in the home folder.
+            serve and export apply the repository one first; the Display menu
+            switches between them.
 
 Options:
   --base <ref>     Base ref (default: origin/HEAD, else main, master, or trunk)
