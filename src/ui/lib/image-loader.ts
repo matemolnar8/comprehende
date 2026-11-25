@@ -4,10 +4,12 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 export type Priority = "visible" | "near" | "background";
 
 export type LoadedImage = {
+  /** The network URL it came from. */
+  url: string;
   /** An object URL: showing the image again never goes back to the network. */
   src: string;
   /** For the pixel diff worker, so it does not fetch the image again. */
-  blob: Blob;
+  file: Blob;
   width: number;
   height: number;
 };
@@ -96,6 +98,7 @@ function schedule(): void {
 function pump(): void {
   const waiting: { entry: Entry; rank: number; seq: number }[] = [];
   const nearLoading: Entry[] = [];
+  const backgroundLoading: Entry[] = [];
   let foregroundBusy = 0;
   let backgroundBusy = 0;
   // The best rank still missing anywhere. Only that rank starts, so images further down the list
@@ -121,6 +124,9 @@ function pump(): void {
       waiting.push({ entry, rank: rank(best.priority), seq: best.seq });
     } else if (entry.loading.background) {
       backgroundBusy++;
+      if (best.priority === "background") {
+        backgroundLoading.push(entry);
+      }
     } else if (best.priority === "background") {
       // A screen image the reader has left gives its slot to the images now on the screen.
       entry.loading.controller.abort();
@@ -138,6 +144,12 @@ function pump(): void {
   // into range first, which are the closest to the screen.
   const next = waiting.filter((item) => item.rank === top).sort((a, b) => a.seq - b.seq);
   if (top < rank("background")) {
+    // The background fill waits while the reader waits. Cards also mount as background before
+    // their observers report, so this stops a fill that started on a card far from the screen.
+    for (const entry of backgroundLoading) {
+      entry.loading?.controller.abort();
+      entry.loading = undefined;
+    }
     // An image on the screen takes the slot of one that is only near it.
     if (top === rank("visible")) {
       const short = next.length - (FOREGROUND_SLOTS - foregroundBusy);
@@ -210,11 +222,11 @@ async function load(url: string, signal: AbortSignal): Promise<LoadedImage> {
   if (!response.ok) {
     throw new Error(`image ${response.status}`);
   }
-  const blob = await response.blob();
-  const src = URL.createObjectURL(blob);
+  const file = await response.blob();
+  const src = URL.createObjectURL(file);
   try {
     const { naturalWidth, naturalHeight } = await readImage(src);
-    return { src, blob, width: naturalWidth, height: naturalHeight };
+    return { url, src, file, width: naturalWidth, height: naturalHeight };
   } catch (cause: unknown) {
     URL.revokeObjectURL(src);
     throw cause;

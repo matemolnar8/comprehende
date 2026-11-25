@@ -431,13 +431,7 @@ function PixelStage(props: {
     }
     let answered = false;
     const job = queuePixelDiff(
-      {
-        oldImage: oldImage.blob,
-        newImage: newImage.blob,
-        width: naturalWidth,
-        height: naturalHeight,
-      },
-      `${oldImage.src}\n${newImage.src}\n${naturalWidth}x${naturalHeight}`,
+      { oldImage, newImage, width: naturalWidth, height: naturalHeight },
       (result) => {
         answered = true;
         if (result === null) {

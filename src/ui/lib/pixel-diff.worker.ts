@@ -1,7 +1,12 @@
 import { diffRgba } from "../../schema/image-diff.ts";
 
 /** The image files as the page loaded them, so the worker does not fetch them again. */
-export type PixelDiffInput = { oldImage: Blob; newImage: Blob; width: number; height: number };
+export type PixelDiffInput = {
+  oldImage: { url: string; file: Blob };
+  newImage: { url: string; file: Blob };
+  width: number;
+  height: number;
+};
 
 export type PixelDiffResult = { bitmap: ImageBitmap; changed: number; total: number };
 
@@ -29,8 +34,8 @@ async function reply({ id, input }: PixelDiffRequest): Promise<void> {
 async function pixelDiff(input: PixelDiffInput): Promise<PixelDiffResult> {
   const { width, height } = input;
   const [oldPixels, newPixels] = await Promise.all([
-    raster(input.oldImage, width, height),
-    raster(input.newImage, width, height),
+    raster(input.oldImage.file, width, height),
+    raster(input.newImage.file, width, height),
   ]);
   const diff = diffRgba(oldPixels, newPixels, width, height);
   const canvas = new OffscreenCanvas(width, height);

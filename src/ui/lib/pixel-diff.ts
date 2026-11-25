@@ -23,6 +23,9 @@ let running: { id: number; job: Job } | undefined;
 let worker: Worker | undefined;
 let nextId = 0;
 
+const keyOf = (input: PixelDiffInput) =>
+  `${input.oldImage.url}\n${input.newImage.url}\n${input.width}x${input.height}`;
+
 /**
  * Diff a pair off the main thread: one large pair takes a third of a second, and a group can hold
  * a hundred. Jobs run one at a time in the order asked. `cancel` drops a job that has not started,
@@ -30,10 +33,9 @@ let nextId = 0;
  */
 export function queuePixelDiff(
   input: PixelDiffInput,
-  /** The same key asks for the same pair, so a kept result answers it. */
-  key: string,
   done: (result: PixelDiffResult | null) => void,
 ): { cancel: () => void } {
+  const key = keyOf(input);
   const kept = takeKept(key);
   if (kept !== undefined) {
     done(kept);
