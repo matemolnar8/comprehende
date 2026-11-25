@@ -1,10 +1,15 @@
 import { useEffect, useState, type RefObject } from "react";
+import type { Priority } from "./image-loader.ts";
 
 // One and a half screens above and below, so pixels are ready before a card scrolls in.
 const NEAR_MARGIN = "150% 0px";
 
-/** True while the node is on screen or close to it, inside its scroll container. */
-export function useNearViewport(ref: RefObject<Element | null>): boolean {
+/**
+ * Where the node sits against its scroll container: on the screen, near it, or far away. The
+ * names are image load priorities: a far card still loads, in the background.
+ */
+export function useViewportPriority(ref: RefObject<Element | null>): Priority {
+  const [visible, setVisible] = useState(false);
   const [near, setNear] = useState(false);
 
   useEffect(() => {
@@ -12,21 +17,39 @@ export function useNearViewport(ref: RefObject<Element | null>): boolean {
     if (node === null) {
       return;
     }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries.at(-1);
-        if (entry !== undefined) {
-          setNear(entry.isIntersecting);
-        }
-      },
-      // The margin only grows the root, and a scroll container clips what lies past its edge.
-      { root: scrollRoot(node), rootMargin: NEAR_MARGIN },
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
+    // The margin only grows the root, and a scroll container clips what lies past its edge.
+    const root = scrollRoot(node);
+    const observers = [
+      observe(node, root, "0px", setVisible),
+      observe(node, root, NEAR_MARGIN, setNear),
+    ];
+    return () => {
+      for (const observer of observers) {
+        observer.disconnect();
+      }
+    };
   }, [ref]);
 
-  return near;
+  return visible ? "visible" : near ? "near" : "background";
+}
+
+function observe(
+  node: Element,
+  root: Element | null,
+  rootMargin: string,
+  onChange: (intersecting: boolean) => void,
+): IntersectionObserver {
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries.at(-1);
+      if (entry !== undefined) {
+        onChange(entry.isIntersecting);
+      }
+    },
+    { root, rootMargin },
+  );
+  observer.observe(node);
+  return observer;
 }
 
 function scrollRoot(node: Element): Element | null {
@@ -37,75 +60,4 @@ function scrollRoot(node: Element): Element | null {
     }
   }
   return null;
-}
-
-type Waiter = { reveal: () => void };
-
-// Cards not near the screen yet, in mount order (page order on first render). They load one at
-// a time while the page is idle, so a fast scroll later finds them ready, and they never slow
-// the cards on screen.
-const waiting = new Set<Waiter>();
-let active: Waiter | undefined;
-let scheduled = false;
-
-function pump(): void {
-  if (active !== undefined || scheduled || waiting.size === 0) {
-    return;
-  }
-  scheduled = true;
-  whenIdle(() => {
-    scheduled = false;
-    const next = waiting.values().next().value;
-    if (active !== undefined || next === undefined) {
-      return;
-    }
-    waiting.delete(next);
-    active = next;
-    next.reveal();
-  });
-}
-
-function release(waiter: Waiter): void {
-  waiting.delete(waiter);
-  if (active === waiter) {
-    active = undefined;
-  }
-  pump();
-}
-
-function whenIdle(run: () => void): void {
-  if (typeof requestIdleCallback === "function") {
-    requestIdleCallback(run, { timeout: 2000 });
-  } else {
-    setTimeout(run, 50);
-  }
-}
-
-/**
- * True from the first time the card comes near the screen, or when its turn to load in the
- * background comes. `settled` tells the queue the card is done, so the next one can start. A card
- * that mounts settled, such as one expanded again, starts seen.
- */
-export function useSeen(near: boolean, settled: boolean): boolean {
-  const [seen, setSeen] = useState(near || settled);
-  if (near && !seen) {
-    setSeen(true);
-  }
-  const [waiter] = useState<Waiter>(() => ({ reveal: () => setSeen(true) }));
-
-  useEffect(() => {
-    if (!seen) {
-      waiting.add(waiter);
-      pump();
-      return;
-    }
-    waiting.delete(waiter);
-    if (settled) {
-      release(waiter);
-    }
-  }, [seen, settled, waiter]);
-
-  useEffect(() => () => release(waiter), [waiter]);
-
-  return seen;
 }

@@ -18,7 +18,8 @@ import {
   type ImageStageSize,
   type ImageZoom,
 } from "../lib/image-stage.ts";
-import { useNearViewport, useSeen } from "../lib/near-viewport.ts";
+import { useImage, type ImageState, type LoadedImage } from "../lib/image-loader.ts";
+import { useViewportPriority } from "../lib/near-viewport.ts";
 import { queuePixelDiff } from "../lib/pixel-diff.ts";
 import { Segmented, SegmentedItem } from "@/components/ui/segmented.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
@@ -83,16 +84,20 @@ export function ImageDiff(props: {
   const newUrl = hasNew ? resourceHref({ kind: "image", path, side: "new" }) : undefined;
   const both = oldUrl !== undefined && newUrl !== undefined;
   const host = useHostBox();
-  // A card reads its images the first time it comes near the screen, and keeps them: reading
-  // them again on the way back would show empty frames.
-  const near = useNearViewport(host.ref);
-  const seen = useSeen(near, sizeKnown(oldUrl) && sizeKnown(newUrl));
-  const oldImage = useImageSize(oldUrl, seen);
-  const newImage = useImageSize(newUrl, seen);
+  const priority = useViewportPriority(host.ref);
+  const oldImage = imageSide(oldUrl, useImage(oldUrl, priority));
+  const newImage = imageSide(newUrl, useImage(newUrl, priority));
   const mode = useSharedMode();
   const zoom = useSharedZoom();
   const firstImageSize = useFirstImageSize();
   const [wipe, setWipe] = useState(50);
+
+  const firstLoaded = oldImage.loaded ?? newImage.loaded;
+  useEffect(() => {
+    if (firstLoaded !== undefined && getFirstImageSize() === undefined) {
+      setFirstImageSize({ width: firstLoaded.width, height: firstLoaded.height });
+    }
+  }, [firstLoaded]);
 
   // The caption stays hidden until the size is real.
   const pending = oldImage.pending || newImage.pending;
@@ -106,7 +111,9 @@ export function ImageDiff(props: {
       : both && mode === "side-by-side"
         ? fitTwoColumnStage(naturalWidth, naturalHeight, inner, host.maxHeight, GAP, MAX_UPSCALE)
         : fitImageStage(naturalWidth, naturalHeight, inner, host.maxHeight, MAX_UPSCALE);
-  const ready = stage.width > 0 && (oldImage.ok || newImage.ok || estimate !== undefined);
+  const ready =
+    stage.width > 0 &&
+    (oldImage.loaded !== undefined || newImage.loaded !== undefined || estimate !== undefined);
   const singleWidth =
     both || pending
       ? 0
@@ -145,8 +152,8 @@ export function ImageDiff(props: {
                       <StageFrame width={stage.width} height={stage.height}>
                         {oldImage.error ? (
                           <Missing />
-                        ) : oldUrl !== undefined && seen && oldImage.ok ? (
-                          <StageImage src={oldUrl} alt="Base" stage={stage} />
+                        ) : oldImage.loaded !== undefined ? (
+                          <StageImage src={oldImage.loaded.src} alt="Base" stage={stage} />
                         ) : null}
                       </StageFrame>
                     </Labeled>
@@ -156,34 +163,28 @@ export function ImageDiff(props: {
                       <StageFrame width={stage.width} height={stage.height}>
                         {newImage.error ? (
                           <Missing />
-                        ) : newUrl !== undefined && seen && newImage.ok ? (
-                          <StageImage src={newUrl} alt="Head" stage={stage} />
+                        ) : newImage.loaded !== undefined ? (
+                          <StageImage src={newImage.loaded.src} alt="Head" stage={stage} />
                         ) : null}
                       </StageFrame>
                     </Labeled>
                   ) : null}
                 </div>
               ) : null}
-              {mode === "slider" && both && oldUrl !== undefined && newUrl !== undefined ? (
+              {mode === "slider" && both ? (
                 <WipeStage
-                  oldUrl={oldUrl}
-                  newUrl={newUrl}
-                  shown={seen && !pending}
+                  oldSrc={oldImage.loaded?.src}
+                  newSrc={newImage.loaded?.src}
                   stage={stage}
                   wipe={wipe}
                   onWipe={setWipe}
                 />
               ) : null}
-              {mode === "diff" &&
-              both &&
-              oldUrl !== undefined &&
-              newUrl !== undefined &&
-              !oldImage.error &&
-              !newImage.error ? (
+              {mode === "diff" && both && !oldImage.error && !newImage.error ? (
                 <PixelStage
-                  oldUrl={oldUrl}
-                  newUrl={newUrl}
-                  near={near && oldImage.ok && newImage.ok}
+                  oldImage={oldImage.loaded}
+                  newImage={newImage.loaded}
+                  near={priority !== "background"}
                   naturalWidth={naturalWidth}
                   naturalHeight={naturalHeight}
                   stage={stage}
@@ -323,15 +324,15 @@ function Missing() {
   );
 }
 
+/** The images show once both are loaded. */
 function WipeStage(props: {
-  oldUrl: string;
-  newUrl: string;
-  shown: boolean;
+  oldSrc: string | undefined;
+  newSrc: string | undefined;
   stage: ImageStageSize;
   wipe: number;
   onWipe: (value: number) => void;
 }) {
-  const { oldUrl, newUrl, shown, stage, wipe, onWipe } = props;
+  const { oldSrc, newSrc, stage, wipe, onWipe } = props;
   const frameRef = useRef<HTMLDivElement>(null);
 
   const move = (clientX: number) => {
@@ -381,13 +382,13 @@ function WipeStage(props: {
           onPointerMove={onPointerMove}
         >
           {/* Clip both sides, so empty or transparent base area shows the bench, not the head. */}
-          {shown ? (
+          {oldSrc !== undefined && newSrc !== undefined ? (
             <>
               <div className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${wipe}%)` }}>
-                <StageImage src={newUrl} alt="Head" stage={stage} />
+                <StageImage src={newSrc} alt="Head" stage={stage} />
               </div>
               <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - wipe}% 0 0)` }}>
-                <StageImage src={oldUrl} alt="Base" stage={stage} />
+                <StageImage src={oldSrc} alt="Base" stage={stage} />
               </div>
             </>
           ) : null}
@@ -413,24 +414,30 @@ function WipeStage(props: {
 }
 
 function PixelStage(props: {
-  oldUrl: string;
-  newUrl: string;
+  oldImage: LoadedImage | undefined;
+  newImage: LoadedImage | undefined;
   near: boolean;
   naturalWidth: number;
   naturalHeight: number;
   stage: ImageStageSize;
 }) {
-  const { oldUrl, newUrl, near, naturalWidth, naturalHeight } = props;
+  const { oldImage, newImage, near, naturalWidth, naturalHeight } = props;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stats, setStats] = useState<{ changed: number; total: number } | "failed" | null>(null);
 
   useEffect(() => {
-    if (!near) {
+    if (!near || oldImage === undefined || newImage === undefined) {
       return;
     }
     let answered = false;
     const job = queuePixelDiff(
-      { oldUrl, newUrl, width: naturalWidth, height: naturalHeight },
+      {
+        oldImage: oldImage.blob,
+        newImage: newImage.blob,
+        width: naturalWidth,
+        height: naturalHeight,
+      },
+      `${oldImage.src}\n${newImage.src}\n${naturalWidth}x${naturalHeight}`,
       (result) => {
         answered = true;
         if (result === null) {
@@ -453,7 +460,7 @@ function PixelStage(props: {
       setStats(null);
     }
     return job.cancel;
-  }, [near, naturalHeight, naturalWidth, newUrl, oldUrl]);
+  }, [near, naturalHeight, naturalWidth, newImage, oldImage]);
 
   return (
     <figure className="shrink-0">
@@ -481,84 +488,24 @@ function PixelStage(props: {
   );
 }
 
-type ImageSize = {
-  ok: boolean;
+type ImageSide = {
+  loaded: LoadedImage | undefined;
   error: boolean;
-  /** The side exists, and its size is not known yet. */
+  /** The side exists, and its image has not arrived yet. */
   pending: boolean;
   width: number;
   height: number;
 };
 
-// Sizes outlive a card, so a card that mounts again keeps its exact layout. An error is read
-// again on the next mount: Git LFS objects can arrive while the page is open.
-const imageSizes = new Map<string, Size | "error">();
-
-function sizeKnown(url: string | undefined): boolean {
-  return url === undefined || imageSizes.has(url);
-}
-
-const NO_SIDE: ImageSize = { ok: false, error: false, pending: false, width: 0, height: 0 };
-const PENDING: ImageSize = { ok: false, error: false, pending: true, width: 0, height: 0 };
-const FAILED: ImageSize = { ok: false, error: true, pending: false, width: 0, height: 0 };
-
-function sizeState(url: string | undefined): ImageSize {
-  if (url === undefined) {
-    return NO_SIDE;
-  }
-  const known = imageSizes.get(url);
-  if (known === undefined) {
-    return PENDING;
-  }
-  if (known === "error") {
-    return FAILED;
-  }
-  return { ok: true, error: false, pending: false, ...known };
-}
-
-/** Keep the same state object when nothing changed, so the card does not render again. */
-function nextSizeState(previous: ImageSize, url: string | undefined): ImageSize {
-  const next = sizeState(url);
-  return next.ok && previous.width === next.width && previous.height === next.height
-    ? previous
-    : next;
-}
-
-/** Read an image's size once `load` turns true, and remember it. Retry an error once per mount. */
-function useImageSize(url: string | undefined, load: boolean): ImageSize {
-  const [state, setState] = useState(() => sizeState(url));
-
-  useEffect(() => {
-    setState((previous) => nextSizeState(previous, url));
-    if (url === undefined || sizeState(url).ok || !load) {
-      return;
-    }
-    let cancelled = false;
-    void loadImage(url)
-      .then((image) => {
-        const size = { width: image.naturalWidth, height: image.naturalHeight };
-        imageSizes.set(url, size);
-        if (getFirstImageSize() === undefined) {
-          setFirstImageSize(size);
-        }
-      })
-      .catch(() => {
-        // An earlier mount's read of the same image may have succeeded meanwhile.
-        if (!imageSizes.has(url)) {
-          imageSizes.set(url, "error");
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setState((previous) => nextSizeState(previous, url));
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [load, url]);
-
-  return state;
+function imageSide(url: string | undefined, state: ImageState): ImageSide {
+  const loaded = typeof state === "object" ? state : undefined;
+  return {
+    loaded,
+    error: state === "error",
+    pending: url !== undefined && state === undefined,
+    width: loaded?.width ?? 0,
+    height: loaded?.height ?? 0,
+  };
 }
 
 function useHostBox() {
@@ -588,13 +535,4 @@ function useHostBox() {
   }, []);
 
   return { ref: nodeRef, width: box.width, maxHeight: box.maxHeight };
-}
-
-function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("image load failed"));
-    image.src = url;
-  });
 }
