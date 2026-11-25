@@ -5,7 +5,7 @@ Answer questions about this git change.
 When no question follows this paste, explain this change.
 
 1. Resolve the pinned SHAs.
-   Run `git rev-parse --verify fe03571cd177e5f7f16352b0b4b68b39721b2e56` and `git rev-parse --verify 1671733faea758db55156ed744d7c515324a5610` in this repository.
+   Run `git rev-parse --verify fe03571cd177e5f7f16352b0b4b68b39721b2e56` and `git rev-parse --verify 5485056e4c2fd250bc5c751de58acdc001afec6f` in this repository.
    Done when both objects exist.
 
 2. Choose the relevant review concerns.
@@ -24,15 +24,17 @@ Origin: git@github.com:matemolnar8/comprehende.git
 
 base (merge-base)  fe03571cd177e5f7f16352b0b4b68b39721b2e56
 
-head               1671733faea758db55156ed744d7c515324a5610
+head               5485056e4c2fd250bc5c751de58acdc001afec6f
 
 Named refs at pin: origin/main ... HEAD
 
 Read the diff:
 
-git diff --find-renames fe03571cd177e5f7f16352b0b4b68b39721b2e56 1671733faea758db55156ed744d7c515324a5610
+git diff --find-renames fe03571cd177e5f7f16352b0b4b68b39721b2e56 5485056e4c2fd250bc5c751de58acdc001afec6f
 
 Commits:
+- 5485056e Image diffs: the background fill waits while screen images are missing
+- 43b1c1d6 Image diffs: screen images load first, passed ones stop loading
 - 1671733f Image diffs: load pixels near the screen, diff them in a worker
 - 5ee07e6f Serve: read the pinned diff once, not on every request
 
@@ -49,10 +51,10 @@ With hundreds of screenshot diffs in one group, [image sliders lagged and the re
 
 The what (medium):
 
-`serve` reads the pinned diff once, and image cards load pixels near the screen and diff them in a worker.
+`serve` reads the pinned diff once, and image cards load by screen priority and diff pixels in a worker.
 
 Things to check:
-- The [session](source:s1) asks for no change to the user experience. At head, a card that has not loaded yet shows an empty frame at the first image's size with a hidden caption, and in Pixel diff each canvas fills when its worker job ends, about 0.3 s per pair.
+- The [session](source:s1) asks for no change to the user experience. At head, a card whose images have not arrived shows an empty frame at the first image's size with a hidden caption, and in Pixel diff each canvas fills when its worker job ends, about 0.3 s per pair.
 
 ## Review concerns
 
@@ -71,23 +73,23 @@ Each function that takes the diff now takes `readonly DiffFile[]`. The reader ca
 
 [groups/readonly-callers.md](groups/readonly-callers.md)
 
-### 03 Load images near the screen (`lazy-cards`)
+### 03 Load images by screen priority (`lazy-cards`)
 
-`ImageDiff` loads a card's images when it comes within 1.5 screens, or when an idle queue in `near-viewport.ts` reaches it.
+`ImageDiff` asks `useImage` for each side with the card's place from `useViewportPriority`: on screen, within 1.5 screens, or far.
 
 Attention (tradeoff):
-A card keeps its images after it scrolls away, and the idle queue loads every remaining card one at a time. So a 100-card group still ends with all images loaded, as before; the gain is that the cards on screen load first and nothing loads during a scroll. Unmounting far images instead made returning cards fetch again, because `serve` sends image URLs with `no-store`, and showed empty frames.
+`image-loader.ts` keeps every finished image as a Blob with an object URL for the page's life, and never revokes them: about 340 MB for 100 screenshot pairs. In return no image downloads twice, since `serve` sends image URLs with `no-store`, and the pixel diff worker reads the same Blob. Chrome moves large blobs to disk.
 
 [groups/lazy-cards.md](groups/lazy-cards.md)
 
 ### 04 Pixel diff in a worker (`pixel-worker`)
 
-`PixelStage` asks `queuePixelDiff` for a bitmap, and the worker fetches both images and runs the same `diffRgba`.
+`PixelStage` hands the loaded Blobs to `queuePixelDiff`, and the worker decodes them and runs the same `diffRgba`.
 
 Attention (risk):
 The worker needs `OffscreenCanvas` and `createImageBitmap` (Safari 16.4+, Firefox 105+). In an older browser the job fails, and the card shows "The pixels could not be compared" where the main-thread diff worked before. Only cards near the screen get a job, and a job that has not started is dropped when its card scrolls away.
 
 Depends on:
-- 03 Load images near the screen (`lazy-cards`)
+- 03 Load images by screen priority (`lazy-cards`)
 
 [groups/pixel-worker.md](groups/pixel-worker.md)
