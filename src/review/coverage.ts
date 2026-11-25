@@ -185,7 +185,7 @@ function dirOwners(
  * A directory ref stands for mechanical files only. Each other file under it needs a path ref
  * in the group of its concern, which takes it out of the directory ref.
  */
-export function dirRefErrors(coverage: ReviewCoverage, files: DiffFile[]): string[] {
+export function dirRefErrors(coverage: ReviewCoverage, files: readonly DiffFile[]): string[] {
   const digests = new Map(buildDigest(files).files.map((file) => [file.path, file]));
   const errors: string[] = [];
   for (const { group, dirHunks } of coverage.groups) {

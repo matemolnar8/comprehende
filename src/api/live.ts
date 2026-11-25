@@ -61,7 +61,7 @@ export type ReviewContext = {
   previous?: ReviewDocument;
   repo: ApiReview["repo"];
   resolved: ApiReview["resolved"];
-  files: DiffFile[];
+  files: readonly DiffFile[];
   coverage: ReviewCoverage;
   staleCommentPins: StaleCommentPin[];
   mergeBaseSha: string;
@@ -143,7 +143,7 @@ async function codeChanges(
   if (baseSha === undefined || headSha === undefined) {
     return undefined;
   }
-  let before: DiffFile[];
+  let before: readonly DiffFile[];
   try {
     before = await readDiff(ctx.cwd, baseSha, headSha);
   } catch (error) {
@@ -420,7 +420,7 @@ function sidesFor(file: DiffFile): FileSide[] {
   return ["old", "new"];
 }
 
-function serializeGroup(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
+function serializeGroup(files: readonly DiffFile[], hunks: LiveHunk[]): ApiHunks {
   const filesByPath: { file: DiffFile; hunks: LiveHunk[] }[] = [];
   for (const hunk of hunks) {
     const existing = filesByPath.find((entry) => entry.file.path === hunk.path);
@@ -440,12 +440,12 @@ function serializeGroup(files: DiffFile[], hunks: LiveHunk[]): ApiHunks {
   return { hunks: hunks.map(serializeHunk), files: serializedFiles };
 }
 
-function serializeLockfiles(files: DiffFile[]): ApiHunks {
+function serializeLockfiles(files: readonly DiffFile[]): ApiHunks {
   const serializedFiles = lockfileFiles(files).map((file) => serializeGroupFile(file, [], true));
   return { hunks: [], files: serializedFiles };
 }
 
-function lockfileFiles(files: DiffFile[]): DiffFile[] {
+function lockfileFiles(files: readonly DiffFile[]): DiffFile[] {
   return files.filter((file) => isLockfilePath(file.path) && !file.binary && !file.image);
 }
 
@@ -512,7 +512,7 @@ function serializeHunk(hunk: LiveHunk): ApiHunk {
   };
 }
 
-function findFile(files: DiffFile[], path: string): DiffFile {
+function findFile(files: readonly DiffFile[], path: string): DiffFile {
   const file = findDiffFile(files, path);
   if (file === undefined) {
     throw new ApiError(404, `path is not in the live diff: ${path}`);
