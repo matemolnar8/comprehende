@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { useMonoFont } from "@/lib/MonoFontProvider.tsx";
 import { useTheme } from "@/lib/ThemeProvider.tsx";
-import { pickPalette, type Palette } from "@/lib/custom-theme.ts";
+import { pickThemeChoice, type ThemeChoice } from "@/lib/custom-theme.ts";
 import type { ReviewMeta } from "../api.ts";
 import { cn } from "@/lib/utils.ts";
 import { nextThemePreference, type ThemePreference } from "../lib/theme.ts";
@@ -36,11 +36,11 @@ const THEME_LABELS = {
 
 const THEME_CHOICES: readonly ThemePreference[] = ["auto", "light", "dark"];
 
-const PALETTE_LABELS = {
+const COLOUR_LABELS = {
   project: "Project",
   user: "User",
   default: "Default",
-} satisfies Record<Palette, string>;
+} satisfies Record<ThemeChoice, string>;
 
 const THEME_ICONS = {
   auto: SunMoonIcon,
@@ -61,8 +61,8 @@ export function DisplayMenu(props: {
   labelClassName?: string;
   triggerClassName?: string;
 }) {
-  const { preference, setPreference, palette, setPalette } = useTheme();
-  const palettes: Palette[] = [...props.themes.map((theme) => theme.source), "default"];
+  const { preference, setPreference, themeChoice, setThemeChoice } = useTheme();
+  const colourChoices: ThemeChoice[] = [...props.themes.map((theme) => theme.source), "default"];
   const { font, toggleMonoFont } = useMonoFont();
   return (
     <DropdownMenu>
@@ -83,7 +83,7 @@ export function DisplayMenu(props: {
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>Wrap, comments, code font, theme</TooltipContent>
+        <TooltipContent>Wrap, comments, code font, colours, theme</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="end" className="min-w-60">
         <DropdownMenuLabel>Code</DropdownMenuLabel>
@@ -106,17 +106,17 @@ export function DisplayMenu(props: {
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Colours</DropdownMenuLabel>
             <DropdownMenuRadioGroup
-              value={pickPalette(props.themes, palette)}
+              value={pickThemeChoice(props.themes, themeChoice)}
               onValueChange={(value) => {
-                const next = palettes.find((choice) => choice === value);
+                const next = colourChoices.find((choice) => choice === value);
                 if (next !== undefined) {
-                  setPalette(next);
+                  setThemeChoice(next);
                 }
               }}
             >
-              {palettes.map((choice) => (
+              {colourChoices.map((choice) => (
                 <DropdownMenuRadioItem key={choice} value={choice}>
-                  {PALETTE_LABELS[choice]}
+                  {COLOUR_LABELS[choice]}
                 </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>

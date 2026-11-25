@@ -31,4 +31,4 @@ Every key is optional. A token the file leaves out keeps the default colour. Eac
 
 3. **Write and check.** Write the file with your edit tool, then run `<cli> theme`. On an error, fix the field it names and run `<cli> theme` again. Done when it prints `ok` and the path you wrote.
 
-4. **Hand over.** Tell the user the path, and that the next `serve` or `export` uses it; an open `serve` shows it on reload. Committing the file shares the theme with everyone who reviews this repository.
+4. **Hand over.** Tell the user the path, and that the next `serve` or `export` uses it; an open `serve` shows it on reload, unless they picked other colours under Display › Colours. Committing the file shares the theme with everyone who reviews this repository.

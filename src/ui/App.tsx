@@ -18,7 +18,7 @@ import { ReviewStage } from "./components/ReviewStage.tsx";
 import { Sidebar } from "./components/Sidebar.tsx";
 import { WaitMark } from "./components/WaitMark.tsx";
 import { waitCopy } from "./lib/wait.ts";
-import { applyCustomTheme, pickPalette } from "./lib/custom-theme.ts";
+import { applyCustomTheme, pickThemeChoice } from "./lib/custom-theme.ts";
 import { useTheme } from "./lib/ThemeProvider.tsx";
 import { fileIndexAtHunk, filesFromPayload } from "./lib/group-files.ts";
 import { toggleMarkdownView } from "./lib/markdown-view.ts";
@@ -107,9 +107,9 @@ export function App() {
     void load();
   }, [load]);
 
-  const { palette } = useTheme();
+  const { themeChoice } = useTheme();
   const themes = meta?.themes ?? [];
-  const theme = themes.find((item) => item.source === pickPalette(themes, palette))?.theme;
+  const theme = themes.find((item) => item.source === pickThemeChoice(themes, themeChoice))?.theme;
   useLayoutEffect(() => (theme === undefined ? undefined : applyCustomTheme(theme)), [theme]);
 
   useEffect(() => {

@@ -18,7 +18,7 @@ Inside the repository you want to review, run `/comprehende` in your coding agen
 
 When the branch gets new commits, run it again. The agent keeps the existing groups and rewrites only the ones that changed.
 
-To give the UI your project's colours, run `/comprehende set up a theme based on this project's design language`. The agent writes `.comprehende/theme.json`. Commit it to share the theme with everyone who reviews the repository. A `~/.comprehende/theme.json` applies to every repository without one. When there is a theme, the Display menu switches between it and the default colours.
+To give the UI your project's colours, run `/comprehende set up a theme based on this project's design language`. The agent writes `.comprehende/theme.json`. Commit it to share the theme with everyone who reviews the repository. A `~/.comprehende/theme.json` applies to every repository without one. The Display menu lists each theme file that exists and the default colours, so you can switch between them.
 
 ## Why
 

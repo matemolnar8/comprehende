@@ -3,33 +3,33 @@ import type { Theme } from "../../schema/theme.ts";
 import { readKey, writeKey } from "./storage.ts";
 
 /** Which colours the UI shows: a theme file's, or the built-in ones. */
-export type Palette = ThemeSource | "default";
+export type ThemeChoice = ThemeSource | "default";
 
-export const PALETTE_STORAGE_KEY = "comprehende.palette";
+export const THEME_CHOICE_STORAGE_KEY = "comprehende.theme-choice";
 
-const PALETTES = ["project", "user", "default"] as const satisfies readonly Palette[];
+const STORED_CHOICES = ["project", "user", "default"] as const satisfies readonly ThemeChoice[];
 
-export function parsePalette(raw: string | null): Palette | undefined {
-  return PALETTES.find((palette) => palette === raw);
+export function parseThemeChoice(raw: string | null): ThemeChoice | undefined {
+  return STORED_CHOICES.find((themeChoice) => themeChoice === raw);
 }
 
-/** The stored palette when the review has it, else the first theme: the project's, then the user's. */
-export function pickPalette(
+/** The stored themeChoice when the review has it, else the first theme: the project's, then the user's. */
+export function pickThemeChoice(
   themes: readonly { source: ThemeSource }[],
-  stored: Palette | undefined,
-): Palette {
+  stored: ThemeChoice | undefined,
+): ThemeChoice {
   if (stored === "default") {
     return stored;
   }
   return (themes.find((theme) => theme.source === stored) ?? themes[0])?.source ?? "default";
 }
 
-export function readStoredPalette(): Palette | undefined {
-  return parsePalette(readKey(localStorage, PALETTE_STORAGE_KEY));
+export function readStoredThemeChoice(): ThemeChoice | undefined {
+  return parseThemeChoice(readKey(localStorage, THEME_CHOICE_STORAGE_KEY));
 }
 
-export function writeStoredPalette(palette: Palette): void {
-  writeKey(localStorage, PALETTE_STORAGE_KEY, palette);
+export function writeStoredThemeChoice(themeChoice: ThemeChoice): void {
+  writeKey(localStorage, THEME_CHOICE_STORAGE_KEY, themeChoice);
 }
 
 /**
