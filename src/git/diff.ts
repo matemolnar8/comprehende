@@ -18,6 +18,7 @@ import {
   type NameStatusEntry,
   type NumstatEntry,
 } from "./name-status.ts";
+import { readQuotedGitPath, unquoteGitPath } from "./quote.ts";
 import { assertSafePath, rangeLabel, resolveCommit } from "./repo.ts";
 
 const HUNK_HEADER = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/;
@@ -493,6 +494,10 @@ class FileBuilder {
 
 function parseDiffGitLine(line: string): { oldPath: string; newPath: string } {
   const rest = line.slice("diff --git ".length);
+  const quoted = splitQuotedPair(rest);
+  if (quoted !== undefined) {
+    return { oldPath: stripPrefix(quoted.oldName), newPath: stripPrefix(quoted.newName) };
+  }
   const match = /^a\/(.*) b\/(.*)$/.exec(rest);
   if (!match || match[1] === undefined || match[2] === undefined) {
     return { oldPath: rest, newPath: rest };
@@ -507,29 +512,29 @@ function parseDiffGitLine(line: string): { oldPath: string; newPath: string } {
   return { oldPath: match[1], newPath: match[2] };
 }
 
-function unquoteGitPath(raw: string): string {
-  if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed === "string") {
-        return parsed;
-      }
-    } catch {
-      return raw.slice(1, -1);
-    }
+/** `"a/x" "b/y"`, `"a/x" b/y`, or `a/x "b/y"`. A name with no quotes has no `"` in it. */
+function splitQuotedPair(rest: string): { oldName: string; newName: string } | undefined {
+  const first = readQuotedGitPath(rest);
+  if (first !== undefined) {
+    return rest[first.end] === " "
+      ? { oldName: first.path, newName: unquoteGitPath(rest.slice(first.end + 1)) }
+      : undefined;
   }
-  return raw;
+  const split = rest.indexOf(' "');
+  const second = split === -1 ? undefined : readQuotedGitPath(rest, split + 1);
+  return second !== undefined && second.end === rest.length
+    ? { oldName: rest.slice(0, split), newName: second.path }
+    : undefined;
 }
 
+/** A `---` or `+++` path: git appends a tab to unquoted names with spaces. */
 function stripDiffPath(raw: string): string | undefined {
-  const withoutTab = raw.split("\t")[0] ?? raw;
-  if (withoutTab === "/dev/null") {
-    return undefined;
-  }
-  if (withoutTab.startsWith("a/") || withoutTab.startsWith("b/")) {
-    return withoutTab.slice(2);
-  }
-  return withoutTab;
+  const name = unquoteGitPath(raw.split("\t")[0] ?? raw);
+  return name === "/dev/null" ? undefined : stripPrefix(name);
+}
+
+function stripPrefix(name: string): string {
+  return name.startsWith("a/") || name.startsWith("b/") ? name.slice(2) : name;
 }
 
 export function flattenHunks(files: readonly DiffFile[]): LiveHunk[] {
