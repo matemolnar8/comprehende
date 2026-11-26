@@ -57,6 +57,8 @@ export function readDiff(
   const key = `${cwd}\0${baseRef}\0${headRef}`;
   const cached = diffCache.get(key);
   if (cached !== undefined) {
+    diffCache.delete(key);
+    diffCache.set(key, cached);
     return cached;
   }
   const read = readDiffUncached(cwd, baseRef, headRef);
@@ -67,9 +69,9 @@ export function readDiff(
     }
   });
   if (diffCache.size > DIFF_CACHE_LIMIT) {
-    const oldest = diffCache.keys().next().value;
-    if (oldest !== undefined) {
-      diffCache.delete(oldest);
+    const leastRecent = diffCache.keys().next().value;
+    if (leastRecent !== undefined) {
+      diffCache.delete(leastRecent);
     }
   }
   return read;

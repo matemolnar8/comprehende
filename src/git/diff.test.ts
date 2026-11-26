@@ -239,6 +239,27 @@ describe("readDiff", () => {
       true,
     );
   });
+  it("keeps the most recently used diff when the cache is full", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-diff-cache-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    const shas: string[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      await writeFile(join(root, "count.txt"), `${i}\n`, "utf8");
+      await git(root, ["add", "count.txt"]);
+      await git(root, ["commit", "-m", `Commit ${i}`]);
+      shas.push((await git(root, ["rev-parse", "HEAD"])).trim());
+    }
+    const [base, ...heads] = shas;
+    assert.ok(base !== undefined);
+    const read = (i: number) => readDiff(root, base, heads[i] ?? base);
+
+    const first = read(0);
+    await Promise.all([first, read(1), read(2), read(3)]);
+    assert.equal(read(0), first);
+    await read(4);
+    assert.equal(read(0), first);
+  });
 });
 
 describe("lockfile diffs", () => {
