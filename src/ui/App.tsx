@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -259,100 +260,97 @@ export function App() {
     });
   }, []);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable || target.closest("input, textarea, select") !== null)
-      ) {
-        return;
-      }
-      if (event.key === "w") {
-        toggleWrap();
-      } else if (event.key === "b" && !narrow) {
+  const moveSelection = (step: -1 | 1) => () =>
+    shiftSelection(meta, selection, selectFromNav, step);
+  const movePart = (step: -1 | 1) => () => shiftPartSelection(meta, selection, selectFromNav, step);
+  const whenNoInspector = (run: () => void) => () => {
+    if (inspector === null) {
+      run();
+    }
+  };
+  const shortcuts: Partial<Record<string, Shortcut>> = {
+    w: toggleWrap,
+    b: () => {
+      if (!narrow) {
         toggleSidebar();
-      } else if (event.key === "c") {
-        const pinned = linePinnedSources(meta?.document.sources);
-        if (pinned.length > 0) {
-          setShowComments((value) => !value);
-        }
-      } else if (event.key === "r") {
-        void load();
-      } else if (event.key === "o") {
-        selectFromNav({ kind: "overview" });
-      } else if (event.key === "h" && meta?.changes !== undefined) {
-        selectFromNav({ kind: "changes" });
-      } else if (event.key === "u") {
-        selectFromNav({ kind: REVIEW_BUCKETS.unassigned });
-      } else if (event.key === "Escape") {
-        closeInspector();
-      } else if (event.key === "[" && !event.repeat) {
-        event.preventDefault();
-        shiftSelection(meta, selection, selectFromNav, -1);
-      } else if (event.key === "]" && !event.repeat) {
-        event.preventDefault();
-        shiftSelection(meta, selection, selectFromNav, 1);
-      } else if (event.key === "{" && !event.repeat) {
-        event.preventDefault();
-        shiftPartSelection(meta, selection, selectFromNav, -1);
-      } else if (event.key === "}" && !event.repeat) {
-        event.preventDefault();
-        shiftPartSelection(meta, selection, selectFromNav, 1);
-      } else if (event.key === "m") {
-        toggleMarkdownView();
-      } else if (inspector !== null) {
-        return;
-      } else if (event.key === "s") {
-        setSplit((value) => {
-          if (!value) {
-            setSplitRatio(0.5);
-          }
-          return !value;
-        });
-      } else if (event.key === "j") {
-        const files = filesFromPayload(payloadFiles);
-        const current = fileIndexAtHunk(files, activeHunk);
-        const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
-        if (next !== undefined) {
-          scrollToHunk(next.firstIndex);
-        }
-      } else if (event.key === "k") {
-        const files = filesFromPayload(payloadFiles);
-        const current = fileIndexAtHunk(files, activeHunk);
-        const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
-        if (previous !== undefined) {
-          scrollToHunk(previous.firstIndex);
-        }
-      } else if (event.key === "v") {
-        const files = filesFromPayload(payloadFiles);
-        const current = files[Math.max(0, fileIndexAtHunk(files, activeHunk))];
-        if (current !== undefined) {
-          setFileViewed(current.path, !viewedPaths.has(current.path));
-        }
       }
-    };
+    },
+    c: () => {
+      if (linePinnedSources(meta?.document.sources).length > 0) {
+        setShowComments((value) => !value);
+      }
+    },
+    r: () => void load(),
+    o: () => selectFromNav({ kind: "overview" }),
+    h: () => {
+      if (meta?.changes !== undefined) {
+        selectFromNav({ kind: "changes" });
+      }
+    },
+    u: () => selectFromNav({ kind: REVIEW_BUCKETS.unassigned }),
+    Escape: closeInspector,
+    "[": { move: moveSelection(-1) },
+    "]": { move: moveSelection(1) },
+    "{": { move: movePart(-1) },
+    "}": { move: movePart(1) },
+    m: toggleMarkdownView,
+    s: whenNoInspector(() =>
+      setSplit((value) => {
+        if (!value) {
+          setSplitRatio(0.5);
+        }
+        return !value;
+      }),
+    ),
+    j: whenNoInspector(() => {
+      const files = filesFromPayload(payloadFiles);
+      const current = fileIndexAtHunk(files, activeHunk);
+      const next = files[Math.min(files.length - 1, Math.max(current, 0) + 1)];
+      if (next !== undefined) {
+        scrollToHunk(next.firstIndex);
+      }
+    }),
+    k: whenNoInspector(() => {
+      const files = filesFromPayload(payloadFiles);
+      const current = fileIndexAtHunk(files, activeHunk);
+      const previous = files[Math.max(0, (current === -1 ? 0 : current) - 1)];
+      if (previous !== undefined) {
+        scrollToHunk(previous.firstIndex);
+      }
+    }),
+    v: whenNoInspector(() => {
+      const files = filesFromPayload(payloadFiles);
+      const current = files[Math.max(0, fileIndexAtHunk(files, activeHunk))];
+      if (current !== undefined) {
+        setFileViewed(current.path, !viewedPaths.has(current.path));
+      }
+    }),
+  };
+
+  const onKey = useEffectEvent((event: KeyboardEvent) => {
+    if (event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      (target.isContentEditable || target.closest("input, textarea, select") !== null)
+    ) {
+      return;
+    }
+    const shortcut = shortcuts[shortcutKey(event)];
+    if (typeof shortcut === "function") {
+      shortcut();
+    } else if (shortcut !== undefined && !event.repeat) {
+      event.preventDefault();
+      shortcut.move();
+    }
+  });
+
+  useEffect(() => {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [
-    activeHunk,
-    closeInspector,
-    inspector,
-    payloadFiles,
-    load,
-    meta,
-    narrow,
-    scrollToHunk,
-    selectFromNav,
-    selection,
-    setFileViewed,
-    toggleSidebar,
-    toggleWrap,
-    viewedPaths,
-  ]);
+  }, []);
 
   useEffect(() => {
     if (focusClaimKey !== null) {
@@ -582,4 +580,12 @@ function Boot(props: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("px-10 py-8 text-muted-foreground", props.className)}>{props.children}</div>
   );
+}
+
+/** A `move` steps once per press, not on key repeat, and keeps the key from scrolling the page. */
+type Shortcut = (() => void) | { move: () => void };
+
+/** Caps Lock turns `w` into `W`, so letters match in either case. Shift still makes a new key: `{` is not `[`, `W` is not `w`. */
+function shortcutKey(event: KeyboardEvent): string {
+  return event.key.length === 1 && !event.shiftKey ? event.key.toLowerCase() : event.key;
 }
