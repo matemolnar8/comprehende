@@ -43,9 +43,8 @@ describe("parseArgv", () => {
 
   it("parses refresh flags", () => {
     const req = parseArgv(["refresh", "--data", "review.json", "--head", "origin/feat"], "/repo");
-    assert.equal(req.kind, "command");
     assert.equal(req.kind === "command" && req.command, "refresh");
-    assert.equal(req.kind === "command" && req.head, "origin/feat");
+    assert.equal(req.kind === "command" && req.command === "refresh" && req.head, "origin/feat");
   });
 
   it("parses review flags", () => {
@@ -98,13 +97,35 @@ describe("parseArgv", () => {
       port: DEFAULT_PORT,
       open: false,
     });
-    const pregroup = parseArgv(["pregroup", "--data", "r.json", "--file", "a.ts"], "/repo");
-    assert.equal(pregroup.kind, "command");
-    if (pregroup.kind === "command") {
-      assert.equal(pregroup.command, "pregroup");
-      assert.equal(pregroup.data, "r.json");
-      assert.equal(pregroup.file, "a.ts");
-    }
+    const pregroup = parseArgv(["pregroup", "--data=r.json", "--base", "main"], "/repo");
+    assert.equal(
+      pregroup.kind === "command" && pregroup.command === "pregroup" && pregroup.data,
+      "r.json",
+    );
+  });
+
+  it("keeps the first of repeated flags", () => {
+    const req = parseArgv(["show", "--hunk", "a.ts@1+1", "--hunk", "b.ts@2+2"], "/repo");
+    assert.equal(req.kind === "command" && req.command === "show" && req.hunk, "a.ts@1+1");
+  });
+
+  it("rejects flags the command does not take", () => {
+    assert.deepEqual(parseArgv(["serve", "--data", "r.json", "--prot", "5"]), {
+      kind: "error",
+      message: "serve does not take --prot. It takes --data, --port, --open.",
+    });
+    assert.deepEqual(parseArgv(["pregroup", "--data", "r.json", "--file", "a.ts"]), {
+      kind: "error",
+      message: "pregroup does not take --file. It takes --base, --head, --data.",
+    });
+    assert.deepEqual(parseArgv(["theme", "--data=r.json"]), {
+      kind: "error",
+      message: "theme does not take --data. It takes no options.",
+    });
+    const stray = parseArgv(["validate", "--data", "r.json", "extra"]);
+    assert.match(stray.kind === "error" ? stray.message : "", /^Unexpected argument: extra/);
+    const valued = parseArgv(["serve", "--data", "r.json", "--open=yes"]);
+    assert.deepEqual(valued, { kind: "error", message: "--open takes no value" });
   });
 
   it("rejects unknown commands", () => {

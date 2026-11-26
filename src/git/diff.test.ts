@@ -13,8 +13,11 @@ import {
   readDiff,
   readHunkIndex,
   readPathDiff,
+  toHunkRef,
 } from "./diff.ts";
+import { unquoteGitPath } from "./quote.ts";
 import { git } from "./exec.ts";
+import { initEmptyRepo } from "../test/init-repo.ts";
 import { APP_SECRET, createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
@@ -236,6 +239,27 @@ describe("readDiff", () => {
       true,
     );
   });
+  it("keeps the most recently used diff when the cache is full", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-diff-cache-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    const shas: string[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      await writeFile(join(root, "count.txt"), `${i}\n`, "utf8");
+      await git(root, ["add", "count.txt"]);
+      await git(root, ["commit", "-m", `Commit ${i}`]);
+      shas.push((await git(root, ["rev-parse", "HEAD"])).trim());
+    }
+    const [base, ...heads] = shas;
+    assert.ok(base !== undefined);
+    const read = (i: number) => readDiff(root, base, heads[i] ?? base);
+
+    const first = read(0);
+    await Promise.all([first, read(1), read(2), read(3)]);
+    assert.equal(read(0), first);
+    await read(4);
+    assert.equal(read(0), first);
+  });
 });
 
 describe("lockfile diffs", () => {
@@ -301,5 +325,51 @@ describe("findDiffFile", () => {
 
   it("follows a unique old path", () => {
     assert.equal(findDiffFile([copy], "src/beta.ts"), copy);
+  });
+});
+
+describe("quoted file names", () => {
+  it("reads paths git quotes and resolves their hunk refs", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-quoted-"));
+    roots.push(root);
+    await initEmptyRepo(root);
+    const quoted = 'quo"te.txt';
+    const modeOnly = 'mode"only.sh';
+    const control = "bell\u0007caf\u00e9.txt";
+    const renamed = "back\\slash.txt";
+    await writeFile(join(root, quoted), "one\n", "utf8");
+    await writeFile(join(root, modeOnly), "echo hi\n", "utf8");
+    await writeFile(join(root, "plain.txt"), "a\nb\nc\nd\ne\n", "utf8");
+    await git(root, ["add", "."]);
+    await git(root, ["commit", "-m", "Base"]);
+    const base = (await git(root, ["rev-parse", "HEAD"])).trim();
+
+    await writeFile(join(root, quoted), "one\ntwo\n", "utf8");
+    await writeFile(join(root, control), "new\n", "utf8");
+    await git(root, ["mv", "plain.txt", renamed]);
+    await git(root, ["add", "."]);
+    await git(root, ["update-index", "--chmod=+x", modeOnly]);
+    await git(root, ["commit", "-m", "Head"]);
+
+    const files = await readDiff(root, base, "HEAD");
+    assert.deepEqual(
+      files.map((file) => file.path).sort(),
+      [renamed, control, modeOnly, quoted].sort(),
+    );
+    assert.equal(files.find((file) => file.path === renamed)?.oldPath, "plain.txt");
+
+    const index = await readHunkIndex(root, base, "HEAD");
+    const ref = index.hunks.find((hunk) => hunk.path === quoted);
+    assert.deepEqual(ref, { path: quoted, oldStart: 1, oldLines: 1, newStart: 1, newLines: 2 });
+    const live = await readPathDiff(root, base, "HEAD", quoted);
+    assert.deepEqual(live?.hunks.map(toHunkRef), [ref]);
+  });
+
+  it("decodes C-style escapes and octal UTF-8 bytes", () => {
+    assert.equal(
+      unquoteGitPath(String.raw`"caf\303\251 \a\b\t\n\v\f\r\"\\.txt"`),
+      'caf\u00e9 \u0007\b\t\n\v\f\r"\\.txt',
+    );
+    assert.equal(unquoteGitPath("plain name.txt"), "plain name.txt");
   });
 });

@@ -1,46 +1,45 @@
 import { BATCH_CHARS } from "../review/batch.ts";
 
-export type CommandName =
-  | "review"
-  | "validate"
-  | "serve"
-  | "export"
-  | "digest"
-  | "show"
-  | "pregroup"
-  | "refresh"
-  | "theme";
+/** The flags each command reads. The parser rejects the rest, and each command's request type exposes only these. */
+const COMMAND_FLAGS = {
+  review: ["base", "head", "data"],
+  validate: ["data"],
+  serve: ["data", "port", "open"],
+  export: ["data", "out"],
+  digest: ["base", "head"],
+  show: ["base", "head", "batch", "hunk", "file"],
+  pregroup: ["base", "head", "data"],
+  refresh: ["base", "head", "data"],
+  theme: [],
+} as const satisfies Record<string, readonly FlagName[]>;
+
+export type CommandName = keyof typeof COMMAND_FLAGS;
+
+type Flags = {
+  base?: string;
+  head?: string;
+  data?: string;
+  out?: string;
+  hunk?: string;
+  file?: string;
+  batch?: number;
+  port: number;
+  open: boolean;
+};
+type FlagName = keyof Flags;
+
+export type CommandRequest = {
+  [C in CommandName]: { kind: "command"; command: C; cwd: string } & Pick<
+    Flags,
+    (typeof COMMAND_FLAGS)[C][number]
+  >;
+}[CommandName];
 
 export type CliRequest =
   | { kind: "help" }
   | { kind: "version" }
   | { kind: "error"; message: string }
-  | {
-      kind: "command";
-      command: CommandName;
-      cwd: string;
-      base?: string;
-      head?: string;
-      data?: string;
-      out?: string;
-      hunk?: string;
-      file?: string;
-      batch?: number;
-      port: number;
-      open: boolean;
-    };
-
-const COMMANDS: ReadonlySet<string> = new Set<CommandName>([
-  "review",
-  "validate",
-  "serve",
-  "export",
-  "digest",
-  "show",
-  "pregroup",
-  "refresh",
-  "theme",
-]);
+  | CommandRequest;
 
 export const DEFAULT_PORT = 4567;
 
@@ -129,61 +128,71 @@ export function parseArgv(argv: string[], cwd = process.cwd()): CliRequest {
     return { kind: "error", message: `Unknown command: ${command}\n\n${USAGE}` };
   }
 
-  const rest = args.slice(1);
   try {
-    const port = Number(flag(rest, "--port") ?? String(DEFAULT_PORT));
-    if (!Number.isInteger(port) || port < 0) {
-      throw new ArgError("--port must be a non-negative integer");
-    }
-    const batchFlag = flag(rest, "--batch");
-    const batch = batchFlag === undefined ? undefined : Number(batchFlag);
-    if (batch !== undefined && (!Number.isInteger(batch) || batch < 1)) {
-      throw new ArgError("--batch must be a positive integer");
-    }
-    return {
-      kind: "command",
-      command,
-      cwd,
-      base: flag(rest, "--base"),
-      head: flag(rest, "--head"),
-      data: flag(rest, "--data"),
-      out: flag(rest, "--out"),
-      hunk: flag(rest, "--hunk"),
-      file: flag(rest, "--file"),
-      batch,
-      port,
-      open: rest.includes("--open"),
-    };
+    return { kind: "command", command, cwd, ...parseFlags(command, args.slice(1)) };
   } catch (error) {
     return { kind: "error", message: error instanceof Error ? error.message : String(error) };
   }
 }
 
 function isCommand(value: string): value is CommandName {
-  return COMMANDS.has(value);
+  return Object.hasOwn(COMMAND_FLAGS, value);
 }
 
-function flag(args: string[], name: string): string | undefined {
-  const prefix = `${name}=`;
+/** The first of repeated flags wins: the skill tells agents that `show` reads only its first `--hunk`. */
+function parseFlags(command: CommandName, args: string[]): Flags {
+  const accepted: readonly string[] = COMMAND_FLAGS[command];
+  const values = new Map<string, string>();
+  let open = false;
   for (let i = 0; i < args.length; i += 1) {
-    const arg = args[i];
-    if (arg === undefined) {
+    const arg = args[i] ?? "";
+    if (!arg.startsWith("--")) {
+      throw new ArgError(`Unexpected argument: ${arg}\n\n${USAGE}`);
+    }
+    const eq = arg.indexOf("=");
+    const name = arg.slice(2, eq === -1 ? undefined : eq);
+    if (!accepted.includes(name)) {
+      const takes =
+        accepted.length === 0 ? "no options" : accepted.map((flag) => `--${flag}`).join(", ");
+      throw new ArgError(`${command} does not take --${name}. It takes ${takes}.`);
+    }
+    if (name === "open") {
+      if (eq !== -1) {
+        throw new ArgError("--open takes no value");
+      }
+      open = true;
       continue;
     }
-    if (arg === name) {
-      const value = args[i + 1];
-      if (value === undefined || value.startsWith("-")) {
-        throw new ArgError(`${name} requires a value`);
-      }
-      return value;
+    const value = eq === -1 ? args[i + 1] : arg.slice(eq + 1);
+    if (eq === -1) {
+      i += 1;
     }
-    if (arg.startsWith(prefix)) {
-      const value = arg.slice(prefix.length);
-      if (value === "") {
-        throw new ArgError(`${name} requires a value`);
-      }
-      return value;
+    if (value === undefined || value === "" || (eq === -1 && value.startsWith("-"))) {
+      throw new ArgError(`--${name} requires a value`);
+    }
+    if (!values.has(name)) {
+      values.set(name, value);
     }
   }
-  return undefined;
+
+  const port = Number(values.get("port") ?? String(DEFAULT_PORT));
+  if (!Number.isInteger(port) || port < 0) {
+    throw new ArgError("--port must be a non-negative integer");
+  }
+  const batchValue = values.get("batch");
+  const batch = batchValue === undefined ? undefined : Number(batchValue);
+  if (batch !== undefined && (!Number.isInteger(batch) || batch < 1)) {
+    throw new ArgError("--batch must be a positive integer");
+  }
+  return {
+    base: values.get("base"),
+    head: values.get("head"),
+    data: values.get("data"),
+    out: values.get("out"),
+    hunk: values.get("hunk"),
+    file: values.get("file"),
+    batch,
+    port,
+    open,
+  };
 }
