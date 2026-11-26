@@ -1,6 +1,6 @@
 import { parsePatchFiles } from "@pierre/diffs";
 import assert from "node:assert/strict";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, it } from "vite-plus/test";
@@ -14,6 +14,7 @@ import {
   readHunkIndex,
   readPathDiff,
 } from "./diff.ts";
+import { git } from "./exec.ts";
 import { APP_SECRET, createLockfileRepo, LOCKFILE_SECRET } from "../test/lockfile-repo.ts";
 
 const SAMPLE = `diff --git a/src/app.ts b/src/app.ts
@@ -213,6 +214,28 @@ afterAll(() => {
   for (const root of roots) {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+describe("readDiff", () => {
+  it("reads a ref name again after it moves", async () => {
+    const root = await mkdtemp(join(tmpdir(), "comprehende-moving-ref-"));
+    roots.push(root);
+    const repo = await createLockfileRepo(root);
+    const before = await readDiff(repo.root, repo.base, "HEAD");
+    assert.equal(
+      before.some((file) => file.path === "later.ts"),
+      false,
+    );
+
+    await writeFile(join(root, "later.ts"), "export const later = 1;\n", "utf8");
+    await git(root, ["add", "later.ts"]);
+    await git(root, ["commit", "-m", "Later"]);
+    const after = await readDiff(repo.root, repo.base, "HEAD");
+    assert.equal(
+      after.some((file) => file.path === "later.ts"),
+      true,
+    );
+  });
 });
 
 describe("lockfile diffs", () => {

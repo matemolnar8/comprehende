@@ -36,7 +36,49 @@ export async function resolveSource(
   };
 }
 
-export async function readDiff(cwd: string, baseRef: string, headRef: string): Promise<DiffFile[]> {
+const FULL_SHA = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/;
+const DIFF_CACHE_LIMIT = 4;
+const diffCache = new Map<string, Promise<readonly DiffFile[]>>();
+
+/**
+ * A diff between two commit SHAs never changes, and `serve` asks for the same pinned pair on every
+ * request. With hundreds of binaries, rename and copy detection costs about a second per call.
+ * Callers share the result, so they must not change it.
+ */
+export function readDiff(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+): Promise<readonly DiffFile[]> {
+  if (!FULL_SHA.test(baseRef) || !FULL_SHA.test(headRef)) {
+    return readDiffUncached(cwd, baseRef, headRef);
+  }
+  const key = `${cwd}\0${baseRef}\0${headRef}`;
+  const cached = diffCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const read = readDiffUncached(cwd, baseRef, headRef);
+  diffCache.set(key, read);
+  read.catch(() => {
+    if (diffCache.get(key) === read) {
+      diffCache.delete(key);
+    }
+  });
+  if (diffCache.size > DIFF_CACHE_LIMIT) {
+    const oldest = diffCache.keys().next().value;
+    if (oldest !== undefined) {
+      diffCache.delete(oldest);
+    }
+  }
+  return read;
+}
+
+async function readDiffUncached(
+  cwd: string,
+  baseRef: string,
+  headRef: string,
+): Promise<DiffFile[]> {
   await Promise.all([resolveCommit(cwd, baseRef), resolveCommit(cwd, headRef)]);
   return readDiffAt(cwd, baseRef, headRef);
 }
@@ -490,7 +532,7 @@ function stripDiffPath(raw: string): string | undefined {
   return withoutTab;
 }
 
-export function flattenHunks(files: DiffFile[]): LiveHunk[] {
+export function flattenHunks(files: readonly DiffFile[]): LiveHunk[] {
   const hunks: LiveHunk[] = [];
   for (const file of files) {
     if (file.binary && !file.image) {

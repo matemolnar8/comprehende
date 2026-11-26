@@ -123,7 +123,10 @@ describe("markMovedLines", () => {
 });
 
 function movedKeys(
-  files: { path: string; hunks: { lines: { kind: string; text: string; moved?: unknown }[] }[] }[],
+  files: readonly {
+    path: string;
+    hunks: { lines: { kind: string; text: string; moved?: unknown }[] }[];
+  }[],
 ): string[] {
   const keys: string[] = [];
   for (const file of files) {

@@ -61,7 +61,7 @@ export type RefreshResult = {
 };
 
 /** A hunk keeps its identity across a push or rebase when its path and its changed lines are the same. */
-export function matchHunks(previous: DiffFile[], next: DiffFile[]): HunkDelta {
+export function matchHunks(previous: readonly DiffFile[], next: readonly DiffFile[]): HunkDelta {
   const pool = new Map<string, LiveHunk[]>();
   for (const file of previous) {
     for (const hunk of flattenHunks([file])) {
@@ -140,8 +140,8 @@ function contentKey(file: DiffFile, hunk: LiveHunk): string {
  */
 export function refreshDocument(
   document: ReviewDocument,
-  previous: DiffFile[],
-  next: DiffFile[],
+  previous: readonly DiffFile[],
+  next: readonly DiffFile[],
   source: ReviewSource,
 ): RefreshResult {
   const delta = matchHunks(previous, next);
@@ -366,7 +366,7 @@ export type RefreshContext = {
 /** One line per file that changed since the previous review. Same shape as the digest. */
 export function formatRefresh(
   result: RefreshResult,
-  next: DiffFile[],
+  next: readonly DiffFile[],
   context: RefreshContext,
 ): string {
   const { previous, document, delta } = result;

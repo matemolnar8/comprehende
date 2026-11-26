@@ -38,7 +38,7 @@ export type ReadingPlan = {
  * Skips what reading cannot change: lockfiles, binaries, images, pure renames and copies, moved
  * blocks, generated output, and every file of a same-change cluster but the first.
  */
-export function readingPlan(files: DiffFile[], budget = BATCH_CHARS): ReadingPlan {
+export function readingPlan(files: readonly DiffFile[], budget = BATCH_CHARS): ReadingPlan {
   const digest = buildDigest(files);
   const digests = new Map(digest.files.map((item) => [item.path, item]));
   const read: ReadFile[] = [];

@@ -56,7 +56,7 @@ export type ChangeDigest = {
 const MIN_DIR_RENAMES = 5;
 
 /** One line per file. No patch text, so this stays small on large diffs. */
-export function buildDigest(files: DiffFile[]): ChangeDigest {
+export function buildDigest(files: readonly DiffFile[]): ChangeDigest {
   const listed = files
     .filter((file) => !file.binary || file.image)
     .map((file) => ({ file, digest: digestFile(file) }));
