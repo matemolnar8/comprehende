@@ -61,18 +61,13 @@ export async function git(
   }
 }
 
-export async function gitBuffer(
-  cwd: string,
-  args: string[],
-  opts?: { input?: Uint8Array },
-): Promise<Buffer> {
+export async function gitBuffer(cwd: string, args: string[]): Promise<Buffer> {
   try {
     const { stdout } = await execFileAsync("git", ["-c", "core.quotepath=false", ...args], {
       cwd,
       env: gitEnv(),
       encoding: "buffer",
       maxBuffer: 64 * 1024 * 1024,
-      ...(opts?.input !== undefined ? { input: Buffer.from(opts.input) } : {}),
     });
     return stdout;
   } catch (error) {
